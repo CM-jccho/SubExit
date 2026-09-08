@@ -1,0 +1,56 @@
+{
+  "service": {
+    "nameKo": "넷플릭스",
+    "nameAliases": ["netflix", "Netflix", "넷플릭스", "넷플"],
+    "matched": true
+  },
+  "multiChannel": false,
+  "channel": {
+    "type": "web",
+    "confidence": "high",
+    "evidence": [
+      "넷플릭스는 주로 웹사이트(netflix.com)에서 직접 결제 및 구독 관리가 가능합니다.",
+      "신용카드 명세서에 'NETFLIX' 표기가 있다면 웹 결제입니다."
+    ]
+  },
+  "steps": [
+    {
+      "order": 1,
+      "title": "넷플릭스 웹사이트 로그인",
+      "detailKo": "브라우저에서 netflix.com에 접속하여 로그인하세요."
+    },
+    {
+      "order": 2,
+      "title": "계정 메뉴 진입",
+      "detailKo": "우측 상단 프로필 아이콘을 클릭하고 \"계정\"을 선택하세요."
+    },
+    {
+      "order": 3,
+      "title": "멤버십 해지",
+      "detailKo": "\"멤버십 및 결제\" 섹션에서 \"멤버십 해지\" 버튼을 찾아 클릭하세요."
+    },
+    {
+      "order": 4,
+      "title": "해지 확인",
+      "detailKo": "해지 확인 화면에서 \"해지 완료\" 버튼을 클릭하세요. 해지 후에도 남은 기간 동안은 시청 가능합니다."
+    }
+  ],
+  "tags": [
+    {
+      "kind": "cancel_ne_refund",
+      "labelKo": "해지 ≠ 즉시 환불",
+      "evidence": "넷플릭스는 해지 시 남은 기간에 대한 환불을 제공하지 않습니다."
+    },
+    {
+      "kind": "next_renewal",
+      "labelKo": "다음 갱신일 확인 필요",
+      "evidence": "해지 후에도 다음 결제일까지 서비스 이용이 가능합니다."
+    },
+    {
+      "kind": "other_caution",
+      "labelKo": "통신사 제휴 결제 확인",
+      "evidence": "일부 통신사(SKT, KT, LG U+ 등)를 통해 결제한 경우 해당 통신사 고객센터를 통해 해지해야 할 수 있습니다."
+    }
+  ],
+  "disclaimer": "넷플릭스는 주로 웹에서 직접 결제합니다. 통신사나 제휴사를 통해 결제한 경우 해지 방법이 다를 수 있으므로 결제 내역을 먼저 확인하세요. 서비스 UI는 수시로 변경될 수 있으므로 반드시 공식 웹사이트에서 최종 확인하시기 바랍니다. 본 서비스는 법률 자문이 아니며, 자동 해지를 수행하지 않습니다."
+}

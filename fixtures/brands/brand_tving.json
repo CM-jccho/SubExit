@@ -1,0 +1,161 @@
+{
+  "service": {
+    "nameKo": "티빙",
+    "nameAliases": ["tving", "TVING", "Tving", "티빙"],
+    "matched": true
+  },
+  "multiChannel": true,
+  "channels": [
+    {
+      "channel": {
+        "type": "web",
+        "confidence": "high",
+        "evidence": [
+          "티빙은 웹사이트(tving.com)에서 직접 결제 및 구독 관리가 가능합니다.",
+          "신용카드 명세서에 'TVING' 또는 'CJ ENM' 표기가 있다면 웹 결제입니다."
+        ]
+      },
+      "channelLabel": "웹으로 결제했을 때",
+      "steps": [
+        {
+          "order": 1,
+          "title": "티빙 웹사이트 로그인",
+          "detailKo": "브라우저에서 tving.com에 접속하여 로그인하세요."
+        },
+        {
+          "order": 2,
+          "title": "마이페이지 진입",
+          "detailKo": "우측 상단 프로필 아이콘을 클릭하고 \"마이페이지\"를 선택하세요."
+        },
+        {
+          "order": 3,
+          "title": "이용권/결제 관리",
+          "detailKo": "\"이용권 관리\" 또는 \"결제 관리\" 메뉴를 찾아 클릭하세요."
+        },
+        {
+          "order": 4,
+          "title": "구독 해지하기",
+          "detailKo": "현재 활성화된 이용권 옆의 \"해지\" 또는 \"구독 해지\" 버튼을 클릭하세요."
+        },
+        {
+          "order": 5,
+          "title": "해지 확인",
+          "detailKo": "해지 사유를 선택하고 최종 확인 버튼을 눌러 해지를 완료하세요. 해지 후에도 남은 기간 동안은 이용 가능합니다."
+        }
+      ],
+      "tags": [
+        {
+          "kind": "cancel_ne_refund",
+          "labelKo": "해지 ≠ 즉시 환불",
+          "evidence": "티빙은 해지 시 남은 기간에 대한 자동 환불을 제공하지 않습니다."
+        },
+        {
+          "kind": "next_renewal",
+          "labelKo": "다음 갱신일 확인 필요",
+          "evidence": "해지 후에도 다음 결제 예정일까지 서비스를 이용할 수 있습니다."
+        }
+      ]
+    },
+    {
+      "channel": {
+        "type": "app_store",
+        "confidence": "high",
+        "evidence": [
+          "App Store 구매 내역에 'TVING' 또는 '티빙'이 있다면 App Store 결제입니다.",
+          "iPhone/iPad 앱을 통해 구독했다면 대부분 App Store 결제입니다."
+        ]
+      },
+      "channelLabel": "App Store로 결제했을 때",
+      "steps": [
+        {
+          "order": 1,
+          "title": "설정 앱 열기",
+          "detailKo": "iPhone 또는 iPad에서 \"설정\" 앱을 실행하세요."
+        },
+        {
+          "order": 2,
+          "title": "Apple ID 선택",
+          "detailKo": "상단에 표시된 본인의 이름(Apple ID)을 탭하세요."
+        },
+        {
+          "order": 3,
+          "title": "구독 메뉴 진입",
+          "detailKo": "\"구독\" 항목을 선택하여 현재 활성화된 구독 목록을 확인하세요."
+        },
+        {
+          "order": 4,
+          "title": "티빙 구독 선택",
+          "detailKo": "구독 목록에서 \"티빙\" 또는 \"TVING\"을 찾아 탭하세요."
+        },
+        {
+          "order": 5,
+          "title": "구독 취소하기",
+          "detailKo": "화면 하단의 \"구독 취소\" 버튼을 탭하고 확인하세요."
+        }
+      ],
+      "tags": [
+        {
+          "kind": "cancel_ne_refund",
+          "labelKo": "해지 ≠ 즉시 환불",
+          "evidence": "App Store 정책상 구독 취소 시 남은 기간에 대한 환불은 제공되지 않습니다."
+        },
+        {
+          "kind": "next_renewal",
+          "labelKo": "다음 갱신일 확인 필요",
+          "evidence": "취소 시점이 아닌 다음 결제 예정일까지 서비스가 유지됩니다."
+        }
+      ]
+    },
+    {
+      "channel": {
+        "type": "google_play",
+        "confidence": "high",
+        "evidence": [
+          "Google Play 구독 내역에 'TVING' 또는 '티빙'이 있다면 Google Play 결제입니다.",
+          "Android 앱을 통해 구독했다면 대부분 Google Play 결제입니다."
+        ]
+      },
+      "channelLabel": "Google Play로 결제했을 때",
+      "steps": [
+        {
+          "order": 1,
+          "title": "Google Play 스토어 열기",
+          "detailKo": "Android 기기에서 \"Google Play 스토어\" 앱을 실행하세요."
+        },
+        {
+          "order": 2,
+          "title": "프로필 메뉴 진입",
+          "detailKo": "우측 상단의 프로필 아이콘을 탭하세요."
+        },
+        {
+          "order": 3,
+          "title": "결제 및 구독 선택",
+          "detailKo": "메뉴에서 \"결제 및 구독\" → \"구독\"을 선택하세요."
+        },
+        {
+          "order": 4,
+          "title": "티빙 구독 선택",
+          "detailKo": "구독 목록에서 \"티빙\" 또는 \"TVING\"을 찾아 탭하세요."
+        },
+        {
+          "order": 5,
+          "title": "구독 해지하기",
+          "detailKo": "\"구독 해지\" 버튼을 탭하고 해지 사유를 선택한 후 확인하세요."
+        }
+      ],
+      "tags": [
+        {
+          "kind": "cancel_ne_refund",
+          "labelKo": "해지 ≠ 즉시 환불",
+          "evidence": "Google Play 정책상 구독 해지 시 남은 기간에 대한 자동 환불은 제공되지 않습니다."
+        },
+        {
+          "kind": "next_renewal",
+          "labelKo": "다음 갱신일 확인 필요",
+          "evidence": "해지 후에도 다음 결제 예정일까지 서비스가 유지됩니다."
+        }
+      ]
+    }
+  ],
+  "disclaimer": "티빙은 웹, App Store, Google Play 모두에서 구독이 가능합니다. 어디서 결제했는지에 따라 해지 방법이 다르므로, 결제 내역을 먼저 확인하세요. 서비스 UI는 수시로 변경될 수 있으므로 반드시 공식 앱/웹사이트에서 최종 확인하시기 바랍니다. 본 서비스는 법률 자문이 아니며, 자동 해지를 수행하지 않습니다."
+}

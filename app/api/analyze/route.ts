@@ -3,19 +3,44 @@ import Anthropic from '@anthropic-ai/sdk'
 import OpenAI from 'openai'
 import fs from 'fs'
 import path from 'path'
+import { findBrand, getGenericGuidance } from '@/lib/brand-catalog'
 
 type AnalysisResult = {
-  channel: {
+  service?: {
+    nameKo: string
+    nameAliases?: string[]
+    matched: boolean
+  }
+  multiChannel?: boolean
+  channels?: {
+    channel: {
+      type: 'web' | 'app_store' | 'google_play' | 'merchant' | 'unknown'
+      confidence: 'high' | 'medium' | 'low'
+      evidence: string[]
+    }
+    channelLabel: string
+    steps: {
+      order: number
+      title: string
+      detailKo: string
+    }[]
+    tags: {
+      kind: 'dark_pattern' | 'cancel_ne_refund' | 'next_renewal' | 'other_caution'
+      labelKo: string
+      evidence?: string
+    }[]
+  }[]
+  channel?: {
     type: 'web' | 'app_store' | 'google_play' | 'merchant' | 'unknown'
     confidence: 'high' | 'medium' | 'low'
     evidence: string[]
   }
-  steps: {
+  steps?: {
     order: number
     title: string
     detailKo: string
   }[]
-  tags: {
+  tags?: {
     kind: 'dark_pattern' | 'cancel_ne_refund' | 'next_renewal' | 'other_caution'
     labelKo: string
     evidence?: string
@@ -59,12 +84,68 @@ function loadFixture(scenario: string = 'appstore'): AnalysisResult {
     play: 'play.json',
     web_dark: 'web_dark.json',
     email_renewal: 'email_renewal.json',
+    brand_tving: 'brands/brand_tving.json',
+    brand_netflix: 'brands/brand_netflix.json',
   }
   
   const filename = fixtureMap[scenario] || 'appstore.json'
   const fixturePath = path.join(process.cwd(), 'fixtures', filename)
   const data = fs.readFileSync(fixturePath, 'utf-8')
   return JSON.parse(data)
+}
+
+function analyzeBrand(query: string): AnalysisResult {
+  const brand = findBrand(query)
+  
+  if (!brand) {
+    const generic = getGenericGuidance()
+    return {
+      service: {
+        nameKo: query,
+        matched: false,
+      },
+      ...generic,
+    }
+  }
+
+  if (brand.cancelPaths.length > 1) {
+    return {
+      service: {
+        nameKo: brand.nameKo,
+        nameAliases: brand.nameAliases,
+        matched: true,
+      },
+      multiChannel: true,
+      channels: brand.cancelPaths.map((path) => ({
+        channel: {
+          type: path.channel,
+          confidence: 'high',
+          evidence: [],
+        },
+        channelLabel: path.channelLabel,
+        steps: path.steps,
+        tags: path.tags,
+      })),
+      disclaimer: brand.notes || '서비스 UI는 수시로 변경될 수 있으므로 반드시 공식 앱/웹사이트에서 최종 확인하시기 바랍니다. 본 서비스는 법률 자문이 아니며, 자동 해지를 수행하지 않습니다.',
+    }
+  } else {
+    const path = brand.cancelPaths[0]
+    return {
+      service: {
+        nameKo: brand.nameKo,
+        nameAliases: brand.nameAliases,
+        matched: true,
+      },
+      channel: {
+        type: path.channel,
+        confidence: 'high',
+        evidence: [],
+      },
+      steps: path.steps,
+      tags: path.tags,
+      disclaimer: brand.notes || '서비스 UI는 수시로 변경될 수 있으므로 반드시 공식 앱/웹사이트에서 최종 확인하시기 바랍니다. 본 서비스는 법률 자문이 아니며, 자동 해지를 수행하지 않습니다.',
+    }
+  }
 }
 
 async function analyzeWithAnthropic(imageBuffers: Buffer[]): Promise<AnalysisResult> {
@@ -182,6 +263,12 @@ export async function POST(request: NextRequest) {
       const body = await request.json()
       if (body.demo) {
         const result = loadFixture(body.scenario || 'appstore')
+        return NextResponse.json(result)
+      }
+      
+      if (body.query || body.brand) {
+        const query = body.query || body.brand
+        const result = analyzeBrand(query)
         return NextResponse.json(result)
       }
     }
