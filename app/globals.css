@@ -4,36 +4,64 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 text-slate-900;
+    @apply bg-slate-950 text-slate-50;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    background-attachment: fixed;
   }
 }
 
 @layer components {
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-glass;
+  }
+  
+  .glass-card-hover {
+    @apply glass-card hover:bg-white/10 hover:border-white/20 transition-all duration-300;
+  }
+  
   .btn-primary {
-    @apply w-full py-4 px-6 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold rounded-2xl shadow-lg shadow-primary-600/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
+    @apply w-full py-4 px-6 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white font-bold rounded-2xl shadow-glow transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
   }
   
   .btn-secondary {
-    @apply w-full py-4 px-6 bg-white hover:bg-slate-50 active:bg-slate-100 text-primary-600 font-semibold rounded-2xl border-2 border-primary-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
+    @apply w-full py-4 px-6 bg-white/10 hover:bg-white/20 backdrop-blur-xl text-white font-semibold rounded-2xl border border-white/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
   }
   
   .btn-demo {
-    @apply w-full py-4 px-6 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-semibold rounded-2xl shadow-lg shadow-emerald-500/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
-  }
-  
-  .card {
-    @apply bg-white rounded-3xl shadow-lg shadow-slate-200/50 p-6;
+    @apply w-full py-4 px-6 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-500 hover:to-accent-400 text-white font-bold rounded-2xl shadow-glow-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
   }
   
   .input-field {
-    @apply w-full px-4 py-4 text-base border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all;
+    @apply w-full px-5 py-4 text-base bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all;
   }
   
-  .tab-button {
-    @apply flex-1 py-4 px-4 text-base font-medium text-slate-600 transition-all duration-200 border-b-4 border-transparent min-h-[56px];
+  .segmented-control {
+    @apply flex bg-white/5 backdrop-blur-xl rounded-2xl p-1 border border-white/10;
   }
   
-  .tab-button-active {
-    @apply text-primary-600 border-primary-600 font-semibold;
+  .segment-button {
+    @apply flex-1 py-3 px-4 text-sm font-semibold text-slate-400 rounded-xl transition-all duration-200;
+  }
+  
+  .segment-button-active {
+    @apply bg-white/10 text-white shadow-lg;
+  }
+  
+  .step-number {
+    @apply flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary-600 to-primary-500 text-white flex items-center justify-center text-sm font-bold shadow-glow-sm;
+  }
+  
+  .caution-chip {
+    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold backdrop-blur-xl border transition-all;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary-300 to-primary-100 bg-clip-text text-transparent;
   }
 }

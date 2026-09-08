@@ -133,55 +133,57 @@ export default function UploadForm() {
 
   if (result) {
     return (
-      <>
+      <div className="animate-fadeIn">
         {isDemoMode && (
-          <div className="mb-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center">
-            <span className="text-sm font-semibold">📱 샘플 데모</span>
+          <div className="mb-5 px-4 py-2.5 rounded-full bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 text-center backdrop-blur-xl">
+            <span className="text-sm font-bold text-blue-300">📱 샘플 데모</span>
           </div>
         )}
         <ResultDisplay result={result} />
         <button
           onClick={handleReset}
-          className="mt-6 w-full py-4 px-6 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-semibold rounded-2xl transition-all duration-200 min-h-[56px]"
+          className="mt-6 btn-secondary"
         >
-          다시 분석하기
+          ← 다시 분석하기
         </button>
-      </>
+      </div>
     )
   }
 
   return (
-    <div className="card">
-      {/* Tabs */}
-      <div className="flex border-b-2 border-slate-100 mb-6 -mx-6 px-6">
+    <div className="glass-card p-6 sm:p-7">
+      {/* iOS-style Segmented Control */}
+      <div className="segmented-control mb-6">
         <button
           type="button"
           onClick={() => setInputMode('image')}
-          className={`tab-button ${inputMode === 'image' ? 'tab-button-active' : ''}`}
+          className={`segment-button ${inputMode === 'image' ? 'segment-button-active' : ''}`}
         >
-          📷 스크린샷
+          <span className="text-lg mr-1.5">📸</span>
+          스크린샷
         </button>
         <button
           type="button"
           onClick={() => setInputMode('brand')}
-          className={`tab-button ${inputMode === 'brand' ? 'tab-button-active' : ''}`}
+          className={`segment-button ${inputMode === 'brand' ? 'segment-button-active' : ''}`}
         >
-          🔍 서비스명
+          <span className="text-lg mr-1.5">🔍</span>
+          서비스명
         </button>
       </div>
 
-      <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
+      <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-5">
         {inputMode === 'image' ? (
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">
+            <label className="block text-sm font-bold text-slate-200 mb-3 tracking-wide">
               구독 화면 캡처 (1-3개)
             </label>
-            <label className="block cursor-pointer">
-              <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-primary-500 hover:bg-primary-50/50 transition-all">
-                <div className="text-4xl mb-2">📸</div>
-                <div className="text-sm font-medium text-slate-600">
+            <label className="block cursor-pointer group">
+              <div className="relative border-2 border-dashed border-white/20 hover:border-primary-500/50 rounded-3xl p-10 text-center transition-all duration-300 bg-white/5 hover:bg-white/10 backdrop-blur-xl group-hover:shadow-glow">
+                <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">📸</div>
+                <div className="text-base font-bold text-white mb-2">
                   {files.length > 0 ? (
-                    <span className="text-primary-600">
+                    <span className="text-primary-400">
                       {files.length}개 선택됨
                     </span>
                   ) : (
@@ -189,9 +191,18 @@ export default function UploadForm() {
                   )}
                 </div>
                 {files.length > 0 && (
-                  <div className="mt-2 text-xs text-slate-500">
-                    {files.map(f => f.name).join(', ')}
+                  <div className="mt-3 space-y-1">
+                    {files.map((f, i) => (
+                      <div key={i} className="text-xs text-slate-400 truncate px-4">
+                        {f.name}
+                      </div>
+                    ))}
                   </div>
+                )}
+                {files.length === 0 && (
+                  <p className="text-xs text-slate-500 mt-2">
+                    PNG, JPEG, WebP · 최대 10MB
+                  </p>
                 )}
               </div>
               <input
@@ -205,7 +216,7 @@ export default function UploadForm() {
           </div>
         ) : (
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">
+            <label className="block text-sm font-bold text-slate-200 mb-3 tracking-wide">
               서비스·브랜드명
             </label>
             <input
@@ -219,8 +230,8 @@ export default function UploadForm() {
         )}
 
         {error && (
-          <div className="p-4 rounded-2xl bg-red-50 border-2 border-red-200">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 backdrop-blur-xl">
+            <p className="text-sm font-semibold text-rose-400">{error}</p>
           </div>
         )}
 
@@ -238,7 +249,7 @@ export default function UploadForm() {
               분석 중...
             </span>
           ) : (
-            inputMode === 'image' ? '해지 경로 찾기' : '이름으로 찾기'
+            inputMode === 'image' ? '🔮 AI로 해지 경로 찾기' : '🔍 이름으로 찾기'
           )}
         </button>
 
@@ -249,7 +260,7 @@ export default function UploadForm() {
             disabled={loading}
             className="btn-demo"
           >
-            {loading ? '분석 중...' : '📱 샘플로 체험'}
+            {loading ? '분석 중...' : '✨ 샘플로 체험'}
           </button>
         )}
 
@@ -260,25 +271,40 @@ export default function UploadForm() {
             disabled={loading}
             className="btn-demo"
           >
-            {loading ? '분석 중...' : '📱 샘플: 티빙'}
+            {loading ? '분석 중...' : '✨ 샘플: 티빙'}
           </button>
         )}
       </form>
 
       {/* Info Footer */}
-      <div className="mt-6 pt-6 border-t border-slate-100">
-        {inputMode === 'image' ? (
-          <div className="space-y-2 text-xs text-slate-500">
-            <p><span className="font-semibold text-slate-700">지원:</span> PNG, JPEG, WebP</p>
-            <p><span className="font-semibold text-slate-700">용량:</span> 총 8-10MB</p>
-            <p><span className="font-semibold text-slate-700">보안:</span> 업로드 이미지는 저장 안 됨</p>
-          </div>
-        ) : (
-          <div className="space-y-2 text-xs text-slate-500">
-            <p><span className="font-semibold text-slate-700">지원:</span> 티빙, 넷플릭스, 유튜브 프리미엄 등</p>
-            <p className="leading-relaxed">결제 채널이 여러 개면 모든 경로를 안내합니다</p>
-          </div>
-        )}
+      <div className="mt-6 pt-5 border-t border-white/10">
+        <div className="flex items-center justify-center gap-4 text-xs text-slate-500">
+          {inputMode === 'image' ? (
+            <>
+              <span className="flex items-center gap-1.5">
+                <span>🔒</span>
+                <span>저장 안 됨</span>
+              </span>
+              <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+              <span className="flex items-center gap-1.5">
+                <span>⚡</span>
+                <span>즉시 분석</span>
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="flex items-center gap-1.5">
+                <span>📚</span>
+                <span>주요 서비스 지원</span>
+              </span>
+              <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+              <span className="flex items-center gap-1.5">
+                <span>🎯</span>
+                <span>모든 경로 안내</span>
+              </span>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
