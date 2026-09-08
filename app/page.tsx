@@ -6,11 +6,14 @@ export default function Home() {
       <div className="max-w-lg mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Header */}
         <header className="text-center mb-6">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
             SubExit
           </h1>
-          <p className="text-base sm:text-lg text-slate-600 font-medium">
-            구독 해지 경로 찾기
+          <p className="text-base sm:text-lg text-slate-900 font-semibold mb-2">
+            스크린샷을 AI가 읽어 해지 경로 안내
+          </p>
+          <p className="text-sm text-slate-500">
+            서비스명 검색도 가능
           </p>
         </header>
 
