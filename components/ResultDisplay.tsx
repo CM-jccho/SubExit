@@ -1,10 +1,13 @@
+'use client'
+
+import { useState } from 'react'
 import { AnalysisResult } from './UploadForm'
 
 const channelLabels = {
   web: '웹사이트',
   app_store: 'App Store',
   google_play: 'Google Play',
-  merchant: '가맹점 직접',
+  merchant: '가맹점',
   unknown: '확인 필요',
 }
 
@@ -14,339 +17,242 @@ const confidenceLabels = {
   low: '낮음',
 }
 
+const confidenceColors = {
+  high: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  medium: 'bg-amber-100 text-amber-800 border-amber-200',
+  low: 'bg-rose-100 text-rose-800 border-rose-200',
+}
+
 const tagStyles = {
-  dark_pattern: { bg: '#fff3cd', color: '#856404', border: '#ffc107' },
-  cancel_ne_refund: { bg: '#d1ecf1', color: '#0c5460', border: '#bee5eb' },
-  next_renewal: { bg: '#d4edda', color: '#155724', border: '#c3e6cb' },
-  other_caution: { bg: '#f8d7da', color: '#721c24', border: '#f5c6cb' },
+  dark_pattern: { bg: 'bg-amber-50', text: 'text-amber-900', border: 'border-amber-200', icon: '🚨' },
+  cancel_ne_refund: { bg: 'bg-blue-50', text: 'text-blue-900', border: 'border-blue-200', icon: '💰' },
+  next_renewal: { bg: 'bg-emerald-50', text: 'text-emerald-900', border: 'border-emerald-200', icon: '📅' },
+  other_caution: { bg: 'bg-rose-50', text: 'text-rose-900', border: 'border-rose-200', icon: '⚠️' },
 }
 
 export default function ResultDisplay({ result }: { result: AnalysisResult }) {
+  const [selectedChannelIndex, setSelectedChannelIndex] = useState(0)
   const isMultiChannel = result.multiChannel && result.channels
 
-  return (
-    <div style={{ marginTop: '30px' }}>
-      {result.service && (
-        <div style={{
-          backgroundColor: '#e3f2fd',
-          border: '2px solid #2196f3',
-          borderRadius: '12px',
-          padding: '15px',
-          marginBottom: '20px',
-          textAlign: 'center',
-        }}>
-          <strong style={{ fontSize: '1.1rem', color: '#1565c0' }}>
-            "{result.service.nameKo}"로 인식
-          </strong>
-        </div>
-      )}
+  if (isMultiChannel && result.channels) {
+    const selectedChannel = result.channels[selectedChannelIndex]
 
-      {isMultiChannel ? (
-        <>
-          <div style={{
-            backgroundColor: '#fff3cd',
-            border: '2px solid #ffc107',
-            borderRadius: '12px',
-            padding: '15px',
-            marginBottom: '20px',
-          }}>
-            <strong style={{ color: '#856404' }}>💡 여러 결제 경로 가능</strong>
-            <p style={{ margin: '8px 0 0 0', fontSize: '0.9rem', color: '#856404' }}>
-              이 서비스는 웹, App Store, Google Play 등 여러 방법으로 결제 가능합니다. 
-              실제 결제한 채널에 해당하는 경로를 따라 진행하세요.
-            </p>
+    return (
+      <div className="space-y-4">
+        {/* Service Name */}
+        {result.service && (
+          <div className="card bg-gradient-to-r from-primary-50 to-blue-50 border-2 border-primary-200">
+            <div className="text-center">
+              <div className="text-sm text-primary-600 font-semibold mb-1">인식된 서비스</div>
+              <div className="text-lg font-bold text-primary-900">{result.service.nameKo}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Multi Channel Info */}
+        <div className="card bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl flex-shrink-0">💡</span>
+            <div>
+              <div className="text-sm font-bold text-amber-900 mb-1">여러 결제 경로</div>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                결제한 채널에 맞는 경로를 선택하세요
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Channel Selector */}
+        <div className="card">
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {result.channels.map((ch, idx) => {
+              const isSelected = idx === selectedChannelIndex
+              const icon = idx === 0 ? '🌐' : idx === 1 ? '🍎' : '🤖'
+              return (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedChannelIndex(idx)}
+                  className={`py-3 px-2 rounded-xl text-xs font-semibold transition-all ${
+                    isSelected
+                      ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  <div className="text-lg mb-1">{icon}</div>
+                  <div className="truncate">
+                    {channelLabels[ch.channel.type]}
+                  </div>
+                </button>
+              )
+            })}
           </div>
 
-          {result.channels!.map((channelData, idx) => (
-            <div key={idx} style={{ marginBottom: '30px' }}>
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '25px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                marginBottom: '20px',
-              }}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '15px', color: '#1a1a1a' }}>
-                  {idx === 0 ? '📱' : idx === 1 ? '🍎' : '🤖'} {channelData.channelLabel}
-                </h2>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  marginBottom: '15px',
-                }}>
-                  <span style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 'bold',
-                    color: '#007bff',
-                  }}>
-                    {channelLabels[channelData.channel.type]}
-                  </span>
-                  <span style={{
-                    padding: '4px 12px',
-                    backgroundColor: channelData.channel.confidence === 'high' ? '#d4edda' : 
-                                   channelData.channel.confidence === 'medium' ? '#fff3cd' : '#f8d7da',
-                    color: channelData.channel.confidence === 'high' ? '#155724' : 
-                           channelData.channel.confidence === 'medium' ? '#856404' : '#721c24',
-                    borderRadius: '12px',
-                    fontSize: '0.85rem',
-                    fontWeight: 'bold',
-                  }}>
-                    신뢰도: {confidenceLabels[channelData.channel.confidence]}
-                  </span>
-                </div>
-                {channelData.channel.evidence.length > 0 && (
-                  <div style={{ marginBottom: '15px' }}>
-                    <strong style={{ fontSize: '0.9rem', color: '#666' }}>근거:</strong>
-                    <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px', color: '#666', fontSize: '0.9rem' }}>
-                      {channelData.channel.evidence.map((ev, i) => (
-                        <li key={i}>{ev}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+          {/* Channel Info */}
+          <div className="p-4 rounded-2xl bg-slate-50 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold text-slate-700">
+                {selectedChannel.channelLabel}
+              </span>
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${confidenceColors[selectedChannel.channel.confidence]}`}>
+                신뢰도 {confidenceLabels[selectedChannel.channel.confidence]}
+              </span>
+            </div>
+            {selectedChannel.channel.evidence.length > 0 && (
+              <div className="mt-3 space-y-1">
+                {selectedChannel.channel.evidence.map((ev, i) => (
+                  <p key={i} className="text-xs text-slate-600 leading-relaxed">• {ev}</p>
+                ))}
+              </div>
+            )}
+          </div>
 
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', color: '#333', marginTop: '20px' }}>
-                  📋 해지 단계
-                </h3>
-                {channelData.steps.map((step, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      marginBottom: i === channelData.steps.length - 1 ? '0' : '15px',
-                      paddingBottom: i === channelData.steps.length - 1 ? '0' : '15px',
-                      borderBottom: i === channelData.steps.length - 1 ? 'none' : '1px solid #eee',
-                    }}
-                  >
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: '10px',
-                    }}>
-                      <span style={{
-                        display: 'inline-block',
-                        width: '28px',
-                        height: '28px',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        borderRadius: '50%',
-                        textAlign: 'center',
-                        lineHeight: '28px',
-                        fontWeight: 'bold',
-                        fontSize: '0.9rem',
-                        flexShrink: 0,
-                      }}>
-                        {step.order}
-                      </span>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: '#333' }}>
-                          {step.title}
-                        </h4>
-                        <p style={{ margin: '0', color: '#666', fontSize: '0.95rem', lineHeight: '1.5' }}>
-                          {step.detailKo}
-                        </p>
+          {/* Steps */}
+          <div className="space-y-3">
+            <h3 className="text-base font-bold text-slate-900">📋 해지 단계</h3>
+            {selectedChannel.steps.map((step, i) => (
+              <div key={i} className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold">
+                  {step.order}
+                </div>
+                <div className="flex-1 pt-0.5">
+                  <h4 className="text-sm font-bold text-slate-900 mb-1">{step.title}</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">{step.detailKo}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Tags */}
+          {selectedChannel.tags.length > 0 && (
+            <div className="mt-6 space-y-2">
+              <h3 className="text-base font-bold text-slate-900">⚠️ 주의사항</h3>
+              {selectedChannel.tags.map((tag, i) => {
+                const style = tagStyles[tag.kind]
+                return (
+                  <div key={i} className={`p-3 rounded-xl border-2 ${style.bg} ${style.border}`}>
+                    <div className="flex items-start gap-2">
+                      <span className="text-lg flex-shrink-0">{style.icon}</span>
+                      <div className="flex-1">
+                        <div className={`text-xs font-bold ${style.text} mb-1`}>{tag.labelKo}</div>
+                        {tag.evidence && (
+                          <p className={`text-xs ${style.text} opacity-80 leading-relaxed`}>{tag.evidence}</p>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))}
-
-                {channelData.tags.length > 0 && (
-                  <div style={{ marginTop: '20px' }}>
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', color: '#333' }}>
-                      ⚠️ 주의사항
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {channelData.tags.map((tag, i) => {
-                        const style = tagStyles[tag.kind]
-                        return (
-                          <div
-                            key={i}
-                            style={{
-                              backgroundColor: style.bg,
-                              border: `1px solid ${style.border}`,
-                              borderRadius: '8px',
-                              padding: '12px 15px',
-                              color: style.color,
-                            }}
-                          >
-                            <strong style={{ display: 'block', marginBottom: '5px' }}>
-                              {tag.labelKo}
-                            </strong>
-                            {tag.evidence && (
-                              <div style={{ fontSize: '0.9rem' }}>
-                                근거: {tag.evidence}
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </>
-      ) : (
-        <>
-          {result.channel && (
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '25px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              marginBottom: '20px',
-            }}>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '15px', color: '#1a1a1a' }}>
-                📱 결제 채널 추정
-              </h2>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                marginBottom: '15px',
-              }}>
-                <span style={{
-                  fontSize: '1.3rem',
-                  fontWeight: 'bold',
-                  color: '#007bff',
-                }}>
-                  {channelLabels[result.channel.type]}
-                </span>
-                <span style={{
-                  padding: '4px 12px',
-                  backgroundColor: result.channel.confidence === 'high' ? '#d4edda' : 
-                                 result.channel.confidence === 'medium' ? '#fff3cd' : '#f8d7da',
-                  color: result.channel.confidence === 'high' ? '#155724' : 
-                         result.channel.confidence === 'medium' ? '#856404' : '#721c24',
-                  borderRadius: '12px',
-                  fontSize: '0.85rem',
-                  fontWeight: 'bold',
-                }}>
-                  신뢰도: {confidenceLabels[result.channel.confidence]}
-                </span>
-              </div>
-              {result.channel.evidence.length > 0 && (
-                <div>
-                  <strong style={{ fontSize: '0.9rem', color: '#666' }}>근거:</strong>
-                  <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px', color: '#666', fontSize: '0.9rem' }}>
-                    {result.channel.evidence.map((ev, i) => (
-                      <li key={i}>{ev}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                )
+              })}
             </div>
           )}
+        </div>
 
-          {result.steps && result.steps.length > 0 && (
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '25px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              marginBottom: '20px',
-            }}>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '15px', color: '#1a1a1a' }}>
-                📋 해지 단계
-              </h2>
-              {result.steps.map((step, i) => (
-                <div
-                  key={i}
-                  style={{
-                    marginBottom: i === result.steps!.length - 1 ? '0' : '15px',
-                    paddingBottom: i === result.steps!.length - 1 ? '0' : '15px',
-                    borderBottom: i === result.steps!.length - 1 ? 'none' : '1px solid #eee',
-                  }}
-                >
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '10px',
-                  }}>
-                    <span style={{
-                      display: 'inline-block',
-                      width: '28px',
-                      height: '28px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      borderRadius: '50%',
-                      textAlign: 'center',
-                      lineHeight: '28px',
-                      fontWeight: 'bold',
-                      fontSize: '0.9rem',
-                      flexShrink: 0,
-                    }}>
-                      {step.order}
-                    </span>
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: '#333' }}>
-                        {step.title}
-                      </h3>
-                      <p style={{ margin: '0', color: '#666', fontSize: '0.95rem', lineHeight: '1.5' }}>
-                        {step.detailKo}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+        {/* Disclaimer */}
+        <div className="card bg-slate-50 border-2 border-slate-200">
+          <div className="flex items-start gap-3">
+            <span className="text-xl flex-shrink-0">📌</span>
+            <div>
+              <div className="text-xs font-bold text-slate-700 mb-2">면책 고지</div>
+              <p className="text-xs text-slate-600 leading-relaxed">{result.disclaimer}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Single Channel
+  return (
+    <div className="space-y-4">
+      {/* Service Name */}
+      {result.service && (
+        <div className="card bg-gradient-to-r from-primary-50 to-blue-50 border-2 border-primary-200">
+          <div className="text-center">
+            <div className="text-sm text-primary-600 font-semibold mb-1">
+              {result.service.matched ? '인식된 서비스' : '검색된 서비스'}
+            </div>
+            <div className="text-lg font-bold text-primary-900">{result.service.nameKo}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Channel */}
+      {result.channel && (
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="text-xs text-slate-500 font-semibold mb-1">결제 채널</div>
+              <div className="text-lg font-bold text-slate-900">
+                {channelLabels[result.channel.type]}
+              </div>
+            </div>
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${confidenceColors[result.channel.confidence]}`}>
+              {confidenceLabels[result.channel.confidence]}
+            </span>
+          </div>
+          {result.channel.evidence.length > 0 && (
+            <div className="p-3 rounded-xl bg-slate-50 space-y-1">
+              {result.channel.evidence.map((ev, i) => (
+                <p key={i} className="text-xs text-slate-600 leading-relaxed">• {ev}</p>
               ))}
             </div>
           )}
-
-          {result.tags && result.tags.length > 0 && (
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '25px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              marginBottom: '20px',
-            }}>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '15px', color: '#1a1a1a' }}>
-                ⚠️ 주의사항
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {result.tags.map((tag, i) => {
-                  const style = tagStyles[tag.kind]
-                  return (
-                    <div
-                      key={i}
-                      style={{
-                        backgroundColor: style.bg,
-                        border: `1px solid ${style.border}`,
-                        borderRadius: '8px',
-                        padding: '12px 15px',
-                        color: style.color,
-                      }}
-                    >
-                      <strong style={{ display: 'block', marginBottom: '5px' }}>
-                        {tag.labelKo}
-                      </strong>
-                      {tag.evidence && (
-                        <div style={{ fontSize: '0.9rem' }}>
-                          근거: {tag.evidence}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </>
+        </div>
       )}
 
-      <div style={{
-        backgroundColor: '#f8f9fa',
-        borderRadius: '12px',
-        padding: '20px',
-        border: '2px solid #dee2e6',
-      }}>
-        <h3 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: '#495057' }}>
-          📌 면책 고지
-        </h3>
-        <p style={{ margin: '0', fontSize: '0.9rem', color: '#6c757d', lineHeight: '1.6' }}>
-          {result.disclaimer}
-        </p>
+      {/* Steps */}
+      {result.steps && result.steps.length > 0 && (
+        <div className="card">
+          <h3 className="text-base font-bold text-slate-900 mb-4">📋 해지 단계</h3>
+          <div className="space-y-3">
+            {result.steps.map((step, i) => (
+              <div key={i} className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold">
+                  {step.order}
+                </div>
+                <div className="flex-1 pt-0.5">
+                  <h4 className="text-sm font-bold text-slate-900 mb-1">{step.title}</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">{step.detailKo}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tags */}
+      {result.tags && result.tags.length > 0 && (
+        <div className="card">
+          <h3 className="text-base font-bold text-slate-900 mb-3">⚠️ 주의사항</h3>
+          <div className="space-y-2">
+            {result.tags.map((tag, i) => {
+              const style = tagStyles[tag.kind]
+              return (
+                <div key={i} className={`p-3 rounded-xl border-2 ${style.bg} ${style.border}`}>
+                  <div className="flex items-start gap-2">
+                    <span className="text-lg flex-shrink-0">{style.icon}</span>
+                    <div className="flex-1">
+                      <div className={`text-xs font-bold ${style.text} mb-1`}>{tag.labelKo}</div>
+                      {tag.evidence && (
+                        <p className={`text-xs ${style.text} opacity-80 leading-relaxed`}>{tag.evidence}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Disclaimer */}
+      <div className="card bg-slate-50 border-2 border-slate-200">
+        <div className="flex items-start gap-3">
+          <span className="text-xl flex-shrink-0">📌</span>
+          <div>
+            <div className="text-xs font-bold text-slate-700 mb-2">면책 고지</div>
+            <p className="text-xs text-slate-600 leading-relaxed">{result.disclaimer}</p>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -135,33 +135,14 @@ export default function UploadForm() {
     return (
       <>
         {isDemoMode && (
-          <div style={{
-            backgroundColor: '#e3f2fd',
-            border: '2px solid #2196f3',
-            borderRadius: '8px',
-            padding: '12px',
-            marginBottom: '20px',
-            textAlign: 'center',
-            fontWeight: 'bold',
-            color: '#1565c0',
-          }}>
-            📱 샘플 데모 모드
+          <div className="mb-4 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center">
+            <span className="text-sm font-semibold">📱 샘플 데모</span>
           </div>
         )}
         <ResultDisplay result={result} />
         <button
           onClick={handleReset}
-          style={{
-            width: '100%',
-            padding: '15px',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '1rem',
-            cursor: 'pointer',
-            marginTop: '20px',
-          }}
+          className="mt-6 w-full py-4 px-6 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-semibold rounded-2xl transition-all duration-200 min-h-[56px]"
         >
           다시 분석하기
         </button>
@@ -170,139 +151,95 @@ export default function UploadForm() {
   }
 
   return (
-    <div style={{
-      backgroundColor: 'white',
-      borderRadius: '12px',
-      padding: '30px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    }}>
-      <div style={{
-        display: 'flex',
-        gap: '10px',
-        marginBottom: '20px',
-        borderBottom: '2px solid #eee',
-      }}>
+    <div className="card">
+      {/* Tabs */}
+      <div className="flex border-b-2 border-slate-100 mb-6 -mx-6 px-6">
         <button
           type="button"
           onClick={() => setInputMode('image')}
-          style={{
-            flex: 1,
-            padding: '12px',
-            backgroundColor: 'transparent',
-            color: inputMode === 'image' ? '#007bff' : '#666',
-            border: 'none',
-            borderBottom: inputMode === 'image' ? '3px solid #007bff' : '3px solid transparent',
-            fontSize: '1rem',
-            fontWeight: inputMode === 'image' ? 'bold' : 'normal',
-            cursor: 'pointer',
-          }}
+          className={`tab-button ${inputMode === 'image' ? 'tab-button-active' : ''}`}
         >
-          📷 스크린샷으로 찾기
+          📷 스크린샷
         </button>
         <button
           type="button"
           onClick={() => setInputMode('brand')}
-          style={{
-            flex: 1,
-            padding: '12px',
-            backgroundColor: 'transparent',
-            color: inputMode === 'brand' ? '#007bff' : '#666',
-            border: 'none',
-            borderBottom: inputMode === 'brand' ? '3px solid #007bff' : '3px solid transparent',
-            fontSize: '1rem',
-            fontWeight: inputMode === 'brand' ? 'bold' : 'normal',
-            cursor: 'pointer',
-          }}
+          className={`tab-button ${inputMode === 'brand' ? 'tab-button-active' : ''}`}
         >
-          🔍 서비스명으로 찾기
+          🔍 서비스명
         </button>
       </div>
 
-      <form onSubmit={(e) => handleSubmit(e, false)}>
+      <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
         {inputMode === 'image' ? (
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '10px',
-              fontWeight: 'bold',
-              color: '#333',
-            }}>
-              구독 관리 화면 스크린샷 업로드 (1-3개)
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">
+              구독 화면 캡처 (1-3개)
             </label>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              multiple
-              onChange={handleFileChange}
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '2px dashed #ddd',
-                borderRadius: '8px',
-                cursor: 'pointer',
-              }}
-            />
-            {files.length > 0 && (
-              <div style={{ marginTop: '10px', fontSize: '0.9rem', color: '#666' }}>
-                선택된 파일: {files.map(f => f.name).join(', ')}
+            <label className="block cursor-pointer">
+              <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-primary-500 hover:bg-primary-50/50 transition-all">
+                <div className="text-4xl mb-2">📸</div>
+                <div className="text-sm font-medium text-slate-600">
+                  {files.length > 0 ? (
+                    <span className="text-primary-600">
+                      {files.length}개 선택됨
+                    </span>
+                  ) : (
+                    '탭하여 이미지 선택'
+                  )}
+                </div>
+                {files.length > 0 && (
+                  <div className="mt-2 text-xs text-slate-500">
+                    {files.map(f => f.name).join(', ')}
+                  </div>
+                )}
               </div>
-            )}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                multiple
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
           </div>
         ) : (
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '10px',
-              fontWeight: 'bold',
-              color: '#333',
-            }}>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-3">
               서비스·브랜드명
             </label>
             <input
               type="text"
               value={brandQuery}
               onChange={(e) => setBrandQuery(e.target.value)}
-              placeholder="예: 티빙, 넷플릭스, 유튜브 프리미엄"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #ddd',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                boxSizing: 'border-box',
-              }}
+              placeholder="티빙, 넷플릭스, 유튜브 프리미엄..."
+              className="input-field"
             />
           </div>
         )}
 
         {error && (
-          <div style={{
-            backgroundColor: '#f8d7da',
-            color: '#721c24',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-          }}>
-            {error}
+          <div className="p-4 rounded-2xl bg-red-50 border-2 border-red-200">
+            <p className="text-sm text-red-800">{error}</p>
           </div>
         )}
 
         <button
           type="submit"
           disabled={loading || (inputMode === 'image' && files.length === 0) || (inputMode === 'brand' && brandQuery.trim() === '')}
-          style={{
-            width: '100%',
-            padding: '15px',
-            backgroundColor: (inputMode === 'image' && files.length === 0) || (inputMode === 'brand' && brandQuery.trim() === '') || loading ? '#ccc' : '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '1rem',
-            cursor: (inputMode === 'image' && files.length === 0) || (inputMode === 'brand' && brandQuery.trim() === '') || loading ? 'not-allowed' : 'pointer',
-            marginBottom: '10px',
-          }}
+          className="btn-primary"
         >
-          {loading ? '분석 중...' : inputMode === 'image' ? '해지 경로 분석하기' : '이름으로 찾기'}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              분석 중...
+            </span>
+          ) : (
+            inputMode === 'image' ? '해지 경로 찾기' : '이름으로 찾기'
+          )}
         </button>
 
         {inputMode === 'image' && (
@@ -310,19 +247,9 @@ export default function UploadForm() {
             type="button"
             onClick={(e) => handleSubmit(e, true, 'appstore')}
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '15px',
-              backgroundColor: loading ? '#ccc' : '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              marginBottom: '10px',
-            }}
+            className="btn-demo"
           >
-            {loading ? '분석 중...' : '📱 샘플로 체험하기'}
+            {loading ? '분석 중...' : '📱 샘플로 체험'}
           </button>
         )}
 
@@ -331,41 +258,26 @@ export default function UploadForm() {
             type="button"
             onClick={(e) => handleSubmit(e, true, 'brand_tving')}
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '15px',
-              backgroundColor: loading ? '#ccc' : '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
+            className="btn-demo"
           >
             {loading ? '분석 중...' : '📱 샘플: 티빙'}
           </button>
         )}
       </form>
 
-      <div style={{
-        marginTop: '20px',
-        padding: '15px',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '8px',
-        fontSize: '0.85rem',
-        color: '#666',
-      }}>
+      {/* Info Footer */}
+      <div className="mt-6 pt-6 border-t border-slate-100">
         {inputMode === 'image' ? (
-          <>
-            <p style={{ margin: '0 0 8px 0' }}><strong>지원 형식:</strong> PNG, JPEG, WebP</p>
-            <p style={{ margin: '0 0 8px 0' }}><strong>최대 용량:</strong> 총 8-10MB</p>
-            <p style={{ margin: '0' }}><strong>개인정보 보호:</strong> 업로드된 이미지는 서버에 저장되지 않습니다</p>
-          </>
+          <div className="space-y-2 text-xs text-slate-500">
+            <p><span className="font-semibold text-slate-700">지원:</span> PNG, JPEG, WebP</p>
+            <p><span className="font-semibold text-slate-700">용량:</span> 총 8-10MB</p>
+            <p><span className="font-semibold text-slate-700">보안:</span> 업로드 이미지는 저장 안 됨</p>
+          </div>
         ) : (
-          <>
-            <p style={{ margin: '0 0 8px 0' }}><strong>지원 서비스:</strong> 티빙, 넷플릭스, 디즈니+, 유튜브 프리미엄, 쿠팡플레이, 멜론, 스포티파이 등</p>
-            <p style={{ margin: '0' }}><strong>참고:</strong> 서비스명만으로는 정확한 결제 채널(웹/앱스토어/구글플레이)을 알 수 없으므로, 가능한 모든 경로를 안내합니다</p>
-          </>
+          <div className="space-y-2 text-xs text-slate-500">
+            <p><span className="font-semibold text-slate-700">지원:</span> 티빙, 넷플릭스, 유튜브 프리미엄 등</p>
+            <p className="leading-relaxed">결제 채널이 여러 개면 모든 경로를 안내합니다</p>
+          </div>
         )}
       </div>
     </div>
