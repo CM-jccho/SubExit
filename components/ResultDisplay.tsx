@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AnalysisResult } from './UploadForm'
+import CoachPanel from './CoachPanel'
 
 const channelLabels = {
   web: '웹',
@@ -216,6 +217,11 @@ export default function ResultDisplay({ result }: { result: AnalysisResult }) {
           </div>
         )}
 
+        {/* Coach Panel */}
+        {selectedChannel.practiceScripts && selectedChannel.practiceScripts.length > 0 && (
+          <CoachPanel practiceScripts={selectedChannel.practiceScripts} />
+        )}
+
         {/* Disclaimer */}
         <div className="glass-card p-5 border-slate-700">
           <div className="flex items-start gap-3">
@@ -365,6 +371,11 @@ export default function ResultDisplay({ result }: { result: AnalysisResult }) {
             </p>
           </div>
         </div>
+      )}
+
+      {/* Coach Panel */}
+      {result.practiceScripts && result.practiceScripts.length > 0 && (
+        <CoachPanel practiceScripts={result.practiceScripts} />
       )}
 
       {/* Disclaimer */}

@@ -11,12 +11,12 @@ export default function Home() {
               <span className="text-gradient-primary">SubExit</span>
             </h1>
             <p className="text-xl sm:text-2xl font-bold text-white mb-2 leading-tight">
-              스크린샷을 AI가 읽어
+              스크린샷 → 해지 경로
               <br />
-              해지 경로 + 연습 멘트 안내
+              + 연습 멘트 + 옆자리 코치
             </p>
             <p className="text-sm text-slate-400 font-medium">
-              후원·구독 해지 화면 분석 / 서비스명 검색
+              Vision 분석 / 후원·구독 해지 연습 / (로드맵) 스피커폰 코치
             </p>
           </div>
 
