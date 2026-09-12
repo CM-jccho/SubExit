@@ -27,6 +27,10 @@ export type AnalysisResult = {
       labelKo: string
       evidence?: string
     }[]
+    practiceScripts?: {
+      whenKo: string
+      sayKo: string
+    }[]
   }[]
   channel?: {
     type: 'web' | 'app_store' | 'google_play' | 'merchant' | 'unknown'
@@ -42,6 +46,10 @@ export type AnalysisResult = {
     kind: 'dark_pattern' | 'cancel_ne_refund' | 'next_renewal' | 'other_caution'
     labelKo: string
     evidence?: string
+  }[]
+  practiceScripts?: {
+    whenKo: string
+    sayKo: string
   }[]
   disclaimer: string
 }
@@ -256,11 +264,11 @@ export default function UploadForm() {
         {inputMode === 'image' && (
           <button
             type="button"
-            onClick={(e) => handleSubmit(e, true, 'appstore')}
+            onClick={(e) => handleSubmit(e, true, 'sponsor_guilt')}
             disabled={loading}
             className="btn-demo"
           >
-            {loading ? '분석 중...' : '✨ 샘플로 체험'}
+            {loading ? '분석 중...' : '✨ 샘플로 체험 (후원·구독)'}
           </button>
         )}
 

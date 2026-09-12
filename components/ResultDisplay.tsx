@@ -175,6 +175,47 @@ export default function ResultDisplay({ result }: { result: AnalysisResult }) {
           )}
         </div>
 
+        {/* Practice Scripts Section */}
+        {selectedChannel.practiceScripts && selectedChannel.practiceScripts.length > 0 && (
+          <div className="glass-card p-6 border-amber-500/30">
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 pb-4 border-b border-white/10">
+                <span className="text-2xl">💬</span>
+                <div className="flex-1">
+                  <h4 className="text-base font-bold text-white mb-2">연습용 해지 멘트 (본인이 말하세요)</h4>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full text-xs font-bold text-amber-400 backdrop-blur-xl">
+                      <span>⚠️</span>
+                      <span>연습용</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 rounded-full text-xs font-bold text-rose-400 backdrop-blur-xl">
+                      <span>🚫</span>
+                      <span>통화 대행 아님</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {selectedChannel.practiceScripts.map((script, i) => (
+                  <div key={i} className="bg-white/5 rounded-2xl p-4 border border-white/10">
+                    <div className="mb-3">
+                      <div className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">상황</div>
+                      <p className="text-sm text-slate-300 leading-relaxed">{script.whenKo}</p>
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-primary-400 mb-1 uppercase tracking-wider">응답 예시</div>
+                      <p className="text-sm text-white font-medium leading-relaxed">"{script.sayKo}"</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed pt-3 border-t border-white/10">
+                💡 위 멘트는 참고용입니다. 실제 상황에 맞게 조정하여 본인이 직접 말씀하세요.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Disclaimer */}
         <div className="glass-card p-5 border-slate-700">
           <div className="flex items-start gap-3">
@@ -282,6 +323,47 @@ export default function ResultDisplay({ result }: { result: AnalysisResult }) {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Practice Scripts Section */}
+      {result.practiceScripts && result.practiceScripts.length > 0 && (
+        <div className="glass-card p-6 border-amber-500/30">
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 pb-4 border-b border-white/10">
+              <span className="text-2xl">💬</span>
+              <div className="flex-1">
+                <h4 className="text-base font-bold text-white mb-2">연습용 해지 멘트 (본인이 말하세요)</h4>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full text-xs font-bold text-amber-400 backdrop-blur-xl">
+                    <span>⚠️</span>
+                    <span>연습용</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 rounded-full text-xs font-bold text-rose-400 backdrop-blur-xl">
+                    <span>🚫</span>
+                    <span>통화 대행 아님</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              {result.practiceScripts.map((script, i) => (
+                <div key={i} className="bg-white/5 rounded-2xl p-4 border border-white/10">
+                  <div className="mb-3">
+                    <div className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">상황</div>
+                    <p className="text-sm text-slate-300 leading-relaxed">{script.whenKo}</p>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-primary-400 mb-1 uppercase tracking-wider">응답 예시</div>
+                    <p className="text-sm text-white font-medium leading-relaxed">"{script.sayKo}"</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed pt-3 border-t border-white/10">
+              💡 위 멘트는 참고용입니다. 실제 상황에 맞게 조정하여 본인이 직접 말씀하세요.
+            </p>
+          </div>
         </div>
       )}
 

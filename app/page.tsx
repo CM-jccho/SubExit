@@ -13,10 +13,10 @@ export default function Home() {
             <p className="text-xl sm:text-2xl font-bold text-white mb-2 leading-tight">
               스크린샷을 AI가 읽어
               <br />
-              해지 경로 안내
+              해지 경로 + 연습 멘트 안내
             </p>
             <p className="text-sm text-slate-400 font-medium">
-              서비스명 검색도 가능
+              후원·구독 해지 화면 분석 / 서비스명 검색
             </p>
           </div>
 
