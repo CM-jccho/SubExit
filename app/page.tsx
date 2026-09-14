@@ -8,7 +8,7 @@ export default function Home() {
         <header className="text-center mb-8">
           <div className="mb-6">
             <h1 className="text-5xl sm:text-6xl font-black mb-3 tracking-tight">
-              <span className="text-gradient-primary">SubExit</span>
+              <span className="text-gradient-primary">SideCue</span>
             </h1>
             <p className="text-xl sm:text-2xl font-bold text-white mb-2 leading-tight">
               스크린샷 → 해지 경로
