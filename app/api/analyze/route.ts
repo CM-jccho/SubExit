@@ -63,7 +63,18 @@ const SYSTEM_PROMPT = `당신은 구독·후원 관리 화면을 분석하여 �
 - 대신 "확인이 필요할 수 있습니다", "약관을 참고하세요", "본인이 직접 연락하세요" 등의 신중한 표현을 사용하세요
 - 이 서비스는 법률 자문이 아니며, 통화 대행 서비스가 아니며, 참고 정보만 제공합니다
 
-분석 절차:
+**매우 중요한 분석 검증 규칙:**
+1. **반드시 먼저 확인**: 화면에 구독, 멤버십, 결제, 해지, 취소, 관리 등과 관련된 명확한 UI 텍스트가 있는가?
+2. **신뢰도 평가**: 화면의 텍스트나 UI 요소가 구독 해지와 명확하게 관련이 있는가?
+3. **근거 없는 추측 금지**: 화면에 보이지 않는 "Apple ID", "App Store", "구독 취소" 경로를 절대 만들어내지 마세요
+4. **낮은 신뢰도 처리**: 화면이 구독 관리와 무관하거나 신뢰도가 낮으면 다음 형식으로 응답:
+   {
+     "error": "not_subscription_ui",
+     "message": "화면에서 구독 또는 후원 해지 UI를 확신할 수 없습니다. 구독 관리 화면을 다시 캡처하거나 샘플 데모를 시도해보세요.",
+     "disclaimer": "본 서비스는 구독·후원 해지 화면 분석 전용입니다."
+   }
+
+분석 절차 (화면이 구독 관리와 명확히 관련된 경우에만):
 1. 화면에서 보이는 UI 텍스트, 버튼, 레이아웃을 추출
 2. 결제 채널 추정 (web, app_store, google_play, merchant, unknown)
 3. 해지 경로를 단계별로 한국어로 안내
@@ -71,7 +82,7 @@ const SYSTEM_PROMPT = `당신은 구독·후원 관리 화면을 분석하여 �
 5. 죄책감 유도, 전화 압박 등의 retention 패턴이 감지되면 practiceScripts 제공 (사용자가 본인이 직접 말할 수 있는 연습용 멘트)
 6. 각 판단에 대한 근거 텍스트 제시
 
-JSON 형식으로 응답하세요:
+구독 관리 화면이 확실한 경우 JSON 형식으로 응답:
 {
   "channel": {
     "type": "web|app_store|google_play|merchant|unknown",
@@ -304,7 +315,7 @@ export async function POST(request: NextRequest) {
       imageBuffers.push(Buffer.from(bytes))
     }
 
-    let result: AnalysisResult
+    let result: any
     
     try {
       if (process.env.ANTHROPIC_API_KEY) {
@@ -314,6 +325,16 @@ export async function POST(request: NextRequest) {
       } else {
         console.log('No API key configured, falling back to demo fixture')
         result = loadFixture('appstore')
+      }
+      
+      if (result.error === 'not_subscription_ui') {
+        return NextResponse.json(
+          { 
+            error: result.message || '화면에서 구독 또는 후원 해지 UI를 확신할 수 없습니다. 구독 관리 화면을 다시 캡처하거나 샘플 데모를 시도해보세요.',
+            notSubscriptionUI: true
+          },
+          { status: 400 }
+        )
       }
     } catch (error) {
       console.error('Vision API error, falling back to demo fixture:', error)

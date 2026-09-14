@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 type PracticeScript = {
   whenKo: string
@@ -9,6 +9,13 @@ type PracticeScript = {
 
 type CoachPanelProps = {
   practiceScripts: PracticeScript[]
+}
+
+type Message = {
+  id: string
+  type: 'opponent' | 'coach' | 'system'
+  text: string
+  timestamp: Date
 }
 
 type OpponentLine = {
@@ -41,121 +48,242 @@ const opponentLines: OpponentLine[] = [
 ]
 
 export default function CoachPanel({ practiceScripts }: CoachPanelProps) {
-  const [selectedLine, setSelectedLine] = useState<OpponentLine | null>(null)
-  const [showResponse, setShowResponse] = useState(false)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [isTyping, setIsTyping] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      const welcomeMsg: Message = {
+        id: 'welcome',
+        type: 'system',
+        text: '💡 아래 버튼을 눌러 상대방 말에 대응하는 연습을 시작하세요',
+        timestamp: new Date(),
+      }
+      setMessages([welcomeMsg])
+    }
+  }, [messages.length])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isTyping])
 
   const handleLineClick = (line: OpponentLine) => {
-    setSelectedLine(line)
-    setShowResponse(false)
-    setTimeout(() => setShowResponse(true), 300)
+    const opponentMsg: Message = {
+      id: `opponent-${Date.now()}`,
+      type: 'opponent',
+      text: line.text,
+      timestamp: new Date(),
+    }
+    
+    setMessages(prev => [...prev, opponentMsg])
+    setIsTyping(true)
+
+    setTimeout(() => {
+      const meaningMsg: Message = {
+        id: `meaning-${Date.now()}`,
+        type: 'system',
+        text: `💭 ${line.meaning}`,
+        timestamp: new Date(),
+      }
+      setMessages(prev => [...prev, meaningMsg])
+      
+      setTimeout(() => {
+        setIsTyping(false)
+        if (practiceScripts[line.responseIndex]) {
+          const coachMsg: Message = {
+            id: `coach-${Date.now()}`,
+            type: 'coach',
+            text: practiceScripts[line.responseIndex].sayKo,
+            timestamp: new Date(),
+          }
+          setMessages(prev => [...prev, coachMsg])
+        }
+      }, 800)
+    }, 1200)
+  }
+
+  const handleSpeak = (text: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+      
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = 'ko-KR'
+      utterance.rate = 0.9
+      utterance.pitch = 1
+      
+      utterance.onstart = () => setIsSpeaking(true)
+      utterance.onend = () => setIsSpeaking(false)
+      utterance.onerror = () => setIsSpeaking(false)
+      
+      utteranceRef.current = utterance
+      window.speechSynthesis.speak(utterance)
+    } else {
+      alert('이 브라우저는 음성 기능을 지원하지 않습니다')
+    }
+  }
+
+  const handleStopSpeaking = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+    }
+  }
+
+  const handleReset = () => {
+    setMessages([])
+    setIsTyping(false)
+    handleStopSpeaking()
   }
 
   return (
-    <div className="glass-card p-6 border-primary-500/30">
-      <div className="space-y-5">
-        {/* Header */}
-        <div className="flex items-start gap-4 pb-5 border-b border-white/10">
-          <div className="text-5xl">🎯</div>
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-white mb-2">
-              실시간 가이드 (연습)
-            </h3>
-            <p className="text-sm text-slate-400 leading-relaxed mb-3">
-              스피커폰 옆자리 코치 시뮬레이션
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-full text-xs font-bold text-blue-400 backdrop-blur-xl">
-                <span>🔇</span>
-                <span>마이크 없음</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 rounded-full text-xs font-bold text-rose-400 backdrop-blur-xl">
-                <span>🚫</span>
-                <span>통화 대행 아님</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-violet-500/10 border border-violet-500/30 rounded-full text-xs font-bold text-violet-400 backdrop-blur-xl">
-                <span>🎭</span>
-                <span>시뮬레이션</span>
-              </span>
+    <div className="glass-card border-primary-500/30 overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-primary-500/10 to-accent-500/10 border-b border-white/10 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-xl">
+              🎯
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white">
+                연습 코치
+              </h3>
+              <p className="text-xs text-slate-400">
+                실시간 대화 시뮬레이션
+              </p>
             </div>
           </div>
+          <button
+            onClick={handleReset}
+            className="px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+          >
+            초기화
+          </button>
         </div>
-
-        {/* Instruction */}
-        <div className="bg-primary-500/10 rounded-2xl p-4 border border-primary-500/20">
-          <p className="text-sm text-primary-300 leading-relaxed">
-            💡 아래 버튼을 눌러 상대방 말에 어떻게 대응할지 연습해보세요
-          </p>
+        
+        {/* Badges */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/10 border border-blue-500/30 rounded-full text-xs font-semibold text-blue-400">
+            <span>🔇</span>
+            <span>마이크 없음</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/10 border border-rose-500/30 rounded-full text-xs font-semibold text-rose-400">
+            <span>🚫</span>
+            <span>통화 대행 아님</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary-500/10 border border-primary-500/30 rounded-full text-xs font-semibold text-primary-400">
+            <span>🎭</span>
+            <span>연습 모드</span>
+          </span>
         </div>
+      </div>
 
-        {/* Opponent Line Chips */}
-        <div className="space-y-3">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            상대방이 이렇게 말한다면
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {opponentLines.map((line, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleLineClick(line)}
-                className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
-                  selectedLine?.text === line.text
-                    ? 'bg-primary-500 text-white shadow-glow'
-                    : 'bg-white/10 text-slate-300 hover:bg-white/20 border border-white/20'
-                }`}
-              >
-                "{line.text}"
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Response Area */}
-        {selectedLine && (
-          <div className="space-y-4 animate-fadeIn">
-            {/* Meaning Card */}
-            <div className="bg-amber-500/10 rounded-2xl p-5 border border-amber-500/20">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl flex-shrink-0">💭</span>
+      {/* Chat Messages */}
+      <div className="p-4 space-y-3 min-h-[300px] max-h-[500px] overflow-y-auto">
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex ${msg.type === 'opponent' ? 'justify-start' : msg.type === 'coach' ? 'justify-end' : 'justify-center'} animate-slideUp`}
+          >
+            {msg.type === 'system' ? (
+              <div className="max-w-[85%] px-4 py-2 rounded-2xl bg-slate-500/10 border border-slate-500/20">
+                <p className="text-xs text-slate-400 text-center leading-relaxed">
+                  {msg.text}
+                </p>
+              </div>
+            ) : msg.type === 'opponent' ? (
+              <div className="flex items-end gap-2 max-w-[80%]">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-sm">
+                  👤
+                </div>
                 <div>
-                  <div className="text-xs font-bold text-amber-400 mb-2 uppercase tracking-wider">
-                    이렇게 들릴 수 있음 (가설)
+                  <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-white/10 border border-white/20">
+                    <p className="text-sm text-white leading-relaxed">
+                      {msg.text}
+                    </p>
                   </div>
-                  <p className="text-sm text-amber-200 leading-relaxed">
-                    {selectedLine.meaning}
-                  </p>
+                  <div className="text-xs text-slate-500 mt-1 ml-2">
+                    {msg.timestamp.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Coach Response */}
-            {showResponse && practiceScripts[selectedLine.responseIndex] && (
-              <div className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl p-5 border border-emerald-500/30 animate-fadeIn">
-                <div className="flex items-start gap-3">
-                  <div className="text-4xl flex-shrink-0">🎓</div>
-                  <div className="flex-1">
-                    <div className="text-xs font-bold text-emerald-400 mb-2 uppercase tracking-wider">
-                      코치 추천 응답
-                    </div>
-                    <p className="text-base text-white font-semibold leading-relaxed mb-3">
-                      "{practiceScripts[selectedLine.responseIndex].sayKo}"
+            ) : (
+              <div className="flex items-end gap-2 max-w-[80%] flex-row-reverse">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-sm">
+                  🎓
+                </div>
+                <div>
+                  <div className="px-4 py-3 rounded-2xl rounded-br-md bg-gradient-to-br from-primary-500/20 to-accent-500/20 border border-primary-500/30 relative">
+                    <p className="text-sm text-white font-medium leading-relaxed">
+                      {msg.text}
                     </p>
-                    <div className="text-xs text-slate-400 leading-relaxed pt-3 border-t border-white/10">
-                      💡 이 멘트를 참고하여 본인의 상황에 맞게 조정하세요
-                    </div>
+                    <button
+                      onClick={() => isSpeaking ? handleStopSpeaking() : handleSpeak(msg.text)}
+                      className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-primary-500 hover:bg-primary-600 text-white flex items-center justify-center text-xs shadow-lg transition-all active:scale-95"
+                      aria-label={isSpeaking ? '음성 정지' : '음성 읽기'}
+                    >
+                      {isSpeaking ? '⏸' : '🔊'}
+                    </button>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1 mr-2 text-right">
+                    {msg.timestamp.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
               </div>
             )}
           </div>
+        ))}
+        
+        {/* Typing Indicator */}
+        {isTyping && (
+          <div className="flex justify-start animate-slideUp">
+            <div className="flex items-end gap-2 max-w-[80%]">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-sm">
+                🎓
+              </div>
+              <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-white/10 border border-white/20">
+                <div className="flex gap-1">
+                  <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                  <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                  <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
+        
+        <div ref={messagesEndRef} />
+      </div>
 
-        {/* Footer Disclaimer */}
-        <div className="pt-4 border-t border-white/10">
-          <p className="text-xs text-slate-500 leading-relaxed">
-            ⚠️ 이 기능은 연습용 시뮬레이션입니다. 실제 통화 내용을 듣거나 녹음하지 않으며, 통화 대행을 수행하지 않습니다. 
-            실제 통화는 본인이 직접 진행하셔야 합니다.
+      {/* Input Area */}
+      <div className="border-t border-white/10 p-4 bg-slate-900/30">
+        <div className="mb-2">
+          <p className="text-xs font-semibold text-slate-400 mb-2">
+            상대방이 이렇게 말한다면 탭하세요
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+          {opponentLines.map((line, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleLineClick(line)}
+              disabled={isTyping}
+              className="px-3 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 border border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+            >
+              "{line.text}"
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer Disclaimer */}
+      <div className="border-t border-white/10 p-3 bg-slate-900/20">
+        <p className="text-xs text-slate-500 leading-relaxed text-center">
+          ⚠️ 연습용 시뮬레이션 | 통화 대행 아님 | 실제 통화는 본인이 직접
+        </p>
       </div>
     </div>
   )

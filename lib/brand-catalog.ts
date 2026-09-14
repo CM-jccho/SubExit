@@ -526,14 +526,16 @@ export function getGenericGuidance(): {
     evidence?: string
   }[]
   disclaimer: string
+  notFound?: boolean
 } {
   return {
     channel: {
       type: 'unknown',
       confidence: 'low',
       evidence: [
-        '입력하신 서비스명으로는 정확한 결제 채널을 특정할 수 없습니다.',
-        '결제 내역(카드 명세서, 앱스토어 영수증 등)을 먼저 확인하세요.',
+        '❌ 입력하신 서비스를 데이터베이스에서 찾을 수 없습니다.',
+        '현재 지원되는 서비스: 티빙, 넷플릭스, 디즈니+, 유튜브 프리미엄, 쿠팡플레이, 멜론, 스포티파이',
+        '다른 서비스는 아래 일반적인 해지 방법을 참고하거나, 스크린샷 분석 모드를 이용해보세요.',
       ],
     },
     steps: [
@@ -566,10 +568,16 @@ export function getGenericGuidance(): {
     tags: [
       {
         kind: 'other_caution',
+        labelKo: '⚠️ 서비스를 찾을 수 없음',
+        evidence: '입력하신 서비스명이 데이터베이스에 없습니다. 지원되는 서비스 목록을 확인하거나, 스크린샷 분석 모드를 이용해보세요.',
+      },
+      {
+        kind: 'other_caution',
         labelKo: '결제 채널 확인 필수',
         evidence: '서비스명만으로는 정확한 해지 방법을 안내하기 어렵습니다. 실제 결제한 채널을 먼저 확인하세요.',
       },
     ],
     disclaimer: '이 안내는 일반적인 구독 해지 절차를 참고용으로 제공합니다. 서비스 UI는 수시로 변경될 수 있으므로 반드시 공식 앱/웹사이트에서 최종 확인하시기 바랍니다. 본 서비스는 법률 자문이 아니며, 자동 해지를 수행하지 않습니다. 환불 및 위약금 관련 사항은 각 서비스 약관을 직접 확인하셔야 합니다.',
+    notFound: true,
   }
 }
