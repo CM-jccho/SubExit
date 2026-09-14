@@ -92,54 +92,69 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
 
   return (
     <div className="space-y-4 animate-fadeIn">
-      {/* 버팀률 Ring + Stamp */}
+      {/* 버팀률 Ring + Stats */}
       {result.analysis.pressureSegments.length > 0 && (
-        <div className="paper-card p-5 bg-hold-50">
-          <div className="flex items-center justify-center gap-5">
+        <div className="paper-card p-6 bg-gradient-to-br from-hold-50 via-primary-50 to-hold-50 shadow-soft-lg">
+          <div className="flex items-center gap-6">
             {/* 버팀률 Ring */}
-            <div className="relative w-20 h-20">
-              <svg className="w-20 h-20 transform -rotate-90">
+            <div className="relative w-24 h-24 flex-shrink-0">
+              <svg className="w-24 h-24 transform -rotate-90 drop-shadow-md">
                 <circle
-                  cx="40"
-                  cy="40"
-                  r="32"
+                  cx="48"
+                  cy="48"
+                  r="38"
                   stroke="currentColor"
-                  strokeWidth="5"
+                  strokeWidth="7"
                   fill="none"
                   className="text-ink/10"
                 />
                 <circle
-                  cx="40"
-                  cy="40"
-                  r="32"
-                  stroke="currentColor"
-                  strokeWidth="5"
+                  cx="48"
+                  cy="48"
+                  r="38"
+                  stroke="url(#gradient-hold)"
+                  strokeWidth="7"
                   fill="none"
-                  strokeDasharray={`${2 * Math.PI * 32}`}
-                  strokeDashoffset={`${2 * Math.PI * 32 * (1 - heldRate / 100)}`}
-                  className="text-hold transition-all duration-1000"
+                  strokeDasharray={`${2 * Math.PI * 38}`}
+                  strokeDashoffset={`${2 * Math.PI * 38 * (1 - heldRate / 100)}`}
+                  className="transition-all duration-1000"
                   strokeLinecap="round"
                 />
+                <defs>
+                  <linearGradient id="gradient-hold" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#22c55e" />
+                    <stop offset="100%" stopColor="#06b6d4" />
+                  </linearGradient>
+                </defs>
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-xl font-bold text-hold">{heldRate}%</div>
+                  <div className="text-2xl font-black text-hold">{heldRate}<span className="text-sm">%</span></div>
                 </div>
               </div>
             </div>
             
             {/* Stats */}
-            <div>
-              <div className="text-xs font-semibold text-ink/50 mb-1 tracking-wide">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-black text-hold/80 mb-1.5 uppercase tracking-wider">
                 버팀률
               </div>
-              <div className="text-2xl font-bold text-ink mb-1">
-                {heldCount}/{totalCount} 구간
+              <div className="text-3xl font-black text-ink mb-2 tracking-tight">
+                {heldCount}<span className="text-ink/60 text-xl font-bold">/{totalCount}</span> <span className="text-lg text-ink/50 font-semibold">구간</span>
               </div>
-              <div className="text-xs text-ink/60">
-                {heldCount > 0 && '버팀'}
-                {heldCount > 0 && totalCount > heldCount && ' · '}
-                {totalCount > heldCount && `흔들림 ${totalCount - heldCount}개`}
+              <div className="flex flex-wrap gap-2">
+                {heldCount > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-hold-100 border border-hold-300 rounded-lg text-xs font-bold text-hold-700 shadow-soft">
+                    <span>✅</span>
+                    <span>버팀 {heldCount}</span>
+                  </span>
+                )}
+                {totalCount > heldCount && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 border border-amber-300 rounded-lg text-xs font-bold text-amber-700 shadow-soft">
+                    <span>⚠️</span>
+                    <span>흔들림 {totalCount - heldCount}</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>

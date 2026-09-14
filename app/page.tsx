@@ -6,30 +6,43 @@ export default function Home() {
       <div className="max-w-[436px] mx-auto px-5 py-8 sm:py-12">
         {/* Hero Header */}
         <header className="text-center mb-8">
+          {/* Accent Bar */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 mb-6 shadow-soft">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse"></div>
+            <span className="text-xs font-bold text-primary-700 tracking-wide">영업 전화 대응 연습</span>
+          </div>
+          
           <div className="mb-6">
-            <h1 className="text-4xl sm:text-5xl font-bold mb-4 tracking-tight text-ink">
-              든든콜
+            <h1 className="text-5xl sm:text-6xl font-black mb-4 tracking-tighter text-ink">
+              <span className="bg-gradient-to-br from-primary-600 via-primary-500 to-primary-400 bg-clip-text text-transparent">든든콜</span>
             </h1>
-            <p className="text-lg sm:text-xl font-semibold text-ink mb-3 leading-snug">
+            <p className="text-xl sm:text-2xl font-black text-ink mb-4 leading-tight tracking-tight">
               걸려 온 영업 전화,<br />
               거절하려다 또 넘어간 적 있나요?
             </p>
-            <p className="text-sm text-ink/70 mb-3 leading-relaxed">
+            <p className="text-sm text-ink/70 mb-3 font-semibold leading-relaxed">
               통화 녹음 업로드 → 압박 구간 분석<br />
               + 연습 멘트 + 옆자리 코치
             </p>
-            <p className="text-xs text-ink/60 font-medium">
-              영업 전화 거절 ★ · 연봉 협상 / 구독 해지 외
-            </p>
+            <div className="flex items-center justify-center gap-2 text-xs">
+              <span className="px-3 py-1.5 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-700 font-bold shadow-soft">
+                📞 영업 전화 거절 ★
+              </span>
+              <span className="text-ink/40">·</span>
+              <span className="text-ink/60 font-semibold">연봉 협상 외</span>
+            </div>
           </div>
 
           {/* Simplified disclaimer */}
           <div className="flex flex-wrap justify-center gap-2 mb-6">
-            <span className="caution-chip bg-sway-50 border-sway-300 text-sway-600">
-              통화 대행 아님
+            <span className="caution-chip bg-sway-50 border-sway-300 text-sway-700 font-bold">
+              🚫 통화 대행 아님
             </span>
-            <span className="caution-chip bg-cream-200 border-ink/20 text-ink/70">
-              연습용 시뮬레이션
+            <span className="caution-chip bg-indigo-50 border-indigo-300 text-indigo-700 font-bold">
+              🎭 연습용 시뮬레이션
+            </span>
+            <span className="caution-chip bg-hold-50 border-hold-300 text-hold-700 font-bold">
+              ✅ 본인 녹음 필수
             </span>
           </div>
         </header>
