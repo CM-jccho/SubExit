@@ -1,8 +1,8 @@
 import './globals.css'
 
 export const metadata = {
-  title: 'SideCue - 후원·구독 해지 커뮤니케이션 코치',
-  description: '스크린샷으로 해지 경로 찾기 + 해지 대화 연습 멘트 제공. AI가 결제 채널을 분석하고 해지 경로·주의사항·연습 스크립트를 안내합니다.',
+  title: '든든콜 - 거절 통화 연습 & 압박 구간 분석',
+  description: '거절해야 하는데, 말리다가 또 받아들인 적 있나요? 통화 녹음 분석으로 압박·죄책감 구간을 찾고 연습 멘트를 받으세요. 구독 해지, 영업 거절, 이별 통보, 부탁 거절까지.',
 }
 
 export default function RootLayout({
