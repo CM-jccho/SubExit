@@ -45,6 +45,8 @@ function loadCallFixture(scenario: string = 'sales'): CallAnalysisResult {
     sales: 'call_sales_pressure.json',
     salary: 'call_salary_negotiation.json',
     cancel: 'call_sponsor_guilt.json',
+    parent: 'call_parent_request.json',
+    formal: 'call_formal_meeting.json',
     general: 'call_general_refusal.json',
     romantic: 'call_romantic_refusal.json',
   }

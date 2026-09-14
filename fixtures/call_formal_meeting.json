@@ -1,0 +1,139 @@
+{
+  "callType": "formal_meeting",
+  "duration": 108,
+  "transcript": [
+    {
+      "speaker": "partner",
+      "text": "우리 부모님이 다음 주 일요일에 상견례 어떻겠냐고 하시는데... 괜찮아?",
+      "startTime": 2,
+      "endTime": 8
+    },
+    {
+      "speaker": "user",
+      "text": "응, 좋아. 근데 장소는 어디로 정했어?",
+      "startTime": 9,
+      "endTime": 12
+    },
+    {
+      "speaker": "partner",
+      "text": "부모님이 강남에 아시는 한정식집 예약하시겠다는데... 1인당 15만 원 정도 한대.",
+      "startTime": 13,
+      "endTime": 21
+    },
+    {
+      "speaker": "user",
+      "text": "15만 원? 우리 집 사람들 4명이면 60만 원인데... 좀 부담스러운데.",
+      "startTime": 22,
+      "endTime": 29
+    },
+    {
+      "speaker": "partner",
+      "text": "아... 그치? 근데 우리 부모님이 이미 예약하셨대. 그냥 한 번만 맞춰줄 수 없을까? 첫 상견례잖아.",
+      "startTime": 30,
+      "endTime": 39,
+      "tags": ["pressure", "fait_accompli"]
+    },
+    {
+      "speaker": "user",
+      "text": "이미 예약했다는 게... 우리 의견은 안 물어봤어?",
+      "startTime": 40,
+      "endTime": 44
+    },
+    {
+      "speaker": "partner",
+      "text": "미안, 부모님이 좋은 곳으로 하시겠다고... 네 부모님도 좋아하실 것 같은데? 너무 격식 없는 곳도 실례잖아.",
+      "startTime": 45,
+      "endTime": 55,
+      "tags": ["guilt", "face"]
+    },
+    {
+      "speaker": "user",
+      "text": "우리 부모님은 편한 게 더 좋으실 것 같은데. 그리고 비용도 부담되시면 어쩌지?",
+      "startTime": 56,
+      "endTime": 63
+    },
+    {
+      "speaker": "partner",
+      "text": "그럼... 우리가 부담할까? 근데 그것도 우리한테 부담이긴 한데... 이번엔 그냥 맞춰주면 안 될까?",
+      "startTime": 64,
+      "endTime": 73,
+      "tags": ["burden_shift", "pleading"]
+    },
+    {
+      "speaker": "user",
+      "text": "음... 한 번 더 부모님께 여쭤봐줄 수 있어? 장소 바꾸거나 우리가 같이 정하는 걸로.",
+      "startTime": 74,
+      "endTime": 81
+    },
+    {
+      "speaker": "partner",
+      "text": "알겠어, 한 번 더 여쭤볼게. 근데 너무 늦게 바꾸면 실례일 수도 있으니까 빨리 결정하자.",
+      "startTime": 82,
+      "endTime": 90
+    }
+  ],
+  "analysis": {
+    "pressureSegments": [
+      {
+        "startTime": 30,
+        "endTime": 39,
+        "type": "fait_accompli",
+        "severity": "high",
+        "description": "이미 예약된 사실 통보 + '한 번만 맞춰달라' 압박"
+      },
+      {
+        "startTime": 45,
+        "endTime": 55,
+        "type": "face",
+        "severity": "medium",
+        "description": "체면 프레임 ('격식 없는 곳은 실례')"
+      },
+      {
+        "startTime": 64,
+        "endTime": 73,
+        "type": "burden_shift",
+        "severity": "medium",
+        "description": "부담 전가 시도 + '이번엔 맞춰달라' 반복"
+      }
+    ],
+    "overallTone": "polite_but_pressured",
+    "riskLevel": "medium",
+    "feedback": {
+      "positive": [
+        "비용 부담을 명확히 표현",
+        "우리 부모님 입장 고려",
+        "재논의 요청"
+      ],
+      "improvements": [
+        "초반부터 '함께 정하고 싶다' 의사 명확히",
+        "체면 프레임에 '서로 편한 게 진짜 예의'로 재프레임",
+        "비용 분담 방식 먼저 합의 제안"
+      ]
+    },
+    "practiceScripts": [
+      {
+        "whenKo": "이미 예약됨 통보 (기정사실화)",
+        "sayKo": "이해하지만, 중요한 자리니까 우리 쪽 의견도 반영되면 좋겠어. 다시 조율 가능할까?"
+      },
+      {
+        "whenKo": "체면·격식 프레임 ('실례')",
+        "sayKo": "격식도 중요하지만, 서로 부담 없이 편하게 만나는 게 진짜 예의 아닐까?"
+      },
+      {
+        "whenKo": "비용 부담 전가 또는 '이번만' 압박",
+        "sayKo": "이번뿐 아니라 앞으로도 함께 결정하고 싶어. 비용 분담 방식부터 정하자."
+      },
+      {
+        "whenKo": "'늦으면 실례' 시간 압박",
+        "sayKo": "늦어지더라도 양쪽 다 편한 방법 찾는 게 우선이야. 천천히 정하자."
+      }
+    ]
+  },
+  "metadata": {
+    "scenario": "formal_meeting",
+    "organization": "상견례 준비 대화 (샘플)",
+    "callDate": "2026-02-25",
+    "outcome": "재논의 합의"
+  },
+  "disclaimer": "이 통화 녹음 분석은 데모용 샘플입니다. 본 서비스는 중매나 가족 치료, 법률 자문이 아닙니다. 상호 존중과 열린 소통을 권장하며, 양가 간 합의를 우선으로 합니다."
+}

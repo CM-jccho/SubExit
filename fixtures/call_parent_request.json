@@ -1,0 +1,127 @@
+{
+  "callType": "parent_request",
+  "duration": 95,
+  "transcript": [
+    {
+      "speaker": "user",
+      "text": "엄마, 저 다음 달에 노트북 좀 사야 해서... 지원해줄 수 있을까?",
+      "startTime": 2,
+      "endTime": 8
+    },
+    {
+      "speaker": "parent",
+      "text": "또? 작년에 사준 거 어떻게 됐어? 너 돈 개념이 없구나.",
+      "startTime": 9,
+      "endTime": 14,
+      "tags": ["guilt", "criticism"]
+    },
+    {
+      "speaker": "user",
+      "text": "그게 너무 느려서 업무용으로 못 쓰겠더라구. 100만 원 정도면 괜찮은 걸 살 수 있을 것 같아.",
+      "startTime": 15,
+      "endTime": 22
+    },
+    {
+      "speaker": "parent",
+      "text": "100만 원? 그걸 그냥 달라는 거야? 우리가 돈이 많은 줄 알아? 네 동생은 아무 말 안 하고 알아서 잘 사는데.",
+      "startTime": 23,
+      "endTime": 33,
+      "tags": ["comparison", "guilt"]
+    },
+    {
+      "speaker": "user",
+      "text": "...",
+      "startTime": 34,
+      "endTime": 36
+    },
+    {
+      "speaker": "parent",
+      "text": "우리가 널 키우느라 얼마나 힘들었는지 알아? 이제 좀 자립해야 할 나이 아니야?",
+      "startTime": 37,
+      "endTime": 44,
+      "tags": ["guilt", "emotional"]
+    },
+    {
+      "speaker": "user",
+      "text": "알아, 미안해. 그럼 빌려주시면 안 돼? 나중에 갚을게.",
+      "startTime": 45,
+      "endTime": 50
+    },
+    {
+      "speaker": "parent",
+      "text": "네가 언제 갚은 적 있어? 그리고 너 이번에도 돈 쓰는 거 보면 걱정돼서... 차라리 네가 더 저축해서 사는 게 나을 것 같아.",
+      "startTime": 51,
+      "endTime": 62,
+      "tags": ["distrust", "rejection"]
+    },
+    {
+      "speaker": "user",
+      "text": "알겠어. 내가 알아서 할게. 그럼 이만 끊을게.",
+      "startTime": 63,
+      "endTime": 67
+    }
+  ],
+  "analysis": {
+    "pressureSegments": [
+      {
+        "startTime": 9,
+        "endTime": 14,
+        "type": "guilt",
+        "severity": "medium",
+        "description": "과거 지원 언급하며 돈 개념 없다는 비판"
+      },
+      {
+        "startTime": 23,
+        "endTime": 33,
+        "type": "comparison",
+        "severity": "high",
+        "description": "동생과 비교하며 죄책감 유도"
+      },
+      {
+        "startTime": 37,
+        "endTime": 44,
+        "type": "emotional",
+        "severity": "high",
+        "description": "양육 희생 강조 + 자립 압박"
+      }
+    ],
+    "overallTone": "parental_concern_mixed_guilt",
+    "riskLevel": "medium",
+    "feedback": {
+      "positive": [
+        "구체적 필요성과 금액 제시",
+        "대안 제시 (빌려주기)"
+      ],
+      "improvements": [
+        "이유를 더 구체적으로 설명 (업무 필수, 투자 대비 효과)",
+        "비교 멘트에 감정적 반응보다는 본인 상황 재강조",
+        "분할 지원이나 공동 부담 제안도 고려"
+      ]
+    },
+    "practiceScripts": [
+      {
+        "whenKo": "과거 지원 언급 또는 '돈 개념 없다' 비판",
+        "sayKo": "이해해. 이번엔 정말 필요해서 신중하게 요청드리는 거야. 업무 필수 장비라서 투자 가치가 있어."
+      },
+      {
+        "whenKo": "동생 또는 다른 사람과 비교",
+        "sayKo": "동생이랑 내 상황은 달라. 내 필요를 말하는 거니까 비교는 의미 없어."
+      },
+      {
+        "whenKo": "양육 희생 강조 + 자립 압박",
+        "sayKo": "키워주신 건 정말 감사해. 그래서 꼭 필요한 것만 부탁드리는 거고, 자립 준비도 하고 있어."
+      },
+      {
+        "whenKo": "신뢰 부족 또는 거절",
+        "sayKo": "이해해. 그럼 분할로 조금씩이라도 도와주실 수 있을까? 아니면 내가 모아서 살게."
+      }
+    ]
+  },
+  "metadata": {
+    "scenario": "parent_request",
+    "organization": "가족 간 대화 (샘플)",
+    "callDate": "2026-03-08",
+    "outcome": "거절됨"
+  },
+  "disclaimer": "이 통화 녹음 분석은 데모용 샘플입니다. 본 서비스는 가족 조작이나 가스라이팅을 코치하지 않으며, 심리 상담이나 가족 치료가 아닙니다. 건강한 소통과 상호 존중을 권장합니다."
+}
