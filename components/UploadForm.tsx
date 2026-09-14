@@ -69,7 +69,30 @@ export default function UploadForm() {
     const scenarioParam = params.get('scenario')
     
     if (demoParam === '1' && scenarioParam) {
-      handleSubmit(new Event('submit') as any, true, scenarioParam)
+      setLoading(true)
+      setError(null)
+      setIsDemoMode(true)
+      
+      window.history.replaceState({}, '', window.location.pathname)
+      
+      fetch('/api/analyze?demo=1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ demo: true, scenario: scenarioParam }),
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error('분석 중 오류가 발생했습니다')
+          }
+          const data = await response.json()
+          setResult(data)
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다')
+        })
+        .finally(() => {
+          setLoading(false)
+        })
     }
   }, [])
 
@@ -176,6 +199,7 @@ export default function UploadForm() {
         <button
           type="button"
           onClick={() => setInputMode('image')}
+          disabled={loading}
           className={`segment-button ${inputMode === 'image' ? 'segment-button-active' : ''}`}
         >
           <span className="text-lg mr-1.5">📸</span>
@@ -184,6 +208,7 @@ export default function UploadForm() {
         <button
           type="button"
           onClick={() => setInputMode('brand')}
+          disabled={loading}
           className={`segment-button ${inputMode === 'brand' ? 'segment-button-active' : ''}`}
         >
           <span className="text-lg mr-1.5">🔍</span>
@@ -197,7 +222,7 @@ export default function UploadForm() {
             <label className="block text-sm font-bold text-slate-200 mb-3 tracking-wide">
               구독 화면 캡처 (1-3개)
             </label>
-            <label className="block cursor-pointer group">
+            <label className={`block ${loading ? 'pointer-events-none opacity-60' : 'cursor-pointer'} group`}>
               <div className="relative border-2 border-dashed border-white/20 hover:border-primary-500/50 rounded-3xl p-10 text-center transition-all duration-300 bg-white/5 hover:bg-white/10 backdrop-blur-xl group-hover:shadow-glow">
                 <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">📸</div>
                 <div className="text-base font-bold text-white mb-2">
@@ -206,7 +231,7 @@ export default function UploadForm() {
                       {files.length}개 선택됨
                     </span>
                   ) : (
-                    '탭하여 이미지 선택'
+                    loading ? '분석 중...' : '탭하여 이미지 선택'
                   )}
                 </div>
                 {files.length > 0 && (
@@ -218,7 +243,7 @@ export default function UploadForm() {
                     ))}
                   </div>
                 )}
-                {files.length === 0 && (
+                {files.length === 0 && !loading && (
                   <p className="text-xs text-slate-500 mt-2">
                     PNG, JPEG, WebP · 최대 10MB
                   </p>
@@ -229,6 +254,7 @@ export default function UploadForm() {
                 accept="image/png,image/jpeg,image/webp"
                 multiple
                 onChange={handleFileChange}
+                disabled={loading}
                 className="hidden"
               />
             </label>
@@ -243,6 +269,7 @@ export default function UploadForm() {
               value={brandQuery}
               onChange={(e) => setBrandQuery(e.target.value)}
               placeholder="티빙, 넷플릭스, 유튜브 프리미엄..."
+              disabled={loading}
               className="input-field"
             />
           </div>
