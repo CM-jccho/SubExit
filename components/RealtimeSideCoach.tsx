@@ -154,57 +154,57 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
     return (
       <div className="space-y-4 animate-fadeIn">
         {/* 단계 표시기 */}
-        <div className="paper-card p-4 bg-cream-100">
+        <div className="paper-card p-4 bg-surface-light">
           <div className="flex items-center justify-center gap-3">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center text-sm font-bold">1</div>
-              <span className="text-sm font-bold text-primary-700">동의</span>
+              <span className="text-sm font-bold text-primary-500">동의</span>
             </div>
             <div className="w-8 h-0.5 bg-ink/20"></div>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-ink/10 text-ink/40 flex items-center justify-center text-sm font-bold">2</div>
+              <div className="w-8 h-8 rounded-full bg-surface-dark text-ink/40 flex items-center justify-center text-sm font-bold">2</div>
               <span className="text-sm text-ink/40">통화 중</span>
             </div>
             <div className="w-8 h-0.5 bg-ink/20"></div>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-ink/10 text-ink/40 flex items-center justify-center text-sm font-bold">3</div>
+              <div className="w-8 h-8 rounded-full bg-surface-dark text-ink/40 flex items-center justify-center text-sm font-bold">3</div>
               <span className="text-sm text-ink/40">복기</span>
             </div>
           </div>
         </div>
 
-        <div className="paper-card p-6 bg-hold-50">
+        <div className="paper-card p-6 bg-primary-500/5 border-primary-500/20">
           <div className="flex items-start gap-3 mb-6">
             <div className="text-3xl">📞</div>
             <div>
               <h3 className="text-lg font-bold text-ink mb-2">
                 실시간 통화 시뮬레이션
               </h3>
-              <p className="text-sm text-ink/70 leading-relaxed">
+              <p className="text-sm text-ink-500 leading-relaxed">
                 영업 전화를 받는 상황을 시뮬레이션합니다. 통화 중 옆자리 코치처럼 실시간으로 대응 멘트를 제안합니다.
               </p>
             </div>
           </div>
 
           <div className="space-y-4 mb-6">
-            <div className="flex items-start gap-2.5 p-4 rounded-xl bg-white border border-hold-200">
+            <div className="flex items-start gap-2.5 p-4 rounded-xl bg-surface-light border border-ink/10">
               <span className="text-lg flex-shrink-0">🎭</span>
               <div className="flex-1">
                 <h4 className="text-sm font-bold text-ink mb-1">시뮬레이션 안내</h4>
-                <ul className="text-xs text-ink/70 leading-relaxed space-y-1">
-                  <li>• 실제 통화가 아닌 <strong>연습용 데모</strong>입니다</li>
-                  <li>• 통화 대행 서비스가 <strong>아닙니다</strong></li>
+                <ul className="text-xs text-ink-500 leading-relaxed space-y-1">
+                  <li>• 실제 통화가 아닌 <strong className="text-ink">연습용 데모</strong>입니다</li>
+                  <li>• 통화 대행 서비스가 <strong className="text-ink">아닙니다</strong></li>
                   <li>• 실제 통화는 본인이 직접 진행하셔야 합니다</li>
                 </ul>
               </div>
             </div>
 
-            <div className="flex items-start gap-2.5 p-4 rounded-xl bg-white border border-sway-200">
+            <div className="flex items-start gap-2.5 p-4 rounded-xl bg-surface-light border border-sway-500/20">
               <span className="text-lg flex-shrink-0">🔴</span>
               <div className="flex-1">
                 <h4 className="text-sm font-bold text-ink mb-1">녹음 및 데이터</h4>
-                <ul className="text-xs text-ink/70 leading-relaxed space-y-1">
-                  <li>• 이 시뮬레이션은 <strong>데모용 사전 녹음</strong>을 사용합니다</li>
+                <ul className="text-xs text-ink-500 leading-relaxed space-y-1">
+                  <li>• 이 시뮬레이션은 <strong className="text-ink">데모용 사전 녹음</strong>을 사용합니다</li>
                   <li>• 실제 마이크 입력은 사용하지 않습니다</li>
                   <li>• 연습 목적으로만 사용하세요</li>
                 </ul>
@@ -218,7 +218,7 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
           >
             ✓ 시뮬레이션 시작
           </button>
-          <p className="text-xs text-center text-ink/50 mt-3">
+          <p className="text-xs text-center text-ink-500 mt-3">
             약 40초 소요 · 빠른 체험 가능
           </p>
         </div>
@@ -229,30 +229,30 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
   return (
     <div className="space-y-4 animate-fadeIn">
       {/* 단계 표시기 */}
-      <div className="paper-card p-4 bg-cream-100">
+      <div className="paper-card p-4 bg-surface-light">
         <div className="flex items-center justify-center gap-3">
           <div className="flex items-center gap-2 opacity-50">
             <div className="w-8 h-8 rounded-full bg-hold text-white flex items-center justify-center text-sm font-bold">✓</div>
-            <span className="text-sm text-ink/60">동의</span>
+            <span className="text-sm text-ink-500">동의</span>
           </div>
           <div className="w-8 h-0.5 bg-hold"></div>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center text-sm font-bold animate-pulse">2</div>
-            <span className="text-sm font-bold text-primary-700">통화 중</span>
+            <span className="text-sm font-bold text-primary-500">통화 중</span>
           </div>
           <div className="w-8 h-0.5 bg-ink/20"></div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-ink/10 text-ink/40 flex items-center justify-center text-sm font-bold">3</div>
+            <div className="w-8 h-8 rounded-full bg-surface-dark text-ink/40 flex items-center justify-center text-sm font-bold">3</div>
             <span className="text-sm text-ink/40">복기</span>
           </div>
         </div>
       </div>
 
       {/* Recording Indicator - 단순화 */}
-      <div className="paper-card p-3 bg-sway-50 border-sway-300">
+      <div className="paper-card p-3 bg-sway-50/5 border-sway-500/30">
         <div className="flex items-center justify-center gap-2">
-          <div className={`w-2.5 h-2.5 rounded-full bg-sway-600 ${isPlaying ? 'animate-pulse' : ''}`}></div>
-          <span className="text-sm font-bold text-sway-600">
+          <div className={`w-2.5 h-2.5 rounded-full bg-sway-500 ${isPlaying ? 'animate-pulse' : ''}`}></div>
+          <span className="text-sm font-bold text-sway-400">
             {isPlaying ? '녹음 중' : '일시정지'}
           </span>
         </div>
@@ -260,14 +260,14 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
 
       {/* Main Content */}
       <div className="space-y-4">
-        {/* 고정 코치 가이드 영역 - 말해보카 스타일 */}
+        {/* 고정 코치 가이드 영역 */}
         <div className={`paper-card overflow-hidden sticky top-4 z-10 transition-all ${
-          currentSuggestion ? 'ring-4 ring-hold/50 shadow-2xl' : 'shadow-soft'
+          currentSuggestion ? 'ring-2 ring-primary-500/50 shadow-soft-lg' : 'shadow-soft'
         }`}>
-          <div className="bg-gradient-to-r from-hold-600 to-primary-600 p-4">
+          <div className="bg-gradient-to-r from-primary-600 to-primary-500 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-lg">
+                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-lg">
                   🎓
                 </div>
                 <div>
@@ -289,33 +289,33 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
             </div>
           </div>
 
-          <div className="p-5 min-h-[140px] flex items-center justify-center bg-gradient-to-br from-cream-50 to-hold-50">
+          <div className="p-5 min-h-[140px] flex items-center justify-center bg-surface-dark">
             {currentSuggestion ? (
               <div className="w-full animate-slideUp">
                 {showFullScript ? (
                   <>
-                    <div className="text-xs font-bold text-hold-700 mb-2 uppercase tracking-wider flex items-center gap-2">
+                    <div className="text-xs font-bold text-primary-500 mb-2 uppercase tracking-wider flex items-center gap-2">
                       💡 추천 대응
-                      <span className="px-2 py-0.5 rounded-full bg-hold-100 text-hold-600 text-xs font-medium normal-case">
+                      <span className="px-2 py-0.5 rounded-full bg-primary-500/10 text-primary-500 text-xs font-medium normal-case">
                         {coachTone === 'cold' ? '냉정' : coachTone === 'warm' ? '감성' : '단호·공손'}
                       </span>
                     </div>
-                    <div className="p-4 rounded-xl bg-white border-2 border-hold-300 shadow-lg">
+                    <div className="p-4 rounded-xl bg-surface border border-primary-500/30 shadow-soft">
                       <p className="text-xl text-ink font-bold leading-relaxed">
                         "{currentSuggestion.text}"
                       </p>
                     </div>
-                    <div className="text-xs text-hold-600 font-medium mt-2 text-center">
+                    <div className="text-xs text-primary-500 font-medium mt-2 text-center">
                       👆 이 멘트를 참고하여 응답하세요
                     </div>
                   </>
                 ) : (
                   <div className="text-center">
-                    <div className="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-hold-100 border border-hold-300 mb-2">
+                    <div className="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-primary-500/10 border border-primary-500/30 mb-2">
                       <span className="text-2xl">💡</span>
-                      <span className="text-sm font-bold text-hold-700">대응 멘트 준비됨</span>
+                      <span className="text-sm font-bold text-primary-500">대응 멘트 준비됨</span>
                     </div>
-                    <p className="text-xs text-ink/60">
+                    <p className="text-xs text-ink-500">
                       "전체 보기" 버튼을 눌러 확인하세요
                     </p>
                   </div>
@@ -324,7 +324,7 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
             ) : (
               <div className="text-center">
                 <div className="text-3xl mb-2">🎯</div>
-                <p className="text-sm text-ink/60 font-medium">
+                <p className="text-sm text-ink-500 font-medium">
                   {isPlaying ? '대응이 필요한 순간에 멘트를 제안합니다' : '시작 버튼을 눌러 통화를 시작하세요'}
                 </p>
               </div>
@@ -332,12 +332,12 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
           </div>
         </div>
 
-        {/* Transcript Timeline - dim when coach suggestion active */}
+        {/* Transcript Timeline */}
         <div className={`paper-card overflow-hidden transition-all ${currentSuggestion && showFullScript ? 'opacity-30' : 'opacity-100'}`}>
-          <div className="bg-cream-100 border-b border-ink/10 p-4">
+          <div className="bg-surface-light border-b border-ink/10 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-ink">통화 진행</h3>
-              <span className="text-xs font-medium text-ink/60">
+              <span className="text-xs font-medium text-ink-500">
                 {formatTime(currentTime)} / {formatTime(transcript[transcript.length - 1]?.endTime || 0)}
               </span>
             </div>
@@ -346,7 +346,7 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
               {!isPlaying ? (
                 <button
                   onClick={handleStart}
-                  className="flex-1 min-w-[120px] px-4 py-2.5 bg-hold hover:bg-hold-600 text-white rounded-xl text-sm font-bold transition-all"
+                  className="flex-1 min-w-[120px] px-4 py-2.5 bg-hold hover:bg-hold-600 text-white rounded-xl text-sm font-bold transition-all shadow-soft"
                 >
                   ▶ 시작
                 </button>
@@ -354,7 +354,7 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
                 <>
                   <button
                     onClick={handlePause}
-                    className="flex-1 min-w-[100px] px-4 py-2.5 bg-ink hover:bg-ink-400 text-white rounded-xl text-sm font-bold transition-all"
+                    className="flex-1 min-w-[100px] px-4 py-2.5 bg-surface-dark hover:bg-ink/50 text-white rounded-xl text-sm font-bold transition-all"
                   >
                     ⏸ 일시정지
                   </button>
@@ -370,13 +370,13 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
             
             {/* 속도 조절 */}
             <div className="flex items-center gap-2 mt-3">
-              <span className="text-xs text-ink/60 font-medium">속도:</span>
+              <span className="text-xs text-ink-500 font-medium">속도:</span>
               <button
                 onClick={() => setPlaybackSpeed(1)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                   playbackSpeed === 1
-                    ? 'bg-ink text-white'
-                    : 'bg-white text-ink/60 border border-ink/15 hover:bg-cream-100'
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-surface-light text-ink-500 border border-ink/10 hover:bg-surface'
                 }`}
               >
                 1x
@@ -385,8 +385,8 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
                 onClick={() => setPlaybackSpeed(2.5)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                   playbackSpeed === 2.5
-                    ? 'bg-ink text-white'
-                    : 'bg-white text-ink/60 border border-ink/15 hover:bg-cream-100'
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-surface-light text-ink-500 border border-ink/10 hover:bg-surface'
                 }`}
               >
                 2.5x
@@ -395,8 +395,8 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
                 onClick={() => setPlaybackSpeed(4)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                   playbackSpeed === 4
-                    ? 'bg-ink text-white'
-                    : 'bg-white text-ink/60 border border-ink/15 hover:bg-cream-100'
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-surface-light text-ink-500 border border-ink/10 hover:bg-surface'
                 }`}
               >
                 4x
@@ -404,7 +404,7 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
             </div>
           </div>
 
-          <div ref={scrollRef} className="p-4 space-y-2.5 max-h-[400px] overflow-y-auto bg-cream-100">
+          <div ref={scrollRef} className="p-4 space-y-2.5 max-h-[400px] overflow-y-auto bg-surface-dark">
             {displayedLines.map((line, idx) => {
               const isUser = line.speaker === 'user'
               const isCurrent = line.startTime <= currentTime && line.endTime >= currentTime
@@ -416,21 +416,21 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
                 >
                   <div className={`flex items-end gap-2 max-w-[85%] ${isUser ? 'flex-row-reverse' : ''}`}>
                     <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-base ${
-                      isUser ? 'bg-ink/10' : 'bg-sway-200'
+                      isUser ? 'bg-surface-light' : 'bg-sway-500/20'
                     }`}>
                       {isUser ? '👤' : '📞'}
                     </div>
                     <div>
                       <div className={`px-3.5 py-2.5 rounded-xl ${
                         isUser 
-                          ? 'rounded-br-sm bg-ink/5 border border-ink/10' 
-                          : 'rounded-bl-sm bg-white border border-ink/10'
-                      } ${isCurrent ? 'ring-2 ring-hold/30' : ''}`}>
+                          ? 'rounded-br-sm bg-surface-light border border-ink/10' 
+                          : 'rounded-bl-sm bg-surface border border-ink/10'
+                      } ${isCurrent ? 'ring-2 ring-primary-500/30' : ''}`}>
                         <p className="text-sm text-ink leading-relaxed">
                           {line.text}
                         </p>
                       </div>
-                      <div className={`text-xs text-ink/40 mt-1 ${isUser ? 'text-right mr-2' : 'ml-2'}`}>
+                      <div className={`text-xs text-ink/30 mt-1 ${isUser ? 'text-right mr-2' : 'ml-2'}`}>
                         {formatTime(line.startTime)}
                       </div>
                     </div>

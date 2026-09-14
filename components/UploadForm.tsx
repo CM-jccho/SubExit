@@ -65,6 +65,7 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
   const [isDemoMode, setIsDemoMode] = useState(false)
   const [activeTab, setActiveTab] = useState<'analysis' | 'practice'>('analysis')
   const [showRealtimeCoach, setShowRealtimeCoach] = useState(false)
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
 
   useEffect(() => {
     if (initialScenario) {
@@ -270,8 +271,8 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
     
     return (
       <div className="animate-fadeIn">
-        <div className="mb-5 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 text-center">
-          <span className="text-sm font-bold text-primary-700">실시간 통화 시뮬레이션</span>
+        <div className="mb-4 px-4 py-2 rounded-xl bg-primary-500/10 border border-primary-500/20 text-center">
+          <span className="text-sm font-bold text-primary-500">실시간 통화 시뮬레이션</span>
         </div>
         
         <RealtimeSideCoach
@@ -294,21 +295,21 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
     return (
       <div className="animate-fadeIn">
         {/* 단계 표시기 */}
-        <div className="paper-card p-4 bg-cream-100 mb-5">
+        <div className="paper-card p-4 bg-surface-light mb-5">
           <div className="flex items-center justify-center gap-3">
             <div className="flex items-center gap-2 opacity-50">
               <div className="w-8 h-8 rounded-full bg-hold text-white flex items-center justify-center text-sm font-bold">✓</div>
-              <span className="text-sm text-ink/60">동의</span>
+              <span className="text-sm text-ink-500">동의</span>
             </div>
             <div className="w-8 h-0.5 bg-hold"></div>
             <div className="flex items-center gap-2 opacity-50">
               <div className="w-8 h-8 rounded-full bg-hold text-white flex items-center justify-center text-sm font-bold">✓</div>
-              <span className="text-sm text-ink/60">통화 중</span>
+              <span className="text-sm text-ink-500">통화 중</span>
             </div>
             <div className="w-8 h-0.5 bg-hold"></div>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center text-sm font-bold">3</div>
-              <span className="text-sm font-bold text-primary-700">복기</span>
+              <span className="text-sm font-bold text-primary-500">복기</span>
             </div>
           </div>
         </div>
@@ -425,49 +426,122 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
   // parent, formal, general, romantic
 
   return (
-    <div className="paper-card p-6 sm:p-7">
-      {/* Coach Tone Selection */}
-      <div className="mb-6">
-        <label className="block text-xs font-semibold text-ink/60 mb-3 tracking-wide">
-          코치 톤
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(coachToneLabels) as CoachTone[]).map((tone) => (
-            <button
-              key={tone}
-              type="button"
-              onClick={() => handleToneChange(tone)}
-              className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
-                coachTone === tone
-                  ? 'bg-hold text-white'
-                  : 'bg-white text-ink/70 hover:bg-cream-200 border border-ink/15'
-              }`}
-            >
-              {coachToneLabels[tone]}
-            </button>
-          ))}
-        </div>
+    <div className="paper-card p-5 sm:p-6">
+      {/* Advanced Settings - Collapsed Accordion */}
+      <div className="mb-5">
+        <button
+          type="button"
+          onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+          className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-light border border-ink/10 hover:border-ink/20 transition-all"
+        >
+          <span className="text-sm font-semibold text-ink">
+            ⚙️ 고급 설정 (코치 톤 · 상대방 캐릭터 · 속도)
+          </span>
+          <span className="text-ink-500 text-lg">
+            {showAdvancedSettings ? '−' : '+'}
+          </span>
+        </button>
+        
+        {showAdvancedSettings && (
+          <div className="mt-3 space-y-4 animate-slideUp">
+            {/* Coach Tone Selection */}
+            <div>
+              <label className="block text-xs font-semibold text-ink-500 mb-2 tracking-wide">
+                코치 톤
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(coachToneLabels) as CoachTone[]).map((tone) => (
+                  <button
+                    key={tone}
+                    type="button"
+                    onClick={() => handleToneChange(tone)}
+                    className={`px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 ${
+                      coachTone === tone
+                        ? 'bg-primary-500 text-white shadow-soft'
+                        : 'bg-surface-light text-ink-500 hover:bg-surface border border-ink/10'
+                    }`}
+                  >
+                    {coachToneLabels[tone]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Opponent Persona Picker */}
+            <div>
+              <label className="block text-xs font-semibold text-ink-500 mb-2 tracking-wide">
+                상대방 캐릭터
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(opponentPersonaLabels) as OpponentPersona[]).map((persona) => {
+                  const isRecommended = scenarioRecommendedPersona[selectedScenario] === persona
+                  const traits = opponentPersonaTraits[persona]
+                  
+                  return (
+                    <button
+                      key={persona}
+                      type="button"
+                      onClick={() => setSelectedPersona(persona)}
+                      className={`text-left p-3 rounded-xl transition-all duration-200 ${
+                        selectedPersona === persona
+                          ? 'bg-primary-500 text-white shadow-soft'
+                          : 'bg-surface-light hover:bg-surface border border-ink/10'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className={`text-xs font-bold ${
+                          selectedPersona === persona ? 'text-white' : 'text-ink'
+                        }`}>
+                          {opponentPersonaLabels[persona]}
+                        </h4>
+                        {isRecommended && (
+                          <span className={`text-xs px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            selectedPersona === persona 
+                              ? 'bg-white/20 text-white' 
+                              : 'bg-primary-500/10 text-primary-500'
+                          }`}>
+                            추천
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-[10px] leading-snug ${
+                        selectedPersona === persona ? 'text-white/80' : 'text-ink-500'
+                      }`}>
+                        {traits.traits}
+                      </p>
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="mt-2 p-2.5 rounded-lg bg-surface-light border border-ink/10">
+                <p className="text-[10px] text-ink-500 leading-relaxed">
+                  <strong className="text-ink">스타일:</strong> {opponentPersonaTraits[selectedPersona].openerStyle}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Scenario Card Selection */}
-      <div className="mb-6">
-        <label className="block text-xs font-semibold text-ink/60 mb-3 tracking-wide">
-          시나리오 선택 (데모용)
+      <div className="mb-5">
+        <label className="block text-xs font-semibold text-ink-500 mb-2 tracking-wide">
+          시나리오 선택
         </label>
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-2">
           {scenarios.map((scenario) => (
             <button
               key={scenario.id}
               type="button"
               onClick={() => setSelectedScenario(scenario.id)}
-              className={`text-left p-4 rounded-xl transition-all duration-200 ${
+              className={`text-left p-3 rounded-xl transition-all duration-200 ${
                 selectedScenario === scenario.id
-                  ? 'bg-primary-500 text-white shadow-lg scale-[1.02]'
-                  : 'bg-white hover:bg-cream-100 border border-ink/15 hover:border-primary-300'
+                  ? 'bg-primary-500 text-white shadow-soft-md'
+                  : 'bg-surface-light hover:bg-surface border border-ink/10'
               }`}
             >
               <div className="flex items-start gap-3">
-                <div className={`text-2xl flex-shrink-0 ${
+                <div className={`text-xl flex-shrink-0 ${
                   selectedScenario === scenario.id ? '' : 'opacity-70'
                 }`}>
                   {scenario.emoji}
@@ -483,14 +557,14 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
                       <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
                         selectedScenario === scenario.id 
                           ? 'bg-white/20 text-white' 
-                          : 'bg-hold-50 text-hold-600'
+                          : 'bg-primary-500/10 text-primary-500'
                       }`}>
                         ★
                       </span>
                     )}
                   </div>
                   <p className={`text-xs leading-relaxed ${
-                    selectedScenario === scenario.id ? 'text-white/90' : 'text-ink/60'
+                    selectedScenario === scenario.id ? 'text-white/80' : 'text-ink-500'
                   }`}>
                     {scenario.description}
                   </p>
@@ -501,70 +575,17 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
         </div>
       </div>
 
-      {/* Opponent Persona Picker */}
-      <div className="mb-6">
-        <label className="block text-xs font-semibold text-ink/60 mb-3 tracking-wide">
-          상대방 캐릭터 (말해보카 스타일)
-        </label>
-        <div className="grid grid-cols-2 gap-2">
-          {(Object.keys(opponentPersonaLabels) as OpponentPersona[]).map((persona) => {
-            const isRecommended = scenarioRecommendedPersona[selectedScenario] === persona
-            const traits = opponentPersonaTraits[persona]
-            
-            return (
-              <button
-                key={persona}
-                type="button"
-                onClick={() => setSelectedPersona(persona)}
-                className={`text-left p-3 rounded-xl transition-all duration-200 ${
-                  selectedPersona === persona
-                    ? 'bg-ink text-white shadow-md'
-                    : 'bg-white hover:bg-cream-100 border border-ink/15'
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className={`text-xs font-bold ${
-                    selectedPersona === persona ? 'text-white' : 'text-ink'
-                  }`}>
-                    {opponentPersonaLabels[persona]}
-                  </h4>
-                  {isRecommended && (
-                    <span className={`text-xs px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                      selectedPersona === persona 
-                        ? 'bg-white/20 text-white' 
-                        : 'bg-primary-100 text-primary-600'
-                    }`}>
-                      추천
-                    </span>
-                  )}
-                </div>
-                <p className={`text-[10px] leading-snug ${
-                  selectedPersona === persona ? 'text-white/80' : 'text-ink/50'
-                }`}>
-                  {traits.traits}
-                </p>
-              </button>
-            )
-          })}
-        </div>
-        <div className="mt-2 p-2.5 rounded-lg bg-cream-100 border border-ink/10">
-          <p className="text-[10px] text-ink/60 leading-relaxed">
-            <strong className="text-ink/80">스타일:</strong> {opponentPersonaTraits[selectedPersona].openerStyle}
-          </p>
-        </div>
-      </div>
-
       <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-ink mb-3">
+          <label className="block text-sm font-semibold text-ink mb-2">
             통화 녹음 업로드
           </label>
           <label className="block cursor-pointer group">
-            <div className="relative border-2 border-dashed border-ink/20 hover:border-hold/50 rounded-2xl p-8 text-center transition-all duration-200 bg-cream-100 hover:bg-hold-50">
+            <div className="relative border-2 border-dashed border-ink/10 hover:border-primary-500/30 rounded-2xl p-8 text-center transition-all duration-200 bg-surface-light hover:bg-surface">
               <div className="text-4xl mb-3">🎙️</div>
               <div className="text-sm font-medium text-ink mb-1">
                 {audioFile ? (
-                  <span className="text-hold-600">
+                  <span className="text-primary-500">
                     {audioFile.name}
                   </span>
                 ) : (
@@ -572,7 +593,7 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
                 )}
               </div>
               {!audioFile && (
-                <p className="text-xs text-ink/50 mt-1">
+                <p className="text-xs text-ink-500 mt-1">
                   MP3, M4A, WAV · 최대 25MB
                 </p>
               )}
@@ -586,16 +607,16 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
           </label>
           
           {/* Upload Notice */}
-          <div className="mt-3 p-3 rounded-xl bg-sway-50 border border-sway-200">
-            <p className="text-xs text-sway-600 leading-relaxed">
+          <div className="mt-3 p-3 rounded-xl bg-sway-50/5 border border-sway-500/20">
+            <p className="text-xs text-sway-400 leading-relaxed">
               본인이 직접 녹음한 통화만 업로드하세요. 상대방 동의가 필요할 수 있습니다.
             </p>
           </div>
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-sway-50 border border-sway-300">
-            <p className="text-sm font-medium text-sway-600">{error}</p>
+          <div className="p-3 rounded-xl bg-sway-50/5 border border-sway-500/30">
+            <p className="text-sm font-medium text-sway-400">{error}</p>
           </div>
         )}
 
@@ -617,7 +638,7 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
           )}
         </button>
         {!audioFile && (
-          <p className="text-xs text-center text-ink/50 -mt-2">
+          <p className="text-xs text-center text-ink-500 -mt-2">
             파일을 선택하면 분석을 시작할 수 있습니다
           </p>
         )}
@@ -627,7 +648,7 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
             <div className="w-full border-t border-ink/10"></div>
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="bg-white px-3 text-ink/50 font-medium">또는 데모 체험</span>
+            <span className="bg-surface px-3 text-ink-500 font-medium">또는 데모 체험</span>
           </div>
         </div>
 
@@ -639,7 +660,7 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
         >
           📞 실시간 시뮬레이션 체험하기
         </button>
-        <p className="text-xs text-center text-ink/50 -mt-2">
+        <p className="text-xs text-center text-ink-500 -mt-2">
           약 40초 · 빠른 데모 체험
         </p>
         
@@ -651,14 +672,14 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
         >
           {loading ? '분석 중...' : `${scenarios.find(s => s.id === selectedScenario)?.emoji} ${scenarios.find(s => s.id === selectedScenario)?.label} 복기 보기`}
         </button>
-        <p className="text-xs text-center text-ink/50 -mt-2">
+        <p className="text-xs text-center text-ink-500 -mt-2">
           시뮬레이션 없이 바로 분석 결과 확인
         </p>
       </form>
 
       {/* Info Footer */}
-      <div className="mt-6 pt-4 border-t border-ink/10">
-        <div className="flex items-center justify-center gap-3 text-xs text-ink/50">
+      <div className="mt-5 pt-4 border-t border-ink/10">
+        <div className="flex items-center justify-center gap-3 text-xs text-ink/30">
           <span>녹음 미저장</span>
           <span className="w-1 h-1 rounded-full bg-ink/20"></span>
           <span>압박 구간 탐지</span>
