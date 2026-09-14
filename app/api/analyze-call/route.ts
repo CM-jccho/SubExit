@@ -45,6 +45,7 @@ type CallAnalysisResult = {
 function loadCallFixture(scenario: string = 'sales'): CallAnalysisResult {
   const fixtureMap: Record<string, string> = {
     sales: 'call_sales_pressure.json',
+    job_interview: 'call_job_interview.json',
     first_date: 'call_first_date.json',
     relationship: 'call_relationship_concern.json',
     school_group: 'call_school_group.json',
