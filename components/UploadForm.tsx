@@ -7,6 +7,7 @@ import RealtimeSideCoach from './RealtimeSideCoach'
 import { CoachTone, coachToneLabels, loadCoachTone, saveCoachTone } from '@/lib/coach-tone'
 import { OpponentPersona, opponentPersonaLabels, opponentPersonaTraits, scenarioRecommendedPersona } from '@/lib/opponent-persona'
 import PracticeTab from './PracticeTab'
+import { recordScenarioAttempt, isScenarioCleared, getLevelBadge, getLevelLabel } from '@/lib/gamification'
 
 export type AnalysisResult = {
   // Call recording analysis result
@@ -66,6 +67,7 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
   const [activeTab, setActiveTab] = useState<'analysis' | 'practice'>('analysis')
   const [showRealtimeCoach, setShowRealtimeCoach] = useState(false)
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
+  const [levelUpInfo, setLevelUpInfo] = useState<{ leveledUp: boolean; newLevel: number } | null>(null)
 
   useEffect(() => {
     if (initialScenario) {
@@ -145,6 +147,20 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
 
       const data = await response.json()
       setResult(data)
+      
+      // Record gamification progress
+      if (data.analysis?.pressureSegments) {
+        const totalSegments = data.analysis.pressureSegments.length
+        const heldSegments = data.analysis.pressureSegments.filter((seg: any) => seg.held !== false).length
+        const heldRate = totalSegments > 0 ? Math.round((heldSegments / totalSegments) * 100) : 0
+        const cleared = isScenarioCleared(heldRate)
+        
+        const { state, leveledUp } = recordScenarioAttempt(demoScenario || selectedScenario, heldRate, cleared)
+        
+        if (leveledUp) {
+          setLevelUpInfo({ leveledUp: true, newLevel: state.level })
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다')
     } finally {
@@ -159,6 +175,7 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
     setIsDemoMode(false)
     setActiveTab('analysis')
     setShowRealtimeCoach(false)
+    setLevelUpInfo(null)
   }
 
   const handleCallEnd = async () => {
@@ -179,6 +196,20 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
       const data = await response.json()
       setResult(data)
       setIsDemoMode(true)
+      
+      // Record gamification progress
+      if (data.analysis?.pressureSegments) {
+        const totalSegments = data.analysis.pressureSegments.length
+        const heldSegments = data.analysis.pressureSegments.filter((seg: any) => seg.held !== false).length
+        const heldRate = totalSegments > 0 ? Math.round((heldSegments / totalSegments) * 100) : 0
+        const cleared = isScenarioCleared(heldRate)
+        
+        const { state, leveledUp } = recordScenarioAttempt(selectedScenario, heldRate, cleared)
+        
+        if (leveledUp) {
+          setLevelUpInfo({ leveledUp: true, newLevel: state.level })
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다')
     } finally {
@@ -294,6 +325,23 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
   if (result) {
     return (
       <div className="animate-fadeIn">
+        {/* Level Up Notification */}
+        {levelUpInfo?.leveledUp && (
+          <div className="mb-5 paper-card p-5 bg-gradient-to-r from-primary-500/10 to-hold-500/10 border-primary-500/30 animate-slideUp">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">{getLevelBadge(levelUpInfo.newLevel)}</span>
+              <div className="flex-1">
+                <div className="text-lg font-bold text-primary-500 mb-1">
+                  레벨 업! 🎉
+                </div>
+                <p className="text-sm text-ink-500">
+                  {getLevelLabel(levelUpInfo.newLevel)}로 승급했습니다
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 단계 표시기 */}
         <div className="paper-card p-4 bg-surface-light mb-5">
           <div className="flex items-center justify-center gap-3">
@@ -470,7 +518,7 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
             {/* Opponent Persona Picker */}
             <div>
               <label className="block text-xs font-semibold text-ink-500 mb-2 tracking-wide">
-                상대방 캐릭터
+                2️⃣ 상대방 캐릭터 선택 (선택한 시나리오에 맞춰)
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {(Object.keys(opponentPersonaLabels) as OpponentPersona[]).map((persona) => {
@@ -518,6 +566,9 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
                   <strong className="text-ink">스타일:</strong> {opponentPersonaTraits[selectedPersona].openerStyle}
                 </p>
               </div>
+              <p className="mt-2 text-xs text-ink/40 italic">
+                💡 같은 시나리오로 다른 캐릭터와 연습 가능 (예: 면접관 A/B 스타일)
+              </p>
             </div>
           </div>
         )}
@@ -526,7 +577,7 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
       {/* Scenario Card Selection */}
       <div className="mb-5">
         <label className="block text-xs font-semibold text-ink-500 mb-2 tracking-wide">
-          시나리오 선택
+          1️⃣ 시나리오 선택
         </label>
         <div className="grid grid-cols-1 gap-2">
           {scenarios.map((scenario) => (
@@ -573,6 +624,13 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Divider */}
+      <div className="mb-5 flex items-center gap-3">
+        <div className="flex-1 h-px bg-ink/10"></div>
+        <span className="text-xs text-ink/30 font-medium">그 다음</span>
+        <div className="flex-1 h-px bg-ink/10"></div>
       </div>
 
       <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
