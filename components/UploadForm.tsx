@@ -203,11 +203,25 @@ export default function UploadForm() {
   if (result) {
     return (
       <div className="animate-fadeIn">
-        {isDemoMode && (
-          <div className="mb-5 px-4 py-2 rounded-full bg-hold-50 border border-hold-200 text-center">
-            <span className="text-sm font-medium text-hold-600">통화 분석 결과</span>
+        {/* 단계 표시기 */}
+        <div className="paper-card p-4 bg-cream-100 mb-5">
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center gap-2 opacity-50">
+              <div className="w-8 h-8 rounded-full bg-hold text-white flex items-center justify-center text-sm font-bold">✓</div>
+              <span className="text-sm text-ink/60">동의</span>
+            </div>
+            <div className="w-8 h-0.5 bg-hold"></div>
+            <div className="flex items-center gap-2 opacity-50">
+              <div className="w-8 h-8 rounded-full bg-hold text-white flex items-center justify-center text-sm font-bold">✓</div>
+              <span className="text-sm text-ink/60">통화 중</span>
+            </div>
+            <div className="w-8 h-0.5 bg-hold"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center text-sm font-bold">3</div>
+              <span className="text-sm font-bold text-primary-700">복기</span>
+            </div>
           </div>
-        )}
+        </div>
         
         {/* Tab Navigation */}
         <div className="mb-5 segmented-control">
@@ -366,9 +380,23 @@ export default function UploadForm() {
               분석 중...
             </span>
           ) : (
-            '통화 분석 시작'
+            '📊 통화 분석 시작하기'
           )}
         </button>
+        {!audioFile && (
+          <p className="text-xs text-center text-ink/50 -mt-2">
+            파일을 선택하면 분석을 시작할 수 있습니다
+          </p>
+        )}
+
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-ink/10"></div>
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-white px-3 text-ink/50 font-medium">또는 데모 체험</span>
+          </div>
+        </div>
 
         <button
           type="button"
@@ -376,8 +404,11 @@ export default function UploadForm() {
           disabled={loading}
           className="btn-demo"
         >
-          📞 실시간 통화 시뮬레이션 체험
+          📞 실시간 시뮬레이션 체험하기
         </button>
+        <p className="text-xs text-center text-ink/50 -mt-2">
+          약 40초 · 빠른 데모 체험
+        </p>
         
         <button
           type="button"
@@ -385,8 +416,11 @@ export default function UploadForm() {
           disabled={loading}
           className="btn-secondary text-sm"
         >
-          {loading ? '분석 중...' : `${scenarios.find(s => s.id === selectedScenario)?.label} 사후 분석만 보기`}
+          {loading ? '분석 중...' : `${scenarios.find(s => s.id === selectedScenario)?.emoji} ${scenarios.find(s => s.id === selectedScenario)?.label} 복기 보기`}
         </button>
+        <p className="text-xs text-center text-ink/50 -mt-2">
+          시뮬레이션 없이 바로 분석 결과 확인
+        </p>
       </form>
 
       {/* Info Footer */}
