@@ -4,69 +4,61 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-50;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    background-attachment: fixed;
+    @apply bg-cream text-ink font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-glass;
+  .paper-card {
+    @apply bg-white border border-ink/10 rounded-2xl shadow-soft;
   }
   
-  .glass-card-hover {
-    @apply glass-card hover:bg-white/10 hover:border-white/20 transition-all duration-300;
+  .paper-card-hover {
+    @apply paper-card hover:shadow-soft-md transition-all duration-200;
   }
   
   .btn-primary {
-    @apply w-full py-4 px-6 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white font-bold rounded-2xl shadow-glow transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
+    @apply w-full py-3.5 px-6 bg-ink hover:bg-ink-400 text-cream font-semibold rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base;
   }
   
   .btn-secondary {
-    @apply w-full py-4 px-6 bg-white/10 hover:bg-white/20 backdrop-blur-xl text-white font-semibold rounded-2xl border border-white/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
+    @apply w-full py-3.5 px-6 bg-white hover:bg-cream-200 text-ink font-semibold rounded-2xl border border-ink/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base;
   }
   
   .btn-demo {
-    @apply w-full py-4 px-6 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-500 hover:to-accent-400 text-white font-bold rounded-2xl shadow-glow-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
+    @apply w-full py-3.5 px-6 bg-hold hover:bg-hold-600 text-white font-semibold rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base;
   }
   
   .input-field {
-    @apply w-full px-5 py-4 text-base bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all;
+    @apply w-full px-4 py-3 text-base bg-white border border-ink/20 rounded-2xl text-ink placeholder-ink/40 focus:outline-none focus:ring-2 focus:ring-hold/30 focus:border-hold transition-all;
   }
   
   .segmented-control {
-    @apply flex bg-white/5 backdrop-blur-xl rounded-2xl p-1 border border-white/10;
+    @apply flex bg-white rounded-2xl p-1 border border-ink/10 shadow-soft;
   }
   
   .segment-button {
-    @apply flex-1 py-3 px-4 text-sm font-semibold text-slate-400 rounded-xl transition-all duration-200;
+    @apply flex-1 py-2.5 px-4 text-sm font-medium text-ink/60 rounded-xl transition-all duration-200;
   }
   
   .segment-button-active {
-    @apply bg-white/10 text-white shadow-lg;
-  }
-  
-  .step-number {
-    @apply flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary-600 to-primary-500 text-white flex items-center justify-center text-sm font-bold shadow-glow-sm;
+    @apply bg-ink text-cream shadow-soft;
   }
   
   .caution-chip {
-    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold backdrop-blur-xl border transition-all;
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all;
   }
 }
 
 @layer utilities {
-  .text-gradient {
-    @apply bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent;
-  }
-  
-  .text-gradient-primary {
-    @apply bg-gradient-to-r from-primary-300 to-primary-100 bg-clip-text text-transparent;
-  }
-
   .animate-slideUp {
     animation: slideUp 0.3s ease-out;
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.4s ease-out;
   }
 
   @keyframes slideUp {
@@ -77,6 +69,15 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
     }
   }
 }

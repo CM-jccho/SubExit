@@ -135,32 +135,28 @@ export default function UploadForm() {
     return (
       <div className="animate-fadeIn">
         {isDemoMode && (
-          <div className="mb-5 px-4 py-2.5 rounded-full bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 text-center backdrop-blur-xl">
-            <span className="text-sm font-bold text-blue-300">📱 샘플 데모</span>
+          <div className="mb-5 px-4 py-2 rounded-full bg-hold-50 border border-hold-200 text-center">
+            <span className="text-sm font-medium text-hold-600">샘플 데모</span>
           </div>
         )}
         
         {/* Tab Navigation */}
-        <div className="mb-5 glass-card p-1 flex gap-1">
+        <div className="mb-5 segmented-control">
           <button
             onClick={() => setActiveTab('analysis')}
-            className={`flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
-              activeTab === 'analysis'
-                ? 'bg-primary-500 text-white shadow-glow'
-                : 'text-slate-400 hover:text-white hover:bg-white/10'
+            className={`segment-button ${
+              activeTab === 'analysis' ? 'segment-button-active' : ''
             }`}
           >
-            🎧 통화 녹음 분석
+            통화 분석
           </button>
           <button
             onClick={() => setActiveTab('practice')}
-            className={`flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
-              activeTab === 'practice'
-                ? 'bg-primary-500 text-white shadow-glow'
-                : 'text-slate-400 hover:text-white hover:bg-white/10'
+            className={`segment-button ${
+              activeTab === 'practice' ? 'segment-button-active' : ''
             }`}
           >
-            🎭 실전 연습
+            실전 연습
           </button>
         </div>
 
@@ -194,11 +190,11 @@ export default function UploadForm() {
   // parent, formal, general, romantic
 
   return (
-    <div className="glass-card p-6 sm:p-7">
+    <div className="paper-card p-6 sm:p-7">
       {/* Coach Tone Selection */}
       <div className="mb-6">
-        <label className="block text-xs font-bold text-emerald-400 mb-3 uppercase tracking-wider">
-          코치 톤 선택
+        <label className="block text-xs font-semibold text-ink/60 mb-3 tracking-wide">
+          코치 톤
         </label>
         <div className="flex flex-wrap gap-2">
           {(Object.keys(coachToneLabels) as CoachTone[]).map((tone) => (
@@ -206,10 +202,10 @@ export default function UploadForm() {
               key={tone}
               type="button"
               onClick={() => handleToneChange(tone)}
-              className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+              className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
                 coachTone === tone
-                  ? 'bg-emerald-500 text-white shadow-glow'
-                  : 'bg-white/10 text-slate-300 hover:bg-white/20 border border-white/20'
+                  ? 'bg-hold text-white'
+                  : 'bg-white text-ink/70 hover:bg-cream-200 border border-ink/15'
               }`}
             >
               {coachToneLabels[tone]}
@@ -220,8 +216,8 @@ export default function UploadForm() {
 
       {/* Scenario Selection Chips */}
       <div className="mb-6">
-        <label className="block text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">
-          시나리오 선택 (데모용)
+        <label className="block text-xs font-semibold text-ink/60 mb-3 tracking-wide">
+          시나리오 (데모용)
         </label>
         <div className="flex flex-wrap gap-2">
           {scenarios.map((scenario) => (
@@ -229,31 +225,30 @@ export default function UploadForm() {
               key={scenario.id}
               type="button"
               onClick={() => setSelectedScenario(scenario.id)}
-              className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+              className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
                 selectedScenario === scenario.id
-                  ? 'bg-primary-500 text-white shadow-glow'
-                  : 'bg-white/10 text-slate-300 hover:bg-white/20 border border-white/20'
+                  ? 'bg-ink text-cream'
+                  : 'bg-white text-ink/70 hover:bg-cream-200 border border-ink/15'
               }`}
             >
-              <span className="mr-1.5">{scenario.emoji}</span>
               {scenario.label}
-              {scenario.featured && <span className="ml-1.5 text-amber-400">★</span>}
+              {scenario.featured && <span className="ml-1 text-hold">★</span>}
             </button>
           ))}
         </div>
       </div>
 
-      <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-5">
+      <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
         <div>
-          <label className="block text-sm font-bold text-slate-200 mb-3 tracking-wide">
-            통화 녹음 파일 업로드
+          <label className="block text-sm font-semibold text-ink mb-3">
+            통화 녹음 업로드
           </label>
           <label className="block cursor-pointer group">
-            <div className="relative border-2 border-dashed border-white/20 hover:border-primary-500/50 rounded-3xl p-10 text-center transition-all duration-300 bg-white/5 hover:bg-white/10 backdrop-blur-xl group-hover:shadow-glow">
-              <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">🎙️</div>
-              <div className="text-base font-bold text-white mb-2">
+            <div className="relative border-2 border-dashed border-ink/20 hover:border-hold/50 rounded-2xl p-8 text-center transition-all duration-200 bg-cream-100 hover:bg-hold-50">
+              <div className="text-4xl mb-3">🎙️</div>
+              <div className="text-sm font-medium text-ink mb-1">
                 {audioFile ? (
-                  <span className="text-primary-400">
+                  <span className="text-hold-600">
                     {audioFile.name}
                   </span>
                 ) : (
@@ -261,7 +256,7 @@ export default function UploadForm() {
                 )}
               </div>
               {!audioFile && (
-                <p className="text-xs text-slate-500 mt-2">
+                <p className="text-xs text-ink/50 mt-1">
                   MP3, M4A, WAV · 최대 25MB
                 </p>
               )}
@@ -275,16 +270,16 @@ export default function UploadForm() {
           </label>
           
           {/* Upload Notice */}
-          <div className="mt-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
-            <p className="text-xs text-amber-300 leading-relaxed">
-              ⚠️ 본인이 직접 녹음한 통화만 업로드하세요. 상대방 동의가 필요할 수 있습니다.
+          <div className="mt-3 p-3 rounded-xl bg-sway-50 border border-sway-200">
+            <p className="text-xs text-sway-600 leading-relaxed">
+              본인이 직접 녹음한 통화만 업로드하세요. 상대방 동의가 필요할 수 있습니다.
             </p>
           </div>
         </div>
 
         {error && (
-          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 backdrop-blur-xl">
-            <p className="text-sm font-semibold text-rose-400">{error}</p>
+          <div className="p-3 rounded-xl bg-sway-50 border border-sway-300">
+            <p className="text-sm font-medium text-sway-600">{error}</p>
           </div>
         )}
 
@@ -295,14 +290,14 @@ export default function UploadForm() {
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
               분석 중...
             </span>
           ) : (
-            '🎯 통화 분석 시작'
+            '통화 분석 시작'
           )}
         </button>
 
@@ -312,27 +307,18 @@ export default function UploadForm() {
           disabled={loading}
           className="btn-demo"
         >
-          {loading ? '분석 중...' : `✨ ${scenarios.find(s => s.id === selectedScenario)?.label} 샘플 체험`}
+          {loading ? '분석 중...' : `${scenarios.find(s => s.id === selectedScenario)?.label} 샘플 체험`}
         </button>
       </form>
 
       {/* Info Footer */}
-      <div className="mt-6 pt-5 border-t border-white/10">
-        <div className="flex items-center justify-center gap-4 text-xs text-slate-500">
-          <span className="flex items-center gap-1.5">
-            <span>🔒</span>
-            <span>녹음 미저장</span>
-          </span>
-          <span className="w-1 h-1 rounded-full bg-slate-700"></span>
-          <span className="flex items-center gap-1.5">
-            <span>⚡</span>
-            <span>압박 구간 탐지</span>
-          </span>
-          <span className="w-1 h-1 rounded-full bg-slate-700"></span>
-          <span className="flex items-center gap-1.5">
-            <span>💬</span>
-            <span>연습 멘트 제공</span>
-          </span>
+      <div className="mt-6 pt-4 border-t border-ink/10">
+        <div className="flex items-center justify-center gap-3 text-xs text-ink/50">
+          <span>녹음 미저장</span>
+          <span className="w-1 h-1 rounded-full bg-ink/20"></span>
+          <span>압박 구간 탐지</span>
+          <span className="w-1 h-1 rounded-full bg-ink/20"></span>
+          <span>연습 멘트 제공</span>
         </div>
       </div>
     </div>
