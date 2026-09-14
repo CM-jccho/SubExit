@@ -45,21 +45,21 @@ type CallAnalysisResult = {
 }
 
 const patternLabelColors = {
-  '마음 흔들기': 'bg-coral-500/20 border-coral-500/40 text-coral-300',
-  'FOMO·압박': 'bg-amber-500/20 border-amber-500/40 text-amber-300',
-  '절차·질질': 'bg-blue-500/20 border-blue-500/40 text-blue-300',
+  '마음 흔들기': 'bg-sway-50 border-sway-300 text-sway-600',
+  'FOMO·압박': 'bg-amber-50 border-amber-300 text-amber-700',
+  '절차·질질': 'bg-blue-50 border-blue-300 text-blue-700',
 }
 
 const severityColors = {
-  high: 'bg-rose-500/20 border-rose-500/40',
-  medium: 'bg-amber-500/20 border-amber-500/40',
-  low: 'bg-blue-500/20 border-blue-500/40',
+  high: 'bg-sway-50 border-sway-300',
+  medium: 'bg-amber-50 border-amber-300',
+  low: 'bg-blue-50 border-blue-300',
 }
 
 const riskLevelBadge = {
-  high: { bg: 'bg-rose-500/20', text: 'text-rose-400', border: 'border-rose-500/30', label: '높음' },
-  medium: { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/30', label: '중간' },
-  low: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', label: '낮음' },
+  high: { bg: 'bg-sway-50', text: 'text-sway-600', border: 'border-sway-300', label: '높음' },
+  medium: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-300', label: '중간' },
+  low: { bg: 'bg-hold-50', text: 'text-hold-600', border: 'border-hold-300', label: '낮음' },
 }
 
 function formatTime(seconds: number): string {
@@ -91,10 +91,10 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
   const riskBadge = riskLevelBadge[result.analysis.riskLevel as keyof typeof riskLevelBadge] || riskLevelBadge.medium
 
   return (
-    <div className="space-y-5 animate-fadeIn">
+    <div className="space-y-4 animate-fadeIn">
       {/* 버팀률 Ring + Stamp */}
       {result.analysis.pressureSegments.length > 0 && (
-        <div className="glass-card p-5 border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10">
+        <div className="paper-card p-5 bg-hold-50">
           <div className="flex items-center justify-center gap-5">
             {/* 버팀률 Ring */}
             <div className="relative w-20 h-20">
@@ -104,42 +104,42 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
                   cy="40"
                   r="32"
                   stroke="currentColor"
-                  strokeWidth="6"
+                  strokeWidth="5"
                   fill="none"
-                  className="text-white/10"
+                  className="text-ink/10"
                 />
                 <circle
                   cx="40"
                   cy="40"
                   r="32"
                   stroke="currentColor"
-                  strokeWidth="6"
+                  strokeWidth="5"
                   fill="none"
                   strokeDasharray={`${2 * Math.PI * 32}`}
                   strokeDashoffset={`${2 * Math.PI * 32 * (1 - heldRate / 100)}`}
-                  className="text-emerald-400 transition-all duration-1000"
+                  className="text-hold transition-all duration-1000"
                   strokeLinecap="round"
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-lg font-black text-emerald-400">{heldRate}%</div>
+                  <div className="text-xl font-bold text-hold">{heldRate}%</div>
                 </div>
               </div>
             </div>
             
             {/* Stats */}
             <div>
-              <div className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">
+              <div className="text-xs font-semibold text-ink/50 mb-1 tracking-wide">
                 버팀률
               </div>
-              <div className="text-2xl font-black text-white mb-1">
+              <div className="text-2xl font-bold text-ink mb-1">
                 {heldCount}/{totalCount} 구간
               </div>
-              <div className="text-xs text-slate-400">
-                {heldCount > 0 && '✅ 버팀'}
+              <div className="text-xs text-ink/60">
+                {heldCount > 0 && '버팀'}
                 {heldCount > 0 && totalCount > heldCount && ' · '}
-                {totalCount > heldCount && `⚠️ 흔들림 ${totalCount - heldCount}개`}
+                {totalCount > heldCount && `흔들림 ${totalCount - heldCount}개`}
               </div>
             </div>
           </div>
@@ -147,34 +147,33 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
       )}
 
       {/* Header Badge */}
-      <div className="glass-card p-5 border-primary-500/30">
+      <div className="paper-card p-5">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-primary-400 mb-1 uppercase tracking-wider">분석 완료</div>
-            <div className="text-xl font-bold text-white">{result.metadata.organization}</div>
+            <div className="text-xs font-semibold text-ink/50 mb-1 tracking-wide">분석 완료</div>
+            <div className="text-lg font-bold text-ink">{result.metadata.organization}</div>
           </div>
-          <div className={`px-4 py-2 rounded-full text-sm font-bold border ${riskBadge.bg} ${riskBadge.text} ${riskBadge.border}`}>
+          <div className={`px-3 py-1.5 rounded-full text-xs font-medium border ${riskBadge.bg} ${riskBadge.text} ${riskBadge.border}`}>
             압박도: {riskBadge.label}
           </div>
         </div>
       </div>
 
       {/* Timeline + Transcript */}
-      <div className="glass-card p-6">
-        <div className="mb-5 pb-4 border-b border-white/10">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <span className="text-2xl">🎙️</span>
+      <div className="paper-card p-5">
+        <div className="mb-4 pb-4 border-b border-ink/10">
+          <h3 className="text-base font-bold text-ink flex items-center gap-2">
             통화 타임라인
-            <span className="text-sm font-normal text-slate-400 ml-2">
+            <span className="text-sm font-normal text-ink/50 ml-1">
               ({formatTime(result.duration)})
             </span>
           </h3>
-          <p className="text-xs text-slate-400 mt-2">
-            🔴 빨간 박스는 압박·죄책감 구간입니다
+          <p className="text-xs text-ink/60 mt-1">
+            색상 박스는 압박 구간입니다
           </p>
         </div>
 
-        <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+        <div className="space-y-2.5 max-h-96 overflow-y-auto pr-2">
           {result.transcript.map((line, idx) => {
             const isPressure = isPressureSegment(line.startTime, line.endTime)
             const pressureSeg = getPressureSegmentForTime(line.startTime, line.endTime)
@@ -183,54 +182,54 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
             return (
               <div
                 key={idx}
-                className={`p-4 rounded-2xl border-2 transition-all ${
+                className={`p-3.5 rounded-xl border transition-all ${
                   isPressure
-                    ? `${severityColors[pressureSeg?.severity as keyof typeof severityColors] || 'bg-rose-500/20 border-rose-500/40'} cursor-pointer hover:scale-[1.02]`
-                    : 'bg-white/5 border-white/10'
+                    ? `${severityColors[pressureSeg?.severity as keyof typeof severityColors] || 'bg-sway-50 border-sway-300'} cursor-pointer hover:shadow-soft-md`
+                    : 'bg-cream-100 border-ink/10'
                 }`}
                 onClick={() => isPressure && setSelectedSegment(isPressure ? idx : null)}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2.5">
                   <div className="flex-shrink-0">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
-                      isUser ? 'bg-primary-500/20' : 'bg-slate-500/20'
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-base ${
+                      isUser ? 'bg-ink/10' : 'bg-ink/5'
                     }`}>
                       {isUser ? '👤' : '📞'}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-bold text-slate-400 uppercase">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-xs font-semibold text-ink/60">
                         {isUser ? '나' : '상대방'}
                       </span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-ink/40">
                         {formatTime(line.startTime)}
                       </span>
                       {isPressure && pressureSeg && (
                         <>
-                          <span className={`px-2 py-0.5 border rounded-full text-xs font-bold ${
-                            patternLabelColors[pressureSeg.patternLabel as keyof typeof patternLabelColors] || 'bg-rose-500/20 border-rose-500/40 text-rose-300'
+                          <span className={`px-2 py-0.5 border rounded-full text-xs font-medium ${
+                            patternLabelColors[pressureSeg.patternLabel as keyof typeof patternLabelColors] || 'bg-sway-50 border-sway-300 text-sway-600'
                           }`}>
                             {pressureSeg.patternLabel || '압박'}
                           </span>
                           {pressureSeg.held !== undefined && (
-                            <span className={`px-2 py-0.5 border rounded-full text-xs font-bold ${
+                            <span className={`px-2 py-0.5 border rounded-full text-xs font-medium ${
                               pressureSeg.held 
-                                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' 
-                                : 'bg-coral-500/20 border-coral-500/40 text-coral-300'
+                                ? 'bg-hold-50 border-hold-300 text-hold-600' 
+                                : 'bg-sway-50 border-sway-300 text-sway-600'
                             }`}>
-                              {pressureSeg.held ? '✅ 버팀' : '⚠️ 흔들림'}
+                              {pressureSeg.held ? '버팀' : '흔들림'}
                             </span>
                           )}
                         </>
                       )}
                     </div>
-                    <p className="text-sm text-white leading-relaxed">
+                    <p className="text-sm text-ink leading-relaxed">
                       {line.text}
                     </p>
                     {isPressure && pressureSeg && selectedSegment === idx && (
-                      <div className="mt-3 pt-3 border-t border-white/20">
-                        <p className="text-xs text-amber-300 leading-relaxed">
+                      <div className="mt-2.5 pt-2.5 border-t border-ink/10">
+                        <p className="text-xs text-ink/70 leading-relaxed">
                           💡 {pressureSeg.description}
                         </p>
                       </div>
@@ -243,61 +242,60 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
         </div>
       </div>
 
-      {/* Pressure Segments Summary */}
+      {/* Pressure Segments Summary - Only show first one as callout */}
       {result.analysis.pressureSegments.length > 0 && (
-        <div className="glass-card p-6 border-rose-500/30">
-          <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-            <span className="text-xl">⚠️</span>
+        <div className="paper-card p-4 bg-sway-50">
+          <h3 className="text-sm font-bold text-ink mb-3">
             압박 구간 요약
           </h3>
-          <div className="space-y-3">
-            {result.analysis.pressureSegments.map((seg, idx) => (
-              <div key={idx} className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                <div className="flex items-center flex-wrap gap-2 mb-2">
-                  <span className="text-xs font-bold text-slate-400">
-                    {formatTime(seg.startTime)} - {formatTime(seg.endTime)}
-                  </span>
-                  <span className={`px-2 py-0.5 border rounded-full text-xs font-bold ${
-                    patternLabelColors[seg.patternLabel as keyof typeof patternLabelColors] || 'bg-rose-500/20 border-rose-500/40 text-rose-300'
-                  }`}>
-                    {seg.patternLabel || seg.type}
-                  </span>
-                  {seg.held !== undefined && (
-                    <span className={`px-2 py-0.5 border rounded-full text-xs font-bold ${
-                      seg.held 
-                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' 
-                        : 'bg-coral-500/20 border-coral-500/40 text-coral-300'
-                    }`}>
-                      {seg.held ? '✅ 버팀' : '⚠️ 흔들림'}
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-slate-300 leading-relaxed">
-                  {seg.description}
-                </p>
-              </div>
-            ))}
+          <div className="bg-white rounded-xl p-3 border border-sway-200">
+            <div className="flex items-center flex-wrap gap-2 mb-2">
+              <span className="text-xs font-medium text-ink/60">
+                {formatTime(result.analysis.pressureSegments[0].startTime)} - {formatTime(result.analysis.pressureSegments[0].endTime)}
+              </span>
+              <span className={`px-2 py-0.5 border rounded-full text-xs font-medium ${
+                patternLabelColors[result.analysis.pressureSegments[0].patternLabel as keyof typeof patternLabelColors] || 'bg-sway-50 border-sway-300 text-sway-600'
+              }`}>
+                {result.analysis.pressureSegments[0].patternLabel || result.analysis.pressureSegments[0].type}
+              </span>
+              {result.analysis.pressureSegments[0].held !== undefined && (
+                <span className={`px-2 py-0.5 border rounded-full text-xs font-medium ${
+                  result.analysis.pressureSegments[0].held 
+                    ? 'bg-hold-50 border-hold-300 text-hold-600' 
+                    : 'bg-sway-50 border-sway-300 text-sway-600'
+                }`}>
+                  {result.analysis.pressureSegments[0].held ? '버팀' : '흔들림'}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-ink leading-relaxed">
+              {result.analysis.pressureSegments[0].description}
+            </p>
           </div>
+          {result.analysis.pressureSegments.length > 1 && (
+            <p className="text-xs text-ink/60 mt-2">
+              + {result.analysis.pressureSegments.length - 1}개 구간 더 (타임라인 참고)
+            </p>
+          )}
         </div>
       )}
 
       {/* Feedback */}
-      <div className="glass-card p-6">
-        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-          <span className="text-xl">📊</span>
+      <div className="paper-card p-5">
+        <h3 className="text-sm font-bold text-ink mb-4">
           대응 평가
         </h3>
         
         {result.analysis.feedback.positive.length > 0 && (
-          <div className="mb-5">
-            <div className="text-xs font-bold text-emerald-400 mb-3 uppercase tracking-wider">
-              ✅ 잘한 점
+          <div className="mb-4">
+            <div className="text-xs font-semibold text-hold-600 mb-2 tracking-wide">
+              잘한 점
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {result.analysis.feedback.positive.map((item, idx) => (
                 <div key={idx} className="flex items-start gap-2">
-                  <span className="text-emerald-400 mt-1">▸</span>
-                  <p className="text-sm text-slate-300 leading-relaxed">{item}</p>
+                  <span className="text-hold-600 mt-0.5 text-xs">•</span>
+                  <p className="text-sm text-ink/80 leading-relaxed">{item}</p>
                 </div>
               ))}
             </div>
@@ -305,15 +303,15 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
         )}
 
         {result.analysis.feedback.improvements.length > 0 && (
-          <div className="pt-4 border-t border-white/10">
-            <div className="text-xs font-bold text-amber-400 mb-3 uppercase tracking-wider">
-              💡 개선 제안
+          <div className="pt-4 border-t border-ink/10">
+            <div className="text-xs font-semibold text-ink/60 mb-2 tracking-wide">
+              개선 제안
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {result.analysis.feedback.improvements.map((item, idx) => (
                 <div key={idx} className="flex items-start gap-2">
-                  <span className="text-amber-400 mt-1">▸</span>
-                  <p className="text-sm text-slate-300 leading-relaxed">{item}</p>
+                  <span className="text-ink/40 mt-0.5 text-xs">•</span>
+                  <p className="text-sm text-ink/80 leading-relaxed">{item}</p>
                 </div>
               ))}
             </div>
@@ -321,32 +319,23 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
         )}
       </div>
 
-      {/* Practice Scripts Section */}
+      {/* Practice Scripts Section - Show only first one */}
       {result.analysis.practiceScripts && result.analysis.practiceScripts.length > 0 && (
-        <div className="glass-card p-6 border-primary-500/30">
-          <div className="space-y-4">
-            <div className="flex items-start gap-3 pb-4 border-b border-white/10">
-              <span className="text-2xl">💬</span>
-              <div className="flex-1">
-                <h4 className="text-base font-bold text-white mb-2">연습용 대응 멘트</h4>
-                <p className="text-xs text-slate-400">
-                  비슷한 상황에서 이렇게 말해보세요
-                </p>
-              </div>
+        <div className="paper-card p-5 bg-hold-50">
+          <div className="mb-3">
+            <h4 className="text-sm font-bold text-ink mb-1">연습용 대응 멘트</h4>
+            <p className="text-xs text-ink/60">
+              비슷한 상황에서 이렇게 말해보세요
+            </p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-hold-200">
+            <div className="mb-2.5">
+              <div className="text-xs font-semibold text-ink/60 mb-1">상황</div>
+              <p className="text-sm text-ink/80 leading-relaxed">{result.analysis.practiceScripts[0].whenKo}</p>
             </div>
-            <div className="space-y-4">
-              {result.analysis.practiceScripts.map((script, i) => (
-                <div key={i} className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                  <div className="mb-3">
-                    <div className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">상황</div>
-                    <p className="text-sm text-slate-300 leading-relaxed">{script.whenKo}</p>
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-primary-400 mb-1 uppercase tracking-wider">추천 응답</div>
-                    <p className="text-sm text-white font-medium leading-relaxed">"{script.sayKo}"</p>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <div className="text-xs font-semibold text-hold-600 mb-1">추천 응답</div>
+              <p className="text-sm text-ink font-medium leading-relaxed">"{result.analysis.practiceScripts[0].sayKo}"</p>
             </div>
           </div>
         </div>
@@ -358,12 +347,12 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
       )}
 
       {/* Disclaimer */}
-      <div className="glass-card p-5 border-slate-700">
-        <div className="flex items-start gap-3">
-          <span className="text-2xl flex-shrink-0">📌</span>
+      <div className="paper-card p-4 bg-cream-100">
+        <div className="flex items-start gap-2.5">
+          <span className="text-lg flex-shrink-0">📌</span>
           <div>
-            <div className="text-xs font-bold text-slate-300 mb-2">면책 고지</div>
-            <p className="text-xs text-slate-500 leading-relaxed">{result.disclaimer}</p>
+            <div className="text-xs font-semibold text-ink/70 mb-1">면책 고지</div>
+            <p className="text-xs text-ink/60 leading-relaxed">{result.disclaimer}</p>
           </div>
         </div>
       </div>
