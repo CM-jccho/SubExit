@@ -92,54 +92,69 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
 
   return (
     <div className="space-y-5 animate-fadeIn">
-      {/* 버팀률 Ring + Stamp */}
+      {/* 버팀률 Ring + Stats */}
       {result.analysis.pressureSegments.length > 0 && (
-        <div className="glass-card p-5 border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10">
-          <div className="flex items-center justify-center gap-5">
+        <div className="glass-card p-6 border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] via-cyan-500/[0.06] to-emerald-500/[0.04] shadow-soft-lg">
+          <div className="flex items-center gap-6">
             {/* 버팀률 Ring */}
-            <div className="relative w-20 h-20">
-              <svg className="w-20 h-20 transform -rotate-90">
+            <div className="relative w-24 h-24 flex-shrink-0">
+              <svg className="w-24 h-24 transform -rotate-90 drop-shadow-lg">
                 <circle
-                  cx="40"
-                  cy="40"
-                  r="32"
+                  cx="48"
+                  cy="48"
+                  r="38"
                   stroke="currentColor"
-                  strokeWidth="6"
+                  strokeWidth="7"
                   fill="none"
-                  className="text-white/10"
+                  className="text-white/[0.08]"
                 />
                 <circle
-                  cx="40"
-                  cy="40"
-                  r="32"
-                  stroke="currentColor"
-                  strokeWidth="6"
+                  cx="48"
+                  cy="48"
+                  r="38"
+                  stroke="url(#gradient-emerald)"
+                  strokeWidth="7"
                   fill="none"
-                  strokeDasharray={`${2 * Math.PI * 32}`}
-                  strokeDashoffset={`${2 * Math.PI * 32 * (1 - heldRate / 100)}`}
-                  className="text-emerald-400 transition-all duration-1000"
+                  strokeDasharray={`${2 * Math.PI * 38}`}
+                  strokeDashoffset={`${2 * Math.PI * 38 * (1 - heldRate / 100)}`}
+                  className="transition-all duration-1000"
                   strokeLinecap="round"
                 />
+                <defs>
+                  <linearGradient id="gradient-emerald" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#10b981" />
+                    <stop offset="100%" stopColor="#06b6d4" />
+                  </linearGradient>
+                </defs>
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-lg font-black text-emerald-400">{heldRate}%</div>
+                  <div className="text-2xl font-black text-emerald-400">{heldRate}<span className="text-sm">%</span></div>
                 </div>
               </div>
             </div>
             
             {/* Stats */}
-            <div>
-              <div className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-black text-emerald-400/80 mb-1.5 uppercase tracking-wider">
                 버팀률
               </div>
-              <div className="text-2xl font-black text-white mb-1">
-                {heldCount}/{totalCount} 구간
+              <div className="text-3xl font-black text-white mb-2 tracking-tight">
+                {heldCount}<span className="text-slate-400 text-xl font-bold">/{totalCount}</span> <span className="text-lg text-slate-500 font-semibold">구간</span>
               </div>
-              <div className="text-xs text-slate-400">
-                {heldCount > 0 && '✅ 버팀'}
-                {heldCount > 0 && totalCount > heldCount && ' · '}
-                {totalCount > heldCount && `⚠️ 흔들림 ${totalCount - heldCount}개`}
+              <div className="flex flex-wrap gap-2">
+                {heldCount > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-xs font-bold text-emerald-300">
+                    <span>✅</span>
+                    <span>버팀 {heldCount}</span>
+                  </span>
+                )}
+                {totalCount > heldCount && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/20 border border-amber-500/30 rounded-lg text-xs font-bold text-amber-300">
+                    <span>⚠️</span>
+                    <span>흔들림 {totalCount - heldCount}</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -147,30 +162,31 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
       )}
 
       {/* Header Badge */}
-      <div className="glass-card p-5 border-primary-500/30">
+      <div className="glass-card p-5 border-primary-500/20 shadow-soft-lg">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-primary-400 mb-1 uppercase tracking-wider">분석 완료</div>
-            <div className="text-xl font-bold text-white">{result.metadata.organization}</div>
+            <div className="text-xs font-black text-primary-400/80 mb-1.5 uppercase tracking-wider">분석 완료</div>
+            <div className="text-2xl font-black text-white tracking-tight">{result.metadata.organization}</div>
           </div>
-          <div className={`px-4 py-2 rounded-full text-sm font-bold border ${riskBadge.bg} ${riskBadge.text} ${riskBadge.border}`}>
-            압박도: {riskBadge.label}
+          <div className={`px-4 py-2 rounded-full text-sm font-bold border shadow-soft ${riskBadge.bg} ${riskBadge.text} ${riskBadge.border}`}>
+            압박도 {riskBadge.label}
           </div>
         </div>
       </div>
 
       {/* Timeline + Transcript */}
-      <div className="glass-card p-6">
-        <div className="mb-5 pb-4 border-b border-white/10">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+      <div className="glass-card p-6 shadow-soft-lg">
+        <div className="mb-5 pb-4 border-b border-white/[0.08]">
+          <h3 className="section-header">
             <span className="text-2xl">🎙️</span>
-            통화 타임라인
-            <span className="text-sm font-normal text-slate-400 ml-2">
-              ({formatTime(result.duration)})
+            <span>통화 타임라인</span>
+            <span className="text-sm font-semibold text-slate-400 ml-auto">
+              {formatTime(result.duration)}
             </span>
           </h3>
-          <p className="text-xs text-slate-400 mt-2">
-            🔴 빨간 박스는 압박·죄책감 구간입니다
+          <p className="text-xs text-slate-400 font-semibold mt-2 flex items-center gap-2">
+            <span className="w-3 h-3 rounded bg-rose-500/30 border border-rose-500/50"></span>
+            <span>색상 박스는 압박·죄책감 구간입니다</span>
           </p>
         </div>
 
@@ -245,10 +261,10 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
 
       {/* Pressure Segments Summary */}
       {result.analysis.pressureSegments.length > 0 && (
-        <div className="glass-card p-6 border-rose-500/30">
-          <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+        <div className="glass-card p-6 border-rose-500/20 shadow-soft-lg">
+          <h3 className="section-header">
             <span className="text-xl">⚠️</span>
-            압박 구간 요약
+            <span>압박 구간 요약</span>
           </h3>
           <div className="space-y-3">
             {result.analysis.pressureSegments.map((seg, idx) => (
@@ -282,10 +298,10 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
       )}
 
       {/* Feedback */}
-      <div className="glass-card p-6">
-        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+      <div className="glass-card p-6 shadow-soft-lg">
+        <h3 className="section-header">
           <span className="text-xl">📊</span>
-          대응 평가
+          <span>대응 평가</span>
         </h3>
         
         {result.analysis.feedback.positive.length > 0 && (
@@ -323,13 +339,13 @@ export default function CallResultDisplay({ result, coachTone = 'firm_polite' }:
 
       {/* Practice Scripts Section */}
       {result.analysis.practiceScripts && result.analysis.practiceScripts.length > 0 && (
-        <div className="glass-card p-6 border-primary-500/30">
+        <div className="glass-card p-6 border-primary-500/20 shadow-soft-lg">
           <div className="space-y-4">
-            <div className="flex items-start gap-3 pb-4 border-b border-white/10">
+            <div className="flex items-start gap-3 pb-4 border-b border-white/[0.08]">
               <span className="text-2xl">💬</span>
               <div className="flex-1">
-                <h4 className="text-base font-bold text-white mb-2">연습용 대응 멘트</h4>
-                <p className="text-xs text-slate-400">
+                <h4 className="text-base font-black text-white mb-2 tracking-tight">연습용 대응 멘트</h4>
+                <p className="text-xs text-slate-400 font-semibold">
                   비슷한 상황에서 이렇게 말해보세요
                 </p>
               </div>

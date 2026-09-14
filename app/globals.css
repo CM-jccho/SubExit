@@ -5,38 +5,38 @@
 @layer base {
   body {
     @apply bg-slate-950 text-slate-50;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1a1f2e 40%, #0f172a 100%);
     background-attachment: fixed;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-glass;
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-3xl shadow-soft;
   }
   
   .glass-card-hover {
-    @apply glass-card hover:bg-white/10 hover:border-white/20 transition-all duration-300;
+    @apply glass-card hover:bg-white/[0.06] hover:border-white/[0.12] hover:shadow-soft-lg transition-all duration-300;
   }
   
   .btn-primary {
-    @apply w-full py-4 px-6 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white font-bold rounded-2xl shadow-glow transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
+    @apply w-full py-4 px-6 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-bold rounded-2xl shadow-soft-lg hover:shadow-glow transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
   }
   
   .btn-secondary {
-    @apply w-full py-4 px-6 bg-white/10 hover:bg-white/20 backdrop-blur-xl text-white font-semibold rounded-2xl border border-white/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
+    @apply w-full py-4 px-6 bg-white/[0.06] hover:bg-white/[0.1] backdrop-blur-xl text-white font-semibold rounded-2xl border border-white/[0.12] hover:border-white/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base shadow-soft;
   }
   
   .btn-demo {
-    @apply w-full py-4 px-6 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-500 hover:to-accent-400 text-white font-bold rounded-2xl shadow-glow-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
+    @apply w-full py-4 px-6 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white font-bold rounded-2xl shadow-soft-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-base;
   }
   
   .input-field {
-    @apply w-full px-5 py-4 text-base bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all;
+    @apply w-full px-5 py-4 text-base bg-white/[0.04] backdrop-blur-xl border border-white/[0.12] rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/40 transition-all shadow-soft;
   }
   
   .segmented-control {
-    @apply flex bg-white/5 backdrop-blur-xl rounded-2xl p-1 border border-white/10;
+    @apply flex bg-white/[0.04] backdrop-blur-xl rounded-2xl p-1.5 border border-white/[0.08] shadow-soft;
   }
   
   .segment-button {
@@ -44,15 +44,19 @@
   }
   
   .segment-button-active {
-    @apply bg-white/10 text-white shadow-lg;
+    @apply bg-gradient-to-br from-primary-500/20 to-primary-600/20 text-primary-300 border border-primary-500/30 shadow-soft;
   }
   
   .step-number {
-    @apply flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary-600 to-primary-500 text-white flex items-center justify-center text-sm font-bold shadow-glow-sm;
+    @apply flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary-600 to-primary-500 text-white flex items-center justify-center text-sm font-bold shadow-soft-lg;
   }
   
   .caution-chip {
-    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold backdrop-blur-xl border transition-all;
+    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold backdrop-blur-xl border transition-all shadow-soft;
+  }
+  
+  .section-header {
+    @apply text-base font-black text-white flex items-center gap-2 mb-4 tracking-tight;
   }
 }
 

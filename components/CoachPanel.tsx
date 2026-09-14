@@ -166,26 +166,26 @@ export default function CoachPanel({ practiceScripts, coachTone = 'firm_polite' 
   }
 
   return (
-    <div className="glass-card border-primary-500/30 overflow-hidden">
+    <div className="glass-card border-primary-500/20 overflow-hidden shadow-soft-lg">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-500/10 to-accent-500/10 border-b border-white/10 p-4">
+      <div className="bg-gradient-to-r from-primary-500/[0.08] to-cyan-500/[0.06] border-b border-white/[0.08] p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-xl">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-xl shadow-soft">
               🎯
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-base font-black text-white tracking-tight">
                 연습 코치
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 font-semibold">
                 실시간 대화 시뮬레이션
               </p>
             </div>
           </div>
           <button
             onClick={handleReset}
-            className="px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+            className="px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-white transition-colors"
           >
             초기화
           </button>
@@ -193,15 +193,15 @@ export default function CoachPanel({ practiceScripts, coachTone = 'firm_polite' 
         
         {/* Badges */}
         <div className="flex flex-wrap gap-2 mt-3">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/10 border border-blue-500/30 rounded-full text-xs font-semibold text-blue-400">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-500/10 border border-indigo-500/30 rounded-full text-xs font-bold text-indigo-300 shadow-soft">
             <span>🔇</span>
             <span>마이크 없음</span>
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/10 border border-rose-500/30 rounded-full text-xs font-semibold text-rose-400">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/10 border border-rose-500/30 rounded-full text-xs font-bold text-rose-300 shadow-soft">
             <span>🚫</span>
             <span>통화 대행 아님</span>
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary-500/10 border border-primary-500/30 rounded-full text-xs font-semibold text-primary-400">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary-500/10 border border-primary-500/30 rounded-full text-xs font-bold text-primary-300 shadow-soft">
             <span>🎭</span>
             <span>연습 모드</span>
           </span>
@@ -216,46 +216,46 @@ export default function CoachPanel({ practiceScripts, coachTone = 'firm_polite' 
             className={`flex ${msg.type === 'opponent' ? 'justify-start' : msg.type === 'coach' ? 'justify-end' : 'justify-center'} animate-slideUp`}
           >
             {msg.type === 'system' ? (
-              <div className="max-w-[85%] px-4 py-2 rounded-2xl bg-slate-500/10 border border-slate-500/20">
-                <p className="text-xs text-slate-400 text-center leading-relaxed">
+              <div className="max-w-[85%] px-4 py-2 rounded-2xl bg-slate-500/10 border border-slate-500/20 shadow-soft">
+                <p className="text-xs text-slate-400 font-semibold text-center leading-relaxed">
                   {msg.text}
                 </p>
               </div>
             ) : msg.type === 'opponent' ? (
               <div className="flex items-end gap-2 max-w-[80%]">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-sm">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-sm shadow-soft">
                   📞
                 </div>
                 <div>
-                  <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-white/10 border border-white/20">
-                    <p className="text-sm text-white leading-relaxed">
+                  <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-white/[0.08] border border-white/[0.12] shadow-soft">
+                    <p className="text-sm text-white font-semibold leading-relaxed">
                       {msg.text}
                     </p>
                   </div>
-                  <div className="text-xs text-slate-500 mt-1 ml-2">
+                  <div className="text-xs text-slate-500 font-semibold mt-1 ml-2">
                     {msg.timestamp.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
               </div>
             ) : (
               <div className="flex items-end gap-2 max-w-[80%] flex-row-reverse">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-sm">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-sm shadow-soft">
                   🎓
                 </div>
                 <div>
-                  <div className="px-4 py-3 rounded-2xl rounded-br-md bg-gradient-to-br from-primary-500/20 to-accent-500/20 border border-primary-500/30 relative">
-                    <p className="text-sm text-white font-medium leading-relaxed">
+                  <div className="px-4 py-3 rounded-2xl rounded-br-md bg-gradient-to-br from-primary-500/20 to-cyan-500/20 border border-primary-500/30 relative shadow-soft">
+                    <p className="text-sm text-white font-bold leading-relaxed">
                       {msg.text}
                     </p>
                     <button
                       onClick={() => isSpeaking ? handleStopSpeaking() : handleSpeak(msg.text)}
-                      className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-primary-500 hover:bg-primary-600 text-white flex items-center justify-center text-xs shadow-lg transition-all active:scale-95"
+                      className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white flex items-center justify-center text-xs shadow-soft-lg transition-all active:scale-95"
                       aria-label={isSpeaking ? '음성 정지' : '음성 읽기'}
                     >
                       {isSpeaking ? '⏸' : '🔊'}
                     </button>
                   </div>
-                  <div className="text-xs text-slate-500 mt-1 mr-2 text-right">
+                  <div className="text-xs text-slate-500 font-semibold mt-1 mr-2 text-right">
                     {msg.timestamp.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
@@ -268,10 +268,10 @@ export default function CoachPanel({ practiceScripts, coachTone = 'firm_polite' 
         {isTyping && (
           <div className="flex justify-start animate-slideUp">
             <div className="flex items-end gap-2 max-w-[80%]">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-sm">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-sm shadow-soft">
                 🎓
               </div>
-              <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-white/10 border border-white/20">
+              <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-white/[0.08] border border-white/[0.12] shadow-soft">
                 <div className="flex gap-1">
                   <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }}></span>
                   <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }}></span>
@@ -286,9 +286,9 @@ export default function CoachPanel({ practiceScripts, coachTone = 'firm_polite' 
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-white/10 p-4 bg-slate-900/30">
+      <div className="border-t border-white/[0.08] p-4 bg-slate-900/30">
         <div className="mb-2">
-          <p className="text-xs font-semibold text-slate-400 mb-2">
+          <p className="text-xs font-black text-slate-400 mb-2 tracking-tight">
             영업자가 이렇게 말한다면 탭하세요
           </p>
         </div>
@@ -298,7 +298,7 @@ export default function CoachPanel({ practiceScripts, coachTone = 'firm_polite' 
               key={idx}
               onClick={() => handleLineClick(line)}
               disabled={isTyping}
-              className="px-3 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-300 border border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+              className="px-3 py-2 rounded-xl text-xs font-bold bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 border border-white/[0.12] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 shadow-soft"
             >
               "{line.text}"
             </button>
@@ -307,8 +307,8 @@ export default function CoachPanel({ practiceScripts, coachTone = 'firm_polite' 
       </div>
 
       {/* Footer Disclaimer */}
-      <div className="border-t border-white/10 p-3 bg-slate-900/20">
-        <p className="text-xs text-slate-500 leading-relaxed text-center">
+      <div className="border-t border-white/[0.08] p-3 bg-slate-900/20">
+        <p className="text-xs text-slate-500 font-semibold leading-relaxed text-center">
           ⚠️ 연습용 시뮬레이션 | 통화 대행 아님 | 실제 통화는 본인이 직접
         </p>
       </div>

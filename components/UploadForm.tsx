@@ -135,19 +135,19 @@ export default function UploadForm() {
     return (
       <div className="animate-fadeIn">
         {isDemoMode && (
-          <div className="mb-5 px-4 py-2.5 rounded-full bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 text-center backdrop-blur-xl">
-            <span className="text-sm font-bold text-blue-300">📱 샘플 데모</span>
+          <div className="mb-5 px-4 py-2.5 rounded-full bg-gradient-to-r from-indigo-600/20 to-cyan-600/20 border border-indigo-500/30 text-center backdrop-blur-xl shadow-soft">
+            <span className="text-sm font-bold text-indigo-300">📱 샘플 데모</span>
           </div>
         )}
         
         {/* Tab Navigation */}
-        <div className="mb-5 glass-card p-1 flex gap-1">
+        <div className="mb-5 glass-card p-1.5 flex gap-1.5 shadow-soft-lg">
           <button
             onClick={() => setActiveTab('analysis')}
             className={`flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
               activeTab === 'analysis'
-                ? 'bg-primary-500 text-white shadow-glow'
-                : 'text-slate-400 hover:text-white hover:bg-white/10'
+                ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-soft-lg'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
             }`}
           >
             🎧 통화 녹음 분석
@@ -156,8 +156,8 @@ export default function UploadForm() {
             onClick={() => setActiveTab('practice')}
             className={`flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
               activeTab === 'practice'
-                ? 'bg-primary-500 text-white shadow-glow'
-                : 'text-slate-400 hover:text-white hover:bg-white/10'
+                ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-soft-lg'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
             }`}
           >
             🎭 실전 연습
@@ -194,10 +194,10 @@ export default function UploadForm() {
   // parent, formal, general, romantic
 
   return (
-    <div className="glass-card p-6 sm:p-7">
+    <div className="glass-card p-6 sm:p-7 shadow-soft-lg">
       {/* Coach Tone Selection */}
       <div className="mb-6">
-        <label className="block text-xs font-bold text-emerald-400 mb-3 uppercase tracking-wider">
+        <label className="block text-xs font-black text-emerald-400/80 mb-3 uppercase tracking-wider">
           코치 톤 선택
         </label>
         <div className="flex flex-wrap gap-2">
@@ -206,10 +206,10 @@ export default function UploadForm() {
               key={tone}
               type="button"
               onClick={() => handleToneChange(tone)}
-              className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+              className={`px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${
                 coachTone === tone
-                  ? 'bg-emerald-500 text-white shadow-glow'
-                  : 'bg-white/10 text-slate-300 hover:bg-white/20 border border-white/20'
+                  ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-soft-lg border border-emerald-400/30'
+                  : 'bg-white/[0.06] text-slate-300 hover:bg-white/[0.1] border border-white/[0.12] shadow-soft'
               }`}
             >
               {coachToneLabels[tone]}
@@ -220,7 +220,7 @@ export default function UploadForm() {
 
       {/* Scenario Selection Chips */}
       <div className="mb-6">
-        <label className="block text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">
+        <label className="block text-xs font-black text-slate-400/80 mb-3 uppercase tracking-wider">
           시나리오 선택 (데모용)
         </label>
         <div className="flex flex-wrap gap-2">
@@ -229,15 +229,15 @@ export default function UploadForm() {
               key={scenario.id}
               type="button"
               onClick={() => setSelectedScenario(scenario.id)}
-              className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+              className={`px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-200 ${
                 selectedScenario === scenario.id
-                  ? 'bg-primary-500 text-white shadow-glow'
-                  : 'bg-white/10 text-slate-300 hover:bg-white/20 border border-white/20'
+                  ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-soft-lg border border-primary-400/30'
+                  : 'bg-white/[0.06] text-slate-300 hover:bg-white/[0.1] border border-white/[0.12] shadow-soft'
               }`}
             >
               <span className="mr-1.5">{scenario.emoji}</span>
               {scenario.label}
-              {scenario.featured && <span className="ml-1.5 text-amber-400">★</span>}
+              {scenario.featured && <span className="ml-1.5 text-amber-300">★</span>}
             </button>
           ))}
         </div>
@@ -245,12 +245,12 @@ export default function UploadForm() {
 
       <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-5">
         <div>
-          <label className="block text-sm font-bold text-slate-200 mb-3 tracking-wide">
+          <label className="block text-sm font-black text-slate-200 mb-3 tracking-tight">
             통화 녹음 파일 업로드
           </label>
           <label className="block cursor-pointer group">
-            <div className="relative border-2 border-dashed border-white/20 hover:border-primary-500/50 rounded-3xl p-10 text-center transition-all duration-300 bg-white/5 hover:bg-white/10 backdrop-blur-xl group-hover:shadow-glow">
-              <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">🎙️</div>
+            <div className="relative border-2 border-dashed border-white/[0.12] hover:border-primary-500/40 rounded-3xl p-10 text-center transition-all duration-300 bg-white/[0.04] hover:bg-white/[0.08] backdrop-blur-xl group-hover:shadow-soft-lg">
+              <div className="text-6xl mb-4 group-hover:scale-105 transition-transform">🎙️</div>
               <div className="text-base font-bold text-white mb-2">
                 {audioFile ? (
                   <span className="text-primary-400">
@@ -261,7 +261,7 @@ export default function UploadForm() {
                 )}
               </div>
               {!audioFile && (
-                <p className="text-xs text-slate-500 mt-2">
+                <p className="text-xs text-slate-500 font-semibold mt-2">
                   MP3, M4A, WAV · 최대 25MB
                 </p>
               )}
@@ -275,16 +275,16 @@ export default function UploadForm() {
           </label>
           
           {/* Upload Notice */}
-          <div className="mt-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
-            <p className="text-xs text-amber-300 leading-relaxed">
+          <div className="mt-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 shadow-soft">
+            <p className="text-xs text-amber-300 font-semibold leading-relaxed">
               ⚠️ 본인이 직접 녹음한 통화만 업로드하세요. 상대방 동의가 필요할 수 있습니다.
             </p>
           </div>
         </div>
 
         {error && (
-          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 backdrop-blur-xl">
-            <p className="text-sm font-semibold text-rose-400">{error}</p>
+          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 backdrop-blur-xl shadow-soft">
+            <p className="text-sm font-bold text-rose-300">{error}</p>
           </div>
         )}
 
@@ -317,8 +317,8 @@ export default function UploadForm() {
       </form>
 
       {/* Info Footer */}
-      <div className="mt-6 pt-5 border-t border-white/10">
-        <div className="flex items-center justify-center gap-4 text-xs text-slate-500">
+      <div className="mt-6 pt-5 border-t border-white/[0.08]">
+        <div className="flex items-center justify-center gap-4 text-xs text-slate-500 font-semibold">
           <span className="flex items-center gap-1.5">
             <span>🔒</span>
             <span>녹음 미저장</span>

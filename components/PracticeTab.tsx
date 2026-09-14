@@ -77,12 +77,12 @@ export default function PracticeTab() {
   return (
     <div className="space-y-5 animate-fadeIn">
       {/* Info Banner */}
-      <div className="glass-card p-4 border-primary-500/30 bg-gradient-to-r from-primary-500/10 to-accent-500/10">
+      <div className="glass-card p-4 border-primary-500/20 bg-gradient-to-r from-primary-500/[0.08] to-cyan-500/[0.06] shadow-soft-lg">
         <div className="flex items-start gap-3">
           <span className="text-2xl flex-shrink-0">🎭</span>
           <div>
-            <h3 className="text-sm font-bold text-white mb-1">실전 연습 모드</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <h3 className="text-sm font-black text-white mb-1 tracking-tight">실전 연습 모드</h3>
+            <p className="text-xs text-slate-300 font-semibold leading-relaxed">
               영업 전화 상대방 유형을 선택하고, 상황별 대응 멘트를 연습하세요
             </p>
           </div>
@@ -92,27 +92,27 @@ export default function PracticeTab() {
       {/* Preset Selection */}
       {!selectedPreset ? (
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-slate-300 mb-3">상대방 유형 선택</h3>
+          <h3 className="text-sm font-black text-slate-300 mb-3 tracking-tight">상대방 유형 선택</h3>
           <div className="grid gap-3">
             {opponentPresets.map((preset) => (
               <button
                 key={preset.id}
                 onClick={() => handlePresetSelect(preset)}
-                className="glass-card p-5 border-white/20 hover:border-primary-500/50 transition-all duration-200 text-left group hover:shadow-glow"
+                className="glass-card p-5 border-white/[0.08] hover:border-primary-500/30 transition-all duration-200 text-left group hover:shadow-soft-lg"
               >
                 <div className="flex items-start gap-4">
-                  <div className="text-4xl flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <div className="text-4xl flex-shrink-0 group-hover:scale-105 transition-transform">
                     {preset.emoji}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-base font-bold text-white mb-1">
+                    <h4 className="text-base font-black text-white mb-1 tracking-tight">
                       {preset.name}
                     </h4>
-                    <p className="text-sm text-slate-400 leading-relaxed">
+                    <p className="text-sm text-slate-400 font-semibold leading-relaxed">
                       {preset.description}
                     </p>
                   </div>
-                  <div className="text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">
                     →
                   </div>
                 </div>
@@ -123,22 +123,22 @@ export default function PracticeTab() {
       ) : (
         <div className="space-y-5">
           {/* Selected Preset Header */}
-          <div className="glass-card p-5 border-primary-500/30 bg-gradient-to-r from-primary-500/10 to-accent-500/10">
+          <div className="glass-card p-5 border-primary-500/20 bg-gradient-to-r from-primary-500/[0.08] to-cyan-500/[0.06] shadow-soft-lg">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <span className="text-3xl">{selectedPreset.emoji}</span>
                 <div>
-                  <h3 className="text-base font-bold text-white">
+                  <h3 className="text-base font-black text-white tracking-tight">
                     {selectedPreset.name}
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-400 font-semibold">
                     {selectedPreset.description}
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleReset}
-                className="px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+                className="px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-white transition-colors"
               >
                 변경
               </button>
@@ -146,16 +146,16 @@ export default function PracticeTab() {
           </div>
 
           {/* Opponent Opener */}
-          <div className="glass-card p-5 border-rose-500/30 bg-rose-500/5">
+          <div className="glass-card p-5 border-rose-500/20 bg-rose-500/[0.06] shadow-soft-lg">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center text-lg">
                 📞
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-rose-400 mb-2 uppercase tracking-wider">
+                <div className="text-xs font-black text-rose-400/80 mb-2 uppercase tracking-wider">
                   상대방 첫 멘트
                 </div>
-                <p className="text-sm text-white leading-relaxed">
+                <p className="text-sm text-white font-semibold leading-relaxed">
                   "{selectedPreset.opener}"
                 </p>
               </div>
@@ -163,12 +163,12 @@ export default function PracticeTab() {
           </div>
 
           {/* Chips - Opponent Follow-ups */}
-          <div className="glass-card p-5">
+          <div className="glass-card p-5 shadow-soft-lg">
             <div className="mb-4">
-              <h4 className="text-sm font-bold text-slate-300 mb-2">
+              <h4 className="text-sm font-black text-slate-300 mb-2 tracking-tight">
                 상대방 추가 멘트 (탭하여 대응 연습)
               </h4>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 font-semibold">
                 아래 버튼을 눌러 상황별 코치 추천 멘트를 확인하세요
               </p>
             </div>
@@ -177,10 +177,10 @@ export default function PracticeTab() {
                 <button
                   key={idx}
                   onClick={() => handleChipClick(chip)}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
                     selectedChip === chip
-                      ? 'bg-primary-500 text-white shadow-glow'
-                      : 'bg-white/10 hover:bg-white/20 text-slate-300 border border-white/20'
+                      ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-soft-lg border border-primary-400/30'
+                      : 'bg-white/[0.06] hover:bg-white/[0.1] text-slate-300 border border-white/[0.12] shadow-soft'
                   }`}
                 >
                   "{chip}"
@@ -191,14 +191,14 @@ export default function PracticeTab() {
 
           {/* Interpretation (Step 1) */}
           {showInterpretation && (
-            <div className="glass-card p-5 border-amber-500/30 bg-amber-500/5 animate-slideUp">
+            <div className="glass-card p-5 border-amber-500/20 bg-amber-500/[0.06] animate-slideUp shadow-soft-lg">
               <div className="flex items-start gap-3">
                 <span className="text-2xl flex-shrink-0">💡</span>
                 <div>
-                  <div className="text-xs font-bold text-amber-400 mb-2 uppercase tracking-wider">
+                  <div className="text-xs font-black text-amber-400/80 mb-2 uppercase tracking-wider">
                     해석 (가설)
                   </div>
-                  <p className="text-sm text-slate-300 leading-relaxed">
+                  <p className="text-sm text-slate-300 font-semibold leading-relaxed">
                     {selectedPreset.interpretation}
                   </p>
                 </div>
@@ -208,19 +208,19 @@ export default function PracticeTab() {
 
           {/* Coach Script (Step 2) */}
           {showCoachScript && (
-            <div className="glass-card p-5 border-emerald-500/30 bg-emerald-500/5 animate-slideUp">
+            <div className="glass-card p-5 border-emerald-500/20 bg-emerald-500/[0.06] animate-slideUp shadow-soft-lg">
               <div className="flex items-start gap-3">
                 <span className="text-2xl flex-shrink-0">🎓</span>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-emerald-400 mb-2 uppercase tracking-wider">
+                  <div className="text-xs font-black text-emerald-400/80 mb-2 uppercase tracking-wider">
                     코치 추천 멘트
                   </div>
-                  <div className="p-4 rounded-2xl bg-white/10 border border-white/20">
-                    <p className="text-base text-white font-medium leading-relaxed">
+                  <div className="p-4 rounded-2xl bg-white/[0.08] border border-white/[0.12] shadow-soft">
+                    <p className="text-base text-white font-bold leading-relaxed">
                       "{selectedPreset.coachScript}"
                     </p>
                   </div>
-                  <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+                  <div className="mt-3 flex items-center gap-2 text-xs text-slate-400 font-semibold">
                     <span>💡</span>
                     <span>이 멘트를 연습해보세요</span>
                   </div>
@@ -230,12 +230,12 @@ export default function PracticeTab() {
           )}
 
           {/* Practice Tips */}
-          <div className="glass-card p-5 border-slate-700">
+          <div className="glass-card p-5 border-slate-700/50 shadow-soft">
             <div className="flex items-start gap-3">
               <span className="text-xl flex-shrink-0">✨</span>
               <div>
-                <div className="text-xs font-bold text-slate-300 mb-2">연습 팁</div>
-                <ul className="text-xs text-slate-400 leading-relaxed space-y-1">
+                <div className="text-xs font-black text-slate-300 mb-2 tracking-tight">연습 팁</div>
+                <ul className="text-xs text-slate-400 font-semibold leading-relaxed space-y-1">
                   <li>• 상대방의 압박 패턴을 인지하는 것부터 시작하세요</li>
                   <li>• 코치 추천 멘트를 소리 내어 여러 번 연습하세요</li>
                   <li>• 실제 상황에서는 자신만의 표현으로 자연스럽게 말하세요</li>
@@ -248,15 +248,15 @@ export default function PracticeTab() {
 
       {/* Badges Footer */}
       <div className="flex flex-wrap gap-2 justify-center">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-full text-xs font-semibold text-blue-400">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/30 rounded-full text-xs font-bold text-indigo-300 shadow-soft">
           <span>🎭</span>
           <span>시뮬레이션</span>
         </span>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 rounded-full text-xs font-semibold text-rose-400">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 rounded-full text-xs font-bold text-rose-300 shadow-soft">
           <span>🚫</span>
           <span>통화 대행 아님</span>
         </span>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full text-xs font-semibold text-amber-400">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-xs font-bold text-emerald-300 shadow-soft">
           <span>✅</span>
           <span>연습용</span>
         </span>
