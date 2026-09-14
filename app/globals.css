@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * Design System Tokens (말해보카-inspired dark theme)
+ * 
+ * Colors:
+ * - bg: #0B1220 (dark slate) - main background
+ * - surface: #121A2A - card/surface color
+ * - ink: #E8EEF7 - primary text (light on dark)
+ * - muted: #8B9BB4 - secondary text
+ * - primary: #0D9488 (deep teal) - NO purple glow, NO neon cyan
+ * 
+ * Shadows: Soft dark shadows for depth
+ * Radius: 16-20px for premium feel
+ */
+
 @layer base {
   body {
     @apply bg-cream text-ink font-sans;
@@ -12,39 +26,39 @@
 
 @layer components {
   .paper-card {
-    @apply bg-white border border-ink/10 rounded-2xl shadow-soft;
+    @apply bg-surface border border-ink/5 rounded-2xl shadow-soft;
   }
   
   .paper-card-hover {
-    @apply paper-card hover:shadow-soft-md transition-all duration-200;
+    @apply paper-card hover:shadow-soft-md hover:border-ink/10 transition-all duration-200;
   }
   
   .btn-primary {
-    @apply w-full py-3.5 px-6 bg-ink hover:bg-ink-400 text-cream font-semibold rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base;
+    @apply w-full py-3.5 px-6 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-soft;
   }
   
   .btn-secondary {
-    @apply w-full py-3.5 px-6 bg-white hover:bg-cream-200 text-ink font-semibold rounded-2xl border border-ink/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base;
+    @apply w-full py-3.5 px-6 bg-surface hover:bg-surface-light text-ink font-semibold rounded-2xl border border-ink/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base;
   }
   
   .btn-demo {
-    @apply w-full py-3.5 px-6 bg-hold hover:bg-hold-600 text-white font-semibold rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base;
+    @apply w-full py-3.5 px-6 bg-hold hover:bg-hold-600 text-white font-semibold rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-soft;
   }
   
   .input-field {
-    @apply w-full px-4 py-3 text-base bg-white border border-ink/20 rounded-2xl text-ink placeholder-ink/40 focus:outline-none focus:ring-2 focus:ring-hold/30 focus:border-hold transition-all;
+    @apply w-full px-4 py-3 text-base bg-surface border border-ink/10 rounded-2xl text-ink placeholder-ink-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all;
   }
   
   .segmented-control {
-    @apply flex bg-white rounded-2xl p-1 border border-ink/10 shadow-soft;
+    @apply flex bg-surface-dark rounded-2xl p-1 border border-ink/10 shadow-soft;
   }
   
   .segment-button {
-    @apply flex-1 py-2.5 px-4 text-sm font-medium text-ink/60 rounded-xl transition-all duration-200;
+    @apply flex-1 py-2.5 px-4 text-sm font-medium text-ink-500 rounded-xl transition-all duration-200;
   }
   
   .segment-button-active {
-    @apply bg-ink text-cream shadow-soft;
+    @apply bg-primary-500 text-white shadow-soft;
   }
   
   .caution-chip {

@@ -8,46 +8,54 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Dark design system (말해보카 inspired)
+        // bg: dark slate, surface: deeper slate, ink: light text, muted: gray-blue
         cream: {
-          DEFAULT: '#FAF7F1',
-          50: '#FFFFFF',
-          100: '#FAF7F1',
-          200: '#F5EFE3',
-          300: '#EFE6D4',
-          400: '#E9DDC5',
-          500: '#E3D4B6',
+          DEFAULT: '#0B1220', // dark slate background
+          50: '#1A2332',
+          100: '#0B1220',
+          200: '#080E18',
+          300: '#060A10',
+          400: '#040608',
+          500: '#020304',
         },
         ink: {
-          DEFAULT: '#182420',
-          50: '#4A5752',
-          100: '#3E4A45',
-          200: '#323D38',
-          300: '#26302B',
-          400: '#1F2723',
-          500: '#182420',
+          DEFAULT: '#E8EEF7', // light text on dark
+          50: '#F5F7FA',
+          100: '#E8EEF7',
+          200: '#D1DBE9',
+          300: '#BAC8DB',
+          400: '#A3B5CD',
+          500: '#8B9BB4', // muted text
         },
         primary: {
-          50: '#ecfeff',
-          100: '#cffafe',
-          200: '#a5f3fc',
-          300: '#67e8f9',
-          400: '#22d3ee',
-          500: '#06b6d4',
-          600: '#0891b2',
-          700: '#0e7490',
-          800: '#155e75',
-          900: '#164e63',
+          // Deep teal - NO purple, NO neon cyan
+          50: '#e6f7f5',
+          100: '#ccefeb',
+          200: '#99dfd7',
+          300: '#66cfc3',
+          400: '#33bfaf',
+          500: '#0D9488', // primary deep teal
+          600: '#0a766d',
+          700: '#085952',
+          800: '#053b36',
+          900: '#031e1b',
         },
         hold: {
-          DEFAULT: '#22C55E',
-          50: '#E8F8EE',
-          100: '#C6EDD8',
-          200: '#A4E2C2',
-          300: '#6BD199',
-          400: '#3BCB76',
-          500: '#22C55E',
-          600: '#1B9D4B',
-          700: '#16A34A',
+          DEFAULT: '#0D9488',
+          50: '#e6f7f5',
+          100: '#ccefeb',
+          200: '#99dfd7',
+          300: '#66cfc3',
+          400: '#33bfaf',
+          500: '#0D9488',
+          600: '#0a766d',
+          700: '#085952',
+        },
+        surface: {
+          DEFAULT: '#121A2A', // surface/card color
+          light: '#1A2332',
+          dark: '#0D1219',
         },
         sway: {
           DEFAULT: '#FB7185',
@@ -74,15 +82,15 @@ module.exports = {
         },
       },
       borderRadius: {
-        '2xl': '1rem',
-        '3xl': '1.5rem',
+        '2xl': '1.25rem', // 20px - more premium
+        '3xl': '1.5rem',  // 24px
       },
       boxShadow: {
-        'glow': '0 0 24px rgba(6, 182, 212, 0.25)',
-        'glow-sm': '0 0 12px rgba(6, 182, 212, 0.15)',
-        'soft': '0 2px 8px rgba(24, 36, 32, 0.08)',
-        'soft-md': '0 4px 12px rgba(24, 36, 32, 0.12)',
-        'soft-lg': '0 4px 16px rgba(24, 36, 32, 0.16), 0 2px 4px rgba(24, 36, 32, 0.12)',
+        'glow': '0 0 24px rgba(13, 148, 136, 0.4)',
+        'glow-sm': '0 0 12px rgba(13, 148, 136, 0.25)',
+        'soft': '0 2px 12px rgba(0, 0, 0, 0.3)',
+        'soft-md': '0 4px 16px rgba(0, 0, 0, 0.4)',
+        'soft-lg': '0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3)',
       },
       fontFamily: {
         sans: ['IBM Plex Sans KR', 'system-ui', '-apple-system', 'sans-serif'],

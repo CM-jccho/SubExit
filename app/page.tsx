@@ -24,39 +24,34 @@ const scenarios: ScenarioCard[] = [
 
 function ScenarioCards({ onSelectScenario }: { onSelectScenario: (id: string) => void }) {
   return (
-    <div className="space-y-3 mb-8">
+    <div className="grid grid-cols-2 gap-3 mb-8">
       {scenarios.map((scenario) => (
         <button
           key={scenario.id}
           onClick={() => onSelectScenario(scenario.id)}
-          className="w-full paper-card-hover p-5 text-left group"
+          className="paper-card-hover p-4 text-left group relative overflow-hidden"
         >
-          <div className="flex items-center gap-4">
-            <div className="text-4xl flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-              {scenario.emoji}
+          {scenario.featured && (
+            <div className="absolute top-2 right-2">
+              <span className="text-primary-500 text-lg">★</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-base font-bold text-ink">
-                  {scenario.title}
-                </h3>
-                {scenario.featured && (
-                  <span className="text-hold text-sm">★</span>
-                )}
-                {scenario.guardrail && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-sway-50 border border-sway-300 text-sway-600">
-                    가드레일
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-ink/60">
-                {scenario.subtitle}
-              </p>
-            </div>
-            <div className="text-ink/40 group-hover:text-ink/80 transition-colors flex-shrink-0">
-              →
-            </div>
+          )}
+          <div className="text-3xl mb-2 group-hover:scale-110 transition-transform duration-200">
+            {scenario.emoji}
           </div>
+          <h3 className="text-sm font-bold text-ink mb-1 line-clamp-1">
+            {scenario.title}
+          </h3>
+          <p className="text-xs text-ink-500 line-clamp-2 leading-snug">
+            {scenario.subtitle}
+          </p>
+          {scenario.guardrail && (
+            <div className="mt-2">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-sway-50/10 border border-sway-500/30 text-sway-400">
+                가드레일
+              </span>
+            </div>
+          )}
         </button>
       ))}
     </div>
@@ -85,44 +80,49 @@ export default function Home() {
 
   return (
     <main className="min-h-screen pb-12">
-      <div className="max-w-[436px] mx-auto px-5 py-8 sm:py-12">
-        {/* Hero Header */}
-        <header className="text-center mb-8">
-          {/* Accent Bar */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 mb-6 shadow-soft">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse"></div>
-            <span className="text-xs font-bold text-primary-700 tracking-wide">통화 중 실시간 코치</span>
-          </div>
-          
-          <div className="mb-6">
-            <h1 className="text-5xl sm:text-6xl font-black mb-4 tracking-tighter text-ink">
-              <span className="bg-gradient-to-br from-primary-600 via-primary-500 to-primary-400 bg-clip-text text-transparent">든든콜</span>
+      <div className="max-w-[436px] mx-auto px-5 py-6 sm:py-8">
+        {/* Hero Header - Short & Dense */}
+        <header className="text-center mb-6">
+          {/* Logo + Hook */}
+          <div className="mb-5">
+            <h1 className="text-4xl sm:text-5xl font-black mb-2 tracking-tight text-ink">
+              든든콜
             </h1>
-            <p className="text-base text-ink/70 font-semibold leading-relaxed">
+            <p className="text-sm text-ink-500 font-medium leading-relaxed">
               통화 받는 순간 옆에서<br />
               「지금 이렇게 말하세요」실시간 제안
             </p>
           </div>
 
-          {/* Simplified disclaimer */}
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
-            <span className="caution-chip bg-sway-50 border-sway-300 text-sway-700 font-bold">
+          {/* Primary CTA - ONE button */}
+          {!selectedScenario && (
+            <button
+              onClick={() => {
+                const salesScenario = scenarios.find(s => s.id === 'sales')
+                if (salesScenario) setSelectedScenario(salesScenario.id)
+              }}
+              className="w-full py-4 px-6 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-2xl transition-all duration-200 shadow-soft-md hover:shadow-glow text-base mb-4"
+            >
+              📞 시뮬레이션 시작
+            </button>
+          )}
+
+          {/* Compact disclaimer */}
+          <div className="flex flex-wrap justify-center gap-2 text-xs">
+            <span className="px-2 py-1 rounded-lg bg-surface border border-ink/10 text-ink-500 font-medium">
               🚫 통화 대행 아님
             </span>
-            <span className="caution-chip bg-indigo-50 border-indigo-300 text-indigo-700 font-bold">
+            <span className="px-2 py-1 rounded-lg bg-surface border border-ink/10 text-ink-500 font-medium">
               🎭 시뮬레이션
-            </span>
-            <span className="caution-chip bg-hold-50 border-hold-300 text-hold-700 font-bold">
-              ✅ 녹음 동의
             </span>
           </div>
         </header>
 
-        {/* Scenario Cards */}
+        {/* Scenario Cards - 2-column grid */}
         {!selectedScenario && (
-          <div className="mb-8">
-            <h2 className="text-lg font-bold text-ink mb-4 px-1">
-              어떤 상황을 연습하고 싶나요?
+          <div className="mb-6">
+            <h2 className="text-base font-bold text-ink mb-3 px-1">
+              또는 다른 시나리오 선택
             </h2>
             <ScenarioCards onSelectScenario={setSelectedScenario} />
           </div>
@@ -133,7 +133,7 @@ export default function Home() {
           <div className="animate-fadeIn">
             <button
               onClick={() => setSelectedScenario(undefined)}
-              className="mb-4 text-sm text-ink/60 hover:text-ink transition-colors flex items-center gap-1"
+              className="mb-4 text-sm text-ink-500 hover:text-ink transition-colors flex items-center gap-1"
             >
               ← 다른 시나리오 선택
             </button>
@@ -142,8 +142,8 @@ export default function Home() {
         )}
 
         {/* Footer */}
-        <footer className="mt-12 text-center">
-          <p className="text-xs text-ink/40 font-medium">
+        <footer className="mt-8 text-center">
+          <p className="text-xs text-ink/30 font-medium">
             Wanted AI Championship 2026
           </p>
         </footer>
