@@ -60,11 +60,14 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
   const [hasConsented, setHasConsented] = useState(false)
   const [currentSuggestion, setCurrentSuggestion] = useState<CoachSuggestion | null>(null)
   const [displayedLines, setDisplayedLines] = useState<TranscriptLine[]>([])
+  const [playbackSpeed, setPlaybackSpeed] = useState(2.5) // 기본 2.5배 속도
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isPlaying && hasConsented) {
+      // 속도에 따라 시간 증가 간격 조정 (기본 2.5배 = 400ms, 1배 = 1000ms, 2배 = 500ms)
+      const interval = 1000 / playbackSpeed
       intervalRef.current = setInterval(() => {
         setCurrentTime((prev) => {
           const newTime = prev + 1
@@ -74,13 +77,13 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
             setIsPlaying(false)
             setTimeout(() => {
               onCallEnd()
-            }, 1000)
+            }, 800)
             return prev
           }
           
           return newTime
         })
-      }, 1000)
+      }, interval)
     } else if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
@@ -91,7 +94,7 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
         clearInterval(intervalRef.current)
       }
     }
-  }, [isPlaying, hasConsented, transcript, onCallEnd])
+  }, [isPlaying, hasConsented, playbackSpeed, transcript, onCallEnd])
 
   useEffect(() => {
     const linesToShow = transcript.filter((line) => line.startTime <= currentTime)
@@ -125,6 +128,21 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
     setIsPlaying(false)
   }
 
+  const handleSkipToCoach = () => {
+    // 다음 코치 제안이 나오는 시점으로 건너뛰기
+    const pressureTags = ['pressure', 'urgency', 'fomo', 'comparison', 'guilt']
+    const nextCoachMoment = transcript.find(
+      (line) => 
+        line.startTime > currentTime && 
+        line.speaker === 'agent' && 
+        line.tags?.some(tag => pressureTags.includes(tag))
+    )
+    
+    if (nextCoachMoment) {
+      setCurrentTime(nextCoachMoment.startTime)
+    }
+  }
+
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -134,6 +152,26 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
   if (!hasConsented) {
     return (
       <div className="space-y-4 animate-fadeIn">
+        {/* 단계 표시기 */}
+        <div className="paper-card p-4 bg-cream-100">
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center text-sm font-bold">1</div>
+              <span className="text-sm font-bold text-primary-700">동의</span>
+            </div>
+            <div className="w-8 h-0.5 bg-ink/20"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-ink/10 text-ink/40 flex items-center justify-center text-sm font-bold">2</div>
+              <span className="text-sm text-ink/40">통화 중</span>
+            </div>
+            <div className="w-8 h-0.5 bg-ink/20"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-ink/10 text-ink/40 flex items-center justify-center text-sm font-bold">3</div>
+              <span className="text-sm text-ink/40">복기</span>
+            </div>
+          </div>
+        </div>
+
         <div className="paper-card p-6 bg-hold-50">
           <div className="flex items-start gap-3 mb-6">
             <div className="text-3xl">📞</div>
@@ -177,8 +215,11 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
             onClick={() => setHasConsented(true)}
             className="btn-primary"
           >
-            이해했습니다. 시뮬레이션 시작
+            ✓ 시뮬레이션 시작
           </button>
+          <p className="text-xs text-center text-ink/50 mt-3">
+            약 40초 소요 · 빠른 체험 가능
+          </p>
         </div>
       </div>
     )
@@ -186,20 +227,40 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
 
   return (
     <div className="space-y-4 animate-fadeIn">
-      {/* Recording Indicator */}
+      {/* 단계 표시기 */}
+      <div className="paper-card p-4 bg-cream-100">
+        <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center gap-2 opacity-50">
+            <div className="w-8 h-8 rounded-full bg-hold text-white flex items-center justify-center text-sm font-bold">✓</div>
+            <span className="text-sm text-ink/60">동의</span>
+          </div>
+          <div className="w-8 h-0.5 bg-hold"></div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center text-sm font-bold animate-pulse">2</div>
+            <span className="text-sm font-bold text-primary-700">통화 중</span>
+          </div>
+          <div className="w-8 h-0.5 bg-ink/20"></div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-ink/10 text-ink/40 flex items-center justify-center text-sm font-bold">3</div>
+            <span className="text-sm text-ink/40">복기</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Recording Indicator - 단순화 */}
       <div className="paper-card p-3 bg-sway-50 border-sway-300">
         <div className="flex items-center justify-center gap-2">
           <div className={`w-2.5 h-2.5 rounded-full bg-sway-600 ${isPlaying ? 'animate-pulse' : ''}`}></div>
           <span className="text-sm font-bold text-sway-600">
-            {isPlaying ? '녹음 중 · 시뮬레이션 진행 중' : '녹음 중 · 일시정지'}
+            {isPlaying ? '녹음 중' : '일시정지'}
           </span>
         </div>
       </div>
 
       {/* Main Content: Split View */}
       <div className="grid grid-cols-1 gap-4">
-        {/* Left: Transcript Timeline */}
-        <div className="paper-card overflow-hidden">
+        {/* Left: Transcript Timeline - dim 처리 when coach suggestion active */}
+        <div className={`paper-card overflow-hidden transition-all ${currentSuggestion ? 'opacity-40' : 'opacity-100'}`}>
           <div className="bg-cream-100 border-b border-ink/10 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-ink">통화 진행</h3>
@@ -208,22 +269,65 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
               </span>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {!isPlaying ? (
                 <button
                   onClick={handleStart}
-                  className="px-4 py-2 bg-hold hover:bg-hold-600 text-white rounded-xl text-sm font-medium transition-all"
+                  className="flex-1 min-w-[120px] px-4 py-2.5 bg-hold hover:bg-hold-600 text-white rounded-xl text-sm font-bold transition-all"
                 >
                   ▶ 시작
                 </button>
               ) : (
-                <button
-                  onClick={handlePause}
-                  className="px-4 py-2 bg-ink hover:bg-ink-400 text-white rounded-xl text-sm font-medium transition-all"
-                >
-                  ⏸ 일시정지
-                </button>
+                <>
+                  <button
+                    onClick={handlePause}
+                    className="flex-1 min-w-[100px] px-4 py-2.5 bg-ink hover:bg-ink-400 text-white rounded-xl text-sm font-bold transition-all"
+                  >
+                    ⏸ 일시정지
+                  </button>
+                  <button
+                    onClick={handleSkipToCoach}
+                    className="px-3 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-medium transition-all"
+                  >
+                    건너뛰기 →
+                  </button>
+                </>
               )}
+            </div>
+            
+            {/* 속도 조절 */}
+            <div className="flex items-center gap-2 mt-3">
+              <span className="text-xs text-ink/60 font-medium">속도:</span>
+              <button
+                onClick={() => setPlaybackSpeed(1)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                  playbackSpeed === 1
+                    ? 'bg-ink text-white'
+                    : 'bg-white text-ink/60 border border-ink/15 hover:bg-cream-100'
+                }`}
+              >
+                1x
+              </button>
+              <button
+                onClick={() => setPlaybackSpeed(2.5)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                  playbackSpeed === 2.5
+                    ? 'bg-ink text-white'
+                    : 'bg-white text-ink/60 border border-ink/15 hover:bg-cream-100'
+                }`}
+              >
+                2.5x
+              </button>
+              <button
+                onClick={() => setPlaybackSpeed(4)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                  playbackSpeed === 4
+                    ? 'bg-ink text-white'
+                    : 'bg-white text-ink/60 border border-ink/15 hover:bg-cream-100'
+                }`}
+              >
+                4x
+              </button>
             </div>
           </div>
 
@@ -264,8 +368,10 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
           </div>
         </div>
 
-        {/* Right: Coach Suggestions */}
-        <div className="paper-card overflow-hidden">
+        {/* Right: Coach Suggestions - 강조 */}
+        <div className={`paper-card overflow-hidden transition-all ${
+          currentSuggestion ? 'ring-4 ring-hold/50 shadow-lg scale-[1.02]' : ''
+        }`}>
           <div className="bg-hold-50 border-b border-hold-200 p-4">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-full bg-hold flex items-center justify-center text-lg">
@@ -285,16 +391,16 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
           <div className="p-5 min-h-[180px] flex items-center justify-center bg-cream-100">
             {currentSuggestion ? (
               <div className="w-full animate-slideUp">
-                <div className="p-4 rounded-xl bg-hold-50 border border-hold-300 mb-3">
-                  <div className="text-xs font-semibold text-hold-600 mb-2">
-                    추천 대응 ({coachTone === 'cold' ? '냉정' : coachTone === 'warm' ? '감성' : '단호·공손'})
+                <div className="p-5 rounded-xl bg-gradient-to-br from-hold-50 to-primary-50 border-2 border-hold-500 shadow-lg mb-3">
+                  <div className="text-xs font-bold text-hold-700 mb-3 uppercase tracking-wider">
+                    💡 추천 대응 ({coachTone === 'cold' ? '냉정' : coachTone === 'warm' ? '감성' : '단호·공손'})
                   </div>
-                  <p className="text-base text-ink font-semibold leading-relaxed">
+                  <p className="text-lg text-ink font-bold leading-relaxed mb-2">
                     "{currentSuggestion.text}"
                   </p>
-                </div>
-                <div className="text-xs text-ink/50 text-center">
-                  💡 이 멘트를 참고하여 응답하세요
+                  <div className="text-xs text-hold-600 font-medium">
+                    👆 이 멘트를 참고하여 응답하세요
+                  </div>
                 </div>
               </div>
             ) : (
@@ -305,20 +411,6 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
                 </p>
               </div>
             )}
-          </div>
-
-          <div className="border-t border-ink/10 p-4 bg-white">
-            <div className="flex flex-wrap gap-2 justify-center">
-              <span className="caution-chip bg-sway-50 border-sway-300 text-sway-600">
-                통화 대행 아님
-              </span>
-              <span className="caution-chip bg-cream-200 border-ink/20 text-ink/70">
-                시뮬레이션
-              </span>
-              <span className="caution-chip bg-hold-50 border-hold-300 text-hold-700">
-                녹음 동의
-              </span>
-            </div>
           </div>
         </div>
       </div>
