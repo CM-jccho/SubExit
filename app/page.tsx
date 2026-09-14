@@ -11,7 +11,7 @@ export default function Home() {
               <span className="text-gradient-primary">든든콜</span>
             </h1>
             <p className="text-xl sm:text-2xl font-bold text-white mb-3 leading-tight">
-              영업 전화,
+              걸려 온 영업 전화,
               <br />
               거절하려다 또 넘어간 적 있나요?
             </p>

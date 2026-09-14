@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import CoachPanel from './CoachPanel'
+import { CoachTone } from '@/lib/coach-tone'
 
 type CallAnalysisResult = {
   callType: string
@@ -59,7 +60,7 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-export default function CallResultDisplay({ result }: { result: CallAnalysisResult }) {
+export default function CallResultDisplay({ result, coachTone = 'firm_polite' }: { result: CallAnalysisResult; coachTone?: CoachTone }) {
   const [selectedSegment, setSelectedSegment] = useState<number | null>(null)
 
   const isPressureSegment = (startTime: number, endTime: number) => {
@@ -283,7 +284,7 @@ export default function CallResultDisplay({ result }: { result: CallAnalysisResu
 
       {/* Coach Panel */}
       {result.analysis.practiceScripts && result.analysis.practiceScripts.length > 0 && (
-        <CoachPanel practiceScripts={result.analysis.practiceScripts} />
+        <CoachPanel practiceScripts={result.analysis.practiceScripts} coachTone={coachTone} />
       )}
 
       {/* Disclaimer */}

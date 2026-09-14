@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 
+type CoachTone = 'cold' | 'warm' | 'firm_polite'
+
 type CallAnalysisResult = {
   callType: string
   duration: number
@@ -66,6 +68,8 @@ export async function POST(request: NextRequest) {
     if (isDemoParam) {
       const body = await request.json().catch(() => ({}))
       const scenario = body.scenario || 'sales'
+      const coachTone = body.coachTone || 'firm_polite'
+      console.log('[Demo] Scenario:', scenario, 'CoachTone:', coachTone)
       const result = loadCallFixture(scenario)
       return NextResponse.json(result)
     }
@@ -77,6 +81,8 @@ export async function POST(request: NextRequest) {
       const body = await request.json()
       if (body.demo) {
         const scenario = body.scenario || 'sales'
+        const coachTone = body.coachTone || 'firm_polite'
+        console.log('[Demo JSON] Scenario:', scenario, 'CoachTone:', coachTone)
         const result = loadCallFixture(scenario)
         return NextResponse.json(result)
       }
@@ -85,6 +91,8 @@ export async function POST(request: NextRequest) {
     // Handle audio file upload
     const formData = await request.formData()
     const audioFile = formData.get('audio') as File
+    const coachTone = (formData.get('coachTone') as string) || 'firm_polite'
+    console.log('[Upload] Audio:', audioFile?.name, 'CoachTone:', coachTone)
     
     if (!audioFile) {
       return NextResponse.json(
