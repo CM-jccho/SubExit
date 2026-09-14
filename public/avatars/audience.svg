@@ -1,0 +1,30 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="60" fill="#1A2332"/>
+  
+  <!-- Multiple small heads representing audience -->
+  
+  <!-- Person 1 (left) -->
+  <circle cx="35" cy="50" r="14" fill="#9F7AEA"/>
+  <circle cx="31" cy="48" r="1.5" fill="#2D3748"/>
+  <circle cx="39" cy="48" r="1.5" fill="#2D3748"/>
+  
+  <!-- Person 2 (center) -->
+  <circle cx="60" cy="45" r="16" fill="#0D9488"/>
+  <circle cx="55" cy="43" r="2" fill="#2D3748"/>
+  <circle cx="65" cy="43" r="2" fill="#2D3748"/>
+  <path d="M54 50C54 50 57 52 60 52C63 52 66 50 66 50" stroke="#2D3748" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Person 3 (right) -->
+  <circle cx="85" cy="50" r="14" fill="#ED8936"/>
+  <circle cx="81" cy="48" r="1.5" fill="#2D3748"/>
+  <circle cx="89" cy="48" r="1.5" fill="#2D3748"/>
+  
+  <!-- Audience seats/rows indicator -->
+  <rect x="30" y="70" width="60" height="8" rx="2" fill="#4A5568" opacity="0.6"/>
+  <rect x="35" y="80" width="50" height="6" rx="2" fill="#4A5568" opacity="0.4"/>
+  <rect x="40" y="88" width="40" height="5" rx="2" fill="#4A5568" opacity="0.3"/>
+  
+  <!-- Question mark (Q&A symbol) -->
+  <text x="60" y="102" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#0D9488" text-anchor="middle">?</text>
+</svg>

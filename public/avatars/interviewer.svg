@@ -1,0 +1,28 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="60" fill="#1A2332"/>
+  
+  <!-- Head -->
+  <circle cx="60" cy="50" r="24" fill="#FDB777"/>
+  
+  <!-- Hair (short professional) -->
+  <path d="M36 48C36 35.8 45.8 26 58 26H62C74.2 26 84 35.8 84 48V50H36V48Z" fill="#4A5568"/>
+  
+  <!-- Glasses -->
+  <rect x="46" y="46" width="12" height="10" rx="5" fill="none" stroke="#2D3748" stroke-width="2"/>
+  <rect x="62" y="46" width="12" height="10" rx="5" fill="none" stroke="#2D3748" stroke-width="2"/>
+  <line x1="58" y1="51" x2="62" y2="51" stroke="#2D3748" stroke-width="2"/>
+  
+  <!-- Eyes behind glasses -->
+  <circle cx="52" cy="51" r="2" fill="#2D3748"/>
+  <circle cx="68" cy="51" r="2" fill="#2D3748"/>
+  
+  <!-- Neutral mouth -->
+  <line x1="52" y1="60" x2="68" y2="60" stroke="#2D3748" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Professional suit -->
+  <rect x="38" y="72" width="44" height="30" rx="4" fill="#1A365D"/>
+  
+  <!-- Shirt collar -->
+  <path d="M52 72L56 78L60 72L64 78L68 72" stroke="#E8EEF7" stroke-width="2"/>
+</svg>

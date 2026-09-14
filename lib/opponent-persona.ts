@@ -9,6 +9,15 @@ export const opponentPersonaLabels: Record<OpponentPersona, string> = {
   audience: '발표 청중 Q&A',
 }
 
+export const opponentPersonaAvatars: Record<OpponentPersona, string> = {
+  sales_agent: '/avatars/sales-agent.svg',
+  interviewer: '/avatars/interviewer.svg',
+  professor: '/avatars/professor.svg',
+  date: '/avatars/date.svg',
+  workplace: '/avatars/manager.svg',
+  audience: '/avatars/audience.svg',
+}
+
 export const opponentPersonaTraits: Record<OpponentPersona, { traits: string; openerStyle: string }> = {
   sales_agent: {
     traits: '적극적, 설득 중심, FOMO 활용',

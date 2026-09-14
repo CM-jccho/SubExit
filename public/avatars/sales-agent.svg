@@ -1,0 +1,29 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="60" fill="#1A2332"/>
+  
+  <!-- Head -->
+  <circle cx="60" cy="50" r="24" fill="#FDB777"/>
+  
+  <!-- Hair -->
+  <path d="M36 46C36 33.8 45.8 24 58 24H62C74.2 24 84 33.8 84 46V50H36V46Z" fill="#2D3748"/>
+  
+  <!-- Eyes -->
+  <circle cx="52" cy="48" r="2.5" fill="#2D3748"/>
+  <circle cx="68" cy="48" r="2.5" fill="#2D3748"/>
+  
+  <!-- Smile -->
+  <path d="M52 58C52 58 56 62 60 62C64 62 68 58 68 58" stroke="#2D3748" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Suit jacket -->
+  <rect x="38" y="72" width="44" height="30" rx="4" fill="#2C5282"/>
+  
+  <!-- Tie -->
+  <path d="M60 72L57 90L60 95L63 90L60 72Z" fill="#0D9488"/>
+  
+  <!-- Headset -->
+  <path d="M40 44C40 44 38 44 38 46C38 48 38 52 38 52" stroke="#4A5568" stroke-width="3" stroke-linecap="round"/>
+  <path d="M80 44C80 44 82 44 82 46C82 48 82 52 82 52" stroke="#4A5568" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="38" cy="52" r="4" fill="#4A5568"/>
+  <circle cx="82" cy="52" r="4" fill="#4A5568"/>
+</svg>
