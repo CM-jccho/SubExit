@@ -46,7 +46,7 @@ type ScenarioType = 'cancel' | 'sales' | 'romantic' | 'general' | 'salary' | 'pa
 
 export default function UploadForm() {
   const [audioFile, setAudioFile] = useState<File | null>(null)
-  const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('sales')
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('cancel')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -135,15 +135,15 @@ export default function UploadForm() {
     )
   }
 
+  // MUST only: 3 visible chips
   const scenarios = [
-    { id: 'sales' as ScenarioType, label: '영업 전화 거절', emoji: '📞', primary: true },
-    { id: 'salary' as ScenarioType, label: '연봉·조건 협상', emoji: '💰', primary: false },
-    { id: 'cancel' as ScenarioType, label: '구독·후원 해지', emoji: '🚫', primary: false },
-    { id: 'parent' as ScenarioType, label: '부모님께 부탁', emoji: '👨‍👩‍👦', primary: false },
-    { id: 'formal' as ScenarioType, label: '상견례·격식', emoji: '🍽️', primary: false },
-    { id: 'general' as ScenarioType, label: '부탁 거절', emoji: '🤝', primary: false },
-    { id: 'romantic' as ScenarioType, label: '이별 통보', emoji: '💔', primary: false },
+    { id: 'cancel' as ScenarioType, label: '구독·후원 해지', emoji: '🚫', primary: true, featured: true },
+    { id: 'sales' as ScenarioType, label: '영업 전화 거절', emoji: '📞', primary: false, featured: false },
+    { id: 'salary' as ScenarioType, label: '연봉·조건 협상', emoji: '💰', primary: false, featured: false },
   ]
+  
+  // Soft-Go scenarios (hidden, available via API)
+  // parent, formal, general, romantic
 
   return (
     <div className="glass-card p-6 sm:p-7">
@@ -166,6 +166,7 @@ export default function UploadForm() {
             >
               <span className="mr-1.5">{scenario.emoji}</span>
               {scenario.label}
+              {scenario.featured && <span className="ml-1.5 text-amber-400">★</span>}
             </button>
           ))}
         </div>
