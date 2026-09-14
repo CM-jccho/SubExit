@@ -49,12 +49,14 @@ export type AnalysisResult = {
 
 type ScenarioType = 'sales' | 'job_interview' | 'first_date' | 'relationship' | 'school_group' | 'presentation_qa' | 'work_comm' | 'work_presentation'
 
-export default function UploadForm() {
+export default function UploadForm({ selectedScenario: initialScenario }: { selectedScenario?: string }) {
   const searchParams = useSearchParams()
   const isRealtimeDemo = searchParams.get('demo') === '1'
   
   const [audioFile, setAudioFile] = useState<File | null>(null)
-  const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('sales')
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioType>(
+    (initialScenario as ScenarioType) || 'sales'
+  )
   const [selectedPersona, setSelectedPersona] = useState<OpponentPersona>('sales_agent')
   const [coachTone, setCoachTone] = useState<CoachTone>('firm_polite')
   const [loading, setLoading] = useState(false)
@@ -63,6 +65,12 @@ export default function UploadForm() {
   const [isDemoMode, setIsDemoMode] = useState(false)
   const [activeTab, setActiveTab] = useState<'analysis' | 'practice'>('analysis')
   const [showRealtimeCoach, setShowRealtimeCoach] = useState(false)
+
+  useEffect(() => {
+    if (initialScenario) {
+      setSelectedScenario(initialScenario as ScenarioType)
+    }
+  }, [initialScenario])
 
   useEffect(() => {
     setCoachTone(loadCoachTone())
