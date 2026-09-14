@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ResultDisplay from './ResultDisplay'
 
 export type AnalysisResult = {
@@ -62,6 +62,16 @@ export default function UploadForm() {
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isDemoMode, setIsDemoMode] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const demoParam = params.get('demo')
+    const scenarioParam = params.get('scenario')
+    
+    if (demoParam === '1' && scenarioParam) {
+      handleSubmit(new Event('submit') as any, true, scenarioParam)
+    }
+  }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || [])
@@ -137,6 +147,7 @@ export default function UploadForm() {
     setResult(null)
     setError(null)
     setIsDemoMode(false)
+    window.history.pushState({}, '', window.location.pathname)
   }
 
   if (result) {
