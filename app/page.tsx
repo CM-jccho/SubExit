@@ -1,7 +1,8 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import UploadForm from '@/components/UploadForm'
+import { loadGamificationState, getLevelBadge, getLevelLabel, getStreakLabel } from '@/lib/gamification'
 
 type ScenarioCard = {
   id: string
@@ -77,12 +78,39 @@ function UploadFormWrapper({ selectedScenario }: { selectedScenario?: string }) 
 
 export default function Home() {
   const [selectedScenario, setSelectedScenario] = useState<string | undefined>(undefined)
+  const [gamificationState, setGamificationState] = useState({ level: 0, streak: 0 })
+
+  useEffect(() => {
+    const state = loadGamificationState()
+    setGamificationState({ level: state.level, streak: state.streak })
+  }, [])
 
   return (
     <main className="min-h-screen pb-12">
       <div className="max-w-[436px] mx-auto px-5 py-6 sm:py-8">
         {/* Hero Header - Short & Dense */}
         <header className="text-center mb-6">
+          {/* Gamification badges */}
+          {(gamificationState.level > 0 || gamificationState.streak > 0) && (
+            <div className="flex items-center justify-center gap-2 mb-4">
+              {gamificationState.level > 0 && (
+                <div className="px-3 py-1.5 rounded-xl bg-surface border border-ink/10 flex items-center gap-1.5">
+                  <span className="text-base">{getLevelBadge(gamificationState.level)}</span>
+                  <span className="text-xs font-bold text-primary-500">
+                    {getLevelLabel(gamificationState.level)}
+                  </span>
+                </div>
+              )}
+              {gamificationState.streak > 0 && (
+                <div className="px-3 py-1.5 rounded-xl bg-surface border border-ink/10">
+                  <span className="text-xs font-bold text-hold-500">
+                    {getStreakLabel(gamificationState.streak)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+          
           {/* Logo + Hook */}
           <div className="mb-5">
             <h1 className="text-4xl sm:text-5xl font-black mb-2 tracking-tight text-ink">
