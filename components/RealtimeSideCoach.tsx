@@ -61,6 +61,7 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
   const [currentSuggestion, setCurrentSuggestion] = useState<CoachSuggestion | null>(null)
   const [displayedLines, setDisplayedLines] = useState<TranscriptLine[]>([])
   const [playbackSpeed, setPlaybackSpeed] = useState(2.5) // 기본 2.5배 속도
+  const [showFullScript, setShowFullScript] = useState(true) // Script 표시 여부
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -257,10 +258,82 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
         </div>
       </div>
 
-      {/* Main Content: Split View */}
-      <div className="grid grid-cols-1 gap-4">
-        {/* Left: Transcript Timeline - dim 처리 when coach suggestion active */}
-        <div className={`paper-card overflow-hidden transition-all ${currentSuggestion ? 'opacity-40' : 'opacity-100'}`}>
+      {/* Main Content */}
+      <div className="space-y-4">
+        {/* 고정 코치 가이드 영역 - 말해보카 스타일 */}
+        <div className={`paper-card overflow-hidden sticky top-4 z-10 transition-all ${
+          currentSuggestion ? 'ring-4 ring-hold/50 shadow-2xl' : 'shadow-soft'
+        }`}>
+          <div className="bg-gradient-to-r from-hold-600 to-primary-600 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-lg">
+                  🎓
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    지금 이렇게 말하세요
+                  </h3>
+                </div>
+              </div>
+              
+              {/* Hint/Script Toggle */}
+              {currentSuggestion && (
+                <button
+                  onClick={() => setShowFullScript(!showFullScript)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/20 hover:bg-white/30 text-white transition-all"
+                >
+                  {showFullScript ? '힌트만' : '전체 보기'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="p-5 min-h-[140px] flex items-center justify-center bg-gradient-to-br from-cream-50 to-hold-50">
+            {currentSuggestion ? (
+              <div className="w-full animate-slideUp">
+                {showFullScript ? (
+                  <>
+                    <div className="text-xs font-bold text-hold-700 mb-2 uppercase tracking-wider flex items-center gap-2">
+                      💡 추천 대응
+                      <span className="px-2 py-0.5 rounded-full bg-hold-100 text-hold-600 text-xs font-medium normal-case">
+                        {coachTone === 'cold' ? '냉정' : coachTone === 'warm' ? '감성' : '단호·공손'}
+                      </span>
+                    </div>
+                    <div className="p-4 rounded-xl bg-white border-2 border-hold-300 shadow-lg">
+                      <p className="text-xl text-ink font-bold leading-relaxed">
+                        "{currentSuggestion.text}"
+                      </p>
+                    </div>
+                    <div className="text-xs text-hold-600 font-medium mt-2 text-center">
+                      👆 이 멘트를 참고하여 응답하세요
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-hold-100 border border-hold-300 mb-2">
+                      <span className="text-2xl">💡</span>
+                      <span className="text-sm font-bold text-hold-700">대응 멘트 준비됨</span>
+                    </div>
+                    <p className="text-xs text-ink/60">
+                      "전체 보기" 버튼을 눌러 확인하세요
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center">
+                <div className="text-3xl mb-2">🎯</div>
+                <p className="text-sm text-ink/60 font-medium">
+                  {isPlaying ? '대응이 필요한 순간에 멘트를 제안합니다' : '시작 버튼을 눌러 통화를 시작하세요'}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Transcript Timeline - dim when coach suggestion active */}
+        <div className={`paper-card overflow-hidden transition-all ${currentSuggestion && showFullScript ? 'opacity-30' : 'opacity-100'}`}>
           <div className="bg-cream-100 border-b border-ink/10 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-ink">통화 진행</h3>
@@ -365,52 +438,6 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
                 </div>
               )
             })}
-          </div>
-        </div>
-
-        {/* Right: Coach Suggestions - 강조 */}
-        <div className={`paper-card overflow-hidden transition-all ${
-          currentSuggestion ? 'ring-4 ring-hold/50 shadow-lg scale-[1.02]' : ''
-        }`}>
-          <div className="bg-hold-50 border-b border-hold-200 p-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-hold flex items-center justify-center text-lg">
-                🎓
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-ink">
-                  옆자리 코치
-                </h3>
-                <p className="text-xs text-ink/60">
-                  지금 이렇게 말하세요
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-5 min-h-[180px] flex items-center justify-center bg-cream-100">
-            {currentSuggestion ? (
-              <div className="w-full animate-slideUp">
-                <div className="p-5 rounded-xl bg-gradient-to-br from-hold-50 to-primary-50 border-2 border-hold-500 shadow-lg mb-3">
-                  <div className="text-xs font-bold text-hold-700 mb-3 uppercase tracking-wider">
-                    💡 추천 대응 ({coachTone === 'cold' ? '냉정' : coachTone === 'warm' ? '감성' : '단호·공손'})
-                  </div>
-                  <p className="text-lg text-ink font-bold leading-relaxed mb-2">
-                    "{currentSuggestion.text}"
-                  </p>
-                  <div className="text-xs text-hold-600 font-medium">
-                    👆 이 멘트를 참고하여 응답하세요
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center">
-                <div className="text-3xl mb-2">🎯</div>
-                <p className="text-sm text-ink/60">
-                  {isPlaying ? '대응이 필요한 순간에 제안을 드립니다' : '시작 버튼을 눌러 통화를 시작하세요'}
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>

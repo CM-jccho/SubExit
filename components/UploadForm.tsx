@@ -46,7 +46,7 @@ export type AnalysisResult = {
   disclaimer: string
 }
 
-type ScenarioType = 'cancel' | 'sales' | 'romantic' | 'general' | 'salary' | 'parent' | 'formal'
+type ScenarioType = 'sales' | 'first_date' | 'relationship' | 'school_group' | 'presentation_qa' | 'work_comm' | 'work_presentation'
 
 export default function UploadForm() {
   const searchParams = useSearchParams()
@@ -168,6 +168,76 @@ export default function UploadForm() {
   }
 
   if (showRealtimeCoach) {
+    // 시나리오별 transcript 매핑
+    const scenarioTranscripts: Record<ScenarioType, TranscriptLine[]> = {
+      sales: [
+        { speaker: 'agent', text: '안녕하세요 고객님, OO카드 프리미엄 회원 혜택 안내 전화드렸습니다.', startTime: 2, endTime: 7 },
+        { speaker: 'user', text: '아, 괜찮습니다. 필요 없어요.', startTime: 8, endTime: 10 },
+        { speaker: 'agent', text: '잠깐만요! 지금 가입하시면 첫 달 무료에 3만 원 캐시백까지 드립니다. 공짜인데 왜 안 받으세요?', startTime: 11, endTime: 19, tags: ['pressure', 'urgency', 'fomo'] },
+        { speaker: 'user', text: '아니요, 정말 괜찮습니다.', startTime: 20, endTime: 22 },
+        { speaker: 'agent', text: '고객님 같은 우량 고객분들은 다들 가입하셨는데요? 지금 안 하시면 다음 달부터는 혜택이 축소됩니다. 1분만 투자하시면 돼요.', startTime: 23, endTime: 34, tags: ['pressure', 'fomo', 'comparison'] },
+        { speaker: 'user', text: '관심 없습니다. 전화 끊을게요.', startTime: 35, endTime: 38 },
+        { speaker: 'agent', text: '아 잠깐만요! 정말 마지막입니다. 연회비도 첫 해 면제인데, 손해 보시는 거예요. 다른 분들은 저한테 고맙다고 하시던데...', startTime: 39, endTime: 50, tags: ['pressure', 'guilt'] },
+        { speaker: 'user', text: '필요 없다고 했습니다. 이제 끊겠습니다.', startTime: 51, endTime: 54 },
+        { speaker: 'agent', text: '네... 알겠습니다. 좋은 하루 되세요.', startTime: 55, endTime: 58 },
+      ],
+      first_date: [
+        { speaker: 'agent', text: '오늘 영화 어땠어요? 재밌었죠?', startTime: 2, endTime: 5 },
+        { speaker: 'user', text: '네, 재미있었어요.', startTime: 6, endTime: 8 },
+        { speaker: 'agent', text: '저는 이런 영화 진짜 좋아하는데, 다음에 또 같이 보러 가요. 이번 주말은 어때요?', startTime: 9, endTime: 16, tags: ['pressure', 'urgency'] },
+        { speaker: 'user', text: '음... 이번 주는 약속이 있어서요.', startTime: 17, endTime: 20 },
+        { speaker: 'agent', text: '그럼 다다음 주? 아니면 평일 저녁에라도? 제가 맞출 수 있어요!', startTime: 21, endTime: 27, tags: ['pressure'] },
+        { speaker: 'user', text: '감사한데, 제가 일정 확인하고 연락드릴게요.', startTime: 28, endTime: 32 },
+      ],
+      relationship: [
+        { speaker: 'user', text: '저기... 요즘 약속 시간에 자주 늦는 것 같아서 얘기하고 싶었어.', startTime: 2, endTime: 8 },
+        { speaker: 'agent', text: '아, 그게... 회사 일이 바빠서 그런 거야. 이해해줄 수 있지?', startTime: 9, endTime: 14, tags: ['guilt'] },
+        { speaker: 'user', text: '그건 이해하는데, 연락이라도 미리 해주면 좋겠어.', startTime: 15, endTime: 19 },
+        { speaker: 'agent', text: '그렇게까지 예민하게 굴 필요 있어? 다른 커플들은 다 이해해주던데.', startTime: 20, endTime: 26, tags: ['comparison', 'guilt'] },
+        { speaker: 'user', text: '다른 사람들 얘기는 중요하지 않아. 우리 관계에서 내가 느낀 걸 말하는 거야.', startTime: 27, endTime: 33 },
+      ],
+      school_group: [
+        { speaker: 'agent', text: '야, 조별과제 PPT 네가 만들어줘. 너 잘하잖아.', startTime: 2, endTime: 6 },
+        { speaker: 'user', text: '이번엔 제가 다른 파트 하고 싶은데요.', startTime: 7, endTime: 10 },
+        { speaker: 'agent', text: '에이, 근데 네가 해야 점수 잘 나오잖아. 우리 다 바쁘고, 너는 이거 금방 하잖아.', startTime: 11, endTime: 18, tags: ['pressure', 'guilt'] },
+        { speaker: 'user', text: '저도 바빠요. 이번엔 역할을 나눠서 공평하게 했으면 좋겠어요.', startTime: 19, endTime: 24 },
+        { speaker: 'agent', text: '아 진짜, 네가 안 하면 우리 조 망하는 거 알지? 교수님 되게 까다로운데.', startTime: 25, endTime: 31, tags: ['guilt', 'pressure'] },
+        { speaker: 'user', text: '그렇게 걱정되면 같이 제대로 역할 분담해서 다 같이 열심히 하면 돼요.', startTime: 32, endTime: 38 },
+      ],
+      presentation_qa: [
+        { speaker: 'agent', text: '발표 내용 중에 3페이지 데이터가 최신인지 의심스러운데요?', startTime: 2, endTime: 7, tags: ['pressure'] },
+        { speaker: 'user', text: '해당 데이터는 지난달 공식 보고서 기준입니다.', startTime: 8, endTime: 12 },
+        { speaker: 'agent', text: '그럼 올해 초 데이터는 왜 빠졌나요? 그게 더 중요하지 않나요?', startTime: 13, endTime: 19, tags: ['pressure'] },
+        { speaker: 'user', text: '좋은 지적입니다. 올해 초 데이터는 트렌드 비교 자료로 다음 슬라이드에 포함되어 있습니다.', startTime: 20, endTime: 28 },
+        { speaker: 'agent', text: '근데 경쟁사 분석은 너무 얕은 거 아닌가요? 실무에서 쓰기에는...', startTime: 29, endTime: 35, tags: ['pressure', 'guilt'] },
+        { speaker: 'user', text: '이번 발표는 개요 중심이라 간략히 다뤘습니다. 상세 분석은 별도 자료로 준비되어 있으니 공유드리겠습니다.', startTime: 36, endTime: 45 },
+      ],
+      work_comm: [
+        { speaker: 'agent', text: '김 대리, 이번 주 금요일까지 보고서 가능하죠?', startTime: 2, endTime: 6 },
+        { speaker: 'user', text: '현재 다른 업무도 있어서 일정이 빠듯한데요.', startTime: 7, endTime: 11 },
+        { speaker: 'agent', text: '그래도 박 대리는 어제 다 끝냈던데? 금요일이면 충분하지 않나요?', startTime: 12, endTime: 18, tags: ['comparison', 'pressure'] },
+        { speaker: 'user', text: '박 대리님 업무량과 제 업무량은 다릅니다. 다음 주 화요일이면 가능합니다.', startTime: 19, endTime: 26 },
+      ],
+      work_presentation: [
+        { speaker: 'agent', text: '이 제안의 ROI가 명확하지 않은 것 같은데요. 구체적인 수치가 있나요?', startTime: 2, endTime: 8, tags: ['pressure'] },
+        { speaker: 'user', text: '7페이지에 3년 예상 ROI가 나와 있습니다. 15% 수익률을 예상하고 있습니다.', startTime: 9, endTime: 16 },
+        { speaker: 'agent', text: '그런데 경쟁사는 이미 비슷한 걸 하고 있지 않나요? 우리가 늦은 거 아닌가요?', startTime: 17, endTime: 24, tags: ['fomo', 'pressure'] },
+        { speaker: 'user', text: '경쟁사는 다른 접근법을 사용합니다. 저희는 차별화된 전략으로 후발주자 이점을 활용할 수 있습니다.', startTime: 25, endTime: 34 },
+        { speaker: 'agent', text: '리스크는 어떻게 관리할 건가요? 실패하면 손실이 크지 않나요?', startTime: 35, endTime: 41, tags: ['pressure', 'guilt'] },
+        { speaker: 'user', text: '단계별 리스크 관리 계획이 있으며, 각 단계마다 go/no-go 결정 포인트를 두었습니다.', startTime: 42, endTime: 50 },
+      ],
+    }
+
+    type TranscriptLine = {
+      speaker: string
+      text: string
+      startTime: number
+      endTime: number
+      tags?: string[]
+    }
+
+    const transcript = scenarioTranscripts[selectedScenario] || scenarioTranscripts.sales
+    
     return (
       <div className="animate-fadeIn">
         <div className="mb-5 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 text-center">
@@ -175,17 +245,7 @@ export default function UploadForm() {
         </div>
         
         <RealtimeSideCoach
-          transcript={[
-            { speaker: 'agent', text: '안녕하세요 고객님, OO카드 프리미엄 회원 혜택 안내 전화드렸습니다.', startTime: 2, endTime: 7 },
-            { speaker: 'user', text: '아, 괜찮습니다. 필요 없어요.', startTime: 8, endTime: 10 },
-            { speaker: 'agent', text: '잠깐만요! 지금 가입하시면 첫 달 무료에 3만 원 캐시백까지 드립니다. 공짜인데 왜 안 받으세요?', startTime: 11, endTime: 19, tags: ['pressure', 'urgency', 'fomo'] },
-            { speaker: 'user', text: '아니요, 정말 괜찮습니다.', startTime: 20, endTime: 22 },
-            { speaker: 'agent', text: '고객님 같은 우량 고객분들은 다들 가입하셨는데요? 지금 안 하시면 다음 달부터는 혜택이 축소됩니다. 1분만 투자하시면 돼요.', startTime: 23, endTime: 34, tags: ['pressure', 'fomo', 'comparison'] },
-            { speaker: 'user', text: '관심 없습니다. 전화 끊을게요.', startTime: 35, endTime: 38 },
-            { speaker: 'agent', text: '아 잠깐만요! 정말 마지막입니다. 연회비도 첫 해 면제인데, 손해 보시는 거예요. 다른 분들은 저한테 고맙다고 하시던데...', startTime: 39, endTime: 50, tags: ['pressure', 'guilt'] },
-            { speaker: 'user', text: '필요 없다고 했습니다. 이제 끊겠습니다.', startTime: 51, endTime: 54 },
-            { speaker: 'agent', text: '네... 알겠습니다. 좋은 하루 되세요.', startTime: 55, endTime: 58 },
-          ]}
+          transcript={transcript}
           coachTone={coachTone}
           onCallEnd={handleCallEnd}
         />
@@ -262,8 +322,62 @@ export default function UploadForm() {
 
   // MUST only: sales★ primary
   const scenarios = [
-    { id: 'sales' as ScenarioType, label: '영업 전화 거절', emoji: '📞', primary: true, featured: true },
-    { id: 'salary' as ScenarioType, label: '연봉·조건 협상', emoji: '💰', primary: false, featured: false },
+    { 
+      id: 'sales' as ScenarioType, 
+      label: '영업 전화 거절', 
+      emoji: '📞', 
+      description: '걸려온 영업 전화, 압박에 흔들리지 않고 거절',
+      primary: true, 
+      featured: true 
+    },
+    { 
+      id: 'first_date' as ScenarioType, 
+      label: '소개팅 / 첫 데이트', 
+      emoji: '💐', 
+      description: '빠른 다음 약속 재촉, 적절한 경계 설정',
+      primary: false, 
+      featured: false 
+    },
+    { 
+      id: 'relationship' as ScenarioType, 
+      label: '연인 불편 말하기', 
+      emoji: '💬', 
+      description: '불편한 점 전달, 비교 압박에 흔들리지 않기',
+      primary: false, 
+      featured: false 
+    },
+    { 
+      id: 'school_group' as ScenarioType, 
+      label: '학교 생활 (조별/교수)', 
+      emoji: '🎓', 
+      description: '일방적 역할 부여, 공평한 분담 요구',
+      primary: false, 
+      featured: false 
+    },
+    { 
+      id: 'presentation_qa' as ScenarioType, 
+      label: '학교 발표 Q&A', 
+      emoji: '📊', 
+      description: '발표 후 날카로운 질문, 침착하게 대응',
+      primary: false, 
+      featured: false 
+    },
+    { 
+      id: 'work_comm' as ScenarioType, 
+      label: '직장 소통 (보고/1:1)', 
+      emoji: '💼', 
+      description: '무리한 일정 요구, 현실적 대안 제시',
+      primary: false, 
+      featured: false 
+    },
+    { 
+      id: 'work_presentation' as ScenarioType, 
+      label: '제안서·사내 발표', 
+      emoji: '📈', 
+      description: '제안서 Q&A 압박, 전문적 답변',
+      primary: false, 
+      featured: false 
+    },
   ]
   
   // Secondary/expansion (available, not hero)
@@ -297,25 +411,53 @@ export default function UploadForm() {
         </div>
       </div>
 
-      {/* Scenario Selection Chips */}
+      {/* Scenario Card Selection */}
       <div className="mb-6">
         <label className="block text-xs font-semibold text-ink/60 mb-3 tracking-wide">
-          시나리오 (데모용)
+          시나리오 선택 (데모용)
         </label>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-1 gap-3">
           {scenarios.map((scenario) => (
             <button
               key={scenario.id}
               type="button"
               onClick={() => setSelectedScenario(scenario.id)}
-              className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+              className={`text-left p-4 rounded-xl transition-all duration-200 ${
                 selectedScenario === scenario.id
-                  ? 'bg-ink text-cream'
-                  : 'bg-white text-ink/70 hover:bg-cream-200 border border-ink/15'
+                  ? 'bg-primary-500 text-white shadow-lg scale-[1.02]'
+                  : 'bg-white hover:bg-cream-100 border border-ink/15 hover:border-primary-300'
               }`}
             >
-              {scenario.label}
-              {scenario.featured && <span className="ml-1 text-hold">★</span>}
+              <div className="flex items-start gap-3">
+                <div className={`text-2xl flex-shrink-0 ${
+                  selectedScenario === scenario.id ? '' : 'opacity-70'
+                }`}>
+                  {scenario.emoji}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className={`text-sm font-bold ${
+                      selectedScenario === scenario.id ? 'text-white' : 'text-ink'
+                    }`}>
+                      {scenario.label}
+                    </h3>
+                    {scenario.featured && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                        selectedScenario === scenario.id 
+                          ? 'bg-white/20 text-white' 
+                          : 'bg-hold-50 text-hold-600'
+                      }`}>
+                        ★
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-xs leading-relaxed ${
+                    selectedScenario === scenario.id ? 'text-white/90' : 'text-ink/60'
+                  }`}>
+                    {scenario.description}
+                  </p>
+                </div>
+              </div>
             </button>
           ))}
         </div>

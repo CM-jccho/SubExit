@@ -1,0 +1,107 @@
+{
+  "callType": "work_presentation",
+  "duration": 55,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "이 제안의 ROI가 명확하지 않은 것 같은데요. 구체적인 수치가 있나요?",
+      "startTime": 2,
+      "endTime": 8,
+      "tags": ["pressure"]
+    },
+    {
+      "speaker": "user",
+      "text": "7페이지에 3년 예상 ROI가 나와 있습니다. 15% 수익률을 예상하고 있습니다.",
+      "startTime": 9,
+      "endTime": 16
+    },
+    {
+      "speaker": "agent",
+      "text": "그런데 경쟁사는 이미 비슷한 걸 하고 있지 않나요? 우리가 늦은 거 아닌가요?",
+      "startTime": 17,
+      "endTime": 24,
+      "tags": ["fomo", "pressure"]
+    },
+    {
+      "speaker": "user",
+      "text": "경쟁사는 다른 접근법을 사용합니다. 저희는 차별화된 [전략]으로 후발주자 이점을 활용할 수 있습니다.",
+      "startTime": 25,
+      "endTime": 34
+    },
+    {
+      "speaker": "agent",
+      "text": "리스크는 어떻게 관리할 건가요? 실패하면 손실이 크지 않나요?",
+      "startTime": 35,
+      "endTime": 41,
+      "tags": ["pressure", "guilt"]
+    },
+    {
+      "speaker": "user",
+      "text": "단계별 리스크 관리 계획이 있으며, 각 단계마다 go/no-go 결정 포인트를 두었습니다.",
+      "startTime": 42,
+      "endTime": 50
+    }
+  ],
+  "analysis": {
+    "pressureSegments": [
+      {
+        "startTime": 2,
+        "endTime": 8,
+        "type": "pressure",
+        "patternLabel": "FOMO·압박",
+        "severity": "medium",
+        "held": true,
+        "description": "구체성 부족을 지적하며 제안의 타당성 의심"
+      },
+      {
+        "startTime": 17,
+        "endTime": 24,
+        "type": "fomo",
+        "patternLabel": "FOMO·압박",
+        "severity": "high",
+        "held": true,
+        "description": "경쟁 상황을 강조하며 타이밍 문제 제기"
+      },
+      {
+        "startTime": 35,
+        "endTime": 41,
+        "type": "guilt",
+        "patternLabel": "마음 흔들기",
+        "severity": "high",
+        "held": true,
+        "description": "실패 가능성을 부각하며 책임감 자극"
+      }
+    ],
+    "overallTone": "critical_evaluation",
+    "riskLevel": "high",
+    "feedback": {
+      "positive": [
+        "각 의문에 구체적 데이터로 답변했습니다",
+        "경쟁 상황을 인정하면서도 차별화 전략을 제시했습니다",
+        "리스크 관리 계획을 명확히 설명했습니다"
+      ],
+      "improvements": []
+    },
+    "practiceScripts": [
+      {
+        "whenKo": "구체적 수치를 요구할 때",
+        "sayKo": "[페이지/자료]에 [구체적 수치]가 제시되어 있습니다."
+      },
+      {
+        "whenKo": "경쟁사와 비교하며 타이밍을 의심할 때",
+        "sayKo": "경쟁사와 다른 [차별화 포인트]로 후발주자 이점을 활용할 수 있습니다."
+      },
+      {
+        "whenKo": "실패 리스크를 강조할 때",
+        "sayKo": "단계별 리스크 관리 계획과 의사결정 포인트가 마련되어 있습니다."
+      }
+    ]
+  },
+  "metadata": {
+    "scenario": "work_proposal_qa",
+    "organization": "직장 제안서 발표",
+    "callDate": "2026-09-14",
+    "outcome": "전문적 대응"
+  },
+  "disclaimer": "이 시뮬레이션은 데모용 샘플입니다. 연습 목적으로만 사용하세요."
+}
