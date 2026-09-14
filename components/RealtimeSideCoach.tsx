@@ -17,10 +17,13 @@ type CoachSuggestion = {
   trigger: string
 }
 
+type PersonaType = 'salesperson' | 'interviewer' | 'professor' | 'date' | 'boss' | 'audience'
+
 type Props = {
   transcript: TranscriptLine[]
   coachTone: CoachTone
   onCallEnd: () => void
+  persona: PersonaType
 }
 
 const getTonedSuggestion = (baseTrigger: string, tone: CoachTone): CoachSuggestion => {
@@ -54,14 +57,24 @@ const getTonedSuggestion = (baseTrigger: string, tone: CoachTone): CoachSuggesti
   }
 }
 
-export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: Props) {
+export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd, persona }: Props) {
   const [currentTime, setCurrentTime] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [hasConsented, setHasConsented] = useState(false)
   const [currentSuggestion, setCurrentSuggestion] = useState<CoachSuggestion | null>(null)
   const [displayedLines, setDisplayedLines] = useState<TranscriptLine[]>([])
+  const [showHints, setShowHints] = useState(true)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  const personaLabels: Record<PersonaType, string> = {
+    salesperson: '영업상담원',
+    interviewer: '면접관',
+    professor: '교수/팀원',
+    date: '소개팅상대',
+    boss: '직장상사',
+    audience: '발표청중',
+  }
 
   useEffect(() => {
     if (isPlaying && hasConsented) {
@@ -267,35 +280,56 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
         {/* Right: Coach Suggestions */}
         <div className="paper-card overflow-hidden">
           <div className="bg-hold-50 border-b border-hold-200 p-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-hold flex items-center justify-center text-lg">
-                🎓
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full bg-hold flex items-center justify-center text-lg">
+                  🎓
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-ink">
+                    지금 이렇게 말하세요
+                  </h3>
+                  <p className="text-xs text-ink/60">
+                    상대: {personaLabels[persona]}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-ink">
-                  옆자리 코치
-                </h3>
-                <p className="text-xs text-ink/60">
-                  지금 이렇게 말하세요
-                </p>
-              </div>
+              <button
+                onClick={() => setShowHints(!showHints)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 bg-white border border-ink/15 hover:bg-cream-200 text-ink/70"
+              >
+                {showHints ? '힌트 숨김' : '힌트 보기'}
+              </button>
             </div>
           </div>
 
           <div className="p-5 min-h-[180px] flex items-center justify-center bg-cream-100">
-            {currentSuggestion ? (
+            {currentSuggestion && showHints ? (
               <div className="w-full animate-slideUp">
-                <div className="p-4 rounded-xl bg-hold-50 border border-hold-300 mb-3">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-hold-50 to-hold-100 border-2 border-hold-300 mb-3 ring-2 ring-hold/20 shadow-lg">
                   <div className="text-xs font-semibold text-hold-600 mb-2">
                     추천 대응 ({coachTone === 'cold' ? '냉정' : coachTone === 'warm' ? '감성' : '단호·공손'})
                   </div>
-                  <p className="text-base text-ink font-semibold leading-relaxed">
+                  <p className="text-lg text-ink font-bold leading-relaxed">
                     "{currentSuggestion.text}"
                   </p>
                 </div>
                 <div className="text-xs text-ink/50 text-center">
                   💡 이 멘트를 참고하여 응답하세요
                 </div>
+              </div>
+            ) : currentSuggestion && !showHints ? (
+              <div className="text-center">
+                <div className="text-3xl mb-2">🔕</div>
+                <p className="text-sm text-ink/60">
+                  힌트가 숨겨져 있습니다
+                </p>
+                <button
+                  onClick={() => setShowHints(true)}
+                  className="mt-3 px-4 py-2 bg-hold text-white rounded-xl text-xs font-medium hover:bg-hold-600 transition-colors"
+                >
+                  힌트 보기
+                </button>
               </div>
             ) : (
               <div className="text-center">

@@ -46,14 +46,37 @@ export type AnalysisResult = {
   disclaimer: string
 }
 
-type ScenarioType = 'cancel' | 'sales' | 'romantic' | 'general' | 'salary' | 'parent' | 'formal'
+type ScenarioType = 'sales' | 'interview' | 'date' | 'school' | 'presentation' | 'work' | 'relationship'
+type PersonaType = 'salesperson' | 'interviewer' | 'professor' | 'date' | 'boss' | 'audience'
 
-export default function UploadForm() {
+const scenarioToPersonaMap: Record<ScenarioType, PersonaType> = {
+  sales: 'salesperson',
+  interview: 'interviewer',
+  date: 'date',
+  school: 'professor',
+  presentation: 'audience',
+  work: 'boss',
+  relationship: 'date',
+}
+
+const personaLabels: Record<PersonaType, string> = {
+  salesperson: '영업상담원',
+  interviewer: '면접관',
+  professor: '교수/팀원',
+  date: '소개팅상대',
+  boss: '직장상사',
+  audience: '발표청중',
+}
+
+export default function UploadForm({ selectedScenario: initialScenario }: { selectedScenario?: string }) {
   const searchParams = useSearchParams()
   const isRealtimeDemo = searchParams.get('demo') === '1'
   
   const [audioFile, setAudioFile] = useState<File | null>(null)
-  const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('sales')
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioType>(
+    (initialScenario as ScenarioType) || 'sales'
+  )
+  const [selectedPersona, setSelectedPersona] = useState<PersonaType | null>(null)
   const [coachTone, setCoachTone] = useState<CoachTone>('firm_polite')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AnalysisResult | null>(null)
@@ -61,6 +84,13 @@ export default function UploadForm() {
   const [isDemoMode, setIsDemoMode] = useState(false)
   const [activeTab, setActiveTab] = useState<'analysis' | 'practice'>('analysis')
   const [showRealtimeCoach, setShowRealtimeCoach] = useState(false)
+
+  useEffect(() => {
+    if (initialScenario) {
+      setSelectedScenario(initialScenario as ScenarioType)
+      setSelectedPersona(scenarioToPersonaMap[initialScenario as ScenarioType])
+    }
+  }, [initialScenario])
 
   useEffect(() => {
     setCoachTone(loadCoachTone())
@@ -167,6 +197,69 @@ export default function UploadForm() {
     }
   }
 
+  const getTranscriptForScenario = (scenario: ScenarioType): TranscriptLine[] => {
+    const transcripts: Record<ScenarioType, TranscriptLine[]> = {
+      sales: [
+        { speaker: 'agent', text: '안녕하세요 고객님, OO카드 프리미엄 회원 혜택 안내 전화드렸습니다.', startTime: 2, endTime: 7 },
+        { speaker: 'user', text: '아, 괜찮습니다. 필요 없어요.', startTime: 8, endTime: 10 },
+        { speaker: 'agent', text: '잠깐만요! 지금 가입하시면 첫 달 무료에 3만 원 캐시백까지 드립니다. 공짜인데 왜 안 받으세요?', startTime: 11, endTime: 19, tags: ['pressure', 'urgency', 'fomo'] },
+        { speaker: 'user', text: '아니요, 정말 괜찮습니다.', startTime: 20, endTime: 22 },
+        { speaker: 'agent', text: '고객님 같은 우량 고객분들은 다들 가입하셨는데요? 지금 안 하시면 다음 달부터는 혜택이 축소됩니다. 1분만 투자하시면 돼요.', startTime: 23, endTime: 34, tags: ['pressure', 'fomo', 'comparison'] },
+        { speaker: 'user', text: '관심 없습니다. 전화 끊을게요.', startTime: 35, endTime: 38 },
+        { speaker: 'agent', text: '아 잠깐만요! 정말 마지막입니다. 연회비도 첫 해 면제인데, 손해 보시는 거예요. 다른 분들은 저한테 고맙다고 하시던데...', startTime: 39, endTime: 50, tags: ['pressure', 'guilt'] },
+        { speaker: 'user', text: '필요 없다고 했습니다. 이제 끊겠습니다.', startTime: 51, endTime: 54 },
+        { speaker: 'agent', text: '네... 알겠습니다. 좋은 하루 되세요.', startTime: 55, endTime: 58 },
+      ],
+      interview: [
+        { speaker: 'agent', text: '자기소개 부탁드립니다.', startTime: 2, endTime: 4 },
+        { speaker: 'user', text: '안녕하세요, 저는...', startTime: 5, endTime: 7 },
+        { speaker: 'agent', text: '경력이 부족해 보이는데, 어떻게 생각하시나요?', startTime: 8, endTime: 12, tags: ['pressure'] },
+        { speaker: 'user', text: '음... 그래도...', startTime: 13, endTime: 15 },
+        { speaker: 'agent', text: '우리 회사에 왜 지원하셨나요?', startTime: 16, endTime: 19 },
+        { speaker: 'user', text: '귀사의 비전에...', startTime: 20, endTime: 23 },
+      ],
+      date: [
+        { speaker: 'agent', text: '안녕하세요! 만나서 반갑습니다.', startTime: 2, endTime: 5 },
+        { speaker: 'user', text: '네, 안녕하세요.', startTime: 6, endTime: 7 },
+        { speaker: 'agent', text: '평소에 뭐 하시는 걸 좋아하세요?', startTime: 8, endTime: 11 },
+        { speaker: 'user', text: '음... 저는...', startTime: 12, endTime: 14 },
+      ],
+      school: [
+        { speaker: 'agent', text: '다음은 3조 발표 시간입니다.', startTime: 2, endTime: 5 },
+        { speaker: 'user', text: '안녕하세요, 오늘 발표 주제는...', startTime: 6, endTime: 10 },
+        { speaker: 'agent', text: '질문 있습니다. 그 부분은 어떻게 생각하시나요?', startTime: 11, endTime: 15, tags: ['pressure'] },
+        { speaker: 'user', text: '음... 그건...', startTime: 16, endTime: 18 },
+      ],
+      presentation: [
+        { speaker: 'agent', text: '제안서 발표 시작하겠습니다.', startTime: 2, endTime: 5 },
+        { speaker: 'user', text: '안녕하세요, 오늘 제안드릴 내용은...', startTime: 6, endTime: 10 },
+        { speaker: 'agent', text: '비용 대비 효과가 명확하지 않은데요?', startTime: 11, endTime: 15, tags: ['pressure'] },
+        { speaker: 'user', text: '그 부분은...', startTime: 16, endTime: 18 },
+      ],
+      work: [
+        { speaker: 'agent', text: '이번 프로젝트 일정 좀 타이트한데, 가능하겠어요?', startTime: 2, endTime: 6, tags: ['pressure'] },
+        { speaker: 'user', text: '음... 최선을...', startTime: 7, endTime: 9 },
+        { speaker: 'agent', text: '다른 팀원들은 다 괜찮다고 했는데.', startTime: 10, endTime: 13, tags: ['comparison'] },
+        { speaker: 'user', text: '알겠습니다...', startTime: 14, endTime: 16 },
+      ],
+      relationship: [
+        { speaker: 'agent', text: '왜 요즘 연락 안 해? 나한테 관심 없는 거야?', startTime: 2, endTime: 6, tags: ['pressure', 'guilt'] },
+        { speaker: 'user', text: '아니야, 바빴어...', startTime: 7, endTime: 9 },
+        { speaker: 'agent', text: '항상 바쁘다고만 하네. 다른 사람한테는 시간 내잖아.', startTime: 10, endTime: 15, tags: ['comparison', 'guilt'] },
+        { speaker: 'user', text: '그게 아니라...', startTime: 16, endTime: 18 },
+      ],
+    }
+    return transcripts[scenario] || transcripts.sales
+  }
+
+  type TranscriptLine = {
+    speaker: string
+    text: string
+    startTime: number
+    endTime: number
+    tags?: string[]
+  }
+
   if (showRealtimeCoach) {
     return (
       <div className="animate-fadeIn">
@@ -175,19 +268,10 @@ export default function UploadForm() {
         </div>
         
         <RealtimeSideCoach
-          transcript={[
-            { speaker: 'agent', text: '안녕하세요 고객님, OO카드 프리미엄 회원 혜택 안내 전화드렸습니다.', startTime: 2, endTime: 7 },
-            { speaker: 'user', text: '아, 괜찮습니다. 필요 없어요.', startTime: 8, endTime: 10 },
-            { speaker: 'agent', text: '잠깐만요! 지금 가입하시면 첫 달 무료에 3만 원 캐시백까지 드립니다. 공짜인데 왜 안 받으세요?', startTime: 11, endTime: 19, tags: ['pressure', 'urgency', 'fomo'] },
-            { speaker: 'user', text: '아니요, 정말 괜찮습니다.', startTime: 20, endTime: 22 },
-            { speaker: 'agent', text: '고객님 같은 우량 고객분들은 다들 가입하셨는데요? 지금 안 하시면 다음 달부터는 혜택이 축소됩니다. 1분만 투자하시면 돼요.', startTime: 23, endTime: 34, tags: ['pressure', 'fomo', 'comparison'] },
-            { speaker: 'user', text: '관심 없습니다. 전화 끊을게요.', startTime: 35, endTime: 38 },
-            { speaker: 'agent', text: '아 잠깐만요! 정말 마지막입니다. 연회비도 첫 해 면제인데, 손해 보시는 거예요. 다른 분들은 저한테 고맙다고 하시던데...', startTime: 39, endTime: 50, tags: ['pressure', 'guilt'] },
-            { speaker: 'user', text: '필요 없다고 했습니다. 이제 끊겠습니다.', startTime: 51, endTime: 54 },
-            { speaker: 'agent', text: '네... 알겠습니다. 좋은 하루 되세요.', startTime: 55, endTime: 58 },
-          ]}
+          transcript={getTranscriptForScenario(selectedScenario)}
           coachTone={coachTone}
           onCallEnd={handleCallEnd}
+          persona={selectedPersona || scenarioToPersonaMap[selectedScenario]}
         />
 
         <button
@@ -246,20 +330,55 @@ export default function UploadForm() {
     )
   }
 
-  // MUST only: sales★ primary
-  const scenarios = [
-    { id: 'sales' as ScenarioType, label: '영업 전화 거절', emoji: '📞', primary: true, featured: true },
-    { id: 'salary' as ScenarioType, label: '연봉·조건 협상', emoji: '💰', primary: false, featured: false },
-  ]
-  
-  // Secondary/expansion (available, not hero)
-  // cancel, parent, formal, general, romantic
-  
-  // Soft-Go scenarios (hidden, available via API)
-  // parent, formal, general, romantic
+  const scenarioInfo = {
+    sales: { label: '영업 전화 거절', emoji: '📞' },
+    interview: { label: '면접', emoji: '👔' },
+    date: { label: '소개팅 · 첫 데이트', emoji: '☕' },
+    school: { label: '학교 발표', emoji: '🎓' },
+    presentation: { label: '제안서 · 사내 발표', emoji: '📊' },
+    work: { label: '직장 소통', emoji: '💼' },
+    relationship: { label: '연인 불편', emoji: '💔' },
+  }
 
   return (
     <div className="paper-card p-6 sm:p-7">
+      {/* Scenario Header */}
+      <div className="mb-6 text-center">
+        <div className="text-4xl mb-2">{scenarioInfo[selectedScenario].emoji}</div>
+        <h2 className="text-xl font-bold text-ink mb-1">
+          {scenarioInfo[selectedScenario].label}
+        </h2>
+        <p className="text-sm text-ink/60">
+          시뮬레이션 연습
+        </p>
+      </div>
+
+      {/* Persona Selection */}
+      <div className="mb-6">
+        <label className="block text-xs font-semibold text-ink/60 mb-3 tracking-wide">
+          상대 페르소나
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(personaLabels).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSelectedPersona(key as PersonaType)}
+              className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
+                selectedPersona === key
+                  ? 'bg-ink text-cream'
+                  : 'bg-white text-ink/70 hover:bg-cream-200 border border-ink/15'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-ink/50 mt-2">
+          페르소나는 코치의 말투와 대응 전략에 영향을 줍니다
+        </p>
+      </div>
+
       {/* Coach Tone Selection */}
       <div className="mb-6">
         <label className="block text-xs font-semibold text-ink/60 mb-3 tracking-wide">
@@ -278,30 +397,6 @@ export default function UploadForm() {
               }`}
             >
               {coachToneLabels[tone]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Scenario Selection Chips */}
-      <div className="mb-6">
-        <label className="block text-xs font-semibold text-ink/60 mb-3 tracking-wide">
-          시나리오 (데모용)
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {scenarios.map((scenario) => (
-            <button
-              key={scenario.id}
-              type="button"
-              onClick={() => setSelectedScenario(scenario.id)}
-              className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all duration-200 ${
-                selectedScenario === scenario.id
-                  ? 'bg-ink text-cream'
-                  : 'bg-white text-ink/70 hover:bg-cream-200 border border-ink/15'
-              }`}
-            >
-              {scenario.label}
-              {scenario.featured && <span className="ml-1 text-hold">★</span>}
             </button>
           ))}
         </div>
@@ -385,7 +480,7 @@ export default function UploadForm() {
           disabled={loading}
           className="btn-secondary text-sm"
         >
-          {loading ? '분석 중...' : `${scenarios.find(s => s.id === selectedScenario)?.label} 사후 분석만 보기`}
+          {loading ? '분석 중...' : `${scenarioInfo[selectedScenario].label} 사후 분석만 보기`}
         </button>
       </form>
 
