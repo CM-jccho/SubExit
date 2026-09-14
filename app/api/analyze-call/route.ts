@@ -40,16 +40,16 @@ type CallAnalysisResult = {
   disclaimer: string
 }
 
-function loadCallFixture(scenario: string = 'cancel'): CallAnalysisResult {
+function loadCallFixture(scenario: string = 'sales'): CallAnalysisResult {
   const fixtureMap: Record<string, string> = {
-    cancel: 'call_sponsor_guilt.json',
     sales: 'call_sales_pressure.json',
-    romantic: 'call_romantic_refusal.json',
-    general: 'call_general_refusal.json',
     salary: 'call_salary_negotiation.json',
+    cancel: 'call_sponsor_guilt.json',
+    general: 'call_general_refusal.json',
+    romantic: 'call_romantic_refusal.json',
   }
   
-  const filename = fixtureMap[scenario] || 'call_sponsor_guilt.json'
+  const filename = fixtureMap[scenario] || 'call_sales_pressure.json'
   const fixturePath = path.join(process.cwd(), 'fixtures', filename)
   const data = fs.readFileSync(fixturePath, 'utf-8')
   return JSON.parse(data)
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     // Demo mode - return fixture immediately
     if (isDemoParam) {
       const body = await request.json().catch(() => ({}))
-      const scenario = body.scenario || 'cancel'
+      const scenario = body.scenario || 'sales'
       const result = loadCallFixture(scenario)
       return NextResponse.json(result)
     }
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     if (contentType.includes('application/json')) {
       const body = await request.json()
       if (body.demo) {
-        const scenario = body.scenario || 'cancel'
+        const scenario = body.scenario || 'sales'
         const result = loadCallFixture(scenario)
         return NextResponse.json(result)
       }
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     
     if (!openaiKey) {
       console.log('OPENAI_API_KEY not configured, returning demo fixture')
-      const result = loadCallFixture('cancel')
+      const result = loadCallFixture('sales')
       return NextResponse.json(result)
     }
 
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     console.log('Audio file received:', audioFile.name, 'size:', audioFile.size)
     console.log('Real STT not yet implemented, returning demo fixture')
     
-    const result = loadCallFixture('cancel')
+    const result = loadCallFixture('sales')
     return NextResponse.json(result)
 
   } catch (error) {
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     
     // Fallback to fixture on any error
     try {
-      const fallbackResult = loadCallFixture('cancel')
+      const fallbackResult = loadCallFixture('sales')
       return NextResponse.json(fallbackResult)
     } catch (fixtureError) {
       return NextResponse.json(

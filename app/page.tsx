@@ -11,9 +11,9 @@ export default function Home() {
               <span className="text-gradient-primary">든든콜</span>
             </h1>
             <p className="text-xl sm:text-2xl font-bold text-white mb-3 leading-tight">
-              거절해야 하는데,
+              영업 전화에,
               <br />
-              말리다가 또 받아들인 적 있나요?
+              또 말려서 들어준 적 있나요?
             </p>
             <p className="text-base text-slate-300 mb-2 font-medium leading-relaxed">
               통화 녹음 업로드 → 압박 구간 분석
@@ -21,7 +21,7 @@ export default function Home() {
               + 연습 멘트 + 옆자리 코치
             </p>
             <p className="text-sm text-slate-400 font-medium">
-              구독 해지 · 영업 거절 · 이별 통보 · 부탁 거절 · 연봉 협상 / (로드맵) 실시간 코칭
+              영업 전화 거절 · 연봉 협상 · 구독 해지 · 부탁 거절 · 이별 통보 / (로드맵) 실시간 코칭
             </p>
           </div>
 

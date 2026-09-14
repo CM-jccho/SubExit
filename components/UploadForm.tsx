@@ -46,7 +46,7 @@ type ScenarioType = 'cancel' | 'sales' | 'romantic' | 'general' | 'salary'
 
 export default function UploadForm() {
   const [audioFile, setAudioFile] = useState<File | null>(null)
-  const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('cancel')
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('sales')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -136,11 +136,11 @@ export default function UploadForm() {
   }
 
   const scenarios = [
-    { id: 'cancel' as ScenarioType, label: '구독·후원 해지', emoji: '🚫', primary: true },
-    { id: 'sales' as ScenarioType, label: '영업 거절', emoji: '📞', primary: false },
-    { id: 'romantic' as ScenarioType, label: '이별 통보', emoji: '💔', primary: false },
-    { id: 'general' as ScenarioType, label: '부탁 거절', emoji: '🤝', primary: false },
+    { id: 'sales' as ScenarioType, label: '영업 전화 거절', emoji: '📞', primary: true },
     { id: 'salary' as ScenarioType, label: '연봉·조건 협상', emoji: '💰', primary: false },
+    { id: 'cancel' as ScenarioType, label: '구독·후원 해지', emoji: '🚫', primary: false },
+    { id: 'general' as ScenarioType, label: '부탁 거절', emoji: '🤝', primary: false },
+    { id: 'romantic' as ScenarioType, label: '이별 통보', emoji: '💔', primary: false },
   ]
 
   return (
