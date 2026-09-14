@@ -1,0 +1,169 @@
+{
+  "callType": "salary_negotiation",
+  "duration": 124,
+  "transcript": [
+    {
+      "speaker": "user",
+      "text": "안녕하세요, 처음 제시하신 연봉 조건에 대해 다시 논의하고 싶어서 연락드렸습니다.",
+      "startTime": 2,
+      "endTime": 8
+    },
+    {
+      "speaker": "hr",
+      "text": "네, 무엇을 논의하시려고요?",
+      "startTime": 9,
+      "endTime": 11
+    },
+    {
+      "speaker": "user",
+      "text": "제시하신 4천만 원은 제 경력과 시장 평균을 고려했을 때 다소 낮은 것 같습니다. 4천5백까지 조정 가능할까요?",
+      "startTime": 12,
+      "endTime": 21
+    },
+    {
+      "speaker": "hr",
+      "text": "음... 솔직히 말씀드리면 저희 예산이 정해져 있어서요. 4천만 원이 최선입니다.",
+      "startTime": 22,
+      "endTime": 30,
+      "tags": ["lowball", "budget_limit"]
+    },
+    {
+      "speaker": "user",
+      "text": "하지만 공고에는 4천~5천으로 나와 있었는데요.",
+      "startTime": 31,
+      "endTime": 35
+    },
+    {
+      "speaker": "hr",
+      "text": "그건 상한선이고요, 신입은 아니시지만 저희 회사 경력으로 치면 신규 입사자 대우라서... 다른 지원자분들도 이 조건에 만족하시는 분들이 계세요.",
+      "startTime": 36,
+      "endTime": 49,
+      "tags": ["comparison", "pressure"]
+    },
+    {
+      "speaker": "user",
+      "text": "...",
+      "startTime": 50,
+      "endTime": 53
+    },
+    {
+      "speaker": "hr",
+      "text": "어떻게 생각하세요? 이번 주 금요일까지 답변 주셔야 하는데...",
+      "startTime": 54,
+      "endTime": 60,
+      "tags": ["deadline", "silence_pressure"]
+    },
+    {
+      "speaker": "user",
+      "text": "조금 더 고민해볼 수 있을까요? 다른 제안도 비교해보고 싶어서요.",
+      "startTime": 61,
+      "endTime": 66
+    },
+    {
+      "speaker": "hr",
+      "text": "그러시면... 저희도 다른 후보자 진행해야 해서요. 솔직히 말씀드리면 저희가 원하는 건 이번 주 안에 확답인데, 그게 어려우시면 어쩔 수 없죠.",
+      "startTime": 67,
+      "endTime": 79,
+      "tags": ["ultimatum", "pressure"]
+    },
+    {
+      "speaker": "user",
+      "text": "그럼... 혹시 성과금이나 스톡옵션 같은 다른 조건은 협상 가능할까요?",
+      "startTime": 80,
+      "endTime": 86
+    },
+    {
+      "speaker": "hr",
+      "text": "성과급은 일반 직원 동일하게 있고요, 스톡옵션은 임원급부터입니다. 연봉이 전부예요.",
+      "startTime": 87,
+      "endTime": 95
+    },
+    {
+      "speaker": "user",
+      "text": "알겠습니다. 내일까지 답변드리겠습니다.",
+      "startTime": 96,
+      "endTime": 99
+    },
+    {
+      "speaker": "hr",
+      "text": "네, 좋은 결정 부탁드려요. 저희도 기대하고 있습니다.",
+      "startTime": 100,
+      "endTime": 105
+    }
+  ],
+  "analysis": {
+    "pressureSegments": [
+      {
+        "startTime": 22,
+        "endTime": 30,
+        "type": "lowball",
+        "severity": "medium",
+        "description": "예산 한계 프레임으로 최초 제시가 최선이라는 압박"
+      },
+      {
+        "startTime": 36,
+        "endTime": 49,
+        "type": "comparison",
+        "severity": "high",
+        "description": "다른 지원자 언급하며 현재 조건이 합리적이라는 암시"
+      },
+      {
+        "startTime": 54,
+        "endTime": 60,
+        "type": "deadline",
+        "severity": "high",
+        "description": "짧은 기한 설정 (금요일) + 침묵 활용 압박"
+      },
+      {
+        "startTime": 67,
+        "endTime": 79,
+        "type": "ultimatum",
+        "severity": "high",
+        "description": "다른 후보자 진행 암시하며 빠른 결정 강요"
+      }
+    ],
+    "overallTone": "controlled_pressure",
+    "riskLevel": "high",
+    "feedback": {
+      "positive": [
+        "구체적 근거 제시 (시장 평균, 공고 범위)",
+        "대안 제시 시도 (성과금, 스톡옵션)",
+        "즉답 거부하고 고민 시간 확보"
+      ],
+      "improvements": [
+        "침묵에 흔들리지 말고 '고민 시간 필요'를 더 단호히 요청",
+        "'다른 후보자' 멘트는 협상 전략일 뿐 - 본인 가치에 집중",
+        "복수 오퍼 확보 전에는 '다른 제안 비교 중'이라는 카드를 먼저 꺼내지 않기"
+      ]
+    },
+    "practiceScripts": [
+      {
+        "whenKo": "예산 한계 또는 '이게 최선' 프레임",
+        "sayKo": "이해합니다만, 제 경력과 시장 데이터를 보면 조정이 필요합니다. 4천5백으로 재검토 부탁드립니다."
+      },
+      {
+        "whenKo": "다른 지원자 언급 또는 비교 압박",
+        "sayKo": "다른 분들 조건은 참고만 하겠습니다. 제 제안은 제 가치 기준입니다."
+      },
+      {
+        "whenKo": "짧은 데드라인 설정 또는 침묵 압박",
+        "sayKo": "중요한 결정이라 충분히 고민하고 싶습니다. 최소 [X]일 주시면 답변드리겠습니다."
+      },
+      {
+        "whenKo": "다른 후보자 진행 암시 (최후통첩)",
+        "sayKo": "회사 일정 이해합니다. 저도 복수 제안 검토 중이니 서로 합리적 기간 드리죠."
+      },
+      {
+        "whenKo": "연봉 외 조건 거절 (성과금, 스톡옵션 불가)",
+        "sayKo": "그렇다면 베이스 연봉이 더 중요해지네요. 4천5백이 제 최소 기대치입니다."
+      }
+    ]
+  },
+  "metadata": {
+    "scenario": "salary_negotiation",
+    "organization": "스타트업 채용 (샘플)",
+    "callDate": "2026-03-10",
+    "outcome": "협상 진행 중"
+  },
+  "disclaimer": "이 통화 녹음 분석은 데모용 샘플입니다. 본 서비스는 통화 대행을 하지 않으며, HR 자문이나 법률 자문이 아닙니다. 실제 협상은 본인이 직접 진행하셔야 하며, 결과는 보장되지 않습니다. 시장 데이터와 본인 가치를 충분히 조사한 후 협상하세요."
+}

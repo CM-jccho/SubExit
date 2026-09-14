@@ -8,31 +8,40 @@ export default function Home() {
         <header className="text-center mb-8">
           <div className="mb-6">
             <h1 className="text-5xl sm:text-6xl font-black mb-3 tracking-tight">
-              <span className="text-gradient-primary">SideCue</span>
+              <span className="text-gradient-primary">든든콜</span>
             </h1>
-            <p className="text-xl sm:text-2xl font-bold text-white mb-2 leading-tight">
-              스크린샷 → 해지 경로
+            <p className="text-xl sm:text-2xl font-bold text-white mb-3 leading-tight">
+              영업 전화,
+              <br />
+              거절하려다 또 넘어간 적 있나요?
+            </p>
+            <p className="text-base text-slate-300 mb-2 font-medium leading-relaxed">
+              통화 녹음 업로드 → 압박 구간 분석
               <br />
               + 연습 멘트 + 옆자리 코치
             </p>
             <p className="text-sm text-slate-400 font-medium">
-              Vision 분석 / 후원·구독 해지 연습 / (로드맵) 스피커폰 코치
+              영업 전화 거절 ★ · 연봉 협상 / (확장) 구독 해지 외
             </p>
           </div>
 
           {/* Compact Disclaimer Chips */}
           <div className="flex flex-wrap justify-center gap-2 mb-6">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-xs font-semibold text-amber-400 backdrop-blur-xl">
-              <span>⚠️</span>
-              <span>참고용</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-full text-xs font-semibold text-rose-400 backdrop-blur-xl">
+              <span>🚫</span>
+              <span>통화 대행 아님</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-violet-500/10 border border-violet-500/20 rounded-full text-xs font-semibold text-violet-400 backdrop-blur-xl">
+              <span>🎭</span>
+              <span>시뮬레이션</span>
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-xs font-semibold text-blue-400 backdrop-blur-xl">
-              <span>🔒</span>
-              <span>이미지 미저장</span>
+              <span>✅</span>
+              <span>연습용</span>
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-full text-xs font-semibold text-rose-400 backdrop-blur-xl">
-              <span>⚖️</span>
-              <span>법률자문 아님</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-xs font-semibold text-amber-400 backdrop-blur-xl">
+              <span>⚠️</span>
+              <span>본인 녹음·동의 필수</span>
             </span>
           </div>
         </header>

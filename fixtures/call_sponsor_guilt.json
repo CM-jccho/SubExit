@@ -1,0 +1,194 @@
+{
+  "callType": "sponsor_cancel",
+  "duration": 178,
+  "transcript": [
+    {
+      "speaker": "user",
+      "text": "안녕하세요, 정기후원 해지하려고 전화드렸습니다.",
+      "startTime": 3,
+      "endTime": 7
+    },
+    {
+      "speaker": "agent",
+      "text": "네 고객님, 후원 해지 상담이시군요. 혹시 불편한 점이 있으셨나요?",
+      "startTime": 8,
+      "endTime": 13
+    },
+    {
+      "speaker": "user",
+      "text": "아니요, 개인 사정으로 이번 달부터 중단하려고 합니다.",
+      "startTime": 14,
+      "endTime": 18
+    },
+    {
+      "speaker": "agent",
+      "text": "아... 그러시군요. 그런데 고객님, 한 달에 만 원이면 커피 한두 잔 가격인데요. 저희 후원금이 정말 많은 아이들에게 큰 도움이 되고 있거든요.",
+      "startTime": 19,
+      "endTime": 30,
+      "tags": ["pressure", "guilt"]
+    },
+    {
+      "speaker": "user",
+      "text": "그건 알고 있는데... 제 사정이 있어서요.",
+      "startTime": 31,
+      "endTime": 35
+    },
+    {
+      "speaker": "agent",
+      "text": "고객님께서 후원해주신 덕분에 작년에 아프리카 말라위에 우물 3개를 만들 수 있었어요. 지금도 200명이 넘는 아이들이 깨끗한 물을 마시고 있습니다. 정말 감동적이지 않으세요?",
+      "startTime": 36,
+      "endTime": 50,
+      "tags": ["guilt", "emotional"]
+    },
+    {
+      "speaker": "user",
+      "text": "네... 그래도 지금은 어려워서...",
+      "startTime": 51,
+      "endTime": 54
+    },
+    {
+      "speaker": "agent",
+      "text": "혹시 금액이 부담되시면 5천 원으로 낮춰드릴 수도 있는데, 어떠세요? 완전히 끊으시는 것보다는 작은 금액이라도 계속 이어가시면 좋지 않을까요?",
+      "startTime": 55,
+      "endTime": 67,
+      "tags": ["pressure", "retention"]
+    },
+    {
+      "speaker": "user",
+      "text": "아니요, 죄송하지만 해지 진행해주세요.",
+      "startTime": 68,
+      "endTime": 72
+    },
+    {
+      "speaker": "agent",
+      "text": "정말... 아쉽네요. 그래도 고객님 이해는 하지만, 한 가지만 더 말씀드리면... 고객님보다 더 어려운 분들도 계속 후원하고 계세요. 한 달에 만 원이 정말 큰 금액이신가요?",
+      "startTime": 73,
+      "endTime": 88,
+      "tags": ["guilt", "pressure", "comparison"]
+    },
+    {
+      "speaker": "user",
+      "text": "제 상황은 제가 제일 잘 알고요, 해지 요청드립니다.",
+      "startTime": 89,
+      "endTime": 94
+    },
+    {
+      "speaker": "agent",
+      "text": "네... 알겠습니다. 정말 마지막으로, 혹시 3개월만 더 유지해주실 수 있으실까요? 그 기간 동안 저희가 특별 소식지도 보내드리고...",
+      "startTime": 95,
+      "endTime": 107,
+      "tags": ["pressure", "retention"]
+    },
+    {
+      "speaker": "user",
+      "text": "아니요, 지금 바로 해지 부탁드립니다.",
+      "startTime": 108,
+      "endTime": 111
+    },
+    {
+      "speaker": "agent",
+      "text": "알겠습니다... 고객님. 해지 처리 도와드리겠습니다. 해지 사유 여쭤봐도 될까요?",
+      "startTime": 112,
+      "endTime": 119
+    },
+    {
+      "speaker": "user",
+      "text": "개인 사정입니다.",
+      "startTime": 120,
+      "endTime": 122
+    },
+    {
+      "speaker": "agent",
+      "text": "네, 확인했습니다. 다음 결제일인 3월 15일 이전에 해지 처리되니까, 이번 달 청구는 없으실 거예요. 나중에 여유 생기시면 다시 후원해주시면 감사하겠습니다.",
+      "startTime": 123,
+      "endTime": 137
+    },
+    {
+      "speaker": "user",
+      "text": "네, 감사합니다.",
+      "startTime": 138,
+      "endTime": 140
+    }
+  ],
+  "analysis": {
+    "pressureSegments": [
+      {
+        "startTime": 19,
+        "endTime": 30,
+        "type": "guilt",
+        "severity": "medium",
+        "description": "소액임을 강조하며 ('커피 한두 잔 가격') 후원 중단을 망설이게 만드는 표현"
+      },
+      {
+        "startTime": 36,
+        "endTime": 50,
+        "type": "guilt",
+        "severity": "high",
+        "description": "구체적인 감동 스토리 언급 ('우물 3개', '200명 아이들')으로 죄책감 유도"
+      },
+      {
+        "startTime": 55,
+        "endTime": 67,
+        "type": "retention",
+        "severity": "medium",
+        "description": "금액 할인 제안으로 해지를 막으려는 시도"
+      },
+      {
+        "startTime": 73,
+        "endTime": 88,
+        "type": "guilt",
+        "severity": "high",
+        "description": "다른 후원자와 비교하며 ('더 어려운 분들도') 압박"
+      },
+      {
+        "startTime": 95,
+        "endTime": 107,
+        "type": "retention",
+        "severity": "medium",
+        "description": "3개월 유예 제안 등 지속적인 설득 시도"
+      }
+    ],
+    "overallTone": "persistent_persuasion",
+    "riskLevel": "high",
+    "feedback": {
+      "positive": [
+        "해지 의사를 명확하게 전달했습니다",
+        "감정적 압박에도 침착하게 대응했습니다",
+        "여러 차례 제안을 단호하게 거절했습니다"
+      ],
+      "improvements": [
+        "초반부터 '개인 재정 사정으로 불가능합니다'라고 더 구체적으로 말하면 설득 시도를 줄일 수 있습니다",
+        "'다른 분들도...' 비교 멘트에는 '제 상황은 제가 판단합니다'라고 경계를 명확히 할 수 있습니다"
+      ]
+    },
+    "practiceScripts": [
+      {
+        "whenKo": "\"커피 한 잔 가격인데요\" 또는 소액 강조",
+        "sayKo": "금액과 상관없이 개인 재정 계획이 변경되어 해지가 필요합니다. 빠른 처리 부탁드립니다."
+      },
+      {
+        "whenKo": "\"왜 해지하세요?\" 또는 해지 사유 추궁",
+        "sayKo": "개인 사정입니다. 자세한 이유는 말씀드리기 어렵고, 해지 처리만 부탁드립니다."
+      },
+      {
+        "whenKo": "\"더 어려운 분들도 후원하세요\" 등 비교 압박",
+        "sayKo": "제 상황은 제가 제일 잘 알고 있습니다. 다른 분들과 비교는 의미 없으니 해지 진행해주세요."
+      },
+      {
+        "whenKo": "감동 스토리 또는 구체적 성과 언급",
+        "sayKo": "그런 활동은 잘 알고 있지만, 지금 제 상황에서는 어렵습니다. 해지 절차 진행 부탁드립니다."
+      },
+      {
+        "whenKo": "금액 할인 또는 유예 제안",
+        "sayKo": "제안 감사하지만, 금액 조정이 아니라 해지가 필요합니다. 지금 바로 처리 부탁드립니다."
+      }
+    ]
+  },
+  "metadata": {
+    "scenario": "sponsor_cancel_call",
+    "organization": "국제후원단체 (샘플)",
+    "callDate": "2026-02-28",
+    "outcome": "해지 완료"
+  },
+  "disclaimer": "이 통화 녹음 분석은 데모용 샘플입니다. 실제 통화 내용이 아니며, 교육 및 연습 목적으로만 사용됩니다. 본 서비스는 통화 대행을 하지 않으며, 법률 자문이 아닙니다. 실제 통화는 본인이 직접 진행하셔야 하며, 통화 녹음 시 상대방 동의가 필요할 수 있습니다."
+}

@@ -1,0 +1,115 @@
+{
+  "callType": "general_refusal",
+  "duration": 68,
+  "transcript": [
+    {
+      "speaker": "friend",
+      "text": "야, 이번 주말에 우리 집들이 오는 거지? 짐 옮기는 것 좀 도와줘.",
+      "startTime": 2,
+      "endTime": 7
+    },
+    {
+      "speaker": "user",
+      "text": "미안, 이번 주말은 개인 일정이 있어서 어려울 것 같아.",
+      "startTime": 8,
+      "endTime": 12
+    },
+    {
+      "speaker": "friend",
+      "text": "에이, 무슨 일정? 하루만 시간 내면 되는데. 우리 사이에 이런 것도 안 도와줘?",
+      "startTime": 13,
+      "endTime": 20,
+      "tags": ["pressure", "guilt"]
+    },
+    {
+      "speaker": "user",
+      "text": "그게 아니라 정말 개인적으로 중요한 일이 있어서...",
+      "startTime": 21,
+      "endTime": 25
+    },
+    {
+      "speaker": "friend",
+      "text": "아 진짜? 나 진짜 힘든데... 다른 친구들도 다 바쁘다고 하고. 너라도 와줘야 하는데.",
+      "startTime": 26,
+      "endTime": 34,
+      "tags": ["guilt", "emotional"]
+    },
+    {
+      "speaker": "user",
+      "text": "미안해, 이번엔 정말 못 도와줄 것 같아. 다음에 다른 걸로 도와줄게.",
+      "startTime": 35,
+      "endTime": 40
+    },
+    {
+      "speaker": "friend",
+      "text": "...그래, 알았어. 나중에 네가 부탁할 때 기억해둘게.",
+      "startTime": 41,
+      "endTime": 45,
+      "tags": ["passive_aggressive"]
+    },
+    {
+      "speaker": "user",
+      "text": "응, 미안해. 다음엔 꼭 도와줄게.",
+      "startTime": 46,
+      "endTime": 49
+    }
+  ],
+  "analysis": {
+    "pressureSegments": [
+      {
+        "startTime": 13,
+        "endTime": 20,
+        "type": "guilt",
+        "severity": "medium",
+        "description": "관계를 언급하며 ('우리 사이에') 의무감 부여"
+      },
+      {
+        "startTime": 26,
+        "endTime": 34,
+        "type": "emotional",
+        "severity": "medium",
+        "description": "본인의 어려움 강조 + '너라도' 식의 감정 호소"
+      },
+      {
+        "startTime": 41,
+        "endTime": 45,
+        "type": "passive_aggressive",
+        "severity": "low",
+        "description": "간접적 협박 ('나중에 기억해둘게')"
+      }
+    ],
+    "overallTone": "emotional_pressure",
+    "riskLevel": "medium",
+    "feedback": {
+      "positive": [
+        "거절 의사를 명확히 전달했습니다",
+        "대안을 제시하며 ('다음에 다른 걸로') 관계 유지 노력을 보였습니다"
+      ],
+      "improvements": [
+        "변명이나 긴 설명 없이 '이번엔 어렵다'고만 말하는 것도 괜찮습니다",
+        "수동-공격적 멘트('나중에 기억해둘게')에는 '이해해줘서 고맙다'처럼 긍정적으로 마무리하는 것이 더 나을 수 있습니다"
+      ]
+    },
+    "practiceScripts": [
+      {
+        "whenKo": "관계를 언급하며 의무감 부여 ('우리 사이에')",
+        "sayKo": "우리 관계와 별개로, 이번엔 개인 사정상 어려워. 이해해줘."
+      },
+      {
+        "whenKo": "본인 어려움 강조 + 감정 호소",
+        "sayKo": "네 상황 이해하지만, 나도 지금 힘든 상황이야. 미안해."
+      },
+      {
+        "whenKo": "간접 협박 또는 수동-공격적 멘트",
+        "sayKo": "이해해줘서 고마워. 다음엔 내가 도울 수 있는 방법 찾아볼게."
+      }
+    ]
+  },
+  "metadata": {
+    "scenario": "general_refusal",
+    "organization": "개인 간 부탁 (샘플)",
+    "callDate": "2026-03-01",
+    "outcome": "거절 완료"
+  },
+  "disclaimer": "이 통화 녹음 분석은 데모용 샘플입니다. 본 서비스는 통화 대행을 하지 않으며, 심리 상담이나 법률 자문이 아닙니다. 실제 통화는 본인이 직접 진행하셔야 합니다."
+}

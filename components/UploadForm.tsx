@@ -1,124 +1,77 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import ResultDisplay from './ResultDisplay'
+import { useState } from 'react'
+import CallResultDisplay from './CallResultDisplay'
 
 export type AnalysisResult = {
-  service?: {
-    nameKo: string
-    nameAliases?: string[]
-    matched: boolean
-  }
-  multiChannel?: boolean
-  channels?: {
-    channel: {
-      type: 'web' | 'app_store' | 'google_play' | 'merchant' | 'unknown'
-      confidence: 'high' | 'medium' | 'low'
-      evidence: string[]
+  // Call recording analysis result
+  callType?: string
+  duration?: number
+  transcript?: {
+    speaker: string
+    text: string
+    startTime: number
+    endTime: number
+    tags?: string[]
+  }[]
+  analysis?: {
+    pressureSegments: {
+      startTime: number
+      endTime: number
+      type: string
+      severity: string
+      description: string
+    }[]
+    overallTone: string
+    riskLevel: string
+    feedback: {
+      positive: string[]
+      improvements: string[]
     }
-    channelLabel: string
-    steps: {
-      order: number
-      title: string
-      detailKo: string
-    }[]
-    tags: {
-      kind: 'dark_pattern' | 'cancel_ne_refund' | 'next_renewal' | 'other_caution'
-      labelKo: string
-      evidence?: string
-    }[]
-    practiceScripts?: {
+    practiceScripts: {
       whenKo: string
       sayKo: string
     }[]
-  }[]
-  channel?: {
-    type: 'web' | 'app_store' | 'google_play' | 'merchant' | 'unknown'
-    confidence: 'high' | 'medium' | 'low'
-    evidence: string[]
   }
-  steps?: {
-    order: number
-    title: string
-    detailKo: string
-  }[]
-  tags?: {
-    kind: 'dark_pattern' | 'cancel_ne_refund' | 'next_renewal' | 'other_caution'
-    labelKo: string
-    evidence?: string
-  }[]
-  practiceScripts?: {
-    whenKo: string
-    sayKo: string
-  }[]
+  metadata?: {
+    scenario: string
+    organization: string
+    callDate: string
+    outcome: string
+  }
   disclaimer: string
 }
 
+type ScenarioType = 'cancel' | 'sales' | 'romantic' | 'general' | 'salary' | 'parent' | 'formal'
+
 export default function UploadForm() {
-  const [inputMode, setInputMode] = useState<'image' | 'brand'>('image')
-  const [files, setFiles] = useState<File[]>([])
-  const [brandQuery, setBrandQuery] = useState('')
+  const [audioFile, setAudioFile] = useState<File | null>(null)
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('sales')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isDemoMode, setIsDemoMode] = useState(false)
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const demoParam = params.get('demo')
-    const scenarioParam = params.get('scenario')
-    
-    if (demoParam === '1' && scenarioParam) {
-      setLoading(true)
-      setError(null)
-      setIsDemoMode(true)
-      
-      window.history.replaceState({}, '', window.location.pathname)
-      
-      fetch('/api/analyze?demo=1', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ demo: true, scenario: scenarioParam }),
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            throw new Error('분석 중 오류가 발생했습니다')
-          }
-          const data = await response.json()
-          setResult(data)
-        })
-        .catch((err) => {
-          setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다')
-        })
-        .finally(() => {
-          setLoading(false)
-        })
-    }
-  }, [])
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || [])
-    if (selectedFiles.length > 3) {
-      alert('최대 3개 파일까지 업로드 가능합니다')
-      return
+    const selectedFile = e.target.files?.[0]
+    if (selectedFile) {
+      const validTypes = ['audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/x-m4a']
+      if (!validTypes.includes(selectedFile.type) && !selectedFile.name.match(/\.(mp3|m4a|wav)$/i)) {
+        alert('MP3, M4A, WAV 파일만 업로드 가능합니다')
+        return
+      }
+      setAudioFile(selectedFile)
+      setResult(null)
+      setError(null)
     }
-    setFiles(selectedFiles)
-    setResult(null)
-    setError(null)
   }
 
-  const handleSubmit = async (e: React.FormEvent, demoMode = false, demoScenario?: string) => {
+  const handleSubmit = async (e: React.FormEvent, demoMode = false, demoScenario?: ScenarioType) => {
     e.preventDefault()
     
-    if (!demoMode) {
-      if (inputMode === 'image' && files.length === 0) {
-        alert('이미지를 선택해주세요')
-        return
-      }
-      if (inputMode === 'brand' && brandQuery.trim() === '') {
-        alert('서비스명을 입력해주세요')
-        return
-      }
+    if (!demoMode && !audioFile) {
+      alert('통화 녹음 파일을 선택해주세요')
+      return
     }
 
     setLoading(true)
@@ -129,23 +82,15 @@ export default function UploadForm() {
       let response: Response
 
       if (demoMode) {
-        response = await fetch('/api/analyze?demo=1', {
+        response = await fetch('/api/analyze-call?demo=1', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ demo: true, scenario: demoScenario }),
-        })
-      } else if (inputMode === 'brand') {
-        response = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: brandQuery, mode: 'brand' }),
+          body: JSON.stringify({ demo: true, scenario: demoScenario || selectedScenario }),
         })
       } else {
         const formData = new FormData()
-        files.forEach((file) => {
-          formData.append('files', file)
-        })
-        response = await fetch('/api/analyze', {
+        formData.append('audio', audioFile!)
+        response = await fetch('/api/analyze-call', {
           method: 'POST',
           body: formData,
         })
@@ -165,12 +110,10 @@ export default function UploadForm() {
   }
 
   const handleReset = () => {
-    setFiles([])
-    setBrandQuery('')
+    setAudioFile(null)
     setResult(null)
     setError(null)
     setIsDemoMode(false)
-    window.history.pushState({}, '', window.location.pathname)
   }
 
   if (result) {
@@ -181,7 +124,7 @@ export default function UploadForm() {
             <span className="text-sm font-bold text-blue-300">📱 샘플 데모</span>
           </div>
         )}
-        <ResultDisplay result={result} />
+        <CallResultDisplay result={result as any} />
         <button
           onClick={handleReset}
           className="mt-6 btn-secondary"
@@ -192,88 +135,83 @@ export default function UploadForm() {
     )
   }
 
+  // MUST only: sales★ primary
+  const scenarios = [
+    { id: 'sales' as ScenarioType, label: '영업 전화 거절', emoji: '📞', primary: true, featured: true },
+    { id: 'salary' as ScenarioType, label: '연봉·조건 협상', emoji: '💰', primary: false, featured: false },
+  ]
+  
+  // Secondary/expansion (available, not hero)
+  // cancel, parent, formal, general, romantic
+  
+  // Soft-Go scenarios (hidden, available via API)
+  // parent, formal, general, romantic
+
   return (
     <div className="glass-card p-6 sm:p-7">
-      {/* iOS-style Segmented Control */}
-      <div className="segmented-control mb-6">
-        <button
-          type="button"
-          onClick={() => setInputMode('image')}
-          disabled={loading}
-          className={`segment-button ${inputMode === 'image' ? 'segment-button-active' : ''}`}
-        >
-          <span className="text-lg mr-1.5">📸</span>
-          스크린샷
-        </button>
-        <button
-          type="button"
-          onClick={() => setInputMode('brand')}
-          disabled={loading}
-          className={`segment-button ${inputMode === 'brand' ? 'segment-button-active' : ''}`}
-        >
-          <span className="text-lg mr-1.5">🔍</span>
-          서비스명
-        </button>
+      {/* Scenario Selection Chips */}
+      <div className="mb-6">
+        <label className="block text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">
+          시나리오 선택 (데모용)
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {scenarios.map((scenario) => (
+            <button
+              key={scenario.id}
+              type="button"
+              onClick={() => setSelectedScenario(scenario.id)}
+              className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                selectedScenario === scenario.id
+                  ? 'bg-primary-500 text-white shadow-glow'
+                  : 'bg-white/10 text-slate-300 hover:bg-white/20 border border-white/20'
+              }`}
+            >
+              <span className="mr-1.5">{scenario.emoji}</span>
+              {scenario.label}
+              {scenario.featured && <span className="ml-1.5 text-amber-400">★</span>}
+            </button>
+          ))}
+        </div>
       </div>
 
       <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-5">
-        {inputMode === 'image' ? (
-          <div>
-            <label className="block text-sm font-bold text-slate-200 mb-3 tracking-wide">
-              구독 화면 캡처 (1-3개)
-            </label>
-            <label className={`block ${loading ? 'pointer-events-none opacity-60' : 'cursor-pointer'} group`}>
-              <div className="relative border-2 border-dashed border-white/20 hover:border-primary-500/50 rounded-3xl p-10 text-center transition-all duration-300 bg-white/5 hover:bg-white/10 backdrop-blur-xl group-hover:shadow-glow">
-                <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">📸</div>
-                <div className="text-base font-bold text-white mb-2">
-                  {files.length > 0 ? (
-                    <span className="text-primary-400">
-                      {files.length}개 선택됨
-                    </span>
-                  ) : (
-                    loading ? '분석 중...' : '탭하여 이미지 선택'
-                  )}
-                </div>
-                {files.length > 0 && (
-                  <div className="mt-3 space-y-1">
-                    {files.map((f, i) => (
-                      <div key={i} className="text-xs text-slate-400 truncate px-4">
-                        {f.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {files.length === 0 && !loading && (
-                  <p className="text-xs text-slate-500 mt-2">
-                    PNG, JPEG, WebP · 최대 10MB
-                  </p>
+        <div>
+          <label className="block text-sm font-bold text-slate-200 mb-3 tracking-wide">
+            통화 녹음 파일 업로드
+          </label>
+          <label className="block cursor-pointer group">
+            <div className="relative border-2 border-dashed border-white/20 hover:border-primary-500/50 rounded-3xl p-10 text-center transition-all duration-300 bg-white/5 hover:bg-white/10 backdrop-blur-xl group-hover:shadow-glow">
+              <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">🎙️</div>
+              <div className="text-base font-bold text-white mb-2">
+                {audioFile ? (
+                  <span className="text-primary-400">
+                    {audioFile.name}
+                  </span>
+                ) : (
+                  '탭하여 녹음 파일 선택'
                 )}
               </div>
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                multiple
-                onChange={handleFileChange}
-                disabled={loading}
-                className="hidden"
-              />
-            </label>
-          </div>
-        ) : (
-          <div>
-            <label className="block text-sm font-bold text-slate-200 mb-3 tracking-wide">
-              서비스·브랜드명
-            </label>
+              {!audioFile && (
+                <p className="text-xs text-slate-500 mt-2">
+                  MP3, M4A, WAV · 최대 25MB
+                </p>
+              )}
+            </div>
             <input
-              type="text"
-              value={brandQuery}
-              onChange={(e) => setBrandQuery(e.target.value)}
-              placeholder="티빙, 넷플릭스, 유튜브 프리미엄..."
-              disabled={loading}
-              className="input-field"
+              type="file"
+              accept="audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,.mp3,.m4a,.wav"
+              onChange={handleFileChange}
+              className="hidden"
             />
+          </label>
+          
+          {/* Upload Notice */}
+          <div className="mt-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+            <p className="text-xs text-amber-300 leading-relaxed">
+              ⚠️ 본인이 직접 녹음한 통화만 업로드하세요. 상대방 동의가 필요할 수 있습니다.
+            </p>
           </div>
-        )}
+        </div>
 
         {error && (
           <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 backdrop-blur-xl">
@@ -283,7 +221,7 @@ export default function UploadForm() {
 
         <button
           type="submit"
-          disabled={loading || (inputMode === 'image' && files.length === 0) || (inputMode === 'brand' && brandQuery.trim() === '')}
+          disabled={loading || !audioFile}
           className="btn-primary"
         >
           {loading ? (
@@ -295,61 +233,37 @@ export default function UploadForm() {
               분석 중...
             </span>
           ) : (
-            inputMode === 'image' ? '🔮 AI로 해지 경로 찾기' : '🔍 이름으로 찾기'
+            '🎯 통화 분석 시작'
           )}
         </button>
 
-        {inputMode === 'image' && (
-          <button
-            type="button"
-            onClick={(e) => handleSubmit(e, true, 'sponsor_guilt')}
-            disabled={loading}
-            className="btn-demo"
-          >
-            {loading ? '분석 중...' : '✨ 샘플로 체험 (후원·구독)'}
-          </button>
-        )}
-
-        {inputMode === 'brand' && (
-          <button
-            type="button"
-            onClick={(e) => handleSubmit(e, true, 'brand_tving')}
-            disabled={loading}
-            className="btn-demo"
-          >
-            {loading ? '분석 중...' : '✨ 샘플: 티빙'}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={(e) => handleSubmit(e, true, selectedScenario)}
+          disabled={loading}
+          className="btn-demo"
+        >
+          {loading ? '분석 중...' : `✨ ${scenarios.find(s => s.id === selectedScenario)?.label} 샘플 체험`}
+        </button>
       </form>
 
       {/* Info Footer */}
       <div className="mt-6 pt-5 border-t border-white/10">
         <div className="flex items-center justify-center gap-4 text-xs text-slate-500">
-          {inputMode === 'image' ? (
-            <>
-              <span className="flex items-center gap-1.5">
-                <span>🔒</span>
-                <span>저장 안 됨</span>
-              </span>
-              <span className="w-1 h-1 rounded-full bg-slate-700"></span>
-              <span className="flex items-center gap-1.5">
-                <span>⚡</span>
-                <span>즉시 분석</span>
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="flex items-center gap-1.5">
-                <span>📚</span>
-                <span>주요 서비스 지원</span>
-              </span>
-              <span className="w-1 h-1 rounded-full bg-slate-700"></span>
-              <span className="flex items-center gap-1.5">
-                <span>🎯</span>
-                <span>모든 경로 안내</span>
-              </span>
-            </>
-          )}
+          <span className="flex items-center gap-1.5">
+            <span>🔒</span>
+            <span>녹음 미저장</span>
+          </span>
+          <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+          <span className="flex items-center gap-1.5">
+            <span>⚡</span>
+            <span>압박 구간 탐지</span>
+          </span>
+          <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+          <span className="flex items-center gap-1.5">
+            <span>💬</span>
+            <span>연습 멘트 제공</span>
+          </span>
         </div>
       </div>
     </div>
