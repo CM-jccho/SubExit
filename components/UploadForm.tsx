@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import CallResultDisplay from './CallResultDisplay'
+import RealtimeSideCoach from './RealtimeSideCoach'
 import { CoachTone, coachToneLabels, loadCoachTone, saveCoachTone } from '@/lib/coach-tone'
 import PracticeTab from './PracticeTab'
 
@@ -47,6 +49,9 @@ export type AnalysisResult = {
 type ScenarioType = 'cancel' | 'sales' | 'romantic' | 'general' | 'salary' | 'parent' | 'formal'
 
 export default function UploadForm() {
+  const searchParams = useSearchParams()
+  const isRealtimeDemo = searchParams.get('demo') === '1'
+  
   const [audioFile, setAudioFile] = useState<File | null>(null)
   const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('sales')
   const [coachTone, setCoachTone] = useState<CoachTone>('firm_polite')
@@ -55,10 +60,15 @@ export default function UploadForm() {
   const [error, setError] = useState<string | null>(null)
   const [isDemoMode, setIsDemoMode] = useState(false)
   const [activeTab, setActiveTab] = useState<'analysis' | 'practice'>('analysis')
+  const [showRealtimeCoach, setShowRealtimeCoach] = useState(false)
 
   useEffect(() => {
     setCoachTone(loadCoachTone())
-  }, [])
+    
+    if (isRealtimeDemo) {
+      setShowRealtimeCoach(true)
+    }
+  }, [isRealtimeDemo])
 
   const handleToneChange = (tone: CoachTone) => {
     setCoachTone(tone)
@@ -129,6 +139,65 @@ export default function UploadForm() {
     setError(null)
     setIsDemoMode(false)
     setActiveTab('analysis')
+    setShowRealtimeCoach(false)
+  }
+
+  const handleCallEnd = async () => {
+    setShowRealtimeCoach(false)
+    setLoading(true)
+    
+    try {
+      const response = await fetch('/api/analyze-call?demo=1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ demo: true, scenario: selectedScenario, coachTone }),
+      })
+
+      if (!response.ok) {
+        throw new Error('분석 중 오류가 발생했습니다')
+      }
+
+      const data = await response.json()
+      setResult(data)
+      setIsDemoMode(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (showRealtimeCoach) {
+    return (
+      <div className="animate-fadeIn">
+        <div className="mb-5 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 text-center">
+          <span className="text-sm font-bold text-primary-700">실시간 통화 시뮬레이션</span>
+        </div>
+        
+        <RealtimeSideCoach
+          transcript={[
+            { speaker: 'agent', text: '안녕하세요 고객님, OO카드 프리미엄 회원 혜택 안내 전화드렸습니다.', startTime: 2, endTime: 7 },
+            { speaker: 'user', text: '아, 괜찮습니다. 필요 없어요.', startTime: 8, endTime: 10 },
+            { speaker: 'agent', text: '잠깐만요! 지금 가입하시면 첫 달 무료에 3만 원 캐시백까지 드립니다. 공짜인데 왜 안 받으세요?', startTime: 11, endTime: 19, tags: ['pressure', 'urgency', 'fomo'] },
+            { speaker: 'user', text: '아니요, 정말 괜찮습니다.', startTime: 20, endTime: 22 },
+            { speaker: 'agent', text: '고객님 같은 우량 고객분들은 다들 가입하셨는데요? 지금 안 하시면 다음 달부터는 혜택이 축소됩니다. 1분만 투자하시면 돼요.', startTime: 23, endTime: 34, tags: ['pressure', 'fomo', 'comparison'] },
+            { speaker: 'user', text: '관심 없습니다. 전화 끊을게요.', startTime: 35, endTime: 38 },
+            { speaker: 'agent', text: '아 잠깐만요! 정말 마지막입니다. 연회비도 첫 해 면제인데, 손해 보시는 거예요. 다른 분들은 저한테 고맙다고 하시던데...', startTime: 39, endTime: 50, tags: ['pressure', 'guilt'] },
+            { speaker: 'user', text: '필요 없다고 했습니다. 이제 끊겠습니다.', startTime: 51, endTime: 54 },
+            { speaker: 'agent', text: '네... 알겠습니다. 좋은 하루 되세요.', startTime: 55, endTime: 58 },
+          ]}
+          coachTone={coachTone}
+          onCallEnd={handleCallEnd}
+        />
+
+        <button
+          onClick={handleReset}
+          className="mt-6 btn-secondary"
+        >
+          ← 처음으로
+        </button>
+      </div>
+    )
   }
 
   if (result) {
@@ -136,7 +205,7 @@ export default function UploadForm() {
       <div className="animate-fadeIn">
         {isDemoMode && (
           <div className="mb-5 px-4 py-2 rounded-full bg-hold-50 border border-hold-200 text-center">
-            <span className="text-sm font-medium text-hold-600">샘플 데모</span>
+            <span className="text-sm font-medium text-hold-600">통화 분석 결과</span>
           </div>
         )}
         
@@ -303,11 +372,20 @@ export default function UploadForm() {
 
         <button
           type="button"
-          onClick={(e) => handleSubmit(e, true, selectedScenario)}
+          onClick={() => setShowRealtimeCoach(true)}
           disabled={loading}
           className="btn-demo"
         >
-          {loading ? '분석 중...' : `${scenarios.find(s => s.id === selectedScenario)?.label} 샘플 체험`}
+          📞 실시간 통화 시뮬레이션 체험
+        </button>
+        
+        <button
+          type="button"
+          onClick={(e) => handleSubmit(e, true, selectedScenario)}
+          disabled={loading}
+          className="btn-secondary text-sm"
+        >
+          {loading ? '분석 중...' : `${scenarios.find(s => s.id === selectedScenario)?.label} 사후 분석만 보기`}
         </button>
       </form>
 
