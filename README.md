@@ -1,8 +1,8 @@
-# SubExit
+# SideCue
 
-> 구독 해지 경로 찾기 AI 도우미 — Wanted AI Championship 2026 Hackathon Project
+> 후원·구독 해지 커뮤니케이션 코치 — Wanted AI Championship 2026 Hackathon Project
 
-**SubExit**는 구독 관리 화면 스크린샷 또는 서비스명을 입력하면 AI가 결제 채널을 추정하고, 해지 경로를 단계별로 안내하며, 주의사항을 알려주는 서비스입니다.
+**SideCue**는 구독 관리 화면 스크린샷 또는 서비스명을 입력하면 AI가 결제 채널을 추정하고, 해지 경로를 단계별로 안내하며, 해지 대화 연습 멘트와 주의사항을 알려주는 서비스입니다.
 
 ## ⚠️ 중요 고지사항
 
