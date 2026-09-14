@@ -65,22 +65,28 @@
       {
         "startTime": 11,
         "endTime": 19,
-        "type": "urgency",
+        "type": "fomo",
+        "patternLabel": "FOMO·압박",
         "severity": "high",
+        "held": true,
         "description": "무료 혜택 강조하며 '왜 안 받으세요?' 식의 압박"
       },
       {
         "startTime": 23,
         "endTime": 34,
         "type": "fomo",
+        "patternLabel": "FOMO·압박",
         "severity": "high",
+        "held": true,
         "description": "다른 고객 비교 + 시간 제한 압박 (FOMO 전술)"
       },
       {
         "startTime": 39,
         "endTime": 50,
         "type": "guilt",
+        "patternLabel": "마음 흔들기",
         "severity": "medium",
+        "held": true,
         "description": "'손해', '다른 분들은 고맙다고' 등 죄책감 유도"
       }
     ],

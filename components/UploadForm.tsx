@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import CallResultDisplay from './CallResultDisplay'
 import { CoachTone, coachToneLabels, loadCoachTone, saveCoachTone } from '@/lib/coach-tone'
+import PracticeTab from './PracticeTab'
 
 export type AnalysisResult = {
   // Call recording analysis result
@@ -53,6 +54,7 @@ export default function UploadForm() {
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isDemoMode, setIsDemoMode] = useState(false)
+  const [activeTab, setActiveTab] = useState<'analysis' | 'practice'>('analysis')
 
   useEffect(() => {
     setCoachTone(loadCoachTone())
@@ -126,6 +128,7 @@ export default function UploadForm() {
     setResult(null)
     setError(null)
     setIsDemoMode(false)
+    setActiveTab('analysis')
   }
 
   if (result) {
@@ -136,7 +139,38 @@ export default function UploadForm() {
             <span className="text-sm font-bold text-blue-300">📱 샘플 데모</span>
           </div>
         )}
-        <CallResultDisplay result={result as any} coachTone={coachTone} />
+        
+        {/* Tab Navigation */}
+        <div className="mb-5 glass-card p-1 flex gap-1">
+          <button
+            onClick={() => setActiveTab('analysis')}
+            className={`flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
+              activeTab === 'analysis'
+                ? 'bg-primary-500 text-white shadow-glow'
+                : 'text-slate-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            🎧 통화 녹음 분석
+          </button>
+          <button
+            onClick={() => setActiveTab('practice')}
+            className={`flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
+              activeTab === 'practice'
+                ? 'bg-primary-500 text-white shadow-glow'
+                : 'text-slate-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            🎭 실전 연습
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'analysis' ? (
+          <CallResultDisplay result={result as any} coachTone={coachTone} />
+        ) : (
+          <PracticeTab />
+        )}
+
         <button
           onClick={handleReset}
           className="mt-6 btn-secondary"
