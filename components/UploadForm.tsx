@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import CallResultDisplay from './CallResultDisplay'
 import RealtimeSideCoach from './RealtimeSideCoach'
 import { CoachTone, coachToneLabels, loadCoachTone, saveCoachTone } from '@/lib/coach-tone'
+import { OpponentPersona, opponentPersonaLabels, opponentPersonaTraits, scenarioRecommendedPersona } from '@/lib/opponent-persona'
 import PracticeTab from './PracticeTab'
 
 export type AnalysisResult = {
@@ -46,7 +47,7 @@ export type AnalysisResult = {
   disclaimer: string
 }
 
-type ScenarioType = 'sales' | 'first_date' | 'relationship' | 'school_group' | 'presentation_qa' | 'work_comm' | 'work_presentation'
+type ScenarioType = 'sales' | 'job_interview' | 'first_date' | 'relationship' | 'school_group' | 'presentation_qa' | 'work_comm' | 'work_presentation'
 
 export default function UploadForm() {
   const searchParams = useSearchParams()
@@ -54,6 +55,7 @@ export default function UploadForm() {
   
   const [audioFile, setAudioFile] = useState<File | null>(null)
   const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('sales')
+  const [selectedPersona, setSelectedPersona] = useState<OpponentPersona>('sales_agent')
   const [coachTone, setCoachTone] = useState<CoachTone>('firm_polite')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AnalysisResult | null>(null)
@@ -69,6 +71,14 @@ export default function UploadForm() {
       setShowRealtimeCoach(true)
     }
   }, [isRealtimeDemo])
+
+  useEffect(() => {
+    // 시나리오 변경 시 추천 페르소나로 자동 설정
+    const recommended = scenarioRecommendedPersona[selectedScenario]
+    if (recommended) {
+      setSelectedPersona(recommended)
+    }
+  }, [selectedScenario])
 
   const handleToneChange = (tone: CoachTone) => {
     setCoachTone(tone)
@@ -180,6 +190,18 @@ export default function UploadForm() {
         { speaker: 'agent', text: '아 잠깐만요! 정말 마지막입니다. 연회비도 첫 해 면제인데, 손해 보시는 거예요. 다른 분들은 저한테 고맙다고 하시던데...', startTime: 39, endTime: 50, tags: ['pressure', 'guilt'] },
         { speaker: 'user', text: '필요 없다고 했습니다. 이제 끊겠습니다.', startTime: 51, endTime: 54 },
         { speaker: 'agent', text: '네... 알겠습니다. 좋은 하루 되세요.', startTime: 55, endTime: 58 },
+      ],
+      job_interview: [
+        { speaker: 'agent', text: '자기소개 부탁드립니다.', startTime: 2, endTime: 4 },
+        { speaker: 'user', text: '안녕하세요. 저는 3년간 프론트엔드 개발 경험이 있는 지원자입니다.', startTime: 5, endTime: 10 },
+        { speaker: 'agent', text: '3년이면 그렇게 길지 않은데, 왜 우리 회사에 지원하셨나요?', startTime: 11, endTime: 16, tags: ['pressure'] },
+        { speaker: 'user', text: '귀사의 기술 스택과 제가 추구하는 방향이 잘 맞아서 지원했습니다.', startTime: 17, endTime: 22 },
+        { speaker: 'agent', text: '...', startTime: 23, endTime: 28, tags: ['pressure', 'silence'] },
+        { speaker: 'user', text: '특히 React와 TypeScript 기반의 프로젝트에서 좋은 성과를 냈습니다.', startTime: 29, endTime: 34 },
+        { speaker: 'agent', text: '성과라고 하셨는데, 구체적인 숫자가 있나요? 예를 들어 성능 개선 같은?', startTime: 35, endTime: 42, tags: ['pressure'] },
+        { speaker: 'user', text: '네, 페이지 로딩 시간을 40% 단축시켰고, 번들 사이즈를 30% 줄였습니다.', startTime: 43, endTime: 50 },
+        { speaker: 'agent', text: '그게 정말 당신 혼자서 한 건가요? 팀 프로젝트 아닌가요?', startTime: 51, endTime: 56, tags: ['pressure', 'comparison'] },
+        { speaker: 'user', text: '팀 프로젝트였지만 제가 주도적으로 최적화 전략을 설계하고 구현했습니다.', startTime: 57, endTime: 63 },
       ],
       first_date: [
         { speaker: 'agent', text: '오늘 영화 어땠어요? 재밌었죠?', startTime: 2, endTime: 5 },
@@ -331,6 +353,14 @@ export default function UploadForm() {
       featured: true 
     },
     { 
+      id: 'job_interview' as ScenarioType, 
+      label: '면접', 
+      emoji: '💼', 
+      description: '압박 질문, 침묵, follow-up 대응',
+      primary: false, 
+      featured: true 
+    },
+    { 
       id: 'first_date' as ScenarioType, 
       label: '소개팅 / 첫 데이트', 
       emoji: '💐', 
@@ -365,7 +395,7 @@ export default function UploadForm() {
     { 
       id: 'work_comm' as ScenarioType, 
       label: '직장 소통 (보고/1:1)', 
-      emoji: '💼', 
+      emoji: '💻', 
       description: '무리한 일정 요구, 현실적 대안 제시',
       primary: false, 
       featured: false 
@@ -460,6 +490,59 @@ export default function UploadForm() {
               </div>
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Opponent Persona Picker */}
+      <div className="mb-6">
+        <label className="block text-xs font-semibold text-ink/60 mb-3 tracking-wide">
+          상대방 캐릭터 (말해보카 스타일)
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          {(Object.keys(opponentPersonaLabels) as OpponentPersona[]).map((persona) => {
+            const isRecommended = scenarioRecommendedPersona[selectedScenario] === persona
+            const traits = opponentPersonaTraits[persona]
+            
+            return (
+              <button
+                key={persona}
+                type="button"
+                onClick={() => setSelectedPersona(persona)}
+                className={`text-left p-3 rounded-xl transition-all duration-200 ${
+                  selectedPersona === persona
+                    ? 'bg-ink text-white shadow-md'
+                    : 'bg-white hover:bg-cream-100 border border-ink/15'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className={`text-xs font-bold ${
+                    selectedPersona === persona ? 'text-white' : 'text-ink'
+                  }`}>
+                    {opponentPersonaLabels[persona]}
+                  </h4>
+                  {isRecommended && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      selectedPersona === persona 
+                        ? 'bg-white/20 text-white' 
+                        : 'bg-primary-100 text-primary-600'
+                    }`}>
+                      추천
+                    </span>
+                  )}
+                </div>
+                <p className={`text-[10px] leading-snug ${
+                  selectedPersona === persona ? 'text-white/80' : 'text-ink/50'
+                }`}>
+                  {traits.traits}
+                </p>
+              </button>
+            )
+          })}
+        </div>
+        <div className="mt-2 p-2.5 rounded-lg bg-cream-100 border border-ink/10">
+          <p className="text-[10px] text-ink/60 leading-relaxed">
+            <strong className="text-ink/80">스타일:</strong> {opponentPersonaTraits[selectedPersona].openerStyle}
+          </p>
         </div>
       </div>
 
