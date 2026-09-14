@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { CoachTone } from '@/lib/coach-tone'
 
 type PracticeScript = {
   whenKo: string
@@ -9,6 +10,7 @@ type PracticeScript = {
 
 type CoachPanelProps = {
   practiceScripts: PracticeScript[]
+  coachTone?: CoachTone
 }
 
 type Message = {
@@ -24,30 +26,53 @@ type OpponentLine = {
   responseIndex: number
 }
 
+// Generate tone-specific responses
+function getTonedResponse(baseResponse: string, tone: CoachTone): string {
+  const responses: Record<string, Record<CoachTone, string>> = {
+    '제안 감사하지만 필요 없습니다. 더 이상 안내 전화 주지 마세요.': {
+      cold: '필요 없습니다. 끊겠습니다.',
+      warm: '제안은 감사하지만 지금은 필요 없어요. 안내 전화는 사양할게요.',
+      firm_polite: '제안 감사하지만 필요 없습니다. 더 이상 안내 전화 주지 마세요.',
+    },
+    '제 판단으로 결정하겠습니다. 통화 종료할게요.': {
+      cold: '관심 없습니다. 끊겠습니다.',
+      warm: '다른 분들 말씀은 이해하지만, 제 상황에는 맞지 않아요. 통화 종료할게요.',
+      firm_polite: '제 판단으로 결정하겠습니다. 통화 종료할게요.',
+    },
+    '급하게 결정할 필요 없습니다. 관심 없으니 전화 끊겠습니다.': {
+      cold: '관심 없습니다. 끊겠습니다.',
+      warm: '급하게 결정하고 싶지 않아서요. 필요하면 제가 연락드릴게요. 감사합니다.',
+      firm_polite: '급하게 결정할 필요 없습니다. 관심 없으니 전화 끊겠습니다.',
+    },
+  }
+
+  return responses[baseResponse]?.[tone] || baseResponse
+}
+
 const opponentLines: OpponentLine[] = [
   {
-    text: '커피 한 잔인데요',
-    meaning: '소액임을 강조하여 해지를 망설이게 만들려는 시도일 수 있습니다.',
+    text: '지금 가입하면 3만원 캐시백이에요',
+    meaning: '무료 혜택을 강조하며 즉각적인 결정을 유도하는 영업 전술입니다.',
     responseIndex: 0,
   },
   {
-    text: '왜 해지하세요?',
-    meaning: '해지 사유를 물으며 설득할 기회를 찾으려는 질문일 수 있습니다.',
+    text: '다른 분들은 다 하셨는데요?',
+    meaning: '다른 사람과의 비교를 통해 FOMO(놓칠까봐 두려운 심리)를 자극하는 압박입니다.',
     responseIndex: 1,
   },
   {
-    text: '더 어려운 아이들이 있어요',
-    meaning: '감정적 호소를 통해 죄책감을 유도하려는 시도일 수 있습니다.',
+    text: '지금 안 하시면 손해보세요',
+    meaning: '시간 제한과 손실 프레임을 사용한 긴급성 압박 전술입니다.',
     responseIndex: 2,
   },
   {
-    text: '상담원 연결할게요',
-    meaning: '전화 연결로 직접 설득하려는 시도일 수 있습니다. 웹 해지가 가능한지 다시 확인하세요.',
+    text: '1분만 시간 내주시면 안될까요?',
+    meaning: '작은 요청으로 시작해 대화를 연장하려는 시도입니다. 단호하게 거절하셔도 됩니다.',
     responseIndex: 1,
   },
 ]
 
-export default function CoachPanel({ practiceScripts }: CoachPanelProps) {
+export default function CoachPanel({ practiceScripts, coachTone = 'firm_polite' }: CoachPanelProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [isTyping, setIsTyping] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
@@ -93,10 +118,12 @@ export default function CoachPanel({ practiceScripts }: CoachPanelProps) {
       setTimeout(() => {
         setIsTyping(false)
         if (practiceScripts[line.responseIndex]) {
+          const baseResponse = practiceScripts[line.responseIndex].sayKo
+          const tonedResponse = getTonedResponse(baseResponse, coachTone)
           const coachMsg: Message = {
             id: `coach-${Date.now()}`,
             type: 'coach',
-            text: practiceScripts[line.responseIndex].sayKo,
+            text: tonedResponse,
             timestamp: new Date(),
           }
           setMessages(prev => [...prev, coachMsg])
@@ -197,7 +224,7 @@ export default function CoachPanel({ practiceScripts }: CoachPanelProps) {
             ) : msg.type === 'opponent' ? (
               <div className="flex items-end gap-2 max-w-[80%]">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-sm">
-                  👤
+                  📞
                 </div>
                 <div>
                   <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-white/10 border border-white/20">
@@ -262,7 +289,7 @@ export default function CoachPanel({ practiceScripts }: CoachPanelProps) {
       <div className="border-t border-white/10 p-4 bg-slate-900/30">
         <div className="mb-2">
           <p className="text-xs font-semibold text-slate-400 mb-2">
-            상대방이 이렇게 말한다면 탭하세요
+            영업자가 이렇게 말한다면 탭하세요
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

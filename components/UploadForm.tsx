@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import CallResultDisplay from './CallResultDisplay'
+import { CoachTone, coachToneLabels, loadCoachTone, saveCoachTone } from '@/lib/coach-tone'
 
 export type AnalysisResult = {
   // Call recording analysis result
@@ -47,10 +48,20 @@ type ScenarioType = 'cancel' | 'sales' | 'romantic' | 'general' | 'salary' | 'pa
 export default function UploadForm() {
   const [audioFile, setAudioFile] = useState<File | null>(null)
   const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('sales')
+  const [coachTone, setCoachTone] = useState<CoachTone>('firm_polite')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isDemoMode, setIsDemoMode] = useState(false)
+
+  useEffect(() => {
+    setCoachTone(loadCoachTone())
+  }, [])
+
+  const handleToneChange = (tone: CoachTone) => {
+    setCoachTone(tone)
+    saveCoachTone(tone)
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -85,11 +96,12 @@ export default function UploadForm() {
         response = await fetch('/api/analyze-call?demo=1', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ demo: true, scenario: demoScenario || selectedScenario }),
+          body: JSON.stringify({ demo: true, scenario: demoScenario || selectedScenario, coachTone }),
         })
       } else {
         const formData = new FormData()
         formData.append('audio', audioFile!)
+        formData.append('coachTone', coachTone)
         response = await fetch('/api/analyze-call', {
           method: 'POST',
           body: formData,
@@ -124,7 +136,7 @@ export default function UploadForm() {
             <span className="text-sm font-bold text-blue-300">📱 샘플 데모</span>
           </div>
         )}
-        <CallResultDisplay result={result as any} />
+        <CallResultDisplay result={result as any} coachTone={coachTone} />
         <button
           onClick={handleReset}
           className="mt-6 btn-secondary"
@@ -149,6 +161,29 @@ export default function UploadForm() {
 
   return (
     <div className="glass-card p-6 sm:p-7">
+      {/* Coach Tone Selection */}
+      <div className="mb-6">
+        <label className="block text-xs font-bold text-emerald-400 mb-3 uppercase tracking-wider">
+          코치 톤 선택
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {(Object.keys(coachToneLabels) as CoachTone[]).map((tone) => (
+            <button
+              key={tone}
+              type="button"
+              onClick={() => handleToneChange(tone)}
+              className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                coachTone === tone
+                  ? 'bg-emerald-500 text-white shadow-glow'
+                  : 'bg-white/10 text-slate-300 hover:bg-white/20 border border-white/20'
+              }`}
+            >
+              {coachToneLabels[tone]}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Scenario Selection Chips */}
       <div className="mb-6">
         <label className="block text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">
