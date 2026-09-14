@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { CoachTone } from '@/lib/coach-tone'
+import { OpponentPersona, opponentPersonaAvatars } from '@/lib/opponent-persona'
 
 type TranscriptLine = {
   speaker: string
@@ -20,6 +21,7 @@ type CoachSuggestion = {
 type Props = {
   transcript: TranscriptLine[]
   coachTone: CoachTone
+  selectedPersona: OpponentPersona
   onCallEnd: () => void
 }
 
@@ -54,7 +56,7 @@ const getTonedSuggestion = (baseTrigger: string, tone: CoachTone): CoachSuggesti
   }
 }
 
-export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: Props) {
+export default function RealtimeSideCoach({ transcript, coachTone, selectedPersona, onCallEnd }: Props) {
   const [currentTime, setCurrentTime] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [hasConsented, setHasConsented] = useState(false)
@@ -415,10 +417,18 @@ export default function RealtimeSideCoach({ transcript, coachTone, onCallEnd }: 
                   className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-slideUp`}
                 >
                   <div className={`flex items-end gap-2 max-w-[85%] ${isUser ? 'flex-row-reverse' : ''}`}>
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-base ${
-                      isUser ? 'bg-surface-light' : 'bg-sway-500/20'
+                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center overflow-hidden ${
+                      isUser ? 'bg-surface-light' : 'bg-surface-light border-2 border-primary-500/30'
                     }`}>
-                      {isUser ? '👤' : '📞'}
+                      {isUser ? (
+                        <span className="text-lg">👤</span>
+                      ) : (
+                        <img 
+                          src={opponentPersonaAvatars[selectedPersona]} 
+                          alt="Opponent"
+                          className="w-full h-full object-cover"
+                        />
+                      )}
                     </div>
                     <div>
                       <div className={`px-3.5 py-2.5 rounded-xl ${

@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import CallResultDisplay from './CallResultDisplay'
 import RealtimeSideCoach from './RealtimeSideCoach'
 import { CoachTone, coachToneLabels, loadCoachTone, saveCoachTone } from '@/lib/coach-tone'
-import { OpponentPersona, opponentPersonaLabels, opponentPersonaTraits, scenarioRecommendedPersona } from '@/lib/opponent-persona'
+import { OpponentPersona, opponentPersonaLabels, opponentPersonaTraits, opponentPersonaAvatars, scenarioRecommendedPersona } from '@/lib/opponent-persona'
 import PracticeTab from './PracticeTab'
 import { recordScenarioAttempt, isScenarioCleared, getLevelBadge, getLevelLabel } from '@/lib/gamification'
 
@@ -309,6 +309,7 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
         <RealtimeSideCoach
           transcript={transcript}
           coachTone={coachTone}
+          selectedPersona={selectedPersona}
           onCallEnd={handleCallEnd}
         />
 
@@ -520,40 +521,59 @@ export default function UploadForm({ selectedScenario: initialScenario }: { sele
               <label className="block text-xs font-semibold text-ink-500 mb-2 tracking-wide">
                 2️⃣ 상대방 캐릭터 선택 (선택한 시나리오에 맞춰)
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 {(Object.keys(opponentPersonaLabels) as OpponentPersona[]).map((persona) => {
                   const isRecommended = scenarioRecommendedPersona[selectedScenario] === persona
                   const traits = opponentPersonaTraits[persona]
+                  const avatar = opponentPersonaAvatars[persona]
                   
                   return (
                     <button
                       key={persona}
                       type="button"
                       onClick={() => setSelectedPersona(persona)}
-                      className={`text-left p-3 rounded-xl transition-all duration-200 ${
+                      className={`text-center p-4 rounded-xl transition-all duration-200 ${
                         selectedPersona === persona
-                          ? 'bg-primary-500 text-white shadow-soft'
+                          ? 'bg-primary-500/10 border-2 border-primary-500 shadow-soft'
                           : 'bg-surface-light hover:bg-surface border border-ink/10'
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className={`text-xs font-bold ${
-                          selectedPersona === persona ? 'text-white' : 'text-ink'
+                      {/* Large circular avatar */}
+                      <div className="flex justify-center mb-3">
+                        <div className={`w-20 h-20 rounded-full overflow-hidden border-3 transition-all ${
+                          selectedPersona === persona 
+                            ? 'border-primary-500 ring-4 ring-primary-500/30' 
+                            : 'border-ink/20'
+                        }`}>
+                          <img 
+                            src={avatar} 
+                            alt={opponentPersonaLabels[persona]}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Name + Badge */}
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <h4 className={`text-sm font-bold ${
+                          selectedPersona === persona ? 'text-primary-500' : 'text-ink'
                         }`}>
                           {opponentPersonaLabels[persona]}
                         </h4>
                         {isRecommended && (
                           <span className={`text-xs px-1.5 py-0.5 rounded text-[10px] font-bold ${
                             selectedPersona === persona 
-                              ? 'bg-white/20 text-white' 
+                              ? 'bg-primary-500 text-white' 
                               : 'bg-primary-500/10 text-primary-500'
                           }`}>
                             추천
                           </span>
                         )}
                       </div>
-                      <p className={`text-[10px] leading-snug ${
-                        selectedPersona === persona ? 'text-white/80' : 'text-ink-500'
+                      
+                      {/* One-line trait */}
+                      <p className={`text-[11px] leading-tight ${
+                        selectedPersona === persona ? 'text-ink' : 'text-ink-500'
                       }`}>
                         {traits.traits}
                       </p>
