@@ -21,7 +21,7 @@ export default function Home() {
               + 연습 멘트 + 옆자리 코치
             </p>
             <p className="text-sm text-slate-400 font-medium">
-              구독 해지 · 영업 거절 · 이별 통보 · 부탁 거절 / (로드맵) 실시간 코칭
+              구독 해지 · 영업 거절 · 이별 통보 · 부탁 거절 · 연봉 협상 / (로드맵) 실시간 코칭
             </p>
           </div>
 

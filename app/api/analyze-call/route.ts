@@ -46,6 +46,7 @@ function loadCallFixture(scenario: string = 'cancel'): CallAnalysisResult {
     sales: 'call_sales_pressure.json',
     romantic: 'call_romantic_refusal.json',
     general: 'call_general_refusal.json',
+    salary: 'call_salary_negotiation.json',
   }
   
   const filename = fixtureMap[scenario] || 'call_sponsor_guilt.json'
