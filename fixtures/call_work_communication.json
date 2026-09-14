@@ -1,0 +1,77 @@
+{
+  "callType": "work_communication",
+  "duration": 42,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "김 대리, 이번 주 금요일까지 보고서 가능하죠?",
+      "startTime": 2,
+      "endTime": 6
+    },
+    {
+      "speaker": "user",
+      "text": "현재 다른 업무도 있어서 일정이 빠듯한데요.",
+      "startTime": 7,
+      "endTime": 11
+    },
+    {
+      "speaker": "agent",
+      "text": "그래도 박 대리는 어제 다 끝냈던데? 금요일이면 충분하지 않나요?",
+      "startTime": 12,
+      "endTime": 18,
+      "tags": ["comparison", "pressure"]
+    },
+    {
+      "speaker": "user",
+      "text": "박 대리님 업무량과 제 업무량은 다릅니다. 다음 주 화요일이면 가능합니다.",
+      "startTime": 19,
+      "endTime": 26
+    },
+    {
+      "speaker": "agent",
+      "text": "음... 알겠습니다. 그럼 화요일 오전까지 부탁드립니다.",
+      "startTime": 27,
+      "endTime": 32
+    }
+  ],
+  "analysis": {
+    "pressureSegments": [
+      {
+        "startTime": 12,
+        "endTime": 18,
+        "type": "comparison",
+        "patternLabel": "FOMO·압박",
+        "severity": "medium",
+        "held": true,
+        "description": "동료와 비교하며 빠른 처리 압박"
+      }
+    ],
+    "overallTone": "work_pressure",
+    "riskLevel": "low",
+    "feedback": {
+      "positive": [
+        "현실적인 일정을 제시했습니다",
+        "비교 압박에 흔들리지 않고 상황을 설명했습니다",
+        "대안 일정을 명확히 제안했습니다"
+      ],
+      "improvements": []
+    },
+    "practiceScripts": [
+      {
+        "whenKo": "동료와 비교하며 빠른 처리를 요구할 때",
+        "sayKo": "업무량이 다르기 때문에 [현실적 일정]이 필요합니다."
+      },
+      {
+        "whenKo": "무리한 일정을 요구할 때",
+        "sayKo": "현재 진행 중인 업무를 고려하면 [대안 일정]이 가능합니다."
+      }
+    ]
+  },
+  "metadata": {
+    "scenario": "work_deadline",
+    "organization": "직장",
+    "callDate": "2026-09-14",
+    "outcome": "협상 성공"
+  },
+  "disclaimer": "이 시뮬레이션은 데모용 샘플입니다. 연습 목적으로만 사용하세요."
+}

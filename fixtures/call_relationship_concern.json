@@ -1,0 +1,93 @@
+{
+  "callType": "relationship_concern",
+  "duration": 52,
+  "transcript": [
+    {
+      "speaker": "user",
+      "text": "저기... 요즘 약속 시간에 자주 늦는 것 같아서 얘기하고 싶었어.",
+      "startTime": 2,
+      "endTime": 8
+    },
+    {
+      "speaker": "agent",
+      "text": "아, 그게... 회사 일이 바빠서 그런 거야. 이해해줄 수 있지?",
+      "startTime": 9,
+      "endTime": 14,
+      "tags": ["guilt"]
+    },
+    {
+      "speaker": "user",
+      "text": "그건 이해하는데, 연락이라도 미리 해주면 좋겠어.",
+      "startTime": 15,
+      "endTime": 19
+    },
+    {
+      "speaker": "agent",
+      "text": "그렇게까지 예민하게 굴 필요 있어? 다른 커플들은 다 이해해주던데.",
+      "startTime": 20,
+      "endTime": 26,
+      "tags": ["comparison", "guilt"]
+    },
+    {
+      "speaker": "user",
+      "text": "다른 사람들 얘기는 중요하지 않아. 우리 관계에서 내가 느낀 걸 말하는 거야.",
+      "startTime": 27,
+      "endTime": 33
+    },
+    {
+      "speaker": "agent",
+      "text": "알겠어... 미안해. 다음부터는 미리 연락할게.",
+      "startTime": 34,
+      "endTime": 38
+    }
+  ],
+  "analysis": {
+    "pressureSegments": [
+      {
+        "startTime": 9,
+        "endTime": 14,
+        "type": "guilt",
+        "patternLabel": "마음 흔들기",
+        "severity": "medium",
+        "held": true,
+        "description": "바쁜 상황을 강조하며 이해를 요구"
+      },
+      {
+        "startTime": 20,
+        "endTime": 26,
+        "type": "comparison",
+        "patternLabel": "FOMO·압박",
+        "severity": "high",
+        "held": true,
+        "description": "다른 커플과 비교하며 요구를 무시하려는 시도"
+      }
+    ],
+    "overallTone": "defensive_then_accepting",
+    "riskLevel": "medium",
+    "feedback": {
+      "positive": [
+        "자신의 감정을 명확하게 전달했습니다",
+        "비교 압박에 흔들리지 않고 입장을 유지했습니다",
+        "상대방을 비난하지 않고 행동에 집중했습니다"
+      ],
+      "improvements": []
+    },
+    "practiceScripts": [
+      {
+        "whenKo": "상황을 핑계 삼아 이해를 요구할 때",
+        "sayKo": "바쁜 거 이해해. 하지만 미리 연락은 해줄 수 있잖아. 그게 내가 바라는 거야."
+      },
+      {
+        "whenKo": "다른 사람과 비교하거나 예민하다고 말할 때",
+        "sayKo": "다른 사람들 얘기가 아니라 우리 얘기를 하는 거야. 내 감정은 중요해."
+      }
+    ]
+  },
+  "metadata": {
+    "scenario": "relationship_boundary",
+    "organization": "연인 관계",
+    "callDate": "2026-09-14",
+    "outcome": "건강한 의사소통"
+  },
+  "disclaimer": "이 시뮬레이션은 데모용 샘플입니다. 치료나 상담을 대체하지 않습니다."
+}

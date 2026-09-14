@@ -45,6 +45,13 @@ type CallAnalysisResult = {
 function loadCallFixture(scenario: string = 'sales'): CallAnalysisResult {
   const fixtureMap: Record<string, string> = {
     sales: 'call_sales_pressure.json',
+    first_date: 'call_first_date.json',
+    relationship: 'call_relationship_concern.json',
+    school_group: 'call_school_group.json',
+    presentation_qa: 'call_presentation_qa.json',
+    work_comm: 'call_work_communication.json',
+    work_presentation: 'call_work_presentation.json',
+    // Legacy scenarios (still supported)
     salary: 'call_salary_negotiation.json',
     cancel: 'call_sponsor_guilt.json',
     parent: 'call_parent_request.json',

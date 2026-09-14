@@ -1,0 +1,93 @@
+{
+  "callType": "school_group",
+  "duration": 45,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "야, 조별과제 PPT 네가 만들어줘. 너 잘하잖아.",
+      "startTime": 2,
+      "endTime": 6
+    },
+    {
+      "speaker": "user",
+      "text": "이번엔 제가 다른 파트 하고 싶은데요.",
+      "startTime": 7,
+      "endTime": 10
+    },
+    {
+      "speaker": "agent",
+      "text": "에이, 근데 네가 해야 점수 잘 나오잖아. 우리 다 바쁘고, 너는 이거 금방 하잖아.",
+      "startTime": 11,
+      "endTime": 18,
+      "tags": ["pressure", "guilt"]
+    },
+    {
+      "speaker": "user",
+      "text": "저도 바빠요. 이번엔 역할을 나눠서 공평하게 했으면 좋겠어요.",
+      "startTime": 19,
+      "endTime": 24
+    },
+    {
+      "speaker": "agent",
+      "text": "아 진짜, 네가 안 하면 우리 조 망하는 거 알지? 교수님 되게 까다로운데.",
+      "startTime": 25,
+      "endTime": 31,
+      "tags": ["guilt", "pressure"]
+    },
+    {
+      "speaker": "user",
+      "text": "그렇게 걱정되면 같이 제대로 역할 분담해서 다 같이 열심히 하면 돼요.",
+      "startTime": 32,
+      "endTime": 38
+    }
+  ],
+  "analysis": {
+    "pressureSegments": [
+      {
+        "startTime": 11,
+        "endTime": 18,
+        "type": "guilt",
+        "patternLabel": "마음 흔들기",
+        "severity": "medium",
+        "held": true,
+        "description": "능력을 강조하며 일방적인 역할 부여 시도"
+      },
+      {
+        "startTime": 25,
+        "endTime": 31,
+        "type": "guilt",
+        "patternLabel": "FOMO·압박",
+        "severity": "high",
+        "held": true,
+        "description": "책임을 전가하며 죄책감 유도"
+      }
+    ],
+    "overallTone": "exploitative_pressure",
+    "riskLevel": "medium",
+    "feedback": {
+      "positive": [
+        "공평한 역할 분담을 요구했습니다",
+        "책임 전가에 흔들리지 않았습니다",
+        "대안을 제시하며 건설적으로 대응했습니다"
+      ],
+      "improvements": []
+    },
+    "practiceScripts": [
+      {
+        "whenKo": "능력을 이유로 일방적 역할을 강요할 때",
+        "sayKo": "제 시간도 소중해요. 이번엔 다른 역할 하고 싶으니 나눠서 해요."
+      },
+      {
+        "whenKo": "책임을 전가하며 협박할 때",
+        "sayKo": "제 책임만은 아니에요. 다 같이 역할 나눠서 열심히 하면 돼요."
+      }
+    ]
+  },
+  "metadata": {
+    "scenario": "school_teamwork",
+    "organization": "학교 조별과제",
+    "callDate": "2026-09-14",
+    "outcome": "경계 설정"
+  },
+  "disclaimer": "이 시뮬레이션은 데모용 샘플입니다. 연습 목적으로만 사용하세요."
+}
