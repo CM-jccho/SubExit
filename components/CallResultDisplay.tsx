@@ -78,6 +78,23 @@ export default function CallResultDisplay({ result }: { result: CallAnalysisResu
 
   return (
     <div className="space-y-5 animate-fadeIn">
+      {/* Pressure Survived Stamp - Light Gamification */}
+      {result.analysis.pressureSegments.length > 0 && (
+        <div className="glass-card p-4 border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10">
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-3xl">🛡️</span>
+            <div className="text-center">
+              <div className="text-sm font-bold text-emerald-400 mb-1">
+                오늘 버틴 압박 구간
+              </div>
+              <div className="text-2xl font-black text-white">
+                {result.analysis.pressureSegments.length}개
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Badge */}
       <div className="glass-card p-5 border-primary-500/30">
         <div className="flex items-center justify-between">
