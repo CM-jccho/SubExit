@@ -1,16 +1,18 @@
 {
-  "name": "subexit",
-  "version": "0.1.0",
+  "name": "ddeundeun-call",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",
-    "next": "14.2.15",
+    "next": "15.5.25",
     "openai": "^4.67.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
@@ -23,5 +25,8 @@
     "postcss": "^8.5.28",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20.9.0"
   }
 }
