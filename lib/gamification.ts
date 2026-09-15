@@ -17,6 +17,7 @@ export type GamificationState = {
   streak: number // 연속 연습 일수
   lastPracticeDate?: string // YYYY-MM-DD
   totalAttempts: number
+  lastUsedScenario?: string // Last scenario ID used for 오늘의 연습
 }
 
 const STORAGE_KEY = 'subexit_gamification'
@@ -131,4 +132,17 @@ export function getStreakLabel(streak: number): string {
 // Clear criteria: heldRate >= 80%
 export function isScenarioCleared(heldRate: number): boolean {
   return heldRate >= 80
+}
+
+// Update last used scenario for 오늘의 연습
+export function updateLastUsedScenario(scenarioId: string): void {
+  const state = loadGamificationState()
+  state.lastUsedScenario = scenarioId
+  saveGamificationState(state)
+}
+
+// Get last used scenario or default to 'sales'
+export function getLastUsedScenario(): string {
+  const state = loadGamificationState()
+  return state.lastUsedScenario || 'sales'
 }
