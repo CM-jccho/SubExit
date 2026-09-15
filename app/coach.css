@@ -1,0 +1,1135 @@
+/* Ddeundeun: warm paper, charcoal, quiet green. Primary action stays singular. */
+.dd-root {
+  --ink: #252d29;
+  --muted: #73796f;
+  --line: #e0e4dc;
+  --paper: #f7f8f3;
+  --green: #30744e;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Noto Sans KR",
+    sans-serif;
+  line-height: 1.65;
+  letter-spacing: -0.025em;
+}
+.dd-root * {
+  box-sizing: border-box;
+}
+.dd-root button,
+.dd-root input,
+.dd-root textarea,
+.dd-root select {
+  font: inherit;
+}
+.dd-root button {
+  cursor: pointer;
+}
+.dd-root button:disabled {
+  cursor: not-allowed;
+  opacity: 0.43;
+}
+.dd-root a {
+  color: inherit;
+}
+.dd-root button:focus-visible,
+.dd-root a:focus-visible,
+.dd-root input:focus-visible,
+.dd-root textarea:focus-visible,
+.dd-root select:focus-visible,
+.dd-root summary:focus-visible {
+  outline: 3px solid #7aac80;
+  outline-offset: 4px;
+}
+.dd-root h1,
+.dd-root h2,
+.dd-root h3,
+.dd-root p {
+  margin: 0;
+}
+.dd-root h1 {
+  font-size: clamp(30px, 3.3vw, 44px);
+  line-height: 1.35;
+  font-weight: 760;
+  letter-spacing: -0.055em;
+}
+.dd-root h2 {
+  font-size: 22px;
+  font-weight: 720;
+  line-height: 1.5;
+}
+.dd-root h3 {
+  font-size: 17px;
+  font-weight: 700;
+}
+.dd-root button {
+  border: 0;
+}
+.dd-sidebar {
+  width: 224px;
+  position: fixed;
+  inset: 0 auto 0 0;
+  border-right: 1px solid var(--line);
+  padding: 40px 26px;
+  display: flex;
+  flex-direction: column;
+  background: #eef1e9;
+}
+.dd-brand {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  text-decoration: none;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+.dd-logo,
+.dd-face {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e1efb4;
+  color: #2c483a;
+  font-size: 50px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 5px;
+  width: 42px;
+  height: 38px;
+  border-radius: 14px 14px 14px 3px;
+  padding-bottom: 21px;
+  padding-left: 4px;
+}
+.dd-logo {
+  background: #304e3b;
+  color: #e1efb4;
+  width: 35px;
+  height: 33px;
+  font-size: 40px;
+  padding-bottom: 16px;
+}
+.dd-beta {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+  align-self: flex-start;
+  margin-top: 6px;
+}
+.dd-tagline {
+  margin: 26px 0 39px !important;
+  font-size: 12px;
+  color: var(--muted);
+}
+.dd-sidebar nav {
+  display: grid;
+  gap: 9px;
+}
+.dd-sidebar nav button {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  text-align: left;
+  background: transparent;
+  padding: 12px 15px;
+  border-radius: 12px;
+  color: #687265;
+  font-size: 14px;
+  font-weight: 600;
+}
+.dd-sidebar nav button.active {
+  background: #dde5d7;
+  color: #24472f;
+}
+.dd-sidebar-bottom {
+  margin-top: auto;
+  padding-top: 45px;
+}
+.dd-sidebar-bottom p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 16px 0 22px;
+}
+.dd-sidebar-bottom a {
+  font-size: 11px;
+  text-decoration: none;
+}
+.dd-main {
+  max-width: 1260px;
+  margin-left: 224px;
+  padding: 0 clamp(25px, 4vw, 68px) 32px;
+}
+.dd-topbar {
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 38px;
+}
+.dd-topbar button {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 650;
+}
+.dd-topbar button span {
+  color: var(--green);
+  margin-left: 14px;
+}
+.dd-heading {
+  margin-bottom: 30px;
+}
+.dd-heading h1 span {
+  color: #52704f;
+}
+.dd-heading > p:last-child {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.dd-eyebrow {
+  font-size: 10px !important;
+  font-weight: 750;
+  color: #678260 !important;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px !important;
+  text-transform: uppercase;
+}
+.dd-live-banner {
+  border-radius: 24px;
+  background: #263e31;
+  color: #fff;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 28px;
+  padding: 34px 36px;
+  overflow: hidden;
+  min-height: 310px;
+}
+.dd-live-banner h2 {
+  font-size: 29px;
+  letter-spacing: -0.05em;
+  margin-top: 15px;
+}
+.dd-live-banner p {
+  font-size: 13px;
+  color: #c8d2c4;
+  max-width: 310px;
+  margin: 10px 0 24px;
+}
+.dd-primary,
+.dd-secondary {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  border-radius: 12px !important;
+  padding: 12px 22px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  transition: background 0.15s;
+  white-space: normal;
+}
+.dd-primary {
+  background: #346c49;
+  color: #fff;
+}
+.dd-primary:hover:not(:disabled) {
+  background: #275c3a;
+}
+.dd-live-banner .dd-primary {
+  background: #dff2a4;
+  color: #273c2e;
+}
+.dd-secondary {
+  background: #fff;
+  color: #293b2d;
+  border: 1px solid #d6dfd2 !important;
+}
+.dd-secondary:hover:not(:disabled) {
+  background: #edf2e7;
+}
+.dd-demo-link {
+  display: block;
+  background: none;
+  color: #d8e3ce;
+  font-size: 12px !important;
+  margin-top: 17px;
+}
+.dd-source {
+  font-size: 10px;
+  display: inline-block;
+  border: 1px solid #67806b;
+  border-radius: 5px;
+  padding: 3px 7px;
+  color: #dce8d8;
+}
+.dd-conversation-art {
+  position: relative;
+  align-self: center;
+  height: 237px;
+  max-width: 320px;
+}
+.dd-art-bubble {
+  position: absolute;
+  right: 0;
+  top: 0;
+  border-radius: 18px 18px 3px 18px;
+  background: #4a5d4d;
+  color: #dee7d9;
+  font-size: 13px;
+  line-height: 1.75;
+  padding: 16px 20px;
+  transform: rotate(3deg);
+}
+.dd-art-answer {
+  position: absolute;
+  left: 0;
+  top: 95px;
+  background: #f0f4d8;
+  color: #334536;
+  border-radius: 18px 18px 18px 3px;
+  padding: 22px;
+  font-size: 17px;
+  font-weight: 700;
+  transform: rotate(-3deg);
+  box-shadow: 0 6px 0 #192f25;
+}
+.dd-art-answer span {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  margin-top: 12px;
+  color: #6e7c64;
+}
+.dd-conversation-art > .dd-face {
+  position: absolute;
+  right: 4px;
+  bottom: -2px;
+  transform: rotate(8deg);
+  width: 54px;
+  height: 50px;
+  font-size: 63px;
+}
+.dd-daily {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin: 23px 0 38px;
+  border: 1px solid #dce4d4;
+  background: #eff3e7;
+  padding: 25px 28px;
+  border-radius: 18px;
+}
+.dd-daily h2 {
+  font-size: 19px;
+}
+.dd-daily p:not(.dd-eyebrow) {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.dd-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.dd-section-title h2 {
+  font-size: 19px;
+}
+.dd-link,
+.dd-back {
+  background: transparent;
+  color: #4c664a;
+  font-size: 12px !important;
+  padding: 7px 0 !important;
+}
+.dd-back {
+  margin-bottom: 22px;
+}
+.dd-scenario-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 13px;
+}
+.dd-scenario {
+  text-align: left;
+  border: 1px solid var(--line) !important;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 17px;
+  background: #fff;
+  border-radius: 16px;
+  color: var(--ink);
+  transition: transform 0.15s;
+}
+.dd-scenario:hover {
+  transform: translateY(-2px);
+}
+.dd-scenario > svg {
+  margin-left: auto;
+  width: 17px;
+  flex-shrink: 0;
+  color: #889181;
+}
+.dd-avatar {
+  width: 62px;
+  height: 66px;
+  border-radius: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #e5eccf;
+}
+.dd-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.color-1 {
+  background: #efe5d5;
+}
+.color-2 {
+  background: #e3e8ef;
+}
+.color-3 {
+  background: #e8e0e5;
+}
+.dd-scenario h3 {
+  font-size: 14px;
+}
+.dd-scenario p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 3px 0 7px;
+}
+.dd-scenario small {
+  font-size: 10px;
+  color: #768569;
+}
+.dd-small {
+  font-size: 11px !important;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-top: 12px !important;
+}
+.dd-center {
+  text-align: center;
+  margin-top: 27px !important;
+}
+.dd-footer {
+  font-size: 10px;
+  color: #8b9184;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  margin-top: 50px;
+  padding-top: 20px;
+}
+.dd-footer a {
+  text-decoration: none;
+}
+.dd-mobile-nav {
+  display: none;
+}
+.dd-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 28px;
+}
+.dd-two {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.dd-compact h1 {
+  font-size: 32px;
+}
+.dd-steps {
+  display: flex;
+  gap: 6px;
+  margin: 22px 0;
+}
+.dd-steps span {
+  height: 5px;
+  background: #dce3d6;
+  flex: 1;
+  border-radius: 4px;
+}
+.dd-steps .done {
+  background: #739267;
+}
+.dd-demo-bar {
+  background: #e8eddc;
+  border: 1px solid #d8e2c8;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  color: #56634d;
+}
+.dd-demo-bar button {
+  background: transparent;
+  color: var(--ink);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.dd-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dd-person img {
+  width: 46px;
+  height: 46px;
+  background: #edf1e4;
+  border-radius: 50%;
+}
+.dd-person span {
+  font-size: 13px;
+  font-weight: 700;
+  display: block;
+}
+.dd-person small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.dd-lesson > blockquote {
+  font-size: 23px;
+  line-height: 1.8;
+  margin: 24px 0;
+  font-weight: 650;
+  letter-spacing: -0.05em;
+}
+.dd-round-goal {
+  border-top: 1px solid var(--line);
+  padding: 18px 0 22px;
+}
+.dd-round-goal span {
+  font-size: 10px;
+  color: #67855b;
+  font-weight: 750;
+}
+.dd-round-goal p {
+  font-size: 13px;
+  margin-top: 5px;
+}
+.dd-root label {
+  font-size: 12px;
+  font-weight: 650;
+  display: block;
+  margin: 12px 0 6px;
+}
+.dd-root textarea {
+  width: 100%;
+  min-height: 136px;
+  resize: vertical;
+  border: 1px solid #dce2d7;
+  background: #f9faf6;
+  border-radius: 12px;
+  padding: 14px;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.8;
+}
+.dd-root textarea::placeholder {
+  color: #939b8c;
+}
+.dd-full {
+  width: 100%;
+  margin-top: 16px;
+}
+.dd-check {
+  display: flex !important;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 12px !important;
+  font-weight: 450 !important;
+}
+.dd-check input {
+  accent-color: #467653;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.dd-self-check {
+  background: #f1f5e9;
+  padding: 18px;
+  border-radius: 12px;
+  margin-top: 18px;
+}
+.dd-self-check strong {
+  font-size: 13px;
+}
+.dd-complete {
+  margin-top: 16px;
+  padding: 14px;
+  background: #eff4e6;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #487341;
+}
+.dd-cue {
+  background: #293c32;
+  color: #f1f5e9;
+  border-radius: 20px;
+  padding: 28px;
+  min-height: 465px;
+  position: sticky;
+  top: 20px;
+  scroll-margin-top: 20px;
+}
+.dd-cue-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+.dd-cue .dd-eyebrow {
+  color: #b0c997 !important;
+}
+.dd-cue blockquote {
+  font-size: 27px;
+  line-height: 1.7;
+  font-weight: 650;
+  margin: 24px 0 29px;
+  letter-spacing: -0.05em;
+  overflow-wrap: anywhere;
+}
+.dd-cue details {
+  border-top: 1px solid #526152;
+  padding-top: 17px;
+  font-size: 12px;
+  color: #c7d3bf;
+}
+.dd-cue details p {
+  margin: 14px 0;
+}
+.dd-cue details q {
+  display: block;
+  font-size: 11px;
+  color: #aabca3;
+}
+.dd-cue .dd-small {
+  color: #a9b8a0;
+}
+.dd-cue .dd-source {
+  margin-top: 4px;
+}
+.dd-root summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+}
+.dd-tones {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 21px;
+  flex-wrap: wrap;
+}
+.dd-tones button {
+  border-radius: 20px;
+  background: #3e5142;
+  color: #bdcbb4;
+  font-size: 10px;
+  padding: 7px 10px;
+}
+.dd-tones button[aria-pressed="true"] {
+  background: #e1edc3;
+  color: #344b35;
+}
+.dd-wait {
+  min-height: 245px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 18px;
+}
+.dd-wait > span {
+  font-size: 80px;
+  line-height: 0.5;
+  color: #acc486;
+}
+.dd-wait p {
+  font-size: 14px;
+  color: #c6d2bd;
+}
+.dd-wait button {
+  font-size: 12px !important;
+  min-height: 40px;
+}
+.dd-lesson-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-top: 26px;
+}
+.dd-lesson-footer > span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.dd-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+.dd-recap {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.dd-recap summary {
+  font-size: 16px;
+}
+.dd-recap summary > span {
+  color: #87a271;
+  margin-right: 18px;
+}
+.dd-recap blockquote {
+  border-left: 3px solid #d6ddce;
+  padding: 10px 16px;
+  background: #f6f7f1;
+  font-size: 16px;
+  margin: 10px 0;
+}
+.dd-recap .dd-revision {
+  border-color: #679054;
+  background: #f0f6e7;
+}
+.dd-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.dd-stats strong {
+  font-size: 29px;
+  display: block;
+  letter-spacing: -0.05em;
+}
+.dd-stats span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.dd-growth {
+  margin: 20px 0;
+}
+.dd-growth progress {
+  width: 100%;
+  height: 10px;
+  accent-color: #66884f;
+  margin-top: 20px;
+}
+.dd-growth > p:last-child {
+  font-size: 12px;
+  margin-top: 8px;
+  color: var(--muted);
+}
+.dd-reward {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  padding: 16px 0;
+  font-size: 13px;
+}
+.dd-reward b {
+  color: #62834f;
+}
+.dd-notice {
+  background: #edf0e5;
+  padding: 16px 18px;
+  border: 1px solid #dce2d2;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.9;
+  margin-bottom: 24px !important;
+  color: #66715d;
+}
+.dd-input fieldset {
+  border: 0;
+  padding: 0;
+  margin: 12px 0 0;
+}
+.dd-input select {
+  width: 100%;
+  display: block;
+  margin-top: 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+  color: var(--ink);
+  font-size: 13px;
+}
+.dd-setup {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+.dd-setup summary {
+  font-size: 14px;
+}
+.dd-setup summary span {
+  font-size: 10px;
+  font-weight: 450;
+  color: var(--muted);
+  margin-left: 10px;
+}
+.dd-mic {
+  border-radius: 13px;
+  background: #eff3e8;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.dd-mic > span {
+  font-size: 11px;
+  color: #6d7f64;
+  display: block;
+}
+.dd-mic .dd-actions {
+  justify-content: center;
+  margin-top: 12px;
+}
+.dd-recording {
+  color: #ab4939 !important;
+  font-weight: 700;
+}
+.dd-recording:before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #b64f3a;
+  margin-right: 7px;
+}
+.dd-error {
+  background: #fff0ea;
+  border: 1px solid #eed3c9;
+  color: #983f2c;
+  font-size: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  margin-top: 16px !important;
+}
+.dd-fallback {
+  margin-top: 24px;
+  border-top: 1px solid #526152;
+  padding-top: 20px;
+}
+.dd-fallback > p {
+  font-size: 11px;
+  color: #bdcbaa;
+  margin-bottom: 8px;
+}
+.dd-fallback q {
+  font-size: 14px;
+  line-height: 1.8;
+  display: block;
+}
+.dd-fallback small {
+  font-size: 9px;
+  color: #9faf94;
+  display: block;
+  margin-top: 8px;
+}
+.dd-evidence {
+  max-width: 850px;
+  margin: auto;
+  padding: 50px 25px;
+}
+.dd-evidence h1 {
+  font-size: 32px;
+  margin: 22px 0;
+}
+.dd-evidence h2 {
+  margin: 30px 0 12px;
+}
+.dd-evidence p,
+.dd-evidence li {
+  font-size: 14px;
+  margin: 12px 0;
+}
+.dd-evidence table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.dd-evidence td,
+.dd-evidence th {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+@media (min-width: 1500px) {
+  .dd-main {
+    margin-right: auto;
+    max-width: 1350px;
+    padding-left: 80px;
+    padding-right: 80px;
+  }
+  .dd-scenario h3 {
+    font-size: 16px;
+  }
+}
+@media (max-width: 1100px) {
+  .dd-sidebar {
+    width: 188px;
+    padding: 32px 20px;
+  }
+  .dd-main {
+    margin-left: 188px;
+    padding: 0 28px 26px;
+  }
+  .dd-live-banner {
+    padding: 28px;
+    gap: 15px;
+  }
+  .dd-scenario {
+    gap: 10px;
+    padding: 13px;
+  }
+  .dd-avatar {
+    width: 46px;
+    height: 54px;
+  }
+  .dd-scenario > svg {
+    display: none;
+  }
+  .dd-card,
+  .dd-cue {
+    padding: 22px;
+  }
+  .dd-cue blockquote {
+    font-size: 24px;
+  }
+}
+@media (max-width: 850px) {
+  .dd-sidebar {
+    display: none;
+  }
+  .dd-main {
+    margin: 0 auto;
+    max-width: 730px;
+    padding: 0 23px 100px;
+  }
+  .dd-topbar {
+    height: 70px;
+    margin-bottom: 30px;
+  }
+  .dd-mobile-nav {
+    position: fixed;
+    display: flex;
+    justify-content: space-around;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: rgba(249, 250, 245, 0.97);
+    border-top: 1px solid #dce2d5;
+    padding: 10px 20px max(10px, env(safe-area-inset-bottom));
+  }
+  .dd-mobile-nav button {
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #476141;
+    min-width: 65px;
+  }
+  .dd-two {
+    grid-template-columns: 1fr;
+  }
+  .dd-cue {
+    position: static;
+    min-height: 350px;
+  }
+  .dd-live .dd-cue {
+    scroll-margin-top: 15px;
+  }
+  .dd-wait {
+    min-height: 180px;
+  }
+  .dd-heading h1 {
+    font-size: 36px;
+  }
+  .dd-live-banner h2 {
+    font-size: 27px;
+  }
+  .dd-footer {
+    margin-top: 36px;
+  }
+  .dd-cue blockquote {
+    font-size: 27px;
+  }
+  .dd-live .dd-heading h1 {
+    font-size: 32px;
+  }
+}
+@media (max-width: 560px) {
+  .dd-main {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .dd-heading h1 {
+    font-size: 31px;
+  }
+  .dd-heading > p:last-child {
+    font-size: 12px;
+    max-width: 290px;
+  }
+  .dd-eyebrow {
+    font-size: 9px !important;
+  }
+  .dd-live-banner {
+    display: block;
+    padding: 25px;
+    min-height: 0;
+    border-radius: 20px;
+  }
+  .dd-live-banner h2 {
+    font-size: 26px;
+  }
+  .dd-live-banner p {
+    font-size: 12px;
+  }
+  .dd-live-banner .dd-primary {
+    width: 100%;
+  }
+  .dd-demo-link {
+    margin: 15px auto 0;
+  }
+  .dd-conversation-art {
+    display: none;
+  }
+  .dd-live-banner .dd-source {
+    font-size: 9px;
+  }
+  .dd-daily {
+    padding: 20px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .dd-daily h2 {
+    font-size: 18px;
+  }
+  .dd-daily .dd-secondary {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 15px !important;
+  }
+  .dd-scenario-grid {
+    grid-template-columns: 1fr;
+  }
+  .dd-scenario {
+    padding: 16px;
+    gap: 16px;
+  }
+  .dd-avatar {
+    width: 53px;
+    height: 57px;
+  }
+  .dd-scenario > svg {
+    display: block;
+  }
+  .dd-scenario h3 {
+    font-size: 15px;
+  }
+  .dd-scenario p {
+    font-size: 12px;
+  }
+  .dd-scenario small {
+    font-size: 10px;
+  }
+  .dd-section-title h2 {
+    font-size: 18px;
+  }
+  .dd-stats {
+    gap: 8px;
+  }
+  .dd-stats .dd-card {
+    padding: 16px 12px;
+  }
+  .dd-stats strong {
+    font-size: 23px;
+  }
+  .dd-stats span {
+    font-size: 10px;
+  }
+  .dd-footer {
+    display: block;
+    line-height: 2.2;
+  }
+  .dd-footer a {
+    display: block;
+  }
+  .dd-lesson-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .dd-lesson-footer > span {
+    text-align: center;
+  }
+  .dd-lesson > blockquote {
+    font-size: 22px;
+  }
+  .dd-demo-bar {
+    font-size: 10px;
+    align-items: flex-start;
+  }
+  .dd-card,
+  .dd-cue {
+    padding: 23px;
+  }
+  .dd-notice {
+    font-size: 11px;
+  }
+  .dd-cue blockquote {
+    font-size: 24px;
+  }
+  .dd-actions > .dd-primary,
+  .dd-actions > .dd-secondary {
+    flex: 1;
+  }
+  .dd-compact h1 {
+    font-size: 26px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dd-root * {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
