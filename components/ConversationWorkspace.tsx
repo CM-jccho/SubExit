@@ -356,9 +356,6 @@ export default function ConversationWorkspace() {
       <div className="dc-shell">
         <header className="dc-header">
           <button className="dc-brand" onClick={home}>
-            <span className="dd-logo" aria-hidden="true">
-              ··
-            </span>
             든든콜
           </button>
           <span>내 상황을 기억하는 대화 코치</span>
@@ -374,20 +371,13 @@ export default function ConversationWorkspace() {
           )}
           {view === "library" && (
             <>
-              <section className="dc-hero">
-                <p className="dc-overline">내 대화</p>
-                <h1>
-                  {cards.length
-                    ? "다시 설명하지 않아도,\n내 상황을 아는 코치."
-                    : "어떤 대화를\n앞두고 있나요?"}
-                </h1>
-                <p>
-                  상대와 내 목표를 한 번 정리해 두세요.
-                  <br />
-                  필요한 순간, 저장한 맥락으로 다음 말을 준비해요.
-                </p>
+              <section className="dc-library-top">
+                <div>
+                  <h1>내 대화</h1>
+                  <p>상대와 목표를 정리하고, 필요할 때 다시 꺼내세요.</p>
+                </div>
                 <button className="dd-primary" onClick={() => start()}>
-                  + 대화 카드 만들기
+                  새 대화 준비
                 </button>
               </section>
               {cards.length > 0 ? (
@@ -445,31 +435,17 @@ export default function ConversationWorkspace() {
                   )}
                 </section>
               ) : (
-                <section className="dc-first">
-                  <div className="dc-empty-card">
-                    <span>01 · 내 상황</span>
-                    <strong>
-                      “마감은 급한데,
-                      <br />
-                      이미 맡은 일이 많아요.”
-                    </strong>
-                    <p>상대 · 내 목표 · 지킬 선</p>
-                  </div>
-                  <div>
-                    <h2>
-                      정해진 시나리오를
-                      <br />
-                      고르지 않아도 괜찮아요.
-                    </h2>
-                    <ol>
-                      <li>편하게 이야기해 주세요.</li>
-                      <li>정리된 내용을 카드로 저장해요.</li>
-                      <li>필요할 때 꺼내 코칭받아요.</li>
-                    </ol>
-                    <button className="dd-link" onClick={() => setView("demo")}>
-                      예시 카드로 흐름 보기 →
-                    </button>
-                  </div>
+                <section className="dc-empty-workspace">
+                  <p className="dc-overline">저장된 대화가 없습니다</p>
+                  <h2>누구와 어떤 이야기를 하려 하나요?</h2>
+                  <p>
+                    상황을 이야기하면 상대, 목표, 지킬 선을 정리해요.
+                    <br />
+                    확인한 내용만 저장하고 다음 대화에 다시 쓸 수 있어요.
+                  </p>
+                  <button className="dd-link" onClick={() => setView("demo")}>
+                    저장되는 내용과 코칭 예시 보기 →
+                  </button>
                 </section>
               )}
               <p className="dc-storage">
@@ -492,10 +468,10 @@ export default function ConversationWorkspace() {
                 </p>
                 <h1>
                   {editingId
-                    ? "달라진 상황을 반영해요."
+                    ? "대화 설정 수정"
                     : review
-                      ? "내 상황이 맞는지 확인해요."
-                      : "설정 대신, 이야기부터."}
+                      ? "저장할 내용 확인"
+                      : "대화 준비하기"}
                 </h1>
                 <p>
                   {review
@@ -630,49 +606,51 @@ export default function ConversationWorkspace() {
                     )}
                   </section>
                 )}
-                <section className="dc-profile-panel">
-                  {review && messages.length > 0 && (
-                    <button
-                      className="dd-link"
-                      onClick={() => setReview(false)}
-                    >
-                      ← 대화 내용 다시 보기
-                    </button>
-                  )}
-                  <p className="dc-overline">저장할 내용</p>
-                  <h2>{profile.title || "나의 대화 카드"}</h2>
-                  {review ? (
-                    <ProfileEditor profile={profile} onChange={setProfile} />
-                  ) : (
-                    <ContextFacts profile={profile} />
-                  )}
-                  <p className="dd-small">
-                    설정 대화 전체와 통화 원문은 저장하지 않아요. 확인한 카드
-                    내용만 남겨요.
-                  </p>
-                  {error && (
-                    <p className="dd-error" role="alert">
-                      {error}
+                {review && (
+                  <section className="dc-profile-panel">
+                    {review && messages.length > 0 && (
+                      <button
+                        className="dd-link"
+                        onClick={() => setReview(false)}
+                      >
+                        ← 대화 내용 다시 보기
+                      </button>
+                    )}
+                    <p className="dc-overline">저장할 내용</p>
+                    <h2>{profile.title || "나의 대화 카드"}</h2>
+                    {review ? (
+                      <ProfileEditor profile={profile} onChange={setProfile} />
+                    ) : (
+                      <ContextFacts profile={profile} />
+                    )}
+                    <p className="dd-small">
+                      설정 대화 전체와 통화 원문은 저장하지 않아요. 확인한 카드
+                      내용만 남겨요.
                     </p>
-                  )}
-                  {review ? (
-                    <button
-                      className="dd-primary dd-full"
-                      disabled={!canSave || busy}
-                      onClick={save}
-                    >
-                      {editingId ? "수정 내용 저장" : "대화 카드 저장"}
-                    </button>
-                  ) : (
-                    <button
-                      className="dd-secondary dd-full"
-                      disabled={busy}
-                      onClick={() => setReview(true)}
-                    >
-                      카드 내용 확인하기
-                    </button>
-                  )}
-                </section>
+                    {error && (
+                      <p className="dd-error" role="alert">
+                        {error}
+                      </p>
+                    )}
+                    {review ? (
+                      <button
+                        className="dd-primary dd-full"
+                        disabled={!canSave || busy}
+                        onClick={save}
+                      >
+                        {editingId ? "수정 내용 저장" : "대화 카드 저장"}
+                      </button>
+                    ) : (
+                      <button
+                        className="dd-secondary dd-full"
+                        disabled={busy}
+                        onClick={() => setReview(true)}
+                      >
+                        카드 내용 확인하기
+                      </button>
+                    )}
+                  </section>
+                )}
               </div>
             </>
           )}
@@ -694,10 +672,8 @@ export default function ConversationWorkspace() {
                   </button>
                 </section>
                 <aside className="dc-start-panel">
-                  <span className="dd-face" aria-hidden="true">
-                    ··
-                  </span>
-                  <h2>이제, 대화해 볼까요?</h2>
+                  <p className="dc-overline">다음 단계</p>
+                  <h2>이 맥락으로 코칭받기</h2>
                   <p>
                     상대의 말을 적거나 짧게 들려주세요.
                     <br />
@@ -799,7 +775,7 @@ export default function ConversationWorkspace() {
           )}
         </main>
         <footer className="dc-footer">
-          <span>든든콜 · 내 맥락으로, 내 말답게.</span>
+          <span>든든콜</span>
           <div>
             <a href="/practice?demo=1">문장 연습</a>
             <a href="/evidence">서비스·데이터 안내 ↗</a>
