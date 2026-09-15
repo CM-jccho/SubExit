@@ -259,3 +259,173 @@ test("short voice transcription does not invent speaker labels", async () => {
     Object.assign(process.env, old);
   }
 });
+
+const cardModel = require("../lib/conversation-cards.ts");
+const contextRoute = require("../app/api/context/route.ts");
+test("card storage validates schema, strips extra conversation data and deduplicates", () => {
+  const card = {
+    ...cardModel.exampleProfile,
+    id: "card-test",
+    createdAt: "2026-09-15T10:00:00Z",
+    updatedAt: "2026-09-15T10:00:00Z",
+    lastUsedAt: null,
+    useCount: 0,
+    source: "manual",
+    transcript: "must not persist",
+  };
+  const parsed = cardModel.parseCards(
+    JSON.stringify({
+      version: 1,
+      cards: [card, card, { ...card, id: "card-bad", goal: "" }],
+    }),
+  );
+  assert.equal(parsed.length, 1);
+  assert.equal(parsed[0].transcript, undefined);
+  assert.deepEqual(cardModel.parseCards("broken"), []);
+  assert.deepEqual(
+    cardModel.parseCards(JSON.stringify({ version: 99, cards: [card] })),
+    [],
+  );
+});
+test("save, update, reuse and search preserve identity and independent goals", () => {
+  const old = global.localStorage;
+  let stored = null;
+  global.localStorage = {
+    getItem: () => stored,
+    setItem: (_, v) => (stored = v),
+  };
+  try {
+    let cards = cardModel.saveCard(cardModel.exampleProfile, "manual");
+    const id = cards[0].id,
+      created = cards[0].createdAt;
+    cards = cardModel.saveCard(
+      { ...cardModel.exampleProfile, goal: "다음 주 일정 확정" },
+      "manual",
+      id,
+    );
+    assert.equal(cards.length, 1);
+    assert.equal(cards[0].createdAt, created);
+    cards = cardModel.markUsed(id);
+    assert.equal(cards[0].useCount, 1);
+    assert.equal(cardModel.searchCards(cards, "팀장 다음 주").length, 1);
+    assert.equal(cardModel.searchCards(cards, "병원").length, 0);
+  } finally {
+    global.localStorage = old;
+  }
+});
+test("storage failure is surfaced instead of pretending saved", () => {
+  const old = global.localStorage;
+  global.localStorage = {
+    getItem: () => null,
+    setItem: () => {
+      throw Error("quota");
+    },
+  };
+  try {
+    assert.throws(() => cardModel.saveCard(cardModel.exampleProfile, "guided"));
+  } finally {
+    global.localStorage = old;
+  }
+});
+test("guided setup accepts a novel situation without fixed scenario mapping", () => {
+  const messages = [
+    "집주인에게 누수 수리 일정을 물으려고 해요",
+    "집주인",
+    "수리 날짜 확정",
+    "비난하지 않기",
+  ].map((text) => ({ role: "user", text }));
+  const d = cardModel.guidedReply(messages);
+  assert.equal(d.profile.partner, "집주인");
+  assert.equal(d.profile.goal, "수리 날짜 확정");
+  assert(!Object.hasOwn(d.profile, "scenario"));
+  assert.doesNotThrow(() => cardModel.parseProfile(d.profile));
+});
+test("custom context reaches coach provider instead of the default sales goal", async () => {
+  const old = { ...process.env },
+    before = global.fetch;
+  Object.assign(process.env, {
+    COACH_AI_ENABLED: "true",
+    GEMINI_API_KEY: "mock-key",
+    GEMINI_DATA_MODE: "free",
+  });
+  let payload;
+  global.fetch = async (_, init) => {
+    payload = JSON.parse(JSON.parse(init.body).contents[0].parts[0].text);
+    return Response.json({
+      candidates: [{ content: { parts: [{ text: JSON.stringify(output) }] } }],
+    });
+  };
+  try {
+    const r = await coach.POST(
+      req({ ...data, scenario: undefined, context: cardModel.exampleProfile }),
+    );
+    assert.equal(r.status, 200);
+    assert.equal(payload.goal, cardModel.exampleProfile.goal);
+    assert.equal(payload.context.partner, cardModel.exampleProfile.partner);
+    assert.equal(
+      (
+        await coach.POST(
+          req({ ...data, context: { ...cardModel.exampleProfile, goal: "" } }),
+        )
+      ).status,
+      400,
+    );
+  } finally {
+    global.fetch = before;
+    for (const k of Object.keys(process.env))
+      if (!(k in old)) delete process.env[k];
+    Object.assign(process.env, old);
+  }
+});
+test("AI context requires consent and returns a reviewable profile; no hidden fallback", async () => {
+  const old = { ...process.env },
+    before = global.fetch;
+  Object.assign(process.env, {
+    COACH_AI_ENABLED: "true",
+    GEMINI_API_KEY: "mock-key",
+    GEMINI_DATA_MODE: "free",
+  });
+  let calls = 0;
+  global.fetch = async () => {
+    calls++;
+    return Response.json({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                text: JSON.stringify({
+                  profile: cardModel.exampleProfile,
+                  question: "",
+                }),
+              },
+            ],
+          },
+        },
+      ],
+    });
+  };
+  const d = {
+    messages: [{ role: "user", text: "팀장에게 마감 조율을 요청하고 싶어요." }],
+    consent: true,
+    adultConsent: true,
+    sampleConsent: true,
+  };
+  try {
+    assert.equal(
+      (await contextRoute.POST(req({ ...d, sampleConsent: false }))).status,
+      400,
+    );
+    assert.equal(calls, 0);
+    const r = await contextRoute.POST(req(d));
+    assert.equal(r.status, 200);
+    assert.equal((await r.json()).source, "ai");
+    process.env.COACH_AI_ENABLED = "false";
+    assert.equal((await contextRoute.POST(req(d))).status, 503);
+  } finally {
+    global.fetch = before;
+    for (const k of Object.keys(process.env))
+      if (!(k in old)) delete process.env[k];
+    Object.assign(process.env, old);
+  }
+});

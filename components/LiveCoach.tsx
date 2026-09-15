@@ -1,17 +1,20 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { scenarios, tones, type Tone } from "@/lib/scenarios";
+import type { ContextProfile } from "@/lib/conversation-cards";
 import type { CoachResponse } from "@/lib/coach-contract";
 type Phase = "idle" | "permission" | "listening" | "transcribing" | "coaching";
 export default function LiveCoach({
   onBack,
   onDemo,
+  profile,
 }: {
   onBack: () => void;
   onDemo: () => void;
+  profile?: ContextProfile;
 }) {
   const [scenario, setScenario] = useState("sales"),
-    [tone, setTone] = useState<Tone>("firm_polite");
+    [tone, setTone] = useState<Tone>(profile?.tone || "firm_polite");
   const [config, setConfig] = useState({
     available: false,
     voiceAvailable: false,
@@ -117,6 +120,7 @@ export default function LiveCoach({
         JSON.stringify({
           mode: "ai",
           scenario,
+          context: profile,
           tone,
           opponent: text,
           reply: "",
@@ -267,7 +271,7 @@ export default function LiveCoach({
           onBack();
         }}
       >
-        ← 홈으로
+        ← 내 대화로
       </button>
       <header className="dd-heading">
         <p className="dd-eyebrow">지금 대화</p>
@@ -290,22 +294,31 @@ export default function LiveCoach({
               대화 준비 <span>{allowed ? "설정 확인" : "상황·전송 안내"}</span>
             </summary>
             <fieldset disabled={phase !== "idle"}>
-              <label>
-                상황
-                <select
-                  value={scenario}
-                  onChange={(e) => {
-                    setScenario(e.target.value);
-                    setResult(null);
-                  }}
-                >
-                  {scenarios.map((s) => (
-                    <option value={s.id} key={s.id}>
-                      {s.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {profile ? (
+                <div className="dc-live-context">
+                  <strong>{profile.title}</strong>
+                  <p>상대: {profile.partner}</p>
+                  <p>내 목표: {profile.goal}</p>
+                  {profile.boundaries && <p>지킬 선: {profile.boundaries}</p>}
+                </div>
+              ) : (
+                <label>
+                  상황
+                  <select
+                    value={scenario}
+                    onChange={(e) => {
+                      setScenario(e.target.value);
+                      setResult(null);
+                    }}
+                  >
+                    {scenarios.map((s) => (
+                      <option value={s.id} key={s.id}>
+                        {s.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               <label>
                 말투
                 <select
@@ -418,7 +431,11 @@ export default function LiveCoach({
               setInput(e.target.value);
               setResult(null);
             }}
-            placeholder="예: 지금 가입해야 혜택을 받을 수 있어요. 딱 1분이면 됩니다."
+            placeholder={
+              profile
+                ? "상대가 방금 한 말을 적어주세요."
+                : "예: 지금 가입해야 혜택을 받을 수 있어요. 딱 1분이면 됩니다."
+            }
           />
           <p className="dd-small">
             상대의 말만 남겨 주세요. 자동 화자 구분은 지원하지 않아요.

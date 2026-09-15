@@ -1,3 +1,4 @@
+import { parseProfile } from "@/lib/conversation-cards";
 import { geminiConfig, geminiGenerate } from "@/lib/gemini";
 import { getScenario, tones, type Tone } from "@/lib/scenarios";
 import { coachSchema, systemPrompt, validateCoach } from "@/lib/coach-contract";
@@ -28,9 +29,18 @@ export async function POST(request: Request) {
     if (!d || typeof d !== "object")
       return json({ error: "입력을 확인해 주세요." }, 400);
     const scenario = getScenario(d.scenario);
-    if (!scenario || !tones.some((t) => t.id === d.tone))
+    let context;
+    if (d.context !== undefined) {
+      try {
+        context = parseProfile(d.context);
+      } catch {
+        return json({ error: "저장된 대화 카드를 확인해 주세요." }, 400);
+      }
+    }
+    if ((!scenario && !context) || !tones.some((t) => t.id === d.tone))
       return json({ error: "상황과 말투를 확인해 주세요." }, 400);
     if (d.mode === "sample") {
+      if (!scenario) return json({ error: "샘플 상황을 확인해 주세요." }, 400);
       const round = scenario.rounds.find((r) => r.id === d.roundId);
       if (!round) return json({ error: "샘플 구간을 찾지 못했습니다." }, 400);
       return json({
@@ -73,7 +83,8 @@ export async function POST(request: Request) {
       [
         {
           text: JSON.stringify({
-            goal: scenario.goal,
+            goal: context?.goal || scenario!.goal,
+            context,
             tone: d.tone,
             opponent: d.opponent,
             reply: d.reply,

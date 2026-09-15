@@ -1,9 +1,10 @@
 import "./globals.css";
 import "./coach.css";
+import "./conversation.css";
 export const metadata = {
-  title: "든든콜 · 말하기 어려운 순간, 내 편이 되는 한 문장",
+  title: "든든콜 · 내 상황을 기억하는 대화 코치",
   description:
-    "부담스러운 대화에서 내가 말할 다음 한 문장을 제안하는 옆자리 코치. 짧은 마이크 입력과 직접 답변 연습.",
+    "상대와 내 목표를 대화 카드로 저장하고, 필요한 순간 내 맥락에 맞는 다음 한 문장을 준비하세요.",
 };
 export default function RootLayout({
   children,
