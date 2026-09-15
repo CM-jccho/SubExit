@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react'
 import UploadForm from '@/components/UploadForm'
-import { loadGamificationState, getLevelBadge, getLevelLabel, getStreakLabel } from '@/lib/gamification'
+import { loadGamificationState, getLevelBadge, getLevelLabel, getStreakLabel, getLastUsedScenario, updateLastUsedScenario } from '@/lib/gamification'
 
 type ScenarioCard = {
   id: string
@@ -79,20 +79,28 @@ function UploadFormWrapper({ selectedScenario }: { selectedScenario?: string }) 
 export default function Home() {
   const [selectedScenario, setSelectedScenario] = useState<string | undefined>(undefined)
   const [gamificationState, setGamificationState] = useState({ level: 0, streak: 0 })
+  const [lastUsedScenarioId, setLastUsedScenarioId] = useState<string>('sales')
 
   useEffect(() => {
     const state = loadGamificationState()
     setGamificationState({ level: state.level, streak: state.streak })
+    setLastUsedScenarioId(getLastUsedScenario())
   }, [])
+
+  const handleSelectScenario = (scenarioId: string) => {
+    setSelectedScenario(scenarioId)
+    updateLastUsedScenario(scenarioId)
+    setLastUsedScenarioId(scenarioId)
+  }
 
   return (
     <main className="min-h-screen pb-12">
       <div className="max-w-[436px] mx-auto px-5 py-6 sm:py-8">
         {/* Hero Header - Short & Dense */}
-        <header className="text-center mb-6">
+        <header className="text-center mb-5">
           {/* Gamification badges */}
           {(gamificationState.level > 0 || gamificationState.streak > 0) && (
-            <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="flex items-center justify-center gap-2 mb-3">
               {gamificationState.level > 0 && (
                 <div className="px-3 py-1.5 rounded-xl bg-surface border border-ink/10 flex items-center gap-1.5">
                   <span className="text-base">{getLevelBadge(gamificationState.level)}</span>
@@ -112,7 +120,7 @@ export default function Home() {
           )}
           
           {/* Logo + Hook */}
-          <div className="mb-5">
+          <div>
             <h1 className="text-4xl sm:text-5xl font-black mb-2 tracking-tight text-ink">
               든든콜
             </h1>
@@ -121,30 +129,44 @@ export default function Home() {
               「지금 이렇게 말하세요」실시간 제안
             </p>
           </div>
-
-          {/* Primary CTA - ONE button */}
-          {!selectedScenario && (
-            <button
-              onClick={() => {
-                const salesScenario = scenarios.find(s => s.id === 'sales')
-                if (salesScenario) setSelectedScenario(salesScenario.id)
-              }}
-              className="w-full py-4 px-6 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-2xl transition-all duration-200 shadow-soft-md hover:shadow-glow text-base mb-4"
-            >
-              📞 시뮬레이션 시작
-            </button>
-          )}
-
-          {/* Compact disclaimer */}
-          <div className="flex flex-wrap justify-center gap-2 text-xs">
-            <span className="px-2 py-1 rounded-lg bg-surface border border-ink/10 text-ink-500 font-medium">
-              🚫 통화 대행 아님
-            </span>
-            <span className="px-2 py-1 rounded-lg bg-surface border border-ink/10 text-ink-500 font-medium">
-              🎭 시뮬레이션
-            </span>
-          </div>
         </header>
+
+        {/* 오늘의 연습 Card - LongBlack inspired */}
+        {!selectedScenario && (
+          <div className="mb-6">
+            <div className="paper-card p-5 bg-gradient-to-br from-primary-500/10 to-hold-500/10 border-2 border-primary-500/20">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <div className="text-xs font-bold text-primary-600 mb-1.5 tracking-wide uppercase">
+                    오늘의 연습
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-ink/70">
+                    <span className="font-semibold">오늘 1회</span>
+                    <span className="text-ink/40">·</span>
+                    <span>{scenarios.find(s => s.id === lastUsedScenarioId)?.title || '영업 전화 거절'}</span>
+                  </div>
+                </div>
+                <div className="text-3xl">
+                  {scenarios.find(s => s.id === lastUsedScenarioId)?.emoji || '📞'}
+                </div>
+              </div>
+              
+              <button
+                onClick={() => handleSelectScenario(lastUsedScenarioId)}
+                className="w-full py-4 px-6 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-2xl transition-all duration-200 shadow-soft-md hover:shadow-glow text-base"
+              >
+                연습 시작
+              </button>
+              
+              {/* Optional Plus teaser - muted */}
+              <div className="mt-3 text-center">
+                <p className="text-xs text-ink/40">
+                  매일 연습하고 🔥 연속 기록을 늘려보세요
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Scenario Cards - 2-column grid */}
         {!selectedScenario && (
@@ -152,7 +174,7 @@ export default function Home() {
             <h2 className="text-base font-bold text-ink mb-3 px-1">
               또는 다른 시나리오 선택
             </h2>
-            <ScenarioCards onSelectScenario={setSelectedScenario} />
+            <ScenarioCards onSelectScenario={handleSelectScenario} />
           </div>
         )}
 
