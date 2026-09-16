@@ -886,7 +886,11 @@ export default function VoiceWorkspace({
                         : "녹음 " + (i + 1)}
                     {t.role === "assistant" && (
                       <small>
-                        {t.sample || session.isSample ? "샘플" : "AI"}
+                        {t.origin === "recording"
+                          ? "녹음에서 가져온 말"
+                          : t.sample || session.isSample
+                            ? "샘플"
+                            : "AI"}
                       </small>
                     )}
                   </span>
@@ -1189,7 +1193,7 @@ export default function VoiceWorkspace({
                           session.turns
                             .map(
                               (t) =>
-                                `**${t.role === "assistant" ? (session.kind === "chat" ? sessionCharacter.name : session.context?.partner) || "AI 연습 상대" : t.role === "user" ? "나" : "녹음"}**\n\n${t.sample ? "[사전 작성 샘플 · " + t.sample.topic + "] " + outageMessage(t.sample.outage) + "\n\n" : ""}${t.text || "(문자 변환 없는 음성)"}\n`,
+                                `**${t.role === "assistant" ? (session.kind === "chat" ? sessionCharacter.name : session.context?.partner) || "AI 연습 상대" : t.role === "user" ? "나" : "녹음"}**\n\n${t.origin === "recording" ? "[녹음에서 가져온 상대 말]\n\n" : ""}${t.sample ? "[사전 작성 샘플 · " + t.sample.topic + "] " + outageMessage(t.sample.outage) + "\n\n" : ""}${t.text || "(문자 변환 없는 음성)"}\n`,
                             )
                             .join("\n"),
                       ],
