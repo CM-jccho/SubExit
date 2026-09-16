@@ -651,6 +651,13 @@ export default function ConversationWorkspace() {
                     </span>
                   </div>
                 </section>
+                <button
+                  className="garden-home-link"
+                  onClick={() => navigate("room")}
+                >
+                  <strong>연습하고 내 새싹 키우기</strong>
+                  <span>퀘스트 3개 · 친구방 꾸미기 →</span>
+                </button>
                 {(sampleCards.length > 0 || tour) && (
                   <section className="dc-starter-section">
                     <div className="dc-section-heading">
@@ -814,6 +821,7 @@ export default function ConversationWorkspace() {
               view === "voicePractice" ||
               view === "friendChat") && (
               <VoiceWorkspace
+                onRoom={() => navigate("room")}
                 key={
                   view +
                   (view === "voicePractice"

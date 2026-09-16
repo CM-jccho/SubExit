@@ -77,6 +77,11 @@ export function reviewDrill(
   return {
     id: "session-" + crypto.randomUUID(),
     kind: "practice",
+    gardenRootId:
+      session.gardenRootId ||
+      session.practicePlan?.sourceSessionId ||
+      session.id,
+    gardenRetryOriginal: session.turns[i].text,
     title: session.context.title + " · 다시 연습",
     context: { ...session.context },
     companion: session.companion,

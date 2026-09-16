@@ -1,6 +1,7 @@
 "use client";
 import StickyPageTop from "./StickyPageTop";
 import PersonaObserver from "./PersonaObserver";
+import PracticeGarden from "./PracticeGarden";
 import PracticalScenes from "./PracticalScenes";
 import { responseFriends } from "@/lib/practical-scenes";
 import type { ConversationCard } from "@/lib/conversation-cards";
@@ -470,6 +471,11 @@ export default function CompanionRoom({
           </div>
         </RoomEnvironment>
       </div>
+      <PracticeGarden
+        sessions={sessions}
+        onPractice={onPractice}
+        onSession={onSession}
+      />
       <PracticalScenes onPractice={onPractice} />
       <details className="dc-response-friends">
         <summary>응대 연습 친구 초대하기 · 4가지 역할</summary>

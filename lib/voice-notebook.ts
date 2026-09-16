@@ -1,4 +1,11 @@
 import type { ConversationLanguages } from "./conversation-language";
+import {
+  emptyGarden,
+  earnGarden,
+  decorateGarden,
+  type GardenState,
+  type GardenItem,
+} from "./practice-garden";
 import type { RecordingAnalysisDraft } from "./recording-analysis";
 import type { SampleMeta } from "./demo-bank";
 import type { PracticeReview } from "./practice-review";
@@ -11,6 +18,7 @@ export type AudioClip = {
   name: string;
 };
 export type VoiceTurn = {
+  unchangedSuggestion?: boolean;
   origin?: "recording";
   id: string;
   role: "user" | "assistant" | "recording";
@@ -23,6 +31,9 @@ export type VoiceTurn = {
   suggestionsSample?: SampleMeta;
 };
 export type VoiceSession = {
+  gardenReflection?: { turnId: string; original: string; rewrite: string };
+  gardenRootId?: string;
+  gardenRetryOriginal?: string;
   languages?: ConversationLanguages;
   recordingAnalysis?: RecordingAnalysisDraft;
   review?: PracticeReview;
@@ -212,8 +223,78 @@ export const listSessions = () =>
   transact<VoiceSession[]>("sessions", "readonly", (s) => s.getAll());
 export const getSession = (id: string) =>
   transact<VoiceSession | undefined>("sessions", "readonly", (s) => s.get(id));
-export const putSession = (session: VoiceSession) =>
-  transact("sessions", "readwrite", (s) => s.put(session));
+export async function putSession(session: VoiceSession): Promise<IDBValidKey> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(["sessions", "meta"], "readwrite");
+    tx.objectStore("sessions").put(session);
+    const meta = tx.objectStore("meta"),
+      request = meta.get("practice-garden-v1");
+    request.onsuccess = () =>
+      meta.put(earnGarden(request.result || emptyGarden(), session));
+    tx.oncomplete = () => {
+      db.close();
+      gardenChanged();
+      resolve(session.id);
+    };
+    tx.onabort = tx.onerror = () => {
+      db.close();
+      reject(
+        new Error(
+          "기록과 보상을 저장하지 못했어요. 저장 공간을 확인해 주세요.",
+        ),
+      );
+    };
+  });
+}
+function gardenChanged() {
+  if (typeof window !== "undefined")
+    window.dispatchEvent(new window.Event("practice-garden-changed"));
+}
+export async function readGarden(): Promise<GardenState> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("meta", "readonly"),
+      r = tx.objectStore("meta").get("practice-garden-v1");
+    tx.oncomplete = () => {
+      db.close();
+      resolve(r.result || emptyGarden());
+    };
+    tx.onabort = tx.onerror = () => {
+      db.close();
+      reject(new Error("새싹 기록을 불러오지 못했어요."));
+    };
+  });
+}
+export async function buyGardenItem(id: GardenItem): Promise<GardenState> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("meta", "readwrite"),
+      meta = tx.objectStore("meta");
+    let next: GardenState, error: unknown;
+    const r = meta.get("practice-garden-v1");
+    r.onsuccess = () => {
+      try {
+        next = decorateGarden(r.result || emptyGarden(), id);
+        meta.put(next);
+      } catch (e) {
+        error = e;
+        tx.abort();
+      }
+    };
+    tx.oncomplete = () => {
+      db.close();
+      gardenChanged();
+      resolve(next);
+    };
+    tx.onabort = tx.onerror = () => {
+      db.close();
+      reject(
+        error || new Error("소품을 저장하지 못했어요. 다시 시도해 주세요."),
+      );
+    };
+  });
+}
 export const deleteSession = (id: string) =>
   transact("sessions", "readwrite", (s) => s.delete(id));
 export const listTerms = () =>
