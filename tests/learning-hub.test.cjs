@@ -851,3 +851,86 @@ test("search-specific failure is shown honestly and does not put working convers
     await ui.cleanup();
   }
 });
+
+test("ajit souvenirs open saved reflection, create the same-scene rehearsal and explain missing records", async () => {
+  const Ajit = require("../components/PracticeGarden.tsx").default;
+  const garden = require("../lib/practice-garden.ts");
+  const scenes = require("../lib/ajit-scenes.ts");
+  const notebook = require("../lib/voice-notebook.ts");
+  const original = {
+    id: "session-ajit-ui",
+    kind: "practice",
+    title: "검증용 부탁",
+    context: scenes.ajitScenes[0].context,
+    industry: "",
+    createdAt: "2026-09-16T00:00:00Z",
+    updatedAt: "2026-09-16T00:00:00Z",
+    turns: [
+      { id: "a1", role: "assistant", text: "어떤 부탁인가요?", terms: [] },
+      { id: "u1", role: "user", text: "검토 부탁드려요.", terms: [] },
+      { id: "a2", role: "assistant", text: "언제 필요한가요?", terms: [] },
+      { id: "u2", role: "user", text: "오늘 봐 주세요.", terms: [] },
+    ],
+    gardenReflection: {
+      turnId: "u2",
+      original: "오늘 봐 주세요.",
+      rewrite: "가능하신 시간을 알려 주실 수 있을까요?",
+    },
+  };
+  const replay = garden.reflectionDrill(original);
+  replay.turns.push({
+    id: "u3",
+    role: "user",
+    text: "가능한 시간을 먼저 확인하고 부탁드릴게요.",
+    terms: [],
+  });
+  const earned = garden.earnGarden(
+    garden.earnGarden(garden.emptyGarden(), original),
+    replay,
+  );
+  const oldRead = notebook.readGarden;
+  notebook.readGarden = async () => earned;
+  let opened;
+  const props = {
+    sessions: [original, replay],
+    onSession: (id) => {
+      opened = id;
+    },
+    onPractice: () => {},
+  };
+  let ui;
+  try {
+    ui = await mount(Ajit, props);
+    await settle();
+    await click(button("마주 앉는 테이블 · 내 기록 열기"));
+    assert(document.querySelector("dialog[open]"));
+    assert(
+      document
+        .querySelector("dialog blockquote")
+        .textContent.includes(original.gardenReflection.rewrite),
+    );
+    await click(button("복기 기록 열기"));
+    assert.equal(opened, original.id);
+    await click(button("같은 장면 다시 연습"));
+    await settle();
+    const created = await notebook.getSession(opened);
+    assert.equal(created.practicePlan.sourceSessionId, original.id);
+    assert.equal(created.context.goal, original.context.goal);
+    assert.equal(document.querySelectorAll("dialog").length, 1);
+    await ui.cleanup();
+    ui = null;
+    ui = await mount(Ajit, { ...props, sessions: [] });
+    await settle();
+    await click(button("마주 앉는 테이블 · 내 기록 열기"));
+    assert(
+      document
+        .querySelector("dialog")
+        .textContent.includes("삭제되었거나 이 기기에 없어요"),
+    );
+    assert.equal(button("복기 기록 열기"), undefined);
+    assert(button("조건을 바꿔 새 연습"));
+  } finally {
+    if (ui) await ui.cleanup();
+    notebook.readGarden = oldRead;
+  }
+});

@@ -1,0 +1,329 @@
+.ajit-intro {
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 12px 0 18px;
+  color: #52644d;
+}
+.ajit-stamp-count {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+.ajit-stamp-count span {
+  color: #62735a;
+  font-size: 12px;
+  font-weight: 400;
+}
+.ajit-souvenirs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+.ajit-souvenirs article {
+  min-width: 0;
+  border: 1px solid #d8dfcb;
+  border-bottom: 5px solid #b99c76;
+  border-radius: 14px 14px 5px 5px;
+  padding: 10px;
+  text-align: center;
+  background: #fffdf5;
+}
+.ajit-souvenirs .collected {
+  background: #eef3e6;
+  border-color: #adbf99;
+}
+.ajit-souvenir {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 170px;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+.ajit-souvenir strong {
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.ajit-souvenir > span:last-child {
+  font-size: 12px;
+  color: #5a6d50;
+}
+.ajit-souvenirs article > button.dd-link {
+  min-height: 44px;
+  font-size: 13px;
+}
+.ajit-souvenir:hover .ajit-object {
+  transform: translateY(-3px) rotate(-2deg);
+}
+.uncollected .ajit-object {
+  opacity: 0.5;
+  filter: saturate(0.5);
+}
+.ajit-object {
+  position: relative;
+  display: inline-block;
+  width: 126px;
+  height: 84px;
+  flex: 0 0 84px;
+  transition: transform 0.2s;
+}
+.ajit-object i,
+.ajit-object b,
+.ajit-object em {
+  position: absolute;
+  display: block;
+  font-style: normal;
+}
+.ajit-request i {
+  width: 77px;
+  height: 12px;
+  background: #bc9465;
+  border-radius: 50%;
+  top: 32px;
+  left: 25px;
+  box-shadow: 0 5px 0 #9e754b;
+}
+.ajit-request i::before,
+.ajit-request i::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  height: 35px;
+  width: 5px;
+  background: #9e754b;
+}
+.ajit-request i::before {
+  left: 11px;
+  transform: rotate(8deg);
+}
+.ajit-request i::after {
+  right: 11px;
+  transform: rotate(-8deg);
+}
+.ajit-request b,
+.ajit-request em {
+  width: 21px;
+  height: 39px;
+  background: #a9be9a;
+  border-radius: 8px 8px 2px 2px;
+  top: 32px;
+  border-bottom: 13px solid #6f8a64;
+}
+.ajit-request b {
+  left: 0;
+  transform: rotate(-5deg);
+}
+.ajit-request em {
+  right: 0;
+  transform: rotate(5deg);
+}
+.ajit-boundary i {
+  width: 92px;
+  height: 66px;
+  border: 6px solid #b49672;
+  border-radius: 7px;
+  top: 7px;
+  left: 17px;
+  background: #d9c4a1;
+  transform: rotate(-3deg);
+}
+.ajit-boundary b {
+  width: 36px;
+  height: 36px;
+  background: #fff9d3;
+  left: 26px;
+  top: 19px;
+  transform: rotate(-8deg);
+  box-shadow: 2px 3px 0 #a48b6530;
+}
+.ajit-boundary b::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 13px;
+  width: 21px;
+  height: 11px;
+  border-top: 2px solid #9ba784;
+  border-bottom: 2px solid #9ba784;
+}
+.ajit-boundary em {
+  width: 24px;
+  height: 29px;
+  background: #ccdcca;
+  left: 73px;
+  top: 28px;
+  transform: rotate(8deg);
+}
+.ajit-response i {
+  top: 28px;
+  left: 28px;
+  width: 70px;
+  height: 39px;
+  border-radius: 50px 50px 4px 4px;
+  background: linear-gradient(120deg, #f4d88d, #c5a664);
+  border-bottom: 4px solid #b09254;
+}
+.ajit-response b {
+  top: 66px;
+  left: 19px;
+  width: 89px;
+  height: 9px;
+  border-radius: 5px;
+  background: #63716b;
+}
+.ajit-response em {
+  top: 20px;
+  left: 54px;
+  width: 18px;
+  height: 11px;
+  border-radius: 5px;
+  background: #ac945e;
+}
+.ajit-decor {
+  display: flex;
+  align-items: end;
+  gap: 14px;
+  flex-wrap: wrap;
+  border-bottom: 4px solid #c8b18e;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  background: #f2f0e5;
+  border-radius: 8px;
+}
+.ajit-decor > span {
+  font-size: 12px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.ajit-decor i {
+  font-style: normal;
+  font-size: 22px;
+  color: #9b7651;
+}
+.ajit-decor p {
+  font-size: 13px;
+  color: #5c6a54;
+}
+.ajit-memory {
+  padding: 22px;
+}
+.ajit-memory > p,
+.ajit-next p {
+  font-size: 14px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.ajit-memory blockquote {
+  margin: 12px 0;
+  border-left: 3px solid #9bb18a;
+  padding: 14px;
+  background: #edf2e5;
+  white-space: pre-wrap;
+  font-size: 15px;
+  line-height: 1.7;
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+.ajit-memory-art {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border-radius: 12px;
+  background: #f0f2e6;
+  margin: 10px 0 16px;
+  padding: 12px;
+}
+.ajit-memory-art > span:last-child {
+  font-size: 14px;
+  font-weight: 600;
+}
+.ajit-invitation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ajit-invitation p {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.ajit-invitation strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.ajit-invitation > .dc-companion {
+  flex-shrink: 0;
+}
+.ajit-memory > button {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  min-height: 44px;
+  margin-top: 10px;
+  font-size: 14px;
+}
+.ajit-next {
+  border-top: 1px solid #dce2d3;
+  padding-top: 16px;
+  margin-top: 18px;
+}
+.ajit-next > strong {
+  font-size: 14px;
+}
+.ajit-next button {
+  min-height: 44px;
+  font-size: 14px;
+}
+@media (max-width: 600px) {
+  .ajit-souvenirs {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .ajit-souvenir {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    min-height: 100px;
+    text-align: left;
+    column-gap: 10px;
+  }
+  .ajit-souvenir .ajit-object {
+    grid-row: span 2;
+    transform: scale(0.85);
+    transform-origin: left center;
+  }
+  .ajit-souvenir strong {
+    align-self: end;
+  }
+  .ajit-souvenir > span:last-child {
+    align-self: start;
+  }
+  .ajit-souvenirs article {
+    padding: 6px 10px;
+  }
+  .ajit-memory {
+    padding: 18px;
+  }
+  .ajit-memory-art {
+    gap: 6px;
+    padding: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ajit-object {
+    transition: none;
+  }
+  .ajit-souvenir:hover .ajit-object {
+    transform: none;
+  }
+}

@@ -2,6 +2,7 @@ import type { ConversationLanguages } from "./conversation-language";
 import {
   emptyGarden,
   earnGarden,
+  migrateAjit,
   decorateGarden,
   type GardenState,
   type GardenItem,
@@ -254,15 +255,25 @@ function gardenChanged() {
 export async function readGarden(): Promise<GardenState> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction("meta", "readonly"),
+    const tx = db.transaction(["meta", "sessions"], "readwrite"),
       r = tx.objectStore("meta").get("practice-garden-v1");
+    let state: GardenState;
+    r.onsuccess = () => {
+      state = r.result || emptyGarden();
+      if (state.ajitVersion === 1) return;
+      const sessions = tx.objectStore("sessions").getAll();
+      sessions.onsuccess = () => {
+        state = migrateAjit(state, sessions.result);
+        tx.objectStore("meta").put(state);
+      };
+    };
     tx.oncomplete = () => {
       db.close();
-      resolve(r.result || emptyGarden());
+      resolve(state);
     };
     tx.onabort = tx.onerror = () => {
       db.close();
-      reject(new Error("새싹 기록을 불러오지 못했어요."));
+      reject(new Error("아지트 기록을 불러오지 못했어요."));
     };
   });
 }
