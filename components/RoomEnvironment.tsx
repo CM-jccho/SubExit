@@ -198,7 +198,7 @@ export default function RoomEnvironment({ children }: { children: ReactNode }) {
       )}
       <section
         className="dc-room-stage dc-room-environment"
-        aria-label="캐릭터가 모여 있는 친구방"
+        aria-label="캐릭터가 모여 있는 AI 대화 상대 공간"
         data-period={period}
         data-weather={appearance.kind}
         data-motion={motion ? "on" : "off"}

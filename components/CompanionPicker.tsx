@@ -68,7 +68,7 @@ export default function CompanionPicker({
       </fieldset>
       <p>
         선택은 카드와 함께 저장돼요. 직접 고른 친구는 상황을 수정해도 바뀌지
-        않아요. 새 친구는 친구방에서 만들 수 있어요.
+        않아요. 새 친구는 AI 대화 상대에서 만들 수 있어요.
       </p>
     </details>
   );

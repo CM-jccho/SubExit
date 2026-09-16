@@ -548,7 +548,7 @@ export function GardenPractice({
             onClick={onRoom}
             disabled={disabled || busy}
           >
-            친구방에서 보기
+            AI 대화 상대에서 보기
           </button>
         )}
       </div>

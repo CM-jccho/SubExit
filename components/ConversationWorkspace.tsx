@@ -600,7 +600,7 @@ export default function ConversationWorkspace() {
                 [
                   { id: "home", text: "홈", icon: "home" },
                   { id: "library", text: "내 대화", icon: "cards" },
-                  { id: "room", text: "친구방", icon: "chat" },
+                  { id: "room", text: "AI 대화 상대", icon: "chat" },
                   { id: "records", text: "대화 기록", icon: "mic" },
                   { id: "terms", text: "용어 노트", icon: "book" },
                   { id: "guide", text: "안내", icon: "help" },
@@ -702,10 +702,9 @@ export default function ConversationWorkspace() {
                       여기서 연습해요.
                     </h1>
                     <p className="dc-welcome-desc">
-                      상대와 말해보고, 실제로 한 말을 돌아보며 다음 대화를
-                      준비해요.
-                      <br className="dc-mobile-break" /> 가벼운 일상 이야기로
-                      시작해도 좋아요.
+                      상황을 고르면 AI가 상대 역할을 맡아요.
+                      <br className="dc-mobile-break" /> 내가 답하고, 함께
+                      복기한 뒤 다시 연습해요.
                     </p>
                     <div className="daily-home-starts">
                       <button
@@ -714,28 +713,7 @@ export default function ConversationWorkspace() {
                       >
                         대화 연습 시작 <Icon name="arrow" size={20} />
                       </button>
-                      <button
-                        className="dd-secondary"
-                        onClick={() => {
-                          setChatCharacter(undefined);
-                          navigate("daily");
-                        }}
-                      >
-                        가볍게 이야기하기 <Icon name="chat" size={20} />
-                      </button>
                     </div>
-                    <button
-                      className="dd-link dc-own-situation"
-                      onClick={() => navigate("messenger")}
-                    >
-                      카톡·메신저 답장 다듬기 →
-                    </button>
-                    <button
-                      className="dd-link dc-own-situation"
-                      onClick={() => start()}
-                    >
-                      내 상황으로 새 카드 만들기
-                    </button>
                   </div>
                   <div className="dc-welcome-art">
                     <span className="dc-handnote">천천히 말해도 괜찮아요.</span>
@@ -749,23 +727,21 @@ export default function ConversationWorkspace() {
                   <button onClick={() => navigate("records")}>
                     <Icon name="mic" />
                     <span>
-                      <strong>녹음·파일로 복기하기</strong>
-                      <small>파일 첨부 → 문자·화자 확인 → 코칭</small>
+                      <strong>녹음 분석·코칭</strong>
+                      <small>끝난 대화의 녹음 → 문자·화자 확인 → 코칭</small>
                     </span>
                     <Icon name="arrow" size={18} />
                   </button>
                   <button
-                    onClick={() => {
-                      navigate("library");
-                      setToast(
-                        "카드를 고른 뒤 ‘실제 대화에서 힌트 받기’를 눌러주세요. 최대 8초씩 듣고 힌트를 제안해요.",
-                      );
-                    }}
+                    onClick={() => navigate("messenger")}
+                    aria-label="카톡·메신저 답장 다듬기 →"
                   >
                     <Icon name="chat" />
                     <span>
-                      <strong>대화 중 짧은 힌트 받기</strong>
-                      <small>카드 선택 후 시작 · 최대 8초씩</small>
+                      <strong>메시지 답장 다듬기</strong>
+                      <small>
+                        받은 메시지 붙여넣기 → 답장 후보 → 수정·복사
+                      </small>
                     </span>
                     <Icon name="arrow" size={18} />
                   </button>
@@ -809,25 +785,60 @@ export default function ConversationWorkspace() {
                     </small>
                   </section>
                 )}
-                <button
-                  className="dc-room-invite"
-                  onClick={() => navigate("room")}
-                >
-                  <div className="dc-room-friends">
-                    {["dundi", "moa", "tori", "coco"].map((id) => (
-                      <Companion
-                        key={id}
-                        small
-                        character={resolveCompanion(id, undefined, companions)}
-                      />
-                    ))}
+                <details className="dc-guide-faq dc-more-ways">
+                  <summary>다른 방식으로 대화하기</summary>
+                  <button
+                    className="dd-secondary"
+                    onClick={() => {
+                      setChatCharacter(undefined);
+                      navigate("daily");
+                    }}
+                  >
+                    가볍게 이야기하기 <Icon name="chat" size={20} />
+                  </button>
+                  <button
+                    className="dc-room-invite"
+                    onClick={() => navigate("room")}
+                  >
+                    <div className="dc-room-friends">
+                      {["dundi", "moa", "tori", "coco"].map((id) => (
+                        <Companion
+                          key={id}
+                          small
+                          character={resolveCompanion(
+                            id,
+                            undefined,
+                            companions,
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <span>
+                      <strong>AI 대화 상대</strong>
+                      <small>상대 만들기 · 자유 대화 · 지난 기록 보기</small>
+                    </span>
+                    <Icon name="arrow" size={20} />
+                  </button>
+                  <div className="vn-home-actions">
+                    <button
+                      onClick={() => {
+                        navigate("library");
+                        setToast(
+                          "카드를 고른 뒤 ‘실제 대화에서 힌트 받기’를 눌러주세요. 최대 8초씩 듣고 힌트를 제안해요.",
+                        );
+                      }}
+                    >
+                      <Icon name="chat" />
+                      <span>
+                        <strong>대화 중 짧은 힌트 받기</strong>
+                        <small>
+                          진행 중인 대화에서 최대 8초 녹음 → 다음 한마디 힌트
+                        </small>
+                      </span>
+                      <Icon name="arrow" size={18} />
+                    </button>
                   </div>
-                  <span>
-                    <strong>친구방 · 대화 아지트</strong>
-                    <small>친구와 이야기하고, 연습한 장면을 모아요</small>
-                  </span>
-                  <Icon name="arrow" size={20} />
-                </button>
+                </details>
                 <button className="dc-tour-invite" onClick={beginTour}>
                   <span className="dc-invite-icon">
                     <Icon name="help" size={23} />
@@ -838,33 +849,23 @@ export default function ConversationWorkspace() {
                   </span>
                   <Icon name="arrow" size={20} />
                 </button>
-                <section className="dc-recent">
-                  <div className="dc-section-heading">
-                    <h2>
-                      내가 준비한 대화 <span>{personalCards.length}</span>
-                    </h2>
-                    <button
-                      className="dd-link"
-                      onClick={() => navigate("library")}
-                    >
-                      전체 보기
-                      <Icon name="arrow" size={16} />
-                    </button>
-                  </div>
-                  {personalCards.length ? (
-                    cardList(searchCards(personalCards, "").slice(0, 2))
-                  ) : (
-                    <div className="dc-home-empty">
-                      <span className="dc-empty-stack">
-                        <Icon name="cards" size={32} />
-                      </span>
-                      <div>
-                        <strong>준비한 대화가 여기에 모여요</strong>
-                        <p>한 번 정리한 상황은 다음에도 그대로.</p>
-                      </div>
+                {personalCards.length > 0 && (
+                  <section className="dc-recent">
+                    <div className="dc-section-heading">
+                      <h2>
+                        내가 준비한 대화 <span>{personalCards.length}</span>
+                      </h2>
+                      <button
+                        className="dd-link"
+                        onClick={() => navigate("library")}
+                      >
+                        전체 보기
+                        <Icon name="arrow" size={16} />
+                      </button>
                     </div>
-                  )}
-                </section>
+                    {cardList(searchCards(personalCards, "").slice(0, 2))}
+                  </section>
+                )}
                 <p className="dc-footnote">
                   <Icon name="shield" size={15} />
                   저장한 내용은 재방문해도 남아요 · 이 브라우저에 보관
@@ -1567,9 +1568,9 @@ export default function ConversationWorkspace() {
                     이어서 그 장면부터 다시 연습하세요.
                   </p>
                   <p>
-                    캐릭터 추천은 상황별 규칙으로 정하며, AI는 친구방에서 설정한
-                    역할과 말투로 대화해요. 저장한 다른 대화 전체를 자동으로
-                    읽거나 기억하지는 않아요.
+                    캐릭터 추천은 상황별 규칙으로 정하며, AI는 AI 대화 상대에서
+                    설정한 역할과 말투로 대화해요. 저장한 다른 대화 전체를
+                    자동으로 읽거나 기억하지는 않아요.
                   </p>
                 </details>
                 <QuotaHelp error="한도" />
@@ -1631,19 +1632,7 @@ export default function ConversationWorkspace() {
                 </div>
               </>
             )}
-            {["library", "room", "records", "guide"].includes(view) && (
-              <UpcomingFeatures
-                area={
-                  view === "library"
-                    ? "conversation"
-                    : view === "room"
-                      ? "room"
-                      : view === "records"
-                        ? "audio"
-                        : "all"
-                }
-              />
-            )}
+            {view === "guide" && <UpcomingFeatures />}
           </main>
           <footer className="dc-footer">
             <span>조금 더 나다운 대화, 든든콜</span>
