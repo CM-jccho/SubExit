@@ -15,6 +15,7 @@ export type VoiceTurn = {
   suggestions?: string[];
 };
 export type VoiceSession = {
+  isSample?: boolean;
   id: string;
   title: string;
   kind: "practice" | "recording";
@@ -25,6 +26,7 @@ export type VoiceSession = {
   updatedAt: string;
 };
 export type TermNote = {
+  isSample?: boolean;
   id: string;
   term: string;
   industry: string;
@@ -120,6 +122,7 @@ export function parseTerm(input: unknown): TermNote {
         : "term-" + crypto.randomUUID(),
     source: d.source === "ai" ? "ai" : "manual",
     reviewed: d.reviewed === true,
+    ...(d.isSample === true ? { isSample: true } : {}),
     updatedAt: new Date().toISOString(),
   } as TermNote;
 }
@@ -138,10 +141,11 @@ export function parseTermImport(raw: string): TermNote[] {
 }
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const r = indexedDB.open("ddeundeun-voice-notebook-v1", 1);
+    const r = indexedDB.open("ddeundeun-voice-notebook-v1", 2);
     r.onupgradeneeded = () => {
-      r.result.createObjectStore("sessions", { keyPath: "id" });
-      r.result.createObjectStore("terms", { keyPath: "id" });
+      for (const name of ["sessions", "terms", "meta"])
+        if (!r.result.objectStoreNames.contains(name))
+          r.result.createObjectStore(name, { keyPath: "id" });
     };
     r.onerror = () =>
       reject(
@@ -151,7 +155,10 @@ function openDB(): Promise<IDBDatabase> {
       );
     r.onblocked = () =>
       reject(new Error("다른 든든콜 탭을 닫고 다시 시도해 주세요."));
-    r.onsuccess = () => resolve(r.result);
+    r.onsuccess = () => {
+      r.result.onversionchange = () => r.result.close();
+      resolve(r.result);
+    };
   });
 }
 async function transact<T>(
@@ -198,6 +205,48 @@ export const putTerm = (term: TermNote) =>
   transact("terms", "readwrite", (s) => s.put(parseTerm(term)));
 export const deleteTerm = (id: string) =>
   transact("terms", "readwrite", (s) => s.delete(id));
+// The marker shares the transaction with samples: deletion never re-seeds on reload,
+// and concurrent tabs cannot overwrite samples edited by the user.
+export async function seedNotebook(
+  sessions: VoiceSession[],
+  terms: TermNote[],
+  restore = false,
+) {
+  const db = await openDB();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(["sessions", "terms", "meta"], "readwrite");
+    const meta = tx.objectStore("meta");
+    const marker = meta.get("starter-samples-v1");
+    marker.onsuccess = () => {
+      if (marker.result && !restore) return;
+      for (const [name, rows] of [
+        ["sessions", sessions],
+        ["terms", terms],
+      ] as const) {
+        const target = tx.objectStore(name);
+        for (const row of rows) {
+          const existing = target.get(row.id);
+          existing.onsuccess = () => {
+            if (!existing.result) target.add(row);
+          };
+        }
+      }
+      meta.put({ id: "starter-samples-v1", initialized: true });
+    };
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    tx.onabort = tx.onerror = () => {
+      db.close();
+      reject(
+        new Error(
+          "샘플 기록을 저장하지 못했어요. 기존 기록은 유지돼요. 저장 공간과 권한을 확인해 주세요.",
+        ),
+      );
+    };
+  });
+}
 export async function importTerms(notes: TermNote[]) {
   const db = await openDB();
   return new Promise<void>((resolve, reject) => {
