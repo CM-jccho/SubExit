@@ -10,7 +10,16 @@ import {
 import { Icon } from "./CompanionUI";
 import ConsentDisclosure from "./ConsentDisclosure";
 import type { AIConfig } from "./VoiceComposer";
-export default function TrendSearch({ config }: { config: AIConfig }) {
+export default function TrendSearch({
+  config,
+  kind = "terms",
+  onUse,
+}: {
+  config: AIConfig;
+  kind?: "terms" | "smalltalk";
+  onUse?: (result: TrendResult) => void;
+}) {
+  const daily = kind === "smalltalk";
   const [open, setOpen] = useState(false),
     [language, setLanguage] = useState<TrendLanguage>("ko"),
     [consent, setConsent] = useState(false),
@@ -33,6 +42,7 @@ export default function TrendSearch({ config }: { config: AIConfig }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           language,
+          ...(daily ? { kind: "smalltalk" } : {}),
           consent,
           adultConsent: consent,
           sampleConsent: consent,
@@ -59,7 +69,9 @@ export default function TrendSearch({ config }: { config: AIConfig }) {
   return (
     <section
       className="dc-trend-search"
-      aria-label="지금 유행하는 용어 알아보기"
+      aria-label={
+        daily ? "오늘의 화제 찾아보기" : "지금 유행하는 용어 알아보기"
+      }
     >
       <button
         className="dc-trend-toggle"
@@ -67,34 +79,38 @@ export default function TrendSearch({ config }: { config: AIConfig }) {
         onClick={() => setOpen(!open)}
       >
         <span>
-          <Icon name="search" size={19} /> 지금 유행하는 용어 알아보기
+          <Icon name="search" size={19} />{" "}
+          {daily ? "오늘의 화제 찾아보기" : "지금 유행하는 용어 알아보기"}
         </span>
         <small>{open ? "접기" : "출처와 함께 검색 →"}</small>
       </button>
       {open && (
         <div className="dc-trend-body">
           <p>
-            최근 90일 자료를 우선 찾아 뜻·예문·사용 맥락을 알려드려요. 인기
-            순위나 10대 전체의 표현으로 단정하지 않아요.
+            {daily
+              ? "최근 7일의 문화·과학·생활 소식을 출처와 함께 찾아요. 검색할 때만 AI를 사용하며, 내 대화와 취향은 전송하지 않아요."
+              : "최근 90일 자료를 우선 찾아 뜻·예문·사용 맥락을 알려드려요. 인기 순위나 10대 전체의 표현으로 단정하지 않아요."}
           </p>
-          <label className="vn-label">
-            검색할 언어
-            <select
-              value={language}
-              disabled={busy}
-              onChange={(e) => {
-                setLanguage(e.target.value as TrendLanguage);
-                setResult(null);
-                setError("");
-              }}
-            >
-              {Object.entries(trendLanguages).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
+          {!daily && (
+            <label className="vn-label">
+              검색할 언어
+              <select
+                value={language}
+                disabled={busy}
+                onChange={(e) => {
+                  setLanguage(e.target.value as TrendLanguage);
+                  setResult(null);
+                  setError("");
+                }}
+              >
+                {Object.entries(trendLanguages).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <ConsentDisclosure
             complete={consent}
             disabled={busy}
@@ -107,8 +123,10 @@ export default function TrendSearch({ config }: { config: AIConfig }) {
                 disabled={busy}
                 onChange={(e) => setConsent(e.target.checked)}
               />{" "}
-              만 18세 이상이며, 선택한 언어의 공개 표현 검색 요청을 Google에
-              전송하는 데 동의합니다. 내 대화·녹음·용어 메모는 보내지 않아요.
+              만 18세 이상이며,{" "}
+              {daily ? "공개 화제" : "선택한 언어의 공개 표현"} 검색 요청을
+              Google에 전송하는 데 동의합니다. 내 대화·녹음·용어 메모는 보내지
+              않아요.
             </label>
           </ConsentDisclosure>
           <div className="dc-inline-actions">
@@ -132,7 +150,9 @@ export default function TrendSearch({ config }: { config: AIConfig }) {
               href={
                 "https://www.google.com/search?q=" +
                 encodeURIComponent(
-                  `${new Date().getFullYear()} ${trendLanguages[language]} 최근 신조어 줄임말 뜻`,
+                  daily
+                    ? `${new Date().getFullYear()} 최근 문화 과학 생활 소식`
+                    : `${new Date().getFullYear()} ${trendLanguages[language]} 최근 신조어 줄임말 뜻`,
                 ) +
                 "&tbs=qdr:m"
               }
@@ -186,10 +206,15 @@ export default function TrendSearch({ config }: { config: AIConfig }) {
                   result.suggestions
                 }
               />
+              {daily && onUse && (
+                <button className="dd-primary" onClick={() => onUse(result)}>
+                  이 화제로 이야기하기
+                </button>
+              )}
               <p className="vn-caption">
-                뜻과 쓰임은 함께 표시된 원문에서도 확인해 주세요. 검색 결과는 이
-                화면에서만 표시해요. 게시일 미확인·오래된 자료는 최신 유행의
-                근거로 보기 어려워요.
+                {daily
+                  ? "사실은 연결된 원문에서도 확인해 주세요. 아래 버튼으로 시작하면 검색 자료와 확인일이 해당 대화에 함께 저장돼요."
+                  : "뜻과 쓰임은 함께 표시된 원문에서도 확인해 주세요. 검색 결과는 이 화면에서만 표시해요. 게시일 미확인·오래된 자료는 최신 유행의 근거로 보기 어려워요."}
               </p>
             </div>
           )}

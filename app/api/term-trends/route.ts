@@ -1,3 +1,4 @@
+import { smalltalkSearchPrompt } from "@/lib/daily-talk";
 import { geminiConfig } from "@/lib/gemini";
 import { parseQuota } from "@/lib/quota";
 import {
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
     }
     if (
       !d ||
+      (d.kind !== undefined && d.kind !== "smalltalk") ||
       typeof d.language !== "string" ||
       !Object.hasOwn(trendLanguages, d.language)
     )
@@ -60,7 +62,17 @@ export async function POST(request: Request) {
         signal: abort.signal,
         body: JSON.stringify({
           contents: [
-            { role: "user", parts: [{ text: trendPrompt(language, now) }] },
+            {
+              role: "user",
+              parts: [
+                {
+                  text:
+                    d.kind === "smalltalk"
+                      ? smalltalkSearchPrompt(now)
+                      : trendPrompt(language, now),
+                },
+              ],
+            },
           ],
           tools: [{ google_search: {} }],
           generationConfig: {
@@ -105,7 +117,7 @@ export async function POST(request: Request) {
         {
           code: "search_weak_sources",
           error:
-            "검색은 실행했지만 뜻을 확인할 근거가 개인 블로그·소셜 게시물에 치우쳐 있어요. 목록을 확정해 보여주지 않았습니다. 다시 검색하거나 Google에서 원문을 비교해 주세요.",
+            "검색은 실행했지만 내용을 확인할 근거가 개인 블로그·소셜 게시물에 치우쳐 있어요. 목록을 확정해 보여주지 않았습니다. 다시 검색하거나 Google에서 원문을 비교해 주세요.",
         },
         502,
       );
@@ -114,7 +126,7 @@ export async function POST(request: Request) {
         {
           code: "search_not_grounded",
           error:
-            "검색 출처가 붙은 결과를 확보하지 못했어요. 최신 용어를 추측해 표시하지 않았습니다. 다시 검색하거나 Google 검색을 열어 주세요.",
+            "검색 출처가 붙은 결과를 확보하지 못했어요. 최신 내용을 추측해 표시하지 않았습니다. 다시 검색하거나 Google 검색을 열어 주세요.",
         },
         502,
       );

@@ -1,4 +1,6 @@
 "use client";
+import DailyTalk from "./DailyTalk";
+import PromptPractice from "./PromptPractice";
 import { GardenPractice } from "./PracticeGarden";
 import RecordingAnalysis, { RecordingExamples } from "./RecordingAnalysis";
 import LanguagePicker from "./LanguagePicker";
@@ -612,6 +614,30 @@ export default function VoiceWorkspace({
   const sessionCharacter = session
     ? companionForSession(session)
     : inheritedCompanion;
+  if (session?.promptPractice)
+    return (
+      <PromptPractice
+        key={session.id}
+        config={config}
+        initialSession={session}
+        onRecords={() => {
+          open(null);
+          void refresh();
+        }}
+      />
+    );
+  if (session?.daily)
+    return (
+      <DailyTalk
+        key={session.id}
+        config={config}
+        initialSession={session}
+        onRecords={() => {
+          open(null);
+          void refresh();
+        }}
+      />
+    );
   return (
     <CompanionProvider value={sessionCharacter}>
       {!session ? (
@@ -669,13 +695,17 @@ export default function VoiceWorkspace({
                 </span>
                 <span>
                   <small>
-                    {s.isSample
-                      ? "샘플 · 사전 작성 대화"
-                      : s.kind === "chat"
-                        ? "친구와 대화"
-                        : s.kind === "practice"
-                          ? "상대와 연습"
-                          : "음성 기록"}{" "}
+                    {s.promptPractice
+                      ? "AI 요청 연습"
+                      : s.daily
+                        ? "오늘의 한마디"
+                        : s.isSample
+                          ? "샘플 · 사전 작성 대화"
+                          : s.kind === "chat"
+                            ? "친구와 대화"
+                            : s.kind === "practice"
+                              ? "상대와 연습"
+                              : "음성 기록"}{" "}
                     · {new Date(s.updatedAt).toLocaleDateString("ko-KR")}
                   </small>
                   <strong>{s.title}</strong>
