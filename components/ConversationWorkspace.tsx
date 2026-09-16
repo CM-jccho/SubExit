@@ -787,6 +787,14 @@ export default function ConversationWorkspace() {
             )}
             {view === "room" && (
               <CompanionRoom
+                config={config}
+                onPractice={(card) => {
+                  setActive(card);
+                  setRecordId(undefined);
+                  setChatCharacter(undefined);
+                  setView("voicePractice");
+                  window.scrollTo({ top: 0 });
+                }}
                 saved={companions}
                 onSaved={setCompanions}
                 onCards={() => navigate("library")}

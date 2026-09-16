@@ -137,14 +137,17 @@ test("new request examples migrate once without restoring earlier deleted sample
   await samples.seedStarterData();
   assert.deepEqual(
     cards.readCards().map((c) => c.id),
-    samples.requestCards.map((c) => c.id),
+    [
+      ...samples.requestCards,
+      ...require("../lib/practical-scenes.ts").practicalCards,
+    ].map((c) => c.id),
   );
-  assert.equal((await store.listSessions()).length, 2);
+  assert.equal((await store.listSessions()).length, 5);
   cards.writeCards([]);
   await store.deleteSession(samples.requestSessions[0].id);
   await samples.seedStarterData();
   assert.equal(cards.readCards().length, 0);
-  assert.equal((await store.listSessions()).length, 1);
+  assert.equal((await store.listSessions()).length, 4);
 });
 test("quota classification uses provider evidence, prefers daily limit and never exposes provider details", async () => {
   const body = {

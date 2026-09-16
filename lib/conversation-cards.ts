@@ -119,6 +119,7 @@ export function readCards() {
 export function writeCards(
   cards: ConversationCard[],
   requestSamplesInitialized?: boolean,
+  practicalSamplesInitialized?: boolean,
 ) {
   if (cards.length > 100)
     throw new Error("카드는 최대 100개까지 저장할 수 있어요.");
@@ -131,6 +132,9 @@ export function writeCards(
       requestSamplesInitialized:
         requestSamplesInitialized ??
         previous?.requestSamplesInitialized === true,
+      practicalSamplesInitialized:
+        practicalSamplesInitialized ??
+        previous?.practicalSamplesInitialized === true,
       cards,
     }),
   );
