@@ -288,7 +288,7 @@ export default function ConversationWorkspace() {
     window.scrollTo({ top: 0 });
   }
   async function send() {
-    if (!input.trim() || busy || (ai && !consent)) return;
+    if (!input.trim() || busy || (ai && config.available && !consent)) return;
     const next: SetupMessage[] = [
       ...messages,
       { role: "user", text: input.trim() },
@@ -303,6 +303,22 @@ export default function ConversationWorkspace() {
     setInput("");
     setMessages(next);
     setError("");
+    if (ai && !config.available) {
+      setProfile((p) => ({
+        ...p,
+        situation: [p.situation, input.trim()]
+          .filter(Boolean)
+          .join("\n")
+          .slice(0, 800),
+      }));
+      setSource("manual");
+      setReview(true);
+      setEditFields(true);
+      setToast(
+        "AI 연결 전이라 이야기를 상황란에 옮겼어요. 상대와 목표를 직접 확인해 주세요.",
+      );
+      return;
+    }
     if (!ai) {
       const d = guidedReply(next);
       setProfile(d.profile);
@@ -817,7 +833,16 @@ export default function ConversationWorkspace() {
                 }}
               />
             )}
-            {view === "terms" && <TermNotebook config={config} />}
+            {view === "terms" && (
+              <TermNotebook
+                config={config}
+                onAsk={(c) => {
+                  setChatCharacter(c);
+                  setView("friendChat");
+                  window.scrollTo({ top: 0 });
+                }}
+              />
+            )}
             {view === "library" && (
               <>
                 <section className="dc-page-top">
@@ -909,9 +934,7 @@ export default function ConversationWorkspace() {
                         <button
                           className={ai ? "active" : ""}
                           aria-pressed={ai}
-                          disabled={
-                            !config.available || busy || messages.length > 1
-                          }
+                          disabled={busy}
                           onClick={() => setAi(true)}
                         >
                           <Icon name="chat" size={18} />
@@ -920,8 +943,34 @@ export default function ConversationWorkspace() {
                         <button
                           className={!ai ? "active" : ""}
                           aria-pressed={!ai}
-                          disabled={busy || messages.length > 1}
-                          onClick={() => setAi(false)}
+                          disabled={busy}
+                          onClick={() => {
+                            if (!ai) return;
+                            setAi(false);
+                            setChoices([]);
+                            if (messages.length > 1) {
+                              setProfile((p) => ({
+                                ...p,
+                                situation: [
+                                  p.situation ||
+                                    messages
+                                      .filter((m) => m.role === "user")
+                                      .map((m) => m.text)
+                                      .join("\n"),
+                                  input.trim(),
+                                ]
+                                  .filter(Boolean)
+                                  .join("\n")
+                                  .slice(0, 800),
+                              }));
+                              setReview(true);
+                              setEditFields(true);
+                              setSource("manual");
+                              setToast(
+                                "지금까지 이야기한 내용을 유지했어요. 카드 초안을 이어서 정리해 주세요.",
+                              );
+                            }
+                          }}
                         >
                           <Icon name="edit" size={18} />
                           하나씩 정리
@@ -929,7 +978,8 @@ export default function ConversationWorkspace() {
                       </div>
                       {!config.available && (
                         <p className="dd-small">
-                          지금은 네 가지 질문으로 카드를 만들 수 있어요.
+                          AI에 연결하지 못했어요. 자유롭게 적은 내용을 카드로
+                          옮기거나, 하나씩 직접 정리할 수 있어요.
                         </p>
                       )}
                       {!ai && (
@@ -1060,7 +1110,11 @@ export default function ConversationWorkspace() {
                           <button
                             className="dd-primary"
                             type="submit"
-                            disabled={busy || !input.trim() || (ai && !consent)}
+                            disabled={
+                              busy ||
+                              !input.trim() ||
+                              (ai && config.available && !consent)
+                            }
                           >
                             {busy ? "정리 중" : ai ? "이야기 보내기" : "다음"}
                             <Icon name="send" size={17} />

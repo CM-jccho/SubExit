@@ -1,3 +1,5 @@
+import type { ConversationLanguages } from "./conversation-language";
+import type { RecordingAnalysisDraft } from "./recording-analysis";
 import type { SampleMeta } from "./demo-bank";
 import type { PracticeReview } from "./practice-review";
 import type { CompanionCharacter } from "./companions";
@@ -20,6 +22,8 @@ export type VoiceTurn = {
   suggestionsSample?: SampleMeta;
 };
 export type VoiceSession = {
+  languages?: ConversationLanguages;
+  recordingAnalysis?: RecordingAnalysisDraft;
   review?: PracticeReview;
   practicePlan?: {
     focus: string;
@@ -286,7 +290,7 @@ export function guideMarkdown(terms: TermNote[], title = "우리 일의 말 사�
     terms
       .map(
         (t) =>
-          `\n## ${plain(t.term)}${t.industry ? " · " + plain(t.industry) : ""}\n\n${t.reviewed ? "직접 확인함" : t.source === "ai" ? "AI 설명 초안 · 확인 필요" : "직접 작성"}\n\n**뜻** ${plain(t.meaning) || "작성 전"}\n\n**사용 예** ${plain(t.usage) || "작성 전"}\n\n**사용할 때** ${plain(t.caution) || "맥락에 맞게 사용해 주세요."}\n\n**우리 팀 메모** ${plain(t.memo) || "없음"}\n`,
+          `\n## ${plain(t.term)}${t.industry ? " · " + plain(t.industry) : ""}\n\n${t.reviewed ? "직접 확인함" : t.isSample ? "사전 작성 예시 · 뜻 확인 필요" : t.source === "ai" ? "AI 설명 초안 · 확인 필요" : "직접 작성"}\n\n**뜻** ${plain(t.meaning) || "작성 전"}\n\n**사용 예** ${plain(t.usage) || "작성 전"}\n\n**사용할 때** ${plain(t.caution) || "맥락에 맞게 사용해 주세요."}\n\n**우리 팀 메모** ${plain(t.memo) || "없음"}\n`,
       )
       .join("")
   );

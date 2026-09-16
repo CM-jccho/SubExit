@@ -1,4 +1,10 @@
 "use client";
+import RecordingAnalysis, { RecordingExamples } from "./RecordingAnalysis";
+import LanguagePicker from "./LanguagePicker";
+import {
+  defaultLanguages,
+  conversationLanguages,
+} from "@/lib/conversation-language";
 import {
   reviewKey,
   reviewDrill,
@@ -57,6 +63,7 @@ const makeSession = (
     kind,
     context,
     industry: "",
+    languages: { ...defaultLanguages },
     turns: [],
     createdAt: now,
     updatedAt: now,
@@ -163,13 +170,24 @@ export default function VoiceWorkspace({
     }
     stopAudio();
     const utterance = new SpeechSynthesisUtterance(
-      (turn.sample ? "사전 작성 샘플입니다. " : "") + turn.text,
+      (turn.sample
+        ? session?.languages?.partner === "en"
+          ? "Prewritten sample. "
+          : session?.languages?.partner === "ja"
+            ? "事前作成のサンプルです。"
+            : "사전 작성 샘플입니다. "
+        : "") + turn.text,
     );
-    utterance.lang = "ko-KR";
+    const language = turn.sample?.sampleId.startsWith("language-en")
+      ? "en"
+      : turn.sample?.sampleId.startsWith("language-ja")
+        ? "ja"
+        : session?.languages?.partner || "ko";
+    utterance.lang = conversationLanguages[language].locale;
     utterance.rate = 0.98;
     const voice = speechSynthesis
       .getVoices()
-      .find((v) => v.lang.startsWith("ko"));
+      .find((v) => v.lang.startsWith(language));
     if (voice) utterance.voice = voice;
     utterance.onstart = () => {
       if (mounted.current) setSpeaking(turn.id);
@@ -231,6 +249,7 @@ export default function VoiceWorkspace({
     try {
       const d = await sampledRequest({
         operation: current.kind === "chat" ? "companion" : "partner",
+        language: current.languages?.partner,
         context:
           current.kind === "chat"
             ? current.turns.at(-1)?.text || current.companion?.specialty || ""
@@ -250,6 +269,7 @@ export default function VoiceWorkspace({
               ? { companion: current.companion }
               : {}),
             industry: current.industry,
+            languages: current.languages,
             messages: current.turns.map((t) => ({
               role: t.role,
               text: t.text,
@@ -437,6 +457,7 @@ export default function VoiceWorkspace({
     try {
       const d = await sampledRequest({
         operation: "suggestions",
+        language: session.languages?.mine,
         context: session.context?.situation || "",
         previous: session.turns.at(-1)?.suggestions || [],
         manual: sampleMode,
@@ -447,6 +468,7 @@ export default function VoiceWorkspace({
           signal: c.signal,
           body: JSON.stringify({
             action: "suggest",
+            languages: session.languages,
             context: session.context,
             industry: session.industry,
             messages: session.turns.map((t) => ({
@@ -622,6 +644,7 @@ export default function VoiceWorkspace({
               placeholder="제목, 상대, 대화 내용으로 찾기"
             />
           </label>
+          <RecordingExamples />
           <div className="vn-session-list">
             {matching.map((s) => (
               <button
@@ -725,6 +748,24 @@ export default function VoiceWorkspace({
               </label>
             </div>
           )}
+          {!session.isSample &&
+            session.kind !== "recording" &&
+            !session.turns.length && (
+              <LanguagePicker
+                value={session.languages || defaultLanguages}
+                disabled={busy || captureBusy}
+                onChange={(languages) => setSession({ ...session, languages })}
+              />
+            )}
+          {session.languages &&
+            session.turns.length > 0 &&
+            session.kind !== "recording" && (
+              <p className="vn-caption">
+                상대 · {conversationLanguages[session.languages.partner].label}{" "}
+                / 내 답변 후보 ·{" "}
+                {conversationLanguages[session.languages.mine].label}
+              </p>
+            )}
           {session.kind === "chat" && (
             <div className="vn-persona">
               <Companion small />
@@ -924,6 +965,31 @@ export default function VoiceWorkspace({
             ))}
             <div ref={end} />
           </div>
+          {!session.isSample &&
+            session.kind === "recording" &&
+            session.turns.length > 0 && (
+              <>
+                <RecordingAnalysis
+                  key={session.id}
+                  session={session}
+                  config={config}
+                  disabled={captureBusy || busy}
+                  onBusy={setBusy}
+                  onSave={async (draft) => {
+                    await persist({
+                      ...session,
+                      recordingAnalysis: draft,
+                      updatedAt: new Date().toISOString(),
+                    });
+                  }}
+                  onPractice={async (next) => {
+                    await putSession(next);
+                    open(next);
+                    await refresh();
+                  }}
+                />
+              </>
+            )}
           {session.practicePlan && (
             <aside className="dc-drill-focus">
               <strong>이번에 해볼 한 가지</strong>
@@ -1148,6 +1214,7 @@ export default function VoiceWorkspace({
                         sessionCharacter,
                       ),
                       industry: session.industry,
+                      languages: session.languages,
                     })
                   }
                 >
