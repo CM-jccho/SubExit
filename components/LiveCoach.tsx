@@ -1,5 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import AudioPlayer, { inspectAudio } from "./AudioPlayer";
+import CompanionNudge from "./CompanionNudge";
+import type { AudioClip } from "@/lib/voice-notebook";
 import { scenarios, tones, type Tone } from "@/lib/scenarios";
 import type { ContextProfile } from "@/lib/conversation-cards";
 import type { CoachResponse } from "@/lib/coach-contract";
@@ -30,6 +33,8 @@ export default function LiveCoach({
     [input, setInput] = useState(""),
     [result, setResult] = useState<CoachResponse | null>(null),
     [error, setError] = useState("");
+  const [clip, setClip] = useState<AudioClip | null>(null),
+    [notice, setNotice] = useState("");
   const [prepared, setPrepared] = useState(false),
     [inputMode, setInputMode] = useState<"voice" | "text">("voice"),
     [copied, setCopied] = useState(false);
@@ -49,6 +54,7 @@ export default function LiveCoach({
     stream.current = null;
   }
   function cancel() {
+    setNotice("작업을 취소했어요. 다시 녹음하거나 직접 입력할 수 있어요.");
     version.current++;
     request.current?.abort();
     if (recorder.current) {
@@ -116,6 +122,7 @@ export default function LiveCoach({
     if (!allowed || !config.available || text.trim().length < 2) return;
     busy.current = true;
     setPhase("coaching");
+    setNotice("인식한 말을 바탕으로 답변 힌트를 준비하고 있어요.");
     setError("");
     setResult(null);
     setCopied(false);
@@ -136,7 +143,10 @@ export default function LiveCoach({
         id,
         { "Content-Type": "application/json" },
       );
-      if (version.current === id) setResult(data);
+      if (version.current === id) {
+        setResult(data);
+        setNotice("답변 힌트가 준비됐어요. 내 상황에 맞게 활용해 보세요.");
+      }
     } catch (e) {
       if (version.current === id)
         setError(
@@ -162,6 +172,8 @@ export default function LiveCoach({
     setResult(null);
     setInput("");
     setSeconds(0);
+    setNotice("");
+    setClip(null);
     try {
       if (
         !navigator.mediaDevices?.getUserMedia ||
@@ -199,42 +211,30 @@ export default function LiveCoach({
       rec.onstop = async () => {
         release();
         if (version.current !== id) return;
-        setPhase("transcribing");
-        try {
-          const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
-          if (blob.size < 100)
-            throw new Error("음성이 너무 짧아요. 한 문장을 들려주세요.");
-          const form = new FormData();
-          form.append("audio", blob, "conversation");
-          form.append("consent", String(consent));
-          form.append("adultConsent", String(adult));
-          form.append("sampleConsent", String(sample));
-          const data = await call("/api/transcribe", form, id);
-          if (version.current !== id) return;
-          setInput(data.text);
-          if (!data.text.trim())
-            throw new Error("들린 말이 없어요. 마이크 위치를 확인해 주세요.");
-          if (automatic) {
-            await coach(data.text, id);
-          } else {
-            busy.current = false;
-            setPhase("idle");
-          }
-        } catch (e) {
-          if (version.current === id) {
-            busy.current = false;
-            setPhase("idle");
-            setError(
-              e instanceof Error && e.name === "AbortError"
-                ? "음성 인식 시간이 초과됐어요."
-                : e instanceof Error
-                  ? e.message
-                  : "음성을 인식하지 못했어요.",
-            );
-          }
+        const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+        if (blob.size < 100) {
+          busy.current = false;
+          setPhase("idle");
+          setError(
+            "녹음된 음성이 없거나 너무 짧아요. 한 문장을 말한 뒤 녹음 끝내기를 눌러주세요.",
+          );
+          return;
         }
+        const captured: AudioClip = {
+          blob,
+          duration: 0,
+          peaks: [],
+          name: "상대의 말",
+        };
+        setClip(captured);
+        void inspectAudio(blob)
+          .then((c) => {
+            if (version.current === id) setClip(c);
+          })
+          .catch(() => {});
+        await transcribeBlob(blob, id);
       };
-      rec.start();
+      rec.start(250);
       setPhase("listening");
       const started = Date.now();
       ticker.current = setInterval(
@@ -260,8 +260,59 @@ export default function LiveCoach({
       }
     }
   }
+  function finishRecording() {
+    if (recorder.current?.state === "recording") {
+      setPhase("transcribing");
+      setNotice("녹음을 마쳤어요. 음성을 글로 바꾸고 있어요.");
+      recorder.current.stop();
+    }
+  }
+  async function transcribeBlob(blob: Blob, id = ++version.current) {
+    busy.current = true;
+    setPhase("transcribing");
+    setError("");
+    setNotice("녹음 완료 · 음성 인식 중이에요. 잠시 기다려 주세요.");
+    try {
+      const form = new FormData();
+      form.append("audio", blob, "conversation");
+      form.append("consent", String(consent));
+      form.append("adultConsent", String(adult));
+      form.append("sampleConsent", String(sample));
+      const data = await call("/api/transcribe", form, id);
+      if (version.current !== id) return;
+      if (typeof data.text !== "string" || !data.text.trim())
+        throw new Error(
+          "음성에서 말을 인식하지 못했어요. 아래에서 녹음을 재생해 확인하고 다시 시도해 주세요.",
+        );
+      setInput(data.text.slice(0, 1000));
+      setNotice(
+        "음성 인식이 끝났어요. 아래 문장을 확인하고 ‘답변 힌트 받기’를 눌러주세요.",
+      );
+      if (automatic) await coach(data.text.slice(0, 1000), id);
+    } catch (e) {
+      if (version.current === id) {
+        setNotice("");
+        setError(
+          e instanceof Error && e.name === "AbortError"
+            ? "음성 인식이 지연되어 중단했어요. 녹음은 아래에 남아 있으니 ‘음성 인식 다시 시도’를 눌러주세요."
+            : e instanceof Error
+              ? e.message
+              : "음성을 인식하지 못했어요. 다시 시도해 주세요.",
+        );
+      }
+    } finally {
+      if (version.current === id) {
+        busy.current = false;
+        setPhase("idle");
+      }
+    }
+  }
   const status = {
-    idle: "마이크 꺼짐",
+    idle: input
+      ? "음성 인식 완료 · 문장을 확인해 주세요"
+      : clip
+        ? "녹음 완료 · 아래에서 확인해 주세요"
+        : "마이크 꺼짐",
     permission: "마이크 권한 확인 중",
     listening: `듣는 중 · ${seconds}/8초`,
     transcribing: "들린 말을 글로 바꾸는 중 · 마이크 꺼짐",
@@ -462,11 +513,7 @@ export default function LiveCoach({
                       phase !== "listening" &&
                       (!allowed || !config.voiceAvailable || phase !== "idle")
                     }
-                    onClick={
-                      phase === "listening"
-                        ? () => recorder.current?.stop()
-                        : listen
-                    }
+                    onClick={phase === "listening" ? finishRecording : listen}
                   >
                     <Icon
                       name={phase === "listening" ? "pause" : "mic"}
@@ -494,10 +541,47 @@ export default function LiveCoach({
                 </div>
               )}
               {phase !== "idle" && (
-                <button className="dd-secondary dd-full" onClick={cancel}>
-                  중단하기
+                <button
+                  className="dd-secondary dd-full"
+                  onClick={phase === "listening" ? finishRecording : cancel}
+                >
+                  {phase === "listening"
+                    ? "녹음 끝내고 음성 인식"
+                    : "처리 취소"}
                 </button>
               )}
+              <CompanionNudge
+                mood={
+                  phase === "listening"
+                    ? "listen"
+                    : phase === "transcribing" || phase === "coaching"
+                      ? "think"
+                      : input
+                        ? "done"
+                        : "hello"
+                }
+                text={
+                  phase === "listening"
+                    ? "다 말했으면 녹음 끝내기를 눌러주세요."
+                    : phase === "coaching"
+                      ? "내 목표와 지킬 선을 보고 답변을 준비하고 있어요."
+                      : notice || "마이크를 누르고 한 문장을 들려주세요."
+                }
+              />
+              {clip && (
+                <div className="vn-live-clip">
+                  <AudioPlayer clip={clip} />
+                  {error && phase === "idle" && (
+                    <button
+                      className="dd-secondary"
+                      onClick={() => void transcribeBlob(clip.blob)}
+                    >
+                      음성 인식 다시 시도
+                    </button>
+                  )}
+                </div>
+              )}
+
               {(inputMode === "text" || !!input) && (
                 <div className="dc-transcript">
                   <label htmlFor="live-text">
@@ -625,7 +709,13 @@ export default function LiveCoach({
                 </>
               ) : (
                 <div className="dc-answer-wait">
-                  <Companion mood="listen" />
+                  <Companion
+                    mood={
+                      phase === "coaching" || phase === "transcribing"
+                        ? "think"
+                        : "listen"
+                    }
+                  />
                   <h2>
                     {phase === "coaching"
                       ? "내 목표에 맞게 생각 중이에요"

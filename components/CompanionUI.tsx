@@ -1,6 +1,10 @@
 import type { CSSProperties } from "react";
 
 export type IconName =
+  | "play"
+  | "book"
+  | "upload"
+  | "volume"
   | "home"
   | "cards"
   | "help"
@@ -20,6 +24,10 @@ export type IconName =
   | "target"
   | "pause";
 const paths: Record<IconName, string> = {
+  play: "m8 4 12 8-12 8z",
+  book: "M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3z M12 6v16",
+  upload: "M12 17V3 m-5 5 5-5 5 5 M4 17v4h16v-4",
+  volume: "m3 9 5 0 5-5v16l-5-5H3z M17 8a6 6 0 0 1 0 8 M20 4a12 12 0 0 1 0 16",
   home: "m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z",
   cards: "M7 7h13v14H7z M3 17V3h13",
   help: "M9.2 8a3 3 0 1 1 5 2.2c-1.6 1-2.2 1.5-2.2 3 M12 17h.01 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
@@ -57,12 +65,12 @@ export function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
   );
 }
 
-// An original, lightweight vector companion. Motion is limited to idle breathing.
+// Original vector companion; state-specific motion respects reduced-motion settings.
 export function Companion({
   mood = "hello",
   small = false,
 }: {
-  mood?: "hello" | "listen" | "done";
+  mood?: "hello" | "listen" | "done" | "think" | "speak" | "rest";
   small?: boolean;
 }) {
   return (
@@ -134,7 +142,12 @@ export function Companion({
           <ellipse cx="160" cy="104" rx="3.5" ry="5" />
         </g>
         <path
-          d={mood === "done" ? "M128 117q12 16 23 0z" : "M131 119q9 7 18-1"}
+          className="dc-companion-mouth"
+          d={
+            mood === "done" || mood === "speak"
+              ? "M128 117q12 16 23 0z"
+              : "M131 119q9 7 18-1"
+          }
           stroke="#344B40"
           strokeWidth="2.5"
           strokeLinecap="round"
