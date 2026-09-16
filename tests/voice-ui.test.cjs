@@ -93,6 +93,7 @@ async function mount(Component, props = {}) {
     configurable: true,
   });
   window.matchMedia = () => ({ matches: false });
+  window.scrollTo = () => {};
   window.HTMLElement.prototype.scrollIntoView = () => {};
   global.fetch = async () => Response.json(config);
   const root = createRoot(document.getElementById("test-root"));
@@ -221,6 +222,92 @@ test("choosing a candidate populates editable input and never automatically subm
     );
     assert.equal(submitted, 0);
     assert(document.body.textContent.includes("고른 후보를 넣었어요"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("AI review persists, reopens without another generation, and starts a drill with original goals", async () => {
+  const { IDBFactory } = require("fake-indexeddb");
+  global.indexedDB = new IDBFactory();
+  const store = require("../lib/voice-notebook.ts"),
+    samples = require("../lib/starter-data.ts"),
+    reviews = require("../lib/practice-review.ts"),
+    chars = require("../lib/companions.ts");
+  const session = {
+    ...samples.starterSession,
+    id: "review-ui-personal",
+    isSample: false,
+    context: { ...samples.starterCards[0] },
+    companion: chars.defaultCompanions[0],
+  };
+  await store.putSession(session);
+  const VoiceWorkspace = require("../components/VoiceWorkspace.tsx").default;
+  const settle = async () => {
+    for (let i = 0; i < 4; i++)
+      await act(async () => new Promise((r) => setTimeout(r, 10)));
+  };
+  let ui = await mount(VoiceWorkspace, {
+      initialSessionId: session.id,
+      config,
+      onChooseCard: () => {},
+    }),
+    calls = 0;
+  try {
+    await settle();
+    for (const c of document.querySelectorAll("input[type=checkbox]"))
+      await click(c);
+    global.fetch = async (url) => {
+      calls++;
+      assert.equal(url, "/api/review");
+      return Response.json({
+        review: reviews.validateReview(
+          {
+            strength: {
+              turnId: "turn-sample-1",
+              quote: "스코프를 먼저 정하고",
+              note: "범위를 확인했어요.",
+            },
+            improvement: {
+              turnId: "turn-sample-3",
+              quote: "다음 주 월요일에 공유하겠습니다.",
+              note: "가능한 날짜부터 확인해요.",
+              rewrite: "일정을 확인한 뒤 말씀드릴게요.",
+            },
+            focus: "확인하고 약속하기",
+          },
+          session.context,
+          session.turns,
+        ),
+      });
+    };
+    await click(button("AI로 이 대화 복기하기"));
+    await settle();
+    assert.equal(calls, 1);
+    assert(document.body.textContent.includes("확인하고 약속하기"));
+    assert((await store.getSession(session.id)).review);
+  } finally {
+    await ui.cleanup();
+  }
+  ui = await mount(VoiceWorkspace, {
+    initialSessionId: session.id,
+    config,
+    onChooseCard: () => {},
+  });
+  try {
+    await settle();
+    global.fetch = async () => {
+      throw new Error("Must use cached review");
+    };
+    assert(button("이 장면부터 다시 연습"));
+    await click(button("이 장면부터 다시 연습"));
+    await settle();
+    const drill = (await store.listSessions()).find((s) => s.practicePlan);
+    assert(drill);
+    assert.equal(drill.context.goal, session.context.goal);
+    assert.equal(drill.context.boundaries, session.context.boundaries);
+    assert.equal(drill.turns.at(-1).text, session.turns[2].text);
+    assert(document.body.textContent.includes("이번에 해볼 한 가지"));
   } finally {
     await ui.cleanup();
   }

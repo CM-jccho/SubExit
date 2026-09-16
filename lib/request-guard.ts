@@ -1,3 +1,4 @@
+import { ProviderQuotaError, quotaMessage } from "./quota";
 import { NextResponse } from "next/server";
 const buckets = new Map<string, { count: number; until: number }>();
 export function rateAllowed(request: Request, scope: string) {
@@ -50,7 +51,37 @@ export const json = (value: unknown, status = 200) =>
     headers: { "Cache-Control": "no-store" },
   });
 export function apiError(error: unknown) {
-  const code = error instanceof Error ? error.message : "unknown";
+  if (error instanceof ProviderQuotaError)
+    return NextResponse.json(
+      {
+        error: quotaMessage(error),
+        code: "provider_rate_limit",
+        quotaKind: error.kind,
+        retryAfter: error.retryAfter,
+      },
+      {
+        status: 429,
+        headers: {
+          "Cache-Control": "no-store",
+          ...(error.retryAfter
+            ? { "Retry-After": String(error.retryAfter) }
+            : {}),
+        },
+      },
+    );
+  const known = [
+    "too_large",
+    "provider_rate_limit",
+    "not_configured",
+    "invalid_output",
+    "ungrounded_output",
+    "empty_output",
+    "provider_error",
+  ];
+  const code =
+    error instanceof Error && known.includes(error.message)
+      ? error.message
+      : "unknown";
   const status =
     code === "too_large"
       ? 413
@@ -96,5 +127,20 @@ export function checkConsent(
     data.consent === true &&
     data.adultConsent === true &&
     (!sampleOnly || data.sampleConsent === true)
+  );
+}
+
+export function appRateError() {
+  return NextResponse.json(
+    {
+      error: "앱의 분당 요청 한도에 도달했어요. 1분 뒤 다시 시도해 주세요.",
+      code: "app_rate_limit",
+      quotaKind: "minute",
+      retryAfter: 60,
+    },
+    {
+      status: 429,
+      headers: { "Cache-Control": "no-store", "Retry-After": "60" },
+    },
   );
 }

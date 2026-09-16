@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useCompanion } from "./CompanionTheme";
 import { Companion, Icon } from "./CompanionUI";
 export const TOUR_KEY = "ddeundeun-spotlight-guide-v2";
 const steps = [
@@ -42,6 +43,7 @@ export default function FirstConversation({
   onStep: (step: number) => void;
   onClose: () => void;
 }) {
+  const character = useCompanion();
   const dialog = useRef<HTMLDialogElement>(null),
     panel = useRef<HTMLDivElement>(null),
     next = useRef<HTMLButtonElement>(null);
@@ -179,7 +181,7 @@ export default function FirstConversation({
         )}
         <div className="dc-spotlight-top">
           <span>
-            곁이와 첫 걸음 · {step + 1} / {steps.length}
+            {character.name}와 첫 걸음 · {step + 1} / {steps.length}
           </span>
           <button aria-label="가이드 닫기" onClick={finish}>
             <Icon name="close" size={19} />

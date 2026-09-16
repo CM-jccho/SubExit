@@ -1,3 +1,5 @@
+import type { PracticeReview } from "./practice-review";
+import type { CompanionCharacter } from "./companions";
 import type { ContextProfile } from "./conversation-cards";
 export type AudioClip = {
   blob: Blob;
@@ -15,10 +17,17 @@ export type VoiceTurn = {
   suggestions?: string[];
 };
 export type VoiceSession = {
+  review?: PracticeReview;
+  practicePlan?: {
+    focus: string;
+    sourceSessionId: string;
+    carriedTurns: number;
+  };
+  companion?: CompanionCharacter;
   isSample?: boolean;
   id: string;
   title: string;
-  kind: "practice" | "recording";
+  kind: "practice" | "recording" | "chat";
   context?: ContextProfile;
   industry: string;
   turns: VoiceTurn[];
@@ -211,12 +220,13 @@ export async function seedNotebook(
   sessions: VoiceSession[],
   terms: TermNote[],
   restore = false,
+  group = "starter-samples-v1",
 ) {
   const db = await openDB();
   return new Promise<void>((resolve, reject) => {
     const tx = db.transaction(["sessions", "terms", "meta"], "readwrite");
     const meta = tx.objectStore("meta");
-    const marker = meta.get("starter-samples-v1");
+    const marker = meta.get(group);
     marker.onsuccess = () => {
       if (marker.result && !restore) return;
       for (const [name, rows] of [
@@ -231,7 +241,7 @@ export async function seedNotebook(
           };
         }
       }
-      meta.put({ id: "starter-samples-v1", initialized: true });
+      meta.put({ id: group, initialized: true });
     };
     tx.oncomplete = () => {
       db.close();

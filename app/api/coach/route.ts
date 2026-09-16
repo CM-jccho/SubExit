@@ -5,6 +5,7 @@ import { coachSchema, systemPrompt, validateCoach } from "@/lib/coach-contract";
 import {
   readBounded,
   rateAllowed,
+  appRateError,
   json,
   apiError,
   checkConsent,
@@ -81,11 +82,7 @@ export async function POST(request: Request) {
         { error: "전송·성인 여부 및 무료 API 샘플 조건을 확인해 주세요." },
         400,
       );
-    if (!rateAllowed(request, "coach"))
-      return json(
-        { error: "요청이 많습니다. 잠시 후 다시 시도해 주세요." },
-        429,
-      );
+    if (!rateAllowed(request, "coach")) return appRateError();
     const start = Date.now();
     const output = await geminiGenerate(
       systemPrompt,

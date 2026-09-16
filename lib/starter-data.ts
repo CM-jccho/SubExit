@@ -113,8 +113,67 @@ export const starterTerms: TermNote[] = [
   updatedAt: date,
   isSample: true,
 }));
+export const requestCards: ConversationCard[] = [
+  {
+    ...starterCards[0],
+    id: "card-sample-request-work",
+    title: "동료에게 검토 부탁하기",
+    myRole: "제안서를 준비하는 담당자",
+    partner: "자기 업무로 바쁜 동료",
+    situation: "고객에게 보낼 제안서를 동료에게 검토받고 싶다.",
+    goal: "검토할 부분과 가능한 시간을 정중하게 부탁하기",
+    boundaries: "당연히 도와줄 거라고 여기거나 즉시 답변을 재촉하지 않기",
+  },
+  {
+    ...starterCards[0],
+    id: "card-sample-request-friend",
+    title: "친구에게 약속 변경 부탁하기",
+    myRole: "약속을 조율하려는 친구",
+    partner: "주말에 만나기로 한 친구",
+    situation: "주말 약속 시간을 변경할 수 있는지 물어보려고 한다.",
+    goal: "친구의 가능한 시간을 듣고 함께 새 시간을 정하기",
+    boundaries: "일방적으로 취소하거나 새로운 시간을 통보하지 않기",
+    tone: "warm",
+  },
+];
+export const requestSessions: VoiceSession[] = requestCards.map(
+  (card, index) => ({
+    id: index ? "session-sample-request-friend" : "session-sample-request-work",
+    title: card.title + " · 대화 예시",
+    kind: "practice",
+    isSample: true,
+    context: card,
+    industry: index ? "일상" : "기획 · 제안",
+    createdAt: date,
+    updatedAt: date,
+    turns: (index
+      ? [
+          "주말 약속에 대해 이야기하고 싶은 게 있어?",
+          "혹시 만나는 시간을 바꿀 수 있을까? 네가 괜찮은 시간이 있는지 먼저 물어보고 싶었어.",
+          "어느 시간으로 생각하고 있어?",
+          "나는 오전도 괜찮아. 너도 가능할까? 어렵다면 원래 약속을 기준으로 다시 이야기하자.",
+        ]
+      : [
+          "제안서 관련해서 어떤 도움이 필요하세요?",
+          "고객 제안서의 요구사항 부분만 검토를 부탁드려도 될까요? 지금 맡으신 일이 있는 걸 알아서, 가능한 시간을 먼저 여쭤보고 싶어요.",
+          "검토할 분량과 원하는 시점을 알 수 있을까요?",
+          "요구사항 한 쪽이에요. 검토에 어느 정도 시간이 필요하실까요? 가능한 때를 알려주시면 발송 일정과 맞춰보겠습니다. 어려우시면 다른 방법도 찾아볼게요.",
+        ]
+    ).map((text, i) => ({
+      id: `turn-request-${index}-${i}`,
+      role: i % 2 ? "user" : "assistant",
+      text,
+      terms: [],
+      createdAt: date,
+    })),
+  }),
+);
 export function seedCards(restore = false) {
   const raw = localStorage.getItem(CARD_KEY);
+  let previous: {
+    samplesInitialized?: boolean;
+    requestSamplesInitialized?: boolean;
+  } = {};
   // Never overwrite data we cannot understand, including data from a future app version.
   if (raw) {
     let data;
@@ -129,22 +188,28 @@ export function seedCards(restore = false) {
       throw new Error(
         "기존 카드 형식을 확인해야 해요. 데이터는 그대로 보관했어요.",
       );
-    if (data.samplesInitialized && !restore) return readCards();
+    previous = data;
+    if (data.samplesInitialized && data.requestSamplesInitialized && !restore)
+      return readCards();
     if (parseCards(raw).length !== data.cards.length)
       throw new Error(
         "일부 카드를 읽지 못해 샘플 추가를 멈췄어요. 기존 데이터는 그대로 보관했어요.",
       );
   }
   const old = readCards();
-  const additions = starterCards
+  const additions = [
+    ...(!previous.samplesInitialized || restore ? starterCards : []),
+    ...(!previous.requestSamplesInitialized || restore ? requestCards : []),
+  ]
     .filter((c) => !old.some((o) => o.id === c.id))
     .slice(0, Math.max(0, 100 - old.length));
   const next = [...old, ...additions];
-  writeCards(next);
+  writeCards(next, true);
   return next;
 }
 export async function seedStarterData(restore = false) {
   const cards = seedCards(restore);
   await seedNotebook([starterSession], starterTerms, restore);
+  await seedNotebook(requestSessions, [], restore, "request-samples-v1");
   return cards;
 }
