@@ -5,6 +5,7 @@ import "./voice-notebook.css";
 import "./onboarding.css";
 import "./guide-font.css";
 import "./companions.css";
+import "./room-environment.css";
 export const metadata = {
   title: "든든콜 · 내 상황을 기억하는 대화 코치",
   description:
