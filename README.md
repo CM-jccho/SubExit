@@ -35,6 +35,8 @@ API 키 없이 샘플과 직접 연습을 사용할 수 있습니다.
 
 [Google AI Studio](https://aistudio.google.com/)에서 API 키를 발급받고 서버 환경변수에만 설정합니다. 키를 채팅·GitHub·브라우저에 붙여 넣지 마세요.
 
+최소 설정은 Production의 비밀 환경변수 `GEMINI_API_KEY` 하나입니다. 키가 있으면 카드 정리·코칭·짧은 음성을 활성화합니다. 아래 나머지 값은 선택 설정이며, 기존 `COACH_AI_ENABLED=false` 또는 `COACH_VOICE_ENABLED=false`가 있으면 해당 비활성화 설정을 존중합니다. 사용자의 전송 확인 조건은 계속 적용됩니다.
+
 ```dotenv
 GEMINI_API_KEY=서버에만_설정
 GEMINI_MODEL=gemini-2.5-flash
@@ -44,6 +46,8 @@ GEMINI_DATA_MODE=free
 ```
 
 로컬은 `.env.local` 저장 후 재시작, Vercel은 wanted-sidecue 프로젝트 환경변수의 사용할 대상(미리보기는 Preview, 운영은 Production)에 설정 후 해당 대상을 재배포합니다. 모델 접근 여부·할당량은 해당 AI Studio 계정에서 확인해야 합니다. 무료 모델의 한도와 정책은 변할 수 있습니다.
+
+`GET /api/coach`의 `configurationStatus`로 설정 상태만 확인할 수 있습니다. `missing_key`는 해당 배포에 키 없음, `disabled`는 키가 있지만 AI 비활성화, `configured`는 설정 완료입니다. 키 값은 반환하지 않습니다. `configured`만으로 유효한 키·할당량·AI 응답이 검증된 것은 아니며, 실제 자작 샘플 요청으로 확인해야 합니다.
 
 무료 모드는 **만 18세 이상, 개인정보·기밀 없는 자작·샘플 대화**에만 사용합니다. Google 무료 API 입력·출력은 제품 개선과 검토에 이용될 수 있습니다. `GEMINI_DATA_MODE=paid`는 화면 안내와 서버 확인 조건을 바꾸는 값으로, 실제 Google 과금 등급을 변경하지 않습니다. 실제 대화 적용 전 계정의 데이터 처리 조건과 참여자 동의를 확인하세요.
 

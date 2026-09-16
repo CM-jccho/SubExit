@@ -1,11 +1,18 @@
 export function geminiConfig() {
+  const keyConfigured = !!process.env.GEMINI_API_KEY?.trim();
+  // Registering a key is enough to opt in; explicit switches remain authoritative.
+  const enabled = (value: string | undefined) =>
+    value === undefined || value.trim() === "" || value.trim().toLowerCase() === "true";
+  const available = keyConfigured && enabled(process.env.COACH_AI_ENABLED);
   return {
-    available:
-      process.env.COACH_AI_ENABLED === "true" && !!process.env.GEMINI_API_KEY,
-    voiceAvailable:
-      process.env.COACH_AI_ENABLED === "true" &&
-      process.env.COACH_VOICE_ENABLED === "true" &&
-      !!process.env.GEMINI_API_KEY,
+    available,
+    voiceAvailable: available && enabled(process.env.COACH_VOICE_ENABLED),
+    // Configuration only: "configured" does not claim the key or quota is valid.
+    configurationStatus: !keyConfigured
+      ? "missing_key"
+      : !available
+        ? "disabled"
+        : "configured",
     provider: "Google Gemini",
     model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
     sampleOnly: process.env.GEMINI_DATA_MODE !== "paid",
@@ -32,7 +39,7 @@ export async function geminiGenerate(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-goog-api-key": process.env.GEMINI_API_KEY!,
+          "x-goog-api-key": process.env.GEMINI_API_KEY!.trim(),
         },
         signal: abort.signal,
         cache: "no-store",
