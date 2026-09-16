@@ -33,5 +33,10 @@ export function validateObservedTurns(v: unknown): ObservedTurn[] {
     )
   )
     throw new Error("invalid_output");
+  // A rehearsal must not invent an institution's policy to justify a boundary.
+  const policyClaim =
+    /(?:학교|매장|기관)(?:는|에서는)[^.!?\n]{0,100}(?:만\s|불가|금지|의무|반드시)|(?:학교|매장|기관)의\s*(?:공식적인\s*)?(?:규정|절차|정책)(?:상|에\s*따라)|공식(?:적인)?\s*(?:규정|절차)(?:상|에\s*따라)|법적으로[^.!?\n]{0,60}(?:의무|해야|금지)/;
+  if (v.some((t) => policyClaim.test(t.text)))
+    throw new Error("unsupported_policy_claim");
   return v.map((t) => ({ speaker: t.speaker, text: t.text.trim() }));
 }

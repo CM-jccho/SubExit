@@ -63,7 +63,12 @@ export async function POST(request: Request) {
             { role: "user", parts: [{ text: trendPrompt(language, now) }] },
           ],
           tools: [{ google_search: {} }],
-          generationConfig: { maxOutputTokens: 3000 },
+          generationConfig: {
+            maxOutputTokens: 3000,
+            ...(config.model === "gemini-2.5-flash"
+              ? { thinkingConfig: { thinkingBudget: 0 } }
+              : {}),
+          },
         }),
       },
     );
@@ -86,6 +91,15 @@ export async function POST(request: Request) {
       parseTrendResult(await r.json(), language, new Date().toISOString()),
     );
   } catch (e) {
+    if (abort.signal.aborted || (e instanceof Error && e.name === "AbortError"))
+      return json(
+        {
+          code: "search_timeout",
+          error:
+            "검색 응답이 제한 시간 안에 도착하지 않았어요. 다시 검색하거나 Google에서 직접 확인해 주세요.",
+        },
+        504,
+      );
     if (e instanceof Error && e.message === "weak_search_sources")
       return json(
         {
