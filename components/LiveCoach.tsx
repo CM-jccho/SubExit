@@ -571,6 +571,12 @@ export default function LiveCoach({
               {result ? (
                 <>
                   <p className="dc-answer-label">이렇게 말해볼까요?</p>
+                  {profile && (
+                    <p className="dc-answer-goal">
+                      <Icon name="target" size={14} />
+                      <span>내 목표 · {profile.goal}</span>
+                    </p>
+                  )}
                   <blockquote>{result.suggestion}</blockquote>
                   <div className="dc-answer-actions">
                     <button

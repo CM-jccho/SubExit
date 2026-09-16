@@ -142,8 +142,7 @@ export default function ConversationWorkspace() {
   const [tour, setTour] = useState(false),
     [editFields, setEditFields] = useState(false);
   const controller = useRef<AbortController | null>(null),
-    generation = useRef(0),
-    chatEnd = useRef<HTMLDivElement | null>(null);
+    generation = useRef(0);
   useEffect(() => {
     setCards(readCards());
     try {
@@ -165,7 +164,10 @@ export default function ConversationWorkspace() {
     };
   }, []);
   useEffect(() => {
-    if (query.get("demo") === "1") setView("demo");
+    if (query.get("tour") === "1") {
+      setView("home");
+      setTour(true);
+    } else if (query.get("demo") === "1") setView("demo");
     else if (query.get("live") === "1") {
       setView("library");
       setToast("코칭에 사용할 카드를 선택하거나 새로 만들어 주세요.");
@@ -174,10 +176,6 @@ export default function ConversationWorkspace() {
   useEffect(() => {
     if (review && view === "setup") window.scrollTo({ top: 0 });
   }, [review, view]);
-  useEffect(() => {
-    if (messages.length > 1)
-      chatEnd.current?.scrollIntoView({ block: "nearest" });
-  }, [messages]);
   function cancelRequest() {
     generation.current++;
     controller.current?.abort();
@@ -539,6 +537,7 @@ export default function ConversationWorkspace() {
                 <Icon name="search" size={20} />
                 <input
                   id="card-search"
+                  aria-label="대화 검색"
                   type="search"
                   placeholder="상대, 상황, 목표로 찾기"
                   value={search}
