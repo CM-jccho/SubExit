@@ -1,4 +1,5 @@
 "use client";
+import CommunityPreview from "./CommunityPreview";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import RoomEnvironment from "./RoomEnvironment";
 import { Companion, Icon } from "./CompanionUI";
@@ -419,6 +420,7 @@ export default function CompanionRoom({
           친구 만들기
         </button>
       </section>
+      <CommunityPreview />
       <p className="dc-room-intro">
         친구를 누르면 대화 카드가 바로 열려요. 지난 이야기부터 이어가도 좋아요.
       </p>

@@ -81,6 +81,7 @@ export function reviewDrill(
     context: { ...session.context },
     companion: session.companion,
     industry: session.industry,
+    languages: session.languages,
     // Retain the actual preceding exchange so the partner can understand references.
     turns: session.turns.slice(0, i).map((t) => ({
       id: "turn-" + crypto.randomUUID(),

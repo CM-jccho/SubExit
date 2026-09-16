@@ -1,0 +1,98 @@
+"use client";
+import { useState } from "react";
+import {
+  termCatalogue,
+  termGroups,
+  schoolCompanion,
+} from "@/lib/term-catalogue";
+import type { TermNote } from "@/lib/voice-notebook";
+import type { CompanionCharacter } from "@/lib/companions";
+export default function TermCatalogue({
+  onSelect,
+  onAsk,
+}: {
+  onSelect: (note: TermNote) => void;
+  onAsk?: (c: CompanionCharacter) => void;
+}) {
+  const [group, setGroup] = useState(""),
+    [query, setQuery] = useState("");
+  const rows = termCatalogue.filter(
+    (row) =>
+      (!group || group === row.group) &&
+      [row.note.term, row.note.meaning, row.note.industry]
+        .join(" ")
+        .toLowerCase()
+        .includes(query.toLowerCase()),
+  );
+  return (
+    <section className="learn-catalogue" aria-label="분야별 표현 둘러보기">
+      <div className="vn-toolbar">
+        <h2>분야별 표현 둘러보기</h2>
+        <span>{termCatalogue.length}개 시작 예시</span>
+      </div>
+      <p>
+        업무부터 학교·또래 대화까지. 필요한 표현을 골라 내 노트로 가져오세요.
+      </p>
+      <div className="learn-grid">
+        <label className="vn-label">
+          분야
+          <select value={group} onChange={(e) => setGroup(e.target.value)}>
+            <option value="">모든 분야</option>
+            {Object.entries(termGroups).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="vn-label">
+          예시 표현 검색
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="예: 최애, API, 피킹"
+          />
+        </label>
+      </div>
+      {(group === "teen" || group === "school") && (
+        <div className="learn-callout">
+          <strong>세대마다, 친구마다 말이 달라요.</strong>
+          <p>
+            최신 유행 순위가 아닌 표현 예시예요. 실제 사람이 어떤 뜻으로 썼는지
+            먼저 물어보세요.
+          </p>
+          {onAsk && (
+            <button
+              className="dd-secondary"
+              onClick={() => onAsk(schoolCompanion)}
+            >
+              중학생 AI 역할에게 물어보기
+            </button>
+          )}
+          <small>
+            하루는 가상의 AI 역할이에요. 실제 중학생과 연결하지 않아요.
+          </small>
+        </div>
+      )}
+      <div className="learn-term-grid">
+        {rows.map(({ note }) => (
+          <button
+            className="learn-term"
+            key={note.id}
+            onClick={() => onSelect(note)}
+          >
+            <small>{note.industry} · 작성 예시</small>
+            <strong>{note.term}</strong>
+            <span>{note.meaning}</span>
+            <em>뜻 확인하고 내 노트에 추가 →</em>
+          </button>
+        ))}
+      </div>
+      {!rows.length && (
+        <p role="status">
+          일치하는 예시가 없어요. 내 노트에서 직접 추가할 수 있어요.
+        </p>
+      )}
+    </section>
+  );
+}

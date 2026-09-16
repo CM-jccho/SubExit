@@ -1,3 +1,4 @@
+import type { Language } from "./conversation-language";
 import {
   aiFetch,
   AIServiceError,
@@ -31,6 +32,7 @@ export async function sampledRequest(options: {
   url: string;
   init: RequestInit;
   manual?: boolean;
+  language?: Language;
 }): Promise<SampledResponse> {
   let outage = options.manual ? manualSample() : null;
   if (!outage) {
@@ -80,6 +82,8 @@ export async function sampledRequest(options: {
     options.context,
     options.previous,
     outage,
+    Math.random,
+    options.language,
   );
   return {
     ...sample,

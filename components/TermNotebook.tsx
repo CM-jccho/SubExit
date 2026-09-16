@@ -1,4 +1,7 @@
 "use client";
+import TermCatalogue from "./TermCatalogue";
+import { termGroups } from "@/lib/term-catalogue";
+import type { CompanionCharacter } from "@/lib/companions";
 import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
@@ -185,7 +188,7 @@ export function TermEditor({
     >
       <div className="vn-dialog-head">
         <div>
-          <p className="dc-overline">내 업무의 언어</p>
+          <p className="dc-overline">내가 만난 말</p>
           <h2 id="term-title">용어 메모</h2>
         </div>
         <button
@@ -207,15 +210,21 @@ export function TermEditor({
         />
       </label>
       <label className="vn-label">
-        업종·하는 일
+        분야 · 업종 · 세대
         <input
+          list="term-fields"
           value={note.industry}
           disabled={busy}
           maxLength={120}
           onChange={(e) => edit("industry", e.target.value)}
-          placeholder="예: IT 서비스 기획, 유통 영업"
+          placeholder="예: IT 서비스 기획, 중학교 생활"
         />
       </label>
+      <datalist id="term-fields">
+        {Object.values(termGroups).map((label) => (
+          <option key={label} value={label} />
+        ))}
+      </datalist>
       {note.quote && (
         <details className="vn-quote">
           <summary>이 말을 만난 대화</summary>
@@ -252,7 +261,7 @@ export function TermEditor({
           { k: "meaning", title: "뜻", max: 1000 },
           { k: "usage", title: "자연스러운 사용 예", max: 1000 },
           { k: "caution", title: "누구에게, 언제 쓰면 좋을까", max: 600 },
-          { k: "memo", title: "우리 팀 메모 · 업무 가이드", max: 2000 },
+          { k: "memo", title: "내 메모 · 함께 쓰는 가이드", max: 2000 },
         ] as const
       ).map((f) => (
         <label className="vn-label" key={f.k}>
@@ -298,7 +307,7 @@ export function TermEditor({
             setNote((n) => ({ ...n, reviewed: e.target.checked }))
           }
         />
-        뜻과 우리 업무에서의 사용을 직접 확인했어요.
+        뜻과 이 상황에서의 사용을 직접 확인했어요.
       </label>
       {error && (
         <>
@@ -319,7 +328,14 @@ export function TermEditor({
     </dialog>
   );
 }
-export default function TermNotebook({ config }: { config: AIConfig }) {
+export default function TermNotebook({
+  config,
+  onAsk,
+}: {
+  config: AIConfig;
+  onAsk?: (c: CompanionCharacter) => void;
+}) {
+  const [tab, setTab] = useState<"notes" | "catalogue">("notes");
   const [terms, setTerms] = useState<TermNote[]>([]),
     [query, setQuery] = useState(""),
     [seed, setSeed] = useState<TermSeed | null>(null),
@@ -377,7 +393,7 @@ export default function TermNotebook({ config }: { config: AIConfig }) {
     <>
       <section className="dc-page-top">
         <div>
-          <p className="dc-overline">대화에서 발견한 우리 일의 말</p>
+          <p className="dc-overline">일과 일상, 세대를 잇는 말</p>
           <h1>
             용어 노트 <span className="dc-count">{terms.length}</span>
           </h1>
@@ -393,155 +409,199 @@ export default function TermNotebook({ config }: { config: AIConfig }) {
         </button>
       </section>
       <CompanionNudge
-        text="같은 말도 업종마다 달라요. 우리 팀에서 쓰는 뜻을 한 줄 남겨보세요."
+        text="같은 말도 업종과 세대마다 달라요. 분야별 예시에서 시작하거나 직접 뜻을 남겨보세요."
         dismissible
       />
-      <label className="dc-search">
-        <Icon name="search" size={20} />
-        <input
-          type="search"
-          aria-label="용어 검색"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="용어, 업종, 메모로 찾기"
-        />
-      </label>
-      <div className="vn-toolbar">
+      <div className="dc-mode-switch" aria-label="용어 보기">
         <button
-          className="dd-secondary"
-          disabled={!selected.length}
-          onClick={() => setPreview(true)}
+          aria-pressed={tab === "notes"}
+          className={tab === "notes" ? "active" : ""}
+          onClick={() => setTab("notes")}
         >
-          <Icon name="book" size={17} />
-          선택한 {selected.length}개로 가이드 공유
+          내 노트
         </button>
-        <button className="dd-link" onClick={() => file.current?.click()}>
-          용어 파일 가져오기
+        <button
+          aria-pressed={tab === "catalogue"}
+          className={tab === "catalogue" ? "active" : ""}
+          onClick={() => setTab("catalogue")}
+        >
+          분야별 표현 찾기 · 15개 분야
         </button>
-        <input
-          hidden
-          ref={file}
-          type="file"
-          accept=".json,application/json"
-          onChange={async (e) => {
-            const f = e.target.files?.[0];
-            e.target.value = "";
-            if (!f) return;
-            try {
-              if (f.size > 1000000)
-                throw new Error("1MB 이하 파일을 선택해 주세요.");
-              const rows = parseTermImport(await f.text());
-              const old = await listTerms();
-              const keys = new Set(
-                old.map(
-                  (t) =>
-                    t.term.toLocaleLowerCase() +
-                    "|" +
-                    t.industry.toLocaleLowerCase(),
-                ),
-              );
-              const fresh = rows.filter((t) => {
-                const k =
-                  t.term.toLocaleLowerCase() +
-                  "|" +
-                  t.industry.toLocaleLowerCase();
-                if (keys.has(k)) return false;
-                keys.add(k);
-                return true;
-              });
-              await importTerms(fresh);
-              await refresh();
-              setNotice(
-                `${fresh.length}개 용어를 가져왔어요. 중복 용어는 유지했어요.`,
-              );
-            } catch (err) {
-              setError(
-                err instanceof Error
-                  ? err.message
-                  : "파일을 가져오지 못했어요.",
-              );
-            }
+      </div>
+      {tab === "catalogue" ? (
+        <TermCatalogue
+          onAsk={onAsk}
+          onSelect={(note) => {
+            const existing = terms.find(
+              (t) => t.term === note.term && t.industry === note.industry,
+            );
+            setSeed({
+              term: note.term,
+              quote: "",
+              industry: note.industry,
+              sessionId: "",
+              note: existing || { ...note, id: "term-" + crypto.randomUUID() },
+            });
           }}
         />
-      </div>
-      {notice && <CompanionNudge mood="done" text={notice} dismissible />}
-      {error && (
+      ) : (
         <>
-          <p className="dd-error" role="alert">
-            {error}
-          </p>
-          <QuotaHelp error={error} />
-        </>
-      )}
-      <div className="vn-term-list">
-        {visible.map((t) => (
-          <article key={t.id} className="vn-term-card">
-            <label className="vn-term-select">
-              <input
-                type="checkbox"
-                checked={selected.includes(t.id)}
-                aria-label={t.term + " 공유 선택"}
-                onChange={(e) =>
-                  setSelected((ids) =>
-                    e.target.checked
-                      ? [...ids, t.id]
-                      : ids.filter((id) => id !== t.id),
-                  )
-                }
-              />
-            </label>
+          <label className="dc-search">
+            <Icon name="search" size={20} />
+            <input
+              type="search"
+              aria-label="용어 검색"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="용어, 업종, 메모로 찾기"
+            />
+          </label>
+          <div className="vn-toolbar">
             <button
-              className="vn-term-open"
-              onClick={() =>
-                setSeed({
-                  term: t.term,
-                  industry: t.industry,
-                  quote: t.quote,
-                  sessionId: t.sessionId,
-                  note: t,
-                })
-              }
+              className="dd-secondary"
+              disabled={!selected.length}
+              onClick={() => setPreview(true)}
             >
-              <small>
-                {t.isSample && <span className="dc-sample-badge">샘플</span>}
-                {t.industry || "업종 미지정"} ·{" "}
-                {t.reviewed
-                  ? "직접 확인함"
-                  : t.source === "ai"
-                    ? "AI 초안"
-                    : "직접 작성"}
-              </small>
-              <h2>{t.term}</h2>
-              <p>{t.meaning || "이 말의 뜻과 우리 팀 메모를 남겨보세요."}</p>
-              {t.memo && <p className="vn-team-memo">{t.memo}</p>}
+              <Icon name="book" size={17} />
+              선택한 {selected.length}개로 가이드 공유
             </button>
-            <button
-              className="vn-icon"
-              aria-label={t.term + " 삭제"}
-              onClick={async () => {
-                if (!confirm("이 용어와 메모를 삭제할까요?")) return;
+            <button className="dd-link" onClick={() => file.current?.click()}>
+              용어 파일 가져오기
+            </button>
+            <input
+              hidden
+              ref={file}
+              type="file"
+              accept=".json,application/json"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                e.target.value = "";
+                if (!f) return;
                 try {
-                  await deleteTerm(t.id);
-                  setSelected((s) => s.filter((id) => id !== t.id));
+                  if (f.size > 1000000)
+                    throw new Error("1MB 이하 파일을 선택해 주세요.");
+                  const rows = parseTermImport(await f.text());
+                  const old = await listTerms();
+                  const keys = new Set(
+                    old.map(
+                      (t) =>
+                        t.term.toLocaleLowerCase() +
+                        "|" +
+                        t.industry.toLocaleLowerCase(),
+                    ),
+                  );
+                  const fresh = rows.filter((t) => {
+                    const k =
+                      t.term.toLocaleLowerCase() +
+                      "|" +
+                      t.industry.toLocaleLowerCase();
+                    if (keys.has(k)) return false;
+                    keys.add(k);
+                    return true;
+                  });
+                  await importTerms(fresh);
                   await refresh();
-                } catch {
-                  setError("삭제하지 못했어요.");
+                  setNotice(
+                    `${fresh.length}개 용어를 가져왔어요. 중복 용어는 유지했어요.`,
+                  );
+                } catch (err) {
+                  setError(
+                    err instanceof Error
+                      ? err.message
+                      : "파일을 가져오지 못했어요.",
+                  );
                 }
               }}
-            >
-              <Icon name="close" size={16} />
-            </button>
-          </article>
-        ))}
-      </div>
-      {!visible.length && (
-        <div className="dc-empty-state">
-          <Icon name="book" size={32} />
-          <h2>
-            {query ? "찾는 용어가 없어요" : "대화하다 만난 말, 놓치지 마세요"}
-          </h2>
-          <p>대화 문자의 단어를 누르거나 직접 추가하세요.</p>
-        </div>
+            />
+          </div>
+          {notice && <CompanionNudge mood="done" text={notice} dismissible />}
+          {error && (
+            <>
+              <p className="dd-error" role="alert">
+                {error}
+              </p>
+              <QuotaHelp error={error} />
+            </>
+          )}
+          <div className="vn-term-list">
+            {visible.map((t) => (
+              <article key={t.id} className="vn-term-card">
+                <label className="vn-term-select">
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(t.id)}
+                    aria-label={t.term + " 공유 선택"}
+                    onChange={(e) =>
+                      setSelected((ids) =>
+                        e.target.checked
+                          ? [...ids, t.id]
+                          : ids.filter((id) => id !== t.id),
+                      )
+                    }
+                  />
+                </label>
+                <button
+                  className="vn-term-open"
+                  onClick={() =>
+                    setSeed({
+                      term: t.term,
+                      industry: t.industry,
+                      quote: t.quote,
+                      sessionId: t.sessionId,
+                      note: t,
+                    })
+                  }
+                >
+                  <small>
+                    {t.isSample && (
+                      <span className="dc-sample-badge">샘플</span>
+                    )}
+                    {t.industry || "업종 미지정"} ·{" "}
+                    {t.reviewed
+                      ? "직접 확인함"
+                      : t.isSample
+                        ? "사전 작성 예시"
+                        : t.source === "ai"
+                          ? "AI 초안"
+                          : "직접 작성"}
+                  </small>
+                  <h2>{t.term}</h2>
+                  <p>
+                    {t.meaning || "이 말의 뜻과 우리 팀 메모를 남겨보세요."}
+                  </p>
+                  {t.memo && <p className="vn-team-memo">{t.memo}</p>}
+                </button>
+                <button
+                  className="vn-icon"
+                  aria-label={t.term + " 삭제"}
+                  onClick={async () => {
+                    if (!confirm("이 용어와 메모를 삭제할까요?")) return;
+                    try {
+                      await deleteTerm(t.id);
+                      setSelected((s) => s.filter((id) => id !== t.id));
+                      await refresh();
+                    } catch {
+                      setError("삭제하지 못했어요.");
+                    }
+                  }}
+                >
+                  <Icon name="close" size={16} />
+                </button>
+              </article>
+            ))}
+          </div>
+          {!visible.length && (
+            <div className="dc-empty-state">
+              <Icon name="book" size={32} />
+              <h2>
+                {query
+                  ? "찾는 용어가 없어요"
+                  : "대화하다 만난 말, 놓치지 마세요"}
+              </h2>
+              <p>대화 문자의 단어를 누르거나 직접 추가하세요.</p>
+            </div>
+          )}
+        </>
       )}
       {seed && (
         <TermEditor
