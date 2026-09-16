@@ -1,4 +1,9 @@
 "use client";
+import ConversationTraining from "./ConversationTraining";
+import {
+  trainingOrigin,
+  type TrainingOrigin,
+} from "@/lib/conversation-training";
 import DailyTalk from "./DailyTalk";
 import PromptPractice from "./PromptPractice";
 import { GardenPractice } from "./PracticeGarden";
@@ -98,6 +103,7 @@ export default function VoiceWorkspace({
           : null,
     ),
     [sessions, setSessions] = useState<VoiceSession[]>([]),
+    [trainingFrom, setTrainingFrom] = useState<TrainingOrigin>(),
     [consent, setConsent] = useState(false),
     [sampleMode, setSampleMode] = useState(false),
     [reviewOutage, setReviewOutage] = useState<AIOutage | null>(null),
@@ -614,6 +620,31 @@ export default function VoiceWorkspace({
   const sessionCharacter = session
     ? companionForSession(session)
     : inheritedCompanion;
+  if (session?.training || trainingFrom)
+    return (
+      <CompanionProvider value={sessionCharacter}>
+        <ConversationTraining
+          key={
+            session?.training
+              ? session.id
+              : trainingFrom!.sessionId + "-training"
+          }
+          config={config}
+          initialSession={session?.training ? session : undefined}
+          origin={trainingFrom}
+          onRecords={() => {
+            setTrainingFrom(undefined);
+            open(null);
+            void refresh();
+          }}
+          onSession={(s) => {
+            setTrainingFrom(undefined);
+            open(s);
+            void refresh();
+          }}
+        />
+      </CompanionProvider>
+    );
   if (session?.promptPractice)
     return (
       <PromptPractice
@@ -695,17 +726,19 @@ export default function VoiceWorkspace({
                 </span>
                 <span>
                   <small>
-                    {s.promptPractice
-                      ? "AI 요청 연습"
-                      : s.daily
-                        ? "오늘의 한마디"
-                        : s.isSample
-                          ? "샘플 · 사전 작성 대화"
-                          : s.kind === "chat"
-                            ? "친구와 대화"
-                            : s.kind === "practice"
-                              ? "상대와 연습"
-                              : "음성 기록"}{" "}
+                    {s.training
+                      ? "기초 훈련"
+                      : s.promptPractice
+                        ? "AI 요청 연습"
+                        : s.daily
+                          ? "오늘의 한마디"
+                          : s.isSample
+                            ? "샘플 · 사전 작성 대화"
+                            : s.kind === "chat"
+                              ? "친구와 대화"
+                              : s.kind === "practice"
+                                ? "상대와 연습"
+                                : "음성 기록"}{" "}
                     · {new Date(s.updatedAt).toLocaleDateString("ko-KR")}
                   </small>
                   <strong>{s.title}</strong>
@@ -1099,6 +1132,31 @@ export default function VoiceWorkspace({
                     <p>
                       <strong>다음 연습의 목표</strong> · {currentReview.focus}
                     </p>
+                    <aside className="training-review-entry">
+                      <strong>필요한 기술부터 짧게 연습할까요?</strong>
+                      <p>
+                        생각 넓히기·질문 이어가기·핵심 전달을 훈련한 뒤 이
+                        장면으로 돌아올 수 있어요.
+                      </p>
+                      <button
+                        className="dd-secondary"
+                        disabled={busy || captureBusy}
+                        onClick={() => {
+                          try {
+                            setTrainingFrom(trainingOrigin(session));
+                            window.scrollTo({ top: 0 });
+                          } catch (e) {
+                            setError(
+                              e instanceof Error
+                                ? e.message
+                                : "복기를 확인해 주세요.",
+                            );
+                          }
+                        }}
+                      >
+                        이 복기에서 기초 훈련 시작
+                      </button>
+                    </aside>
                     <button
                       className="dd-primary"
                       disabled={busy || captureBusy}
