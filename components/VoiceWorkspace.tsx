@@ -1,4 +1,5 @@
 "use client";
+import MessengerPractice from "./MessengerPractice";
 import ConversationTraining from "./ConversationTraining";
 import {
   trainingOrigin,
@@ -620,6 +621,18 @@ export default function VoiceWorkspace({
   const sessionCharacter = session
     ? companionForSession(session)
     : inheritedCompanion;
+  if (session?.messenger)
+    return (
+      <MessengerPractice
+        key={session.id}
+        config={config}
+        initialSession={session}
+        onRecords={() => {
+          open(null);
+          void refresh();
+        }}
+      />
+    );
   if (session?.training || trainingFrom)
     return (
       <CompanionProvider value={sessionCharacter}>
@@ -726,19 +739,21 @@ export default function VoiceWorkspace({
                 </span>
                 <span>
                   <small>
-                    {s.training
-                      ? "기초 훈련"
-                      : s.promptPractice
-                        ? "AI 요청 연습"
-                        : s.daily
-                          ? "오늘의 한마디"
-                          : s.isSample
-                            ? "샘플 · 사전 작성 대화"
-                            : s.kind === "chat"
-                              ? "친구와 대화"
-                              : s.kind === "practice"
-                                ? "상대와 연습"
-                                : "음성 기록"}{" "}
+                    {s.messenger
+                      ? "메시지 답장"
+                      : s.training
+                        ? "기초 훈련"
+                        : s.promptPractice
+                          ? "AI 요청 연습"
+                          : s.daily
+                            ? "오늘의 한마디"
+                            : s.isSample
+                              ? "샘플 · 사전 작성 대화"
+                              : s.kind === "chat"
+                                ? "친구와 대화"
+                                : s.kind === "practice"
+                                  ? "상대와 연습"
+                                  : "음성 기록"}{" "}
                     · {new Date(s.updatedAt).toLocaleDateString("ko-KR")}
                   </small>
                   <strong>{s.title}</strong>
