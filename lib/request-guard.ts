@@ -1,4 +1,9 @@
-import { ProviderQuotaError, quotaMessage } from "./quota";
+import {
+  ProviderQuotaError,
+  quotaMessage,
+  nextPacificReset,
+  koreanRetryTime,
+} from "./quota";
 import { NextResponse } from "next/server";
 const buckets = new Map<string, { count: number; until: number }>();
 export function rateAllowed(request: Request, scope: string) {
@@ -51,24 +56,38 @@ export const json = (value: unknown, status = 200) =>
     headers: { "Cache-Control": "no-store" },
   });
 export function apiError(error: unknown) {
-  if (error instanceof ProviderQuotaError)
+  if (error instanceof ProviderQuotaError) {
+    const retryAt =
+      error.kind === "daily"
+        ? nextPacificReset().toISOString()
+        : error.retryAfter
+          ? new Date(Date.now() + error.retryAfter * 1000).toISOString()
+          : undefined;
+    const retryAfter =
+      error.kind === "daily" && retryAt
+        ? Math.ceil((Date.parse(retryAt) - Date.now()) / 1000)
+        : error.retryAfter;
     return NextResponse.json(
       {
-        error: quotaMessage(error),
+        error:
+          quotaMessage(error) +
+          (error.kind === "daily" && retryAt
+            ? ` 한국 시간 ${koreanRetryTime(retryAt)} 이후 다시 시도해 주세요.`
+            : ""),
         code: "provider_rate_limit",
         quotaKind: error.kind,
-        retryAfter: error.retryAfter,
+        retryAt,
+        retryAfter,
       },
       {
         status: 429,
         headers: {
           "Cache-Control": "no-store",
-          ...(error.retryAfter
-            ? { "Retry-After": String(error.retryAfter) }
-            : {}),
+          ...(retryAfter ? { "Retry-After": String(retryAfter) } : {}),
         },
       },
     );
+  }
   const known = [
     "too_large",
     "provider_rate_limit",

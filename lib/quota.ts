@@ -54,3 +54,34 @@ export function quotaMessage(error: ProviderQuotaError) {
     return "Gemini의 분당 요청 또는 입력량 한도에 도달했어요. 1분 뒤 다시 시도해 주세요.";
   return "Gemini 사용 한도에 도달했어요. 잠시 뒤 다시 시도하고, 계속되면 Google AI Studio에서 분당·일일 한도를 확인해 주세요. 현재 응답만으로는 초기화 시점을 알 수 없어요.";
 }
+
+// Pacific midnight is 07:00 or 08:00 UTC depending on daylight saving time.
+export function nextPacificReset(now = new Date()): Date {
+  const midnight = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+  );
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/Los_Angeles",
+    hour: "2-digit",
+    hourCycle: "h23",
+  });
+  for (let day = 0; day < 3; day++)
+    for (const hour of [7, 8]) {
+      const candidate = new Date(midnight + (day * 24 + hour) * 3600000);
+      if (candidate > now && formatter.format(candidate) === "00")
+        return candidate;
+    }
+  throw new Error("reset_time_unavailable");
+}
+export function koreanRetryTime(at: string | Date) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(at));
+}

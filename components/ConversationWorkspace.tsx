@@ -1,4 +1,6 @@
 "use client";
+import ConsentDisclosure from "./ConsentDisclosure";
+import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -320,7 +322,7 @@ export default function ConversationWorkspace() {
     setBusy(true);
     const timeout = setTimeout(() => abort.abort(), 25000);
     try {
-      const r = await fetch("/api/context", {
+      const r = await aiFetch("/api/context", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: abort.signal,
@@ -1066,7 +1068,11 @@ export default function ConversationWorkspace() {
                         </div>
                       </form>
                       {(ai || config.voiceAvailable) && (
-                        <div className="dc-consent-note">
+                        <ConsentDisclosure
+                          complete={consent}
+                          disabled={busy}
+                          onRevoke={() => setConsent(false)}
+                        >
                           <label className="dd-check">
                             <input
                               type="checkbox"
@@ -1085,7 +1091,7 @@ export default function ConversationWorkspace() {
                               )}
                             </span>
                           </label>
-                        </div>
+                        </ConsentDisclosure>
                       )}
                       {error && (
                         <>

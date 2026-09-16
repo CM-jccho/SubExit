@@ -87,6 +87,7 @@ export function reviewDrill(
       role: t.role,
       text: t.text,
       terms: [...t.terms],
+      ...(t.sample ? { sample: t.sample } : {}),
       createdAt: now,
     })),
     practicePlan: {

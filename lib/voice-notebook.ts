@@ -1,3 +1,4 @@
+import type { SampleMeta } from "./demo-bank";
 import type { PracticeReview } from "./practice-review";
 import type { CompanionCharacter } from "./companions";
 import type { ContextProfile } from "./conversation-cards";
@@ -15,6 +16,8 @@ export type VoiceTurn = {
   clip?: AudioClip;
   terms: string[];
   suggestions?: string[];
+  sample?: SampleMeta;
+  suggestionsSample?: SampleMeta;
 };
 export type VoiceSession = {
   review?: PracticeReview;
