@@ -1,3 +1,4 @@
+import { practicalCards, practicalSessions } from "./practical-scenes";
 import {
   CARD_KEY,
   exampleProfile,
@@ -173,6 +174,7 @@ export function seedCards(restore = false) {
   let previous: {
     samplesInitialized?: boolean;
     requestSamplesInitialized?: boolean;
+    practicalSamplesInitialized?: boolean;
   } = {};
   // Never overwrite data we cannot understand, including data from a future app version.
   if (raw) {
@@ -189,7 +191,12 @@ export function seedCards(restore = false) {
         "기존 카드 형식을 확인해야 해요. 데이터는 그대로 보관했어요.",
       );
     previous = data;
-    if (data.samplesInitialized && data.requestSamplesInitialized && !restore)
+    if (
+      data.samplesInitialized &&
+      data.requestSamplesInitialized &&
+      data.practicalSamplesInitialized &&
+      !restore
+    )
       return readCards();
     if (parseCards(raw).length !== data.cards.length)
       throw new Error(
@@ -200,16 +207,18 @@ export function seedCards(restore = false) {
   const additions = [
     ...(!previous.samplesInitialized || restore ? starterCards : []),
     ...(!previous.requestSamplesInitialized || restore ? requestCards : []),
+    ...(!previous.practicalSamplesInitialized || restore ? practicalCards : []),
   ]
     .filter((c) => !old.some((o) => o.id === c.id))
     .slice(0, Math.max(0, 100 - old.length));
   const next = [...old, ...additions];
-  writeCards(next, true);
+  writeCards(next, true, true);
   return next;
 }
 export async function seedStarterData(restore = false) {
   const cards = seedCards(restore);
   await seedNotebook([starterSession], starterTerms, restore);
   await seedNotebook(requestSessions, [], restore, "request-samples-v1");
+  await seedNotebook(practicalSessions, [], restore, "practical-scenes-v1");
   return cards;
 }

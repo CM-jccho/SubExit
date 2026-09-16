@@ -1,4 +1,6 @@
 "use client";
+import StickyPageTop from "./StickyPageTop";
+import TrendSearch from "./TrendSearch";
 import TermCatalogue from "./TermCatalogue";
 import { termGroups } from "@/lib/term-catalogue";
 import type { CompanionCharacter } from "@/lib/companions";
@@ -391,7 +393,7 @@ export default function TermNotebook({
   }
   return (
     <>
-      <section className="dc-page-top">
+      <StickyPageTop>
         <div>
           <p className="dc-overline">일과 일상, 세대를 잇는 말</p>
           <h1>
@@ -407,7 +409,7 @@ export default function TermNotebook({
           <Icon name="plus" size={18} />
           용어 추가
         </button>
-      </section>
+      </StickyPageTop>
       <CompanionNudge
         text="같은 말도 업종과 세대마다 달라요. 분야별 예시에서 시작하거나 직접 뜻을 남겨보세요."
         dismissible
@@ -425,9 +427,10 @@ export default function TermNotebook({
           className={tab === "catalogue" ? "active" : ""}
           onClick={() => setTab("catalogue")}
         >
-          분야별 표현 찾기 · 15개 분야
+          분야별 표현 찾기 · {Object.keys(termGroups).length}개 분야
         </button>
       </div>
+      <TrendSearch config={config} />
       {tab === "catalogue" ? (
         <TermCatalogue
           onAsk={onAsk}

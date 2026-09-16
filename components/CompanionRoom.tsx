@@ -1,4 +1,10 @@
 "use client";
+import StickyPageTop from "./StickyPageTop";
+import PersonaObserver from "./PersonaObserver";
+import PracticalScenes from "./PracticalScenes";
+import { responseFriends } from "@/lib/practical-scenes";
+import type { ConversationCard } from "@/lib/conversation-cards";
+import type { AIConfig } from "./VoiceComposer";
 import CommunityPreview from "./CommunityPreview";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import RoomEnvironment from "./RoomEnvironment";
@@ -347,12 +353,16 @@ function CompanionCard({
   );
 }
 export default function CompanionRoom({
+  config,
+  onPractice,
   saved,
   onSaved,
   onChat,
   onSession,
   onCards,
 }: {
+  config: AIConfig;
+  onPractice: (card: ConversationCard) => void;
   saved: CompanionCharacter[];
   onSaved: (rows: CompanionCharacter[]) => void;
   onChat: (c: CompanionCharacter) => void;
@@ -393,7 +403,7 @@ export default function CompanionRoom({
   );
   return (
     <>
-      <section className="dc-page-top">
+      <StickyPageTop>
         <div>
           <p className="dc-overline">이야기가 쌓이는 작은 공간</p>
           <h1>
@@ -419,8 +429,8 @@ export default function CompanionRoom({
           <Icon name="plus" size={18} />
           친구 만들기
         </button>
-      </section>
-      <CommunityPreview />
+      </StickyPageTop>
+      <PersonaObserver config={config} characters={characters} />
       <p className="dc-room-intro">
         친구를 누르면 대화 카드가 바로 열려요. 지난 이야기부터 이어가도 좋아요.
       </p>
@@ -460,6 +470,45 @@ export default function CompanionRoom({
           </div>
         </RoomEnvironment>
       </div>
+      <PracticalScenes onPractice={onPractice} />
+      <details className="dc-response-friends">
+        <summary>응대 연습 친구 초대하기 · 4가지 역할</summary>
+        <p>
+          역할을 골라 친구방에 저장하세요. 모든 캐릭터는 연습을 위한 가상
+          AI예요.
+        </p>
+        <div className="dc-invite-grid">
+          {responseFriends.map((c) => (
+            <article key={c.id}>
+              <Companion small character={c} />
+              <div>
+                <strong>{c.name}</strong>
+                <p>{c.specialty}</p>
+                <button
+                  className="dd-secondary"
+                  disabled={saved.some((s) => s.id === c.id)}
+                  onClick={() => {
+                    try {
+                      const rows = saveCompanion(c);
+                      onSaved(rows);
+                      setNotice(c.name + "를 친구방에 초대했어요.");
+                    } catch (e) {
+                      setError(
+                        e instanceof Error ? e.message : "저장하지 못했어요.",
+                      );
+                    }
+                  }}
+                >
+                  {saved.some((s) => s.id === c.id)
+                    ? "초대 완료"
+                    : c.name + " 초대하기"}
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </details>
+      <CommunityPreview />
       {cardOpen && (
         <CompanionCard
           selected={selected}

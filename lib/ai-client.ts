@@ -174,10 +174,17 @@ export async function aiFetch(
     throw new AIServiceError(outage);
   }
   if (!response.ok && (response.status === 429 || response.status >= 500)) {
-    const outage = outageFor(
-      response.status,
-      await response.json().catch(() => null),
-    )!;
+    const data = await response
+      .clone()
+      .json()
+      .catch(() => null);
+    // Search-specific grounding/capability failures do not disable working voice/chat APIs.
+    if (
+      url === "/api/term-trends" &&
+      ["search_unavailable", "search_not_grounded"].includes(data?.code)
+    )
+      return response;
+    const outage = outageFor(response.status, data)!;
     hold(outage);
     throw new AIServiceError(outage);
   }

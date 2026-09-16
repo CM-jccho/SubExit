@@ -55,8 +55,8 @@ test("first visit seeds once, preserves personal data, and does not resurrect de
     JSON.stringify({ version: 1, cards: [personal] }),
   );
   await Promise.all([starter.seedStarterData(), starter.seedStarterData()]);
-  assert.equal(cards.readCards().length, 5);
-  assert.equal((await store.listSessions()).length, 3);
+  assert.equal(cards.readCards().length, 8);
+  assert.equal((await store.listSessions()).length, 6);
   assert.equal((await store.listTerms()).length, 3);
   const edited = cards
     .readCards()
@@ -65,12 +65,12 @@ test("first visit seeds once, preserves personal data, and does not resurrect de
   await store.deleteSession(starter.starterSession.id);
   await store.deleteTerm(starter.starterTerms[0].id);
   await starter.seedStarterData();
-  assert.equal(cards.readCards().length, 4);
+  assert.equal(cards.readCards().length, 7);
   assert.equal(
     cards.readCards().find((c) => c.id === personal.id).goal,
     "내 목표 그대로",
   );
-  assert.equal((await store.listSessions()).length, 2);
+  assert.equal((await store.listSessions()).length, 5);
   assert.equal((await store.listTerms()).length, 2);
 });
 test("explicit sample restore only fills missing IDs and preserves edited samples and personal records", async () => {
@@ -193,6 +193,6 @@ test("failed initial write remains retryable, and copied sample becomes a person
     { ...starter.starterCards[0], title: "내 대화로 복사" },
     "manual",
   );
-  assert.equal(saved.length, 5);
+  assert.equal(saved.length, 8);
   assert.equal(saved[0].isSample, undefined);
 });

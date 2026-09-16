@@ -58,8 +58,9 @@ export default function TermCatalogue({
         <div className="learn-callout">
           <strong>세대마다, 친구마다 말이 달라요.</strong>
           <p>
-            최신 유행 순위가 아닌 표현 예시예요. 실제 사람이 어떤 뜻으로 썼는지
-            먼저 물어보세요.
+            ㅇㅈ·찐·꾸안꾸·최애는 여러 연령대에서 쓰는 온라인·일상 표현이에요.
+            10대 전용 표현이나 최신 유행 순위가 아니에요. 문맥과 관계를 함께
+            확인하세요.
           </p>
           {onAsk && (
             <button
