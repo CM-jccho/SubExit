@@ -8,9 +8,9 @@ const quota = require("../lib/quota.ts"),
   resilient = require("../lib/resilient-ai.ts");
 test("all authored scenarios and operations survive the outage matrix without masking validation errors", async () => {
   const report = await simulate();
-  assert.equal(report.verified, 480);
+  assert.equal(report.verified, 660);
   assert.equal(report.liveAICalls, 0);
-  assert.equal(report.authoredResponses, 128);
+  assert.equal(report.authoredResponses, 176);
 });
 test("Pacific daily reset respects winter, summer, DST boundaries and midnight, and daily limits override short Retry-After", () => {
   for (const [now, expected] of [

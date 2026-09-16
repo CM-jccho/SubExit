@@ -630,6 +630,13 @@ test("live trends require actual search evidence, safe source URLs, full output 
       /ungrounded_output/,
     );
   }
+  const weak = grounded();
+  weak.candidates[0].groundingMetadata.groundingChunks[0].web.title =
+    "tistory.com";
+  assert.throws(
+    () => trends.parseTrendResult(weak, "ko", "2026-09-16"),
+    /weak_search_sources/,
+  );
   assert.match(trends.trendPrompt("ja", new Date("2026-09-16")), /2026-06-18/);
   assert.match(trends.trendPrompt("en", new Date("2026-09-16")), /영어/);
   assert.match(termGroups.teen, /온라인/);

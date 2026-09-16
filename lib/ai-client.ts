@@ -181,7 +181,11 @@ export async function aiFetch(
     // Search-specific grounding/capability failures do not disable working voice/chat APIs.
     if (
       url === "/api/term-trends" &&
-      ["search_unavailable", "search_not_grounded"].includes(data?.code)
+      [
+        "search_unavailable",
+        "search_not_grounded",
+        "search_weak_sources",
+      ].includes(data?.code)
     )
       return response;
     const outage = outageFor(response.status, data)!;

@@ -86,6 +86,15 @@ export async function POST(request: Request) {
       parseTrendResult(await r.json(), language, new Date().toISOString()),
     );
   } catch (e) {
+    if (e instanceof Error && e.message === "weak_search_sources")
+      return json(
+        {
+          code: "search_weak_sources",
+          error:
+            "검색은 실행했지만 뜻을 확인할 근거가 개인 블로그·소셜 게시물에 치우쳐 있어요. 목록을 확정해 보여주지 않았습니다. 다시 검색하거나 Google에서 원문을 비교해 주세요.",
+        },
+        502,
+      );
     if (e instanceof Error && e.message === "ungrounded_output")
       return json(
         {

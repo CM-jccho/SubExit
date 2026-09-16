@@ -13,6 +13,12 @@ export const demoCases = bank.cases;
 export type SampleOperation = "partner" | "companion" | "suggestions" | "coach";
 export function chooseDemoCase(text: string) {
   const lower = text.toLocaleLowerCase();
+  const responseScene = demoCases.find(
+    (row) =>
+      ["verbal-boundary", "parent-hours", "refund-pressure"].includes(row.id) &&
+      row.keywords.some((k) => lower.includes(k)),
+  );
+  if (responseScene) return responseScene;
   let best = demoCases.at(-1)!,
     score = 0;
   for (const row of demoCases.slice(0, -1)) {
