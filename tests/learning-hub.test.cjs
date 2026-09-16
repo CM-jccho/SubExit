@@ -746,6 +746,12 @@ test("observer validates two distinct personas and six alternating turns; route 
       speaker: i % 2,
       text,
     }));
+    const unsafe = turns.map((t) => ({ ...t }));
+    unsafe[1].text = "학교는 공식 업무 시간에만 상담이 가능합니다.";
+    assert.throws(
+      () => observer.validateObservedTurns(unsafe),
+      /unsupported_policy_claim/,
+    );
     let system, input;
     gemini.geminiGenerate = async (s, parts) => {
       system = s;

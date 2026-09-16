@@ -185,8 +185,11 @@ export async function aiFetch(
         "search_unavailable",
         "search_not_grounded",
         "search_weak_sources",
+        "search_timeout",
       ].includes(data?.code)
     )
+      return response;
+    if (url === "/api/observe" && data?.code === "observer_policy_claim")
       return response;
     const outage = outageFor(response.status, data)!;
     hold(outage);
