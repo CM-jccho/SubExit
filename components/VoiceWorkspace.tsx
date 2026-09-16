@@ -1,4 +1,5 @@
 "use client";
+import { GardenPractice } from "./PracticeGarden";
 import RecordingAnalysis, { RecordingExamples } from "./RecordingAnalysis";
 import LanguagePicker from "./LanguagePicker";
 import {
@@ -76,7 +77,9 @@ export default function VoiceWorkspace({
   onChooseCard,
   initialCompanion,
   initialSessionId,
+  onRoom,
 }: {
+  onRoom?: () => void;
   initialCard?: ConversationCard;
   mode?: "practice" | "records" | "chat";
   initialCompanion?: CompanionCharacter;
@@ -381,6 +384,11 @@ export default function VoiceWorkspace({
       id: "turn-" + crypto.randomUUID(),
       role: session.kind !== "recording" ? "user" : "recording",
       text: draft.text,
+      unchangedSuggestion: session.turns.some((t) =>
+        t.suggestions?.some(
+          (candidate) => candidate.trim() === draft.text.trim(),
+        ),
+      ),
       clip: draft.clip,
       terms: [],
       createdAt: new Date().toISOString(),
@@ -994,6 +1002,20 @@ export default function VoiceWorkspace({
                 />
               </>
             )}
+          {!session.isSample && session.kind === "practice" && (
+            <GardenPractice
+              key={session.id}
+              session={session}
+              disabled={captureBusy || busy}
+              onSave={persist}
+              onRoom={onRoom}
+              onPractice={async (next) => {
+                await putSession(next);
+                open(next);
+                await refresh();
+              }}
+            />
+          )}
           {session.practicePlan && (
             <aside className="dc-drill-focus">
               <strong>이번에 해볼 한 가지</strong>
