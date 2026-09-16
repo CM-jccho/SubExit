@@ -33,8 +33,17 @@ export async function POST(request: Request) {
     if (d.context !== undefined) {
       try {
         context = parseProfile(d.context);
-      } catch {
-        return json({ error: "저장된 대화 카드를 확인해 주세요." }, 400);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "unknown";
+        return json(
+          {
+            error:
+              msg === "incomplete_context"
+                ? "대화 카드의 목표, 상대, 상황을 모두 입력해 주세요."
+                : "저장된 대화 카드를 확인해 주세요.",
+          },
+          400,
+        );
       }
     }
     if ((!scenario && !context) || !tones.some((t) => t.id === d.tone))

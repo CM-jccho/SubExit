@@ -208,7 +208,7 @@ test("provider rate limits and invalid output stay errors, never fabricated conv
           }),
         )
       ).status,
-      502,
+      500,
     );
   }));
 test("term explanation is explicitly an unverified AI draft", () =>

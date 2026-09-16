@@ -209,7 +209,9 @@ test("Gemini adapter: key header, consent, genuine AI label, quota, evidence", a
           },
         ],
       });
-    assert.equal((await coach.POST(req(data))).status, 502);
+    const invalidEvidence = await coach.POST(req(data));
+    assert.equal(invalidEvidence.status, 500);
+    assert.equal((await invalidEvidence.json()).code, "ungrounded_output");
   } finally {
     global.fetch = fetchBefore;
     for (const k of Object.keys(process.env))
@@ -431,46 +433,48 @@ test("AI context requires consent and returns a reviewable profile; no hidden fa
 });
 
 test("a key alone enables Gemini without exposing the key in public configuration", () => {
-  const before = {...process.env};
-  const {geminiConfig} = require('../lib/gemini.ts');
+  const before = { ...process.env };
+  const { geminiConfig } = require("../lib/gemini.ts");
   try {
     delete process.env.GEMINI_API_KEY;
     delete process.env.COACH_AI_ENABLED;
     delete process.env.COACH_VOICE_ENABLED;
-    assert.equal(geminiConfig().configurationStatus, 'missing_key');
+    assert.equal(geminiConfig().configurationStatus, "missing_key");
     assert.equal(geminiConfig().available, false);
-    process.env.GEMINI_API_KEY = '   ';
-    assert.equal(geminiConfig().configurationStatus, 'missing_key');
-    process.env.GEMINI_API_KEY = 'mock-key-for-config';
+    process.env.GEMINI_API_KEY = "   ";
+    assert.equal(geminiConfig().configurationStatus, "missing_key");
+    process.env.GEMINI_API_KEY = "mock-key-for-config";
     const config = geminiConfig();
     assert.equal(config.available, true);
     assert.equal(config.voiceAvailable, true);
-    assert.equal(config.configurationStatus, 'configured');
-    assert(!JSON.stringify(config).includes('mock-key-for-config'));
+    assert.equal(config.configurationStatus, "configured");
+    assert(!JSON.stringify(config).includes("mock-key-for-config"));
   } finally {
-    for (const k of Object.keys(process.env)) if (!(k in before)) delete process.env[k];
+    for (const k of Object.keys(process.env))
+      if (!(k in before)) delete process.env[k];
     Object.assign(process.env, before);
   }
 });
 
 test("explicit disable switches still stop Gemini calls with a registered key", async () => {
-  const before = {...process.env};
-  const {geminiConfig} = require('../lib/gemini.ts');
+  const before = { ...process.env };
+  const { geminiConfig } = require("../lib/gemini.ts");
   try {
-    process.env.GEMINI_API_KEY = 'mock-key-for-config';
-    process.env.COACH_AI_ENABLED = 'false';
-    process.env.COACH_VOICE_ENABLED = 'true';
-    assert.equal(geminiConfig().configurationStatus, 'disabled');
+    process.env.GEMINI_API_KEY = "mock-key-for-config";
+    process.env.COACH_AI_ENABLED = "false";
+    process.env.COACH_VOICE_ENABLED = "true";
+    assert.equal(geminiConfig().configurationStatus, "disabled");
     assert.equal(geminiConfig().voiceAvailable, false);
     assert.equal((await coach.POST(req(data))).status, 503);
-    process.env.COACH_AI_ENABLED = 'true';
-    process.env.COACH_VOICE_ENABLED = 'false';
+    process.env.COACH_AI_ENABLED = "true";
+    process.env.COACH_VOICE_ENABLED = "false";
     assert.equal(geminiConfig().available, true);
     assert.equal(geminiConfig().voiceAvailable, false);
-    process.env.COACH_AI_ENABLED = 'unrecognized';
+    process.env.COACH_AI_ENABLED = "unrecognized";
     assert.equal(geminiConfig().available, false);
   } finally {
-    for (const k of Object.keys(process.env)) if (!(k in before)) delete process.env[k];
+    for (const k of Object.keys(process.env))
+      if (!(k in before)) delete process.env[k];
     Object.assign(process.env, before);
   }
 });

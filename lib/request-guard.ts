@@ -58,7 +58,13 @@ export function apiError(error: unknown) {
         ? 429
         : code === "not_configured"
           ? 503
-          : 502;
+          : code === "invalid_output" || code === "ungrounded_output"
+            ? 500
+            : code === "empty_output"
+              ? 500
+              : code === "provider_error"
+                ? 502
+                : 502;
   return json(
     {
       error:
@@ -68,7 +74,15 @@ export function apiError(error: unknown) {
             ? "요청 한도에 도달했습니다. 잠시 후 다시 시도해 주세요."
             : status === 503
               ? "AI가 아직 연결되지 않았습니다."
-              : "AI 응답을 받지 못했습니다. 입력을 확인하고 다시 시도해 주세요.",
+              : code === "invalid_output"
+                ? "AI 응답 형식이 올바르지 않습니다. 다시 시도해 주세요."
+                : code === "ungrounded_output"
+                  ? "AI가 적절한 근거를 제시하지 못했습니다. 다시 시도해 주세요."
+                  : code === "empty_output"
+                    ? "AI 응답이 비어 있습니다. 다시 시도해 주세요."
+                    : code === "provider_error"
+                      ? "AI 서비스에 일시적인 문제가 있습니다. 잠시 후 다시 시도해 주세요."
+                      : "AI 응답을 받지 못했습니다. 입력을 확인하고 다시 시도해 주세요.",
       code,
     },
     status,
