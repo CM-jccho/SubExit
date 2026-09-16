@@ -581,9 +581,7 @@ test("workspace navigation preserves section across remount and browser back, an
     await act(async () => ui.root.render(null));
     await act(async () => ui.root.render(React.createElement(C)));
     await settle();
-    assert(
-      document.querySelector("h1").textContent.includes("여기서 연습해요"),
-    );
+    assert(document.querySelector("h1").textContent.includes("여기서 연습해요"));
     await act(async () => {
       window.history.back();
       await new Promise((r) => setTimeout(r, 20));
@@ -1043,4 +1041,299 @@ test("ajit souvenirs open saved reflection, create the same-scene rehearsal and 
     if (ui) await ui.cleanup();
     notebook.readGarden = oldRead;
   }
+});
+
+const daily = require("../lib/daily-talk.ts");
+const prompts = require("../lib/prompt-practice.ts");
+test("daily topics rotate without scores, respect local dayparts and remember only explicit interests", async () => {
+  assert.equal(daily.dailyTopics.length, 15);
+  assert.equal(new Set(daily.dailyTopics.map((t) => t.id)).size, 15);
+  const date = new Date(2026, 8, 16, 8);
+  assert(daily.dailyGreeting(date).includes("아침"));
+  assert(daily.dailyGreeting(new Date(2026, 8, 16, 20)).includes("하루"));
+  const first = daily.dailySelection("everyday", date),
+    next = daily.dailySelection("everyday", date, 1);
+  assert.notDeepEqual(
+    first.map((t) => t.id),
+    next.map((t) => t.id),
+  );
+  assert(
+    daily
+      .dailySelection("everyday", date, 0, ["lunch"])
+      .some((t) => t.id === "lunch"),
+  );
+  for (const t of daily.dailyTopics) {
+    assert.equal(t.choices.length, 3);
+    assert.equal(t.followups.length, 2);
+    assert(t.bridge);
+  }
+  const ui = await mount(() => null);
+  try {
+    assert.deepEqual(daily.readDailyFavorites(), []);
+    daily.saveDailyFavorites(["lunch", "lunch", "invented"]);
+    assert.deepEqual(daily.readDailyFavorites(), ["lunch"]);
+    daily.saveDailyFavorites([]);
+    assert.deepEqual(daily.readDailyFavorites(), []);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("daily AI accepts at most three replies, keeps unrelated history out and validates consent", async () =>
+  ai(async () => {
+    const route = require("../app/api/daily-talk/route.ts");
+    const chars = require("../lib/companions.ts");
+    const companion = chars.resolveCompanion("dundi");
+    let calls = 0;
+    gemini.geminiGenerate = async (system, parts) => {
+      calls++;
+      const payload = JSON.parse(parts[0].text);
+      assert(!("otherHistory" in payload));
+      assert(!("searchContext" in payload));
+      assert(system.includes("점수"));
+      return {
+        reply: "좋아요. 어떤 점이 편한가요?",
+        choices: ["익숙해서요", "가까워서요", "생각 중이에요"],
+      };
+    };
+    const body = {
+      topicId: "lunch",
+      companion,
+      messages: [
+        { role: "assistant", text: "어떤 메뉴가 좋아요?" },
+        { role: "user", text: "익숙한 메뉴요" },
+      ],
+      otherHistory: "절대 보내지 않을 메모",
+      ...consent,
+    };
+    assert.equal(
+      (await route.POST(req({ ...body, consent: false }))).status,
+      400,
+    );
+    assert.equal(
+      (
+        await route.POST(
+          req({
+            ...body,
+            messages: [
+              ...body.messages,
+              ...body.messages,
+              ...body.messages,
+              ...body.messages,
+            ],
+          }),
+        )
+      ).status,
+      400,
+    );
+    assert.equal(calls, 0);
+    const r = await route.POST(req(body));
+    assert.equal(r.status, 200);
+    assert.equal((await r.json()).choices.length, 3);
+    gemini.geminiGenerate = async () => ({
+      reply: "오늘은 여기까지 이야기해요.",
+      choices: [],
+    });
+    const last = await route.POST(
+      req({
+        ...body,
+        messages: [...body.messages, ...body.messages, ...body.messages],
+      }),
+    );
+    assert.equal((await last.json()).completed, true);
+  }));
+test("three prepared daily replies persist and reopen without AI, automatic preference inference or practice rewards", async () => {
+  const C = require("../components/DailyTalk.tsx").default;
+  let calls = 0;
+  const ui = await mount(C, { config, onRecords: () => {} }, () => {
+    global.fetch = async () => {
+      calls++;
+      return Response.json(config);
+    };
+  });
+  try {
+    await settle();
+    await click(document.querySelector(".daily-topic-grid button"));
+    await settle();
+    for (let i = 0; i < 3; i++) {
+      const choice = document.querySelector(".daily-choices button");
+      assert(choice);
+      const text = choice.textContent;
+      await click(choice);
+      const input = document.querySelector(
+        'textarea[aria-label="인식한 말 또는 직접 입력"]',
+      );
+      assert.equal(input.value, text);
+      await change(input, "내가 쓴 일상 답변 " + i);
+      await click(button("한마디 보내기"));
+      await settle();
+    }
+    assert(document.body.textContent.includes("오늘은 이만큼 이야기했어요"));
+    assert(!button("한마디 보내기"));
+    assert.equal(calls, 0);
+    const rows = await store.listSessions();
+    assert.equal(rows.length, 1);
+    assert(rows[0].daily.completed);
+    assert.equal(daily.dailyCount(rows[0]), 3);
+    assert.equal(rows[0].turns.length, 7);
+    assert(
+      rows[0].turns
+        .slice(1)
+        .filter((t) => t.role === "assistant")
+        .every((t) => t.sample),
+    );
+    assert.equal((await store.readGarden()).earned, 0);
+    assert.deepEqual(daily.readDailyFavorites(), []);
+    await click(button("이 주제 다음에도 추천하기"));
+    assert.deepEqual(daily.readDailyFavorites(), [rows[0].daily.topicId]);
+    await act(async () => ui.root.render(null));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(C, {
+          config,
+          initialSession: rows[0],
+          onRecords: () => {},
+        }),
+      ),
+    );
+    await settle();
+    assert(document.body.textContent.includes("내가 쓴 일상 답변 2"));
+    assert.equal(calls, 0);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("daily quota fallback preserves the user's turn and shows a prepared reply with retry information", async () => {
+  const C = require("../components/DailyTalk.tsx").default,
+    chars = require("../lib/companions.ts");
+  const s = daily.createDailySession(
+    daily.dailyTopics[0],
+    chars.resolveCompanion("dundi"),
+  );
+  const ui = await mount(
+    C,
+    { config, initialSession: s, onRecords: () => {} },
+    () => {
+      global.fetch = async () =>
+        Response.json({ quotaKind: "daily", retryAfter: 120 }, { status: 429 });
+    },
+  );
+  try {
+    const checks = [...document.querySelectorAll('input[type="checkbox"]')];
+    await click(checks[0]);
+    await click(document.querySelector(".vn-consent input"));
+    await click(document.querySelector(".daily-choices button"));
+    await click(button("한마디 보내기"));
+    await settle();
+    const saved = (await store.listSessions())[0];
+    assert.equal(saved.turns[1].role, "user");
+    assert.equal(saved.turns[2].sample.outage.reason, "daily");
+    assert(document.body.textContent.includes("일일 한도 초과"));
+    assert(document.body.textContent.includes("사전 작성 샘플"));
+    assert.equal(daily.readDailyFavorites().length, 0);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("prompt execution uses fixed task facts and checks only evidence present in actual output", async () =>
+  ai(async () => {
+    const route = require("../app/api/prompt-practice/route.ts");
+    let calls = 0;
+    gemini.geminiGenerate = async (system, parts) => {
+      calls++;
+      const payload = JSON.parse(parts[0].text);
+      assert.equal(payload.facts, prompts.promptTasks[0].facts);
+      assert(!payload.facts.includes("유출할 비밀"));
+      return {
+        output: "모아: 금요일 초안. 토리: 수요일 오류 공유. 출시일 미정.",
+      };
+    };
+    const body = {
+      taskId: "meeting",
+      prompt: "회의록을 정리해 주세요.",
+      facts: "유출할 비밀",
+      ...consent,
+    };
+    assert.equal(
+      (await route.POST(req({ ...body, consent: false }))).status,
+      400,
+    );
+    assert.equal(calls, 0);
+    const r = await route.POST(req(body));
+    assert.equal(r.status, 200);
+    const d = await r.json();
+    assert(d.checks.every((c) => c.found && d.output.includes(c.evidence)));
+    assert(
+      prompts
+        .inspectPromptOutput(prompts.promptTasks[0], "일을 준비합니다.")
+        .every((c) => !c.found && !c.evidence),
+    );
+  }));
+test("prompt examples never execute or save as AI; chosen conditions require an explicit run and versions survive reopening", async () => {
+  const C = require("../components/PromptPractice.tsx").default;
+  let calls = 0;
+  const ui = await mount(C, { config, onRecords: () => {} }, () => {
+    global.fetch = async (url, init) => {
+      calls++;
+      const d = JSON.parse(init.body);
+      assert.equal(d.taskId, "meeting");
+      return Response.json({
+        output:
+          calls === 1 ? "일을 준비합니다." : prompts.promptTasks[0].sampleAfter,
+        model: "test-model",
+      });
+    };
+  });
+  try {
+    await click(document.querySelector(".daily-topic-grid button"));
+    await click(button("작성된 전후 예시 보기"));
+    assert(
+      document.body.textContent.includes("내 입력을 실행한 결과가 아니에요"),
+    );
+    assert.equal(calls, 0);
+    assert.equal((await store.listSessions()).length, 0);
+    await click(document.querySelector(".vn-consent input"));
+    await click(button("이 요청으로 AI 실행"));
+    await settle();
+    assert.equal(calls, 1);
+    await click(document.querySelector(".daily-choices button"));
+    assert.equal(calls, 1);
+    assert(
+      document.querySelector("textarea").value.includes("담당자·할 일·기한"),
+    );
+    await click(button("수정한 요청 실행"));
+    await settle();
+    const s = (await store.listSessions())[0];
+    assert.equal(s.promptPractice.attempts.length, 2);
+    assert.equal(s.promptPractice.attempts[0].output, "일을 준비합니다.");
+    assert.equal(s.promptPractice.attempts[1].model, "test-model");
+    assert.equal((await store.readGarden()).earned, 0);
+    await act(async () => ui.root.render(null));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(C, {
+          config,
+          initialSession: s,
+          onRecords: () => {},
+        }),
+      ),
+    );
+    assert(document.body.textContent.includes("처음 요청의 결과"));
+    assert(document.body.textContent.includes("수정한 요청의 결과"));
+    assert.equal(calls, 2);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("daily and prompt deep links round-trip while retaining their parent navigation", () => {
+  const nav = require("../lib/workspace-navigation.ts");
+  for (const v of ["daily", "prompts"]) {
+    assert.equal(
+      nav.workspaceView(
+        nav.workspaceUrl("https://test.local", v).split("?")[1],
+      ),
+      v,
+    );
+  }
+  assert.equal(nav.workspaceSection("daily"), "home");
+  assert.equal(nav.workspaceSection("prompts"), "library");
 });

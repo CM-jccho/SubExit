@@ -1,5 +1,6 @@
 "use client";
 import StickyPageTop from "./StickyPageTop";
+import { DailyInvite } from "./DailyTalk";
 import PersonaObserver from "./PersonaObserver";
 import PracticeGarden from "./PracticeGarden";
 import PracticalScenes from "./PracticalScenes";
@@ -361,7 +362,9 @@ export default function CompanionRoom({
   onChat,
   onSession,
   onCards,
+  onDaily,
 }: {
+  onDaily?: (c: CompanionCharacter) => void;
   config: AIConfig;
   onPractice: (card: ConversationCard) => void;
   saved: CompanionCharacter[];
@@ -431,6 +434,9 @@ export default function CompanionRoom({
           친구 만들기
         </button>
       </StickyPageTop>
+      {onDaily && (
+        <DailyInvite character={selected} onClick={() => onDaily(selected)} />
+      )}
       <p className="dc-room-intro">
         친구를 누르면 대화 카드가 바로 열려요. 지난 이야기부터 이어가도 좋아요.
       </p>

@@ -1,4 +1,6 @@
 "use client";
+import DailyTalk from "./DailyTalk";
+import PromptPractice from "./PromptPractice";
 import ConsentDisclosure from "./ConsentDisclosure";
 import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
@@ -566,7 +568,7 @@ export default function ConversationWorkspace() {
       ? resolveCompanion(companionChoice, profile, companions)
       : ["detail", "live", "voicePractice"].includes(view) && active
         ? resolveCompanion(active.companion, active, companions)
-        : view === "friendChat" && chatCharacter
+        : ["friendChat", "daily"].includes(view) && chatCharacter
           ? chatCharacter
           : resolveCompanion("dundi", undefined, companions);
   if (!ready)
@@ -634,6 +636,28 @@ export default function ConversationWorkspace() {
                 {toast}
               </p>
             )}
+            {["library", "prompts"].includes(view) && (
+              <div className="daily-tabs" role="group" aria-label="연습 종류">
+                <button
+                  aria-pressed={view === "library"}
+                  onClick={() => navigate("library")}
+                >
+                  사람과 대화 연습
+                </button>
+                <button
+                  aria-pressed={view === "prompts"}
+                  onClick={() => navigate("prompts")}
+                >
+                  AI에게 요청하기
+                </button>
+              </div>
+            )}
+            {view === "prompts" && (
+              <PromptPractice
+                config={config}
+                onRecords={() => navigate("records")}
+              />
+            )}
             {view === "home" && (
               <>
                 <section className="dc-welcome">
@@ -643,20 +667,29 @@ export default function ConversationWorkspace() {
                     </p>
                     <h1>
                       어려운 한마디,
-                      <br />
-                      여기서 연습해요.
+                      <br />여기서 연습해요.
                     </h1>
                     <p className="dc-welcome-desc">
-                      상대와 말해보고, 실제로 한 말을 돌아보며
-                      <br className="dc-mobile-break" /> 다음 대화를 준비해요.
+                      상대와 말해보고, 실제로 한 말을 돌아보며 다음 대화를 준비해요.
+                      <br className="dc-mobile-break" /> 가벼운 일상 이야기로 시작해도 좋아요.
                     </p>
-                    <button
-                      className="dd-primary"
-                      onClick={() => navigate("library")}
-                    >
-                      대화 연습 시작
-                      <Icon name="arrow" size={20} />
-                    </button>
+                    <div className="daily-home-starts">
+                      <button
+                        className="dd-primary"
+                        onClick={() => navigate("library")}
+                      >
+                        대화 연습 시작 <Icon name="arrow" size={20} />
+                      </button>
+                      <button
+                        className="dd-secondary"
+                        onClick={() => {
+                          setChatCharacter(undefined);
+                          navigate("daily");
+                        }}
+                      >
+                        가볍게 이야기하기 <Icon name="chat" size={20} />
+                      </button>
+                    </div>
                     <button
                       className="dd-link dc-own-situation"
                       onClick={() => start()}
@@ -801,8 +834,19 @@ export default function ConversationWorkspace() {
                 </p>
               </>
             )}
+            {view === "daily" && (
+              <DailyTalk
+                config={config}
+                character={chatCharacter}
+                onRecords={() => navigate("records")}
+              />
+            )}
             {view === "room" && (
               <CompanionRoom
+                onDaily={(c) => {
+                  setChatCharacter(c);
+                  navigate("daily");
+                }}
                 config={config}
                 onPractice={(card) => {
                   setActive(card);

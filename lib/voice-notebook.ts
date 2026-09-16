@@ -32,6 +32,19 @@ export type VoiceTurn = {
   suggestionsSample?: SampleMeta;
 };
 export type VoiceSession = {
+  promptPractice?: {
+    version: 1;
+    taskId: string;
+    attempts: import("./prompt-practice").PromptVersion[];
+  };
+  daily?: {
+    version: 1;
+    topicId: string;
+    completed: boolean;
+    bridge: string;
+    reflection?: { turnId: string; original: string; rewrite: string };
+    search?: import("./trend-search").TrendResult;
+  };
   gardenReflection?: { turnId: string; original: string; rewrite: string };
   gardenRootId?: string;
   gardenRetryOriginal?: string;
