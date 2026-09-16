@@ -128,7 +128,9 @@ const click = async (b) => {
 test("finishing a live recording transcribes it instead of discarding it, with completion guidance", async () => {
   const ui = await mount(LiveCoach, { onBack: () => {}, onDemo: () => {} });
   try {
-    for (const c of document.querySelectorAll("input[type=checkbox]"))
+    for (const c of document.querySelectorAll(
+      ".vn-consent input, .dc-permissions input",
+    ))
       await click(c);
     await click(button("이 설정으로 시작"));
     let requested = 0,
@@ -171,7 +173,8 @@ test("voice recognition failure preserves captured audio and provides retry guid
       Response.json({ error: "요청 한도에 도달했어요." }, { status: 429 });
     await click(button("눌러서 말하기"));
     await click(button("녹음 끝내기"));
-    assert(document.body.textContent.includes("요청 한도"));
+    assert(document.body.textContent.includes("한도 초과"));
+    require("../lib/ai-client.ts").readAIHold(Date.now() + 61000);
     assert(button("음성 재생"));
     assert(button("문자로 바꾸기"));
     assert(document.body.textContent.includes("녹음은 남아 있어요"));
@@ -255,7 +258,9 @@ test("AI review persists, reopens without another generation, and starts a drill
     calls = 0;
   try {
     await settle();
-    for (const c of document.querySelectorAll("input[type=checkbox]"))
+    for (const c of document.querySelectorAll(
+      ".vn-consent input, .dc-permissions input",
+    ))
       await click(c);
     global.fetch = async (url) => {
       calls++;
@@ -308,6 +313,191 @@ test("AI review persists, reopens without another generation, and starts a drill
     assert.equal(drill.context.boundaries, session.context.boundaries);
     assert.equal(drill.turns.at(-1).text, session.turns[2].text);
     assert(document.body.textContent.includes("이번에 해볼 한 가지"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("consent collapses after checking, can be reopened and revoked without persisting authorization", async () => {
+  const Consent = require("../components/VoiceComposer.tsx").AIConsent;
+  function Example() {
+    const [checked, setChecked] = React.useState(false);
+    return React.createElement(Consent, {
+      config,
+      checked,
+      onChange: setChecked,
+    });
+  }
+  let ui = await mount(Example);
+  try {
+    await click(document.querySelector(".vn-consent input"));
+    assert.equal(document.querySelector(".vn-consent input"), null);
+    assert(document.body.textContent.includes("AI 전송 동의 완료"));
+    await click(button("내용 보기"));
+    assert.equal(document.querySelector(".vn-consent input").checked, true);
+    await click(button("동의 철회"));
+    assert.equal(document.querySelector(".vn-consent input").checked, false);
+  } finally {
+    await ui.cleanup();
+  }
+  ui = await mount(Example);
+  try {
+    assert.equal(document.querySelector(".vn-consent input").checked, false);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+const settleNotebook = async () => {
+  for (let i = 0; i < 4; i++)
+    await act(async () => new Promise((r) => setTimeout(r, 10)));
+};
+test("quota fallback preserves labels and candidate provenance after continuing and reopening a conversation", async () => {
+  global.indexedDB = new (require("fake-indexeddb").IDBFactory)();
+  const store = require("../lib/voice-notebook.ts");
+  const card = require("../lib/starter-data.ts").starterCards[0];
+  const Workspace = require("../components/VoiceWorkspace.tsx").default;
+  let calls = 0,
+    savedId;
+  let ui = await mount(Workspace, {
+    mode: "practice",
+    initialCard: card,
+    config,
+    onChooseCard: () => {},
+  });
+  try {
+    await click(document.querySelector(".vn-consent input"));
+    global.fetch = async () => {
+      calls++;
+      return Response.json(
+        { code: "provider_rate_limit", quotaKind: "daily", retryAfter: 30 },
+        { status: 429 },
+      );
+    };
+    await click(button("상대와 연습 시작"));
+    await settleNotebook();
+    assert(
+      document.body.textContent.includes("사전 작성 샘플 · 일일 한도 초과"),
+    );
+    assert(document.body.textContent.includes("초기화 예정"));
+    let saved = (await store.listSessions())[0];
+    savedId = saved.id;
+    assert.equal(saved.turns[0].sample.outage.reason, "daily");
+    await click(button("내 목표에 맞는 답변 후보 3개 보기"));
+    await settleNotebook();
+    assert.equal(document.querySelectorAll(".vn-choice-list button").length, 3);
+    await click(document.querySelector(".vn-choice-list button"));
+    assert(document.querySelector("textarea").value.trim());
+    await click(button("내 답변 보내기"));
+    await settleNotebook();
+    saved = await store.getSession(savedId);
+    assert.equal(saved.turns.length, 3);
+    assert.equal(saved.turns[0].suggestionsSample.source, "sample");
+    assert.equal(saved.turns[1].role, "user");
+    assert.equal(saved.turns[2].sample.source, "sample");
+    assert.equal(calls, 1);
+  } finally {
+    await ui.cleanup();
+  }
+  ui = await mount(Workspace, {
+    initialSessionId: savedId,
+    config,
+    onChooseCard: () => {},
+  });
+  try {
+    await settleNotebook();
+    assert.equal(
+      document.querySelectorAll(".vn-turn.assistant .dc-sample-notice").length,
+      2,
+    );
+    assert(document.body.textContent.includes("일일 한도 초과"));
+    assert((await store.getSession(savedId)).turns[2].sample.sampleId);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("review outage offers a separate fictional example without saving fabricated review results", async () => {
+  global.indexedDB = new (require("fake-indexeddb").IDBFactory)();
+  const store = require("../lib/voice-notebook.ts"),
+    samples = require("../lib/starter-data.ts");
+  const current = {
+    ...samples.starterSession,
+    id: "outage-review",
+    isSample: false,
+  };
+  await store.putSession(current);
+  const Workspace = require("../components/VoiceWorkspace.tsx").default;
+  const ui = await mount(Workspace, {
+    initialSessionId: current.id,
+    config,
+    onChooseCard: () => {},
+  });
+  try {
+    await settleNotebook();
+    await click(document.querySelector(".vn-consent input"));
+    global.fetch = async () =>
+      Response.json(
+        { code: "provider_rate_limit", quotaKind: "daily" },
+        { status: 429 },
+      );
+    await click(button("AI로 이 대화 복기하기"));
+    await settleNotebook();
+    assert(document.body.textContent.includes("가상 대화의 복기 예시 보기"));
+    assert.equal((await store.getSession(current.id)).review, undefined);
+    assert.equal(button("이 장면부터 다시 연습"), undefined);
+    assert.deepEqual((await store.getSession(current.id)).turns, current.turns);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("leaving a conversation during a failed request never saves a fallback into another record", async () => {
+  global.indexedDB = new (require("fake-indexeddb").IDBFactory)();
+  const store = require("../lib/voice-notebook.ts"),
+    card = require("../lib/starter-data.ts").starterCards[0];
+  const Workspace = require("../components/VoiceWorkspace.tsx").default;
+  const ui = await mount(Workspace, {
+    mode: "practice",
+    initialCard: card,
+    config,
+    onChooseCard: () => {},
+  });
+  let finish;
+  try {
+    await click(document.querySelector(".vn-consent input"));
+    global.fetch = () => new Promise((r) => (finish = r));
+    await click(button("상대와 연습 시작"));
+    await click(button("음성 기록 목록"));
+    await act(async () =>
+      finish(Response.json({ code: "provider_error" }, { status: 502 })),
+    );
+    await settleNotebook();
+    assert.equal((await store.listSessions()).length, 0);
+    assert.equal(document.querySelector(".vn-turn"), null);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("live hint sample mode uses the existing transcript without another AI call or invented evidence", async () => {
+  const ui = await mount(LiveCoach, { onBack: () => {}, onDemo: () => {} });
+  let calls = 0;
+  try {
+    for (const c of document.querySelectorAll(".dc-permissions input"))
+      await click(c);
+    await click(button("이 설정으로 시작"));
+    global.fetch = async () => {
+      calls++;
+      return Response.json({ text: "가능한 조건부터 확인하고 싶어요." });
+    };
+    await click(button("상대 말 8초 듣기"));
+    await click(button("녹음 끝내고 음성 인식"));
+    assert.equal(calls, 1);
+    await click(document.querySelector(".dc-sample-switch input"));
+    await click(button("답변 힌트 받기"));
+    assert.equal(calls, 1);
+    assert(document.querySelector(".dc-answer-panel .dc-sample-notice"));
+    assert.equal(document.querySelector(".dc-evidence"), null);
+    assert(document.body.textContent.includes("샘플 모드"));
   } finally {
     await ui.cleanup();
   }

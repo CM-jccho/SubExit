@@ -1,3 +1,4 @@
+import type { SampleMeta } from "./demo-bank";
 export type CoachOutput = {
   pattern: string;
   evidence: string;
@@ -6,7 +7,8 @@ export type CoachOutput = {
   feedback: string;
 };
 export type CoachResponse = CoachOutput & {
-  source: "ai";
+  source: "ai" | "sample";
+  sample?: SampleMeta;
   provider: string;
   model: string;
   latencyMs: number;

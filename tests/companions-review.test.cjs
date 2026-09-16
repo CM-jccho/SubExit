@@ -167,7 +167,12 @@ test("quota classification uses provider evidence, prefers daily limit and never
   const r = apiError(e),
     d = await r.json();
   assert.equal(r.status, 429);
-  assert.equal(r.headers.get("Retry-After"), "50");
+  assert.equal(Number(r.headers.get("Retry-After")), d.retryAfter);
+  assert(d.retryAfter > 0);
+  assert(Number.isFinite(Date.parse(d.retryAt)));
+  assert(
+    Math.abs(Date.parse(d.retryAt) - Date.now() - d.retryAfter * 1000) < 2000,
+  );
   assert(!JSON.stringify(d).includes("PRIVATE"));
   assert(d.error.includes("자정"));
   assert.equal(quota.parseQuota({}, null).kind, "unknown");

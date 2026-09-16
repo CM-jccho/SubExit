@@ -4,6 +4,16 @@ import {
   reviewDrill,
   type PracticeReview,
 } from "@/lib/practice-review";
+import SampleNotice, { SampleSwitch, ReviewExample } from "./SampleNotice";
+import { sampledRequest } from "@/lib/resilient-ai";
+import {
+  aiFetch,
+  AIServiceError,
+  connectionOutage,
+  manualSample,
+  outageMessage,
+  type AIOutage,
+} from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
 import { CompanionProvider, useCompanion } from "./CompanionTheme";
@@ -77,6 +87,8 @@ export default function VoiceWorkspace({
     ),
     [sessions, setSessions] = useState<VoiceSession[]>([]),
     [consent, setConsent] = useState(false),
+    [sampleMode, setSampleMode] = useState(false),
+    [reviewOutage, setReviewOutage] = useState<AIOutage | null>(null),
     [busy, setBusy] = useState(false),
     [captureBusy, setCaptureBusy] = useState(false),
     [error, setError] = useState(""),
@@ -150,7 +162,9 @@ export default function VoiceWorkspace({
       return;
     }
     stopAudio();
-    const utterance = new SpeechSynthesisUtterance(turn.text);
+    const utterance = new SpeechSynthesisUtterance(
+      (turn.sample ? "사전 작성 샘플입니다. " : "") + turn.text,
+    );
     utterance.lang = "ko-KR";
     utterance.rate = 0.98;
     const voice = speechSynthesis
@@ -191,10 +205,12 @@ export default function VoiceWorkspace({
     setError("");
     setNotice("");
     setSession(s);
+    if (s?.kind === "recording") setSampleMode(false);
+    setReviewOutage(null);
     window.scrollTo({ top: 0 });
   }
   async function respond(current: VoiceSession) {
-    if (!consent || !config.available || busy) return;
+    if ((!sampleMode && (!consent || !config.available)) || busy) return;
     if (!current.title.trim()) {
       setError("기록 이름을 입력해 주세요.");
       return;
@@ -213,11 +229,21 @@ export default function VoiceWorkspace({
     setNotice("");
     const timeout = setTimeout(() => c.abort(), 25000);
     try {
-      const r = await fetch(
-        current.kind === "chat" ? "/api/companion" : "/api/roleplay",
-        {
+      const d = await sampledRequest({
+        operation: current.kind === "chat" ? "companion" : "partner",
+        context:
+          current.kind === "chat"
+            ? current.turns.at(-1)?.text || current.companion?.specialty || ""
+            : current.context?.situation || "",
+        previous: current.turns
+          .filter((t) => t.role === "assistant")
+          .map((t) => t.text),
+        manual: sampleMode,
+        url: current.kind === "chat" ? "/api/companion" : "/api/roleplay",
+        init: {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: c.signal,
           body: JSON.stringify({
             context: current.context,
             ...(current.kind === "chat"
@@ -232,18 +258,16 @@ export default function VoiceWorkspace({
             adultConsent: consent,
             sampleConsent: consent,
           }),
-          signal: c.signal,
         },
-      );
-      const d = await r.json();
+      });
       if (generation.current !== id) return;
-      if (!r.ok) throw new Error(d.error || "상대의 답변을 받지 못했어요.");
       const turn: VoiceTurn = {
         id: "turn-" + crypto.randomUUID(),
         role: "assistant",
         text: d.reply,
         terms: d.terms || [],
         suggestions: d.suggestions || [],
+        ...(d.sample ? { sample: d.sample } : {}),
         createdAt: new Date().toISOString(),
       };
       await persist({
@@ -267,7 +291,12 @@ export default function VoiceWorkspace({
     }
   }
   async function reviewPractice() {
-    if (!session?.context || busy || !consent) return;
+    if (!session?.context || busy || (!sampleMode && !consent)) return;
+    if (sampleMode) {
+      setReviewOutage(manualSample());
+      return;
+    }
+    setReviewOutage(null);
     const id = ++generation.current,
       c = new AbortController();
     abort.current = c;
@@ -275,7 +304,7 @@ export default function VoiceWorkspace({
     setError("");
     const timeout = setTimeout(() => c.abort(), 25000);
     try {
-      const r = await fetch("/api/review", {
+      const r = await aiFetch("/api/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal: c.signal,
@@ -299,14 +328,16 @@ export default function VoiceWorkspace({
         "내 말에서 찾은 복기를 저장했어요. 같은 장면을 다시 연습해 볼까요?",
       );
     } catch (e) {
-      if (generation.current === id)
-        setError(
-          e instanceof Error && e.name === "AbortError"
-            ? "복기가 지연됐어요. 대화 기록은 그대로 남아 있어요."
-            : e instanceof Error
-              ? e.message
-              : "복기하지 못했어요.",
-        );
+      if (generation.current === id) {
+        const outage =
+          e instanceof AIServiceError
+            ? e.outage
+            : e instanceof Error && e.name === "AbortError"
+              ? connectionOutage()
+              : null;
+        if (outage) setReviewOutage(outage);
+        else setError(e instanceof Error ? e.message : "복기하지 못했어요.");
+      }
     } finally {
       clearTimeout(timeout);
       if (generation.current === id) setBusy(false);
@@ -353,7 +384,7 @@ export default function VoiceWorkspace({
     abort.current = c;
     const timeout = setTimeout(() => c.abort(), 25000);
     try {
-      const r = await fetch("/api/terms", {
+      const r = await aiFetch("/api/terms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -396,7 +427,7 @@ export default function VoiceWorkspace({
     }
   }
   async function suggestReplies() {
-    if (!session || busy || !consent) return;
+    if (!session || busy || (!sampleMode && !consent)) return;
     const id = ++generation.current,
       c = new AbortController();
     abort.current = c;
@@ -404,28 +435,36 @@ export default function VoiceWorkspace({
     setError("");
     const timeout = setTimeout(() => c.abort(), 25000);
     try {
-      const r = await fetch("/api/roleplay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "suggest",
-          context: session.context,
-          industry: session.industry,
-          messages: session.turns.map((t) => ({ role: t.role, text: t.text })),
-          consent,
-          adultConsent: consent,
-          sampleConsent: consent,
-        }),
-        signal: c.signal,
+      const d = await sampledRequest({
+        operation: "suggestions",
+        context: session.context?.situation || "",
+        previous: session.turns.at(-1)?.suggestions || [],
+        manual: sampleMode,
+        url: "/api/roleplay",
+        init: {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: c.signal,
+          body: JSON.stringify({
+            action: "suggest",
+            context: session.context,
+            industry: session.industry,
+            messages: session.turns.map((t) => ({
+              role: t.role,
+              text: t.text,
+            })),
+            consent,
+            adultConsent: consent,
+            sampleConsent: consent,
+          }),
+        },
       });
-      const d = await r.json();
       if (generation.current !== id) return;
-      if (!r.ok) throw new Error(d.error);
       await persist({
         ...session,
         turns: session.turns.map((t, i) =>
           i === session.turns.length - 1
-            ? { ...t, suggestions: d.suggestions }
+            ? { ...t, suggestions: d.suggestions, suggestionsSample: d.sample }
             : t,
         ),
         updatedAt: new Date().toISOString(),
@@ -458,7 +497,7 @@ export default function VoiceWorkspace({
       form.append("consent", String(consent));
       form.append("adultConsent", String(consent));
       form.append("sampleConsent", String(consent));
-      const r = await fetch("/api/transcribe", {
+      const r = await aiFetch("/api/transcribe", {
         method: "POST",
         body: form,
         signal: c.signal,
@@ -516,6 +555,10 @@ export default function VoiceWorkspace({
       setError("용어 노트를 열지 못했어요. 저장 권한을 확인해 주세요.");
     }
   }
+  const canTalk = sampleMode || (consent && config.available);
+  const sampleConfig = sampleMode
+    ? { ...config, available: false, voiceAvailable: false }
+    : config;
   const pending =
     session &&
     session.kind !== "recording" &&
@@ -724,14 +767,26 @@ export default function VoiceWorkspace({
               해당 입력을 Google Gemini에 전송해요.
             </p>
           </details>
-          {!session.isSample && (
-            <AIConsent
-              config={config}
-              checked={consent}
-              onChange={setConsent}
+          {!session.isSample && session.kind !== "recording" && (
+            <SampleSwitch
+              checked={sampleMode}
               disabled={busy || captureBusy}
+              onChange={(v) => {
+                setSampleMode(v);
+                setReviewOutage(null);
+                setError("");
+              }}
             />
           )}
+          {!session.isSample &&
+            (!sampleMode || session.kind === "recording") && (
+              <AIConsent
+                config={config}
+                checked={consent}
+                onChange={setConsent}
+                disabled={busy || captureBusy}
+              />
+            )}
           {session.isSample && (
             <button
               className="dd-primary"
@@ -766,7 +821,7 @@ export default function VoiceWorkspace({
               />
               <button
                 className="dd-primary dd-full"
-                disabled={!consent || !config.available || busy}
+                disabled={!canTalk || busy}
                 onClick={() => void respond(session)}
               >
                 {session.kind === "chat"
@@ -788,7 +843,11 @@ export default function VoiceWorkspace({
                       : t.role === "user"
                         ? "나"
                         : "녹음 " + (i + 1)}
-                    {t.role === "assistant" && <small>AI</small>}
+                    {t.role === "assistant" && (
+                      <small>
+                        {t.sample || session.isSample ? "샘플" : "AI"}
+                      </small>
+                    )}
                   </span>
                   <time>
                     {new Date(t.createdAt).toLocaleTimeString("ko-KR", {
@@ -797,6 +856,12 @@ export default function VoiceWorkspace({
                     })}
                   </time>
                 </div>
+                {t.sample && (
+                  <SampleNotice
+                    sample={t.sample}
+                    compact={i < session.turns.length - 1}
+                  />
+                )}
                 {t.clip && <AudioPlayer clip={t.clip} />}
                 {t.text ? (
                   <TermText
@@ -839,7 +904,7 @@ export default function VoiceWorkspace({
                         <button
                           className="dd-link"
                           disabled={
-                            busy || captureBusy || !consent || !config.available
+                            busy || captureBusy || !canTalk || sampleMode
                           }
                           onClick={() => void extract(t)}
                         >
@@ -873,9 +938,21 @@ export default function VoiceWorkspace({
             session.kind === "practice" &&
             session.turns.filter((t) => t.role === "user").length >= 2 && (
               <section className="dc-review">
+                {reviewOutage && (
+                  <ReviewExample
+                    context={session.context?.situation || ""}
+                    outage={reviewOutage}
+                  />
+                )}
                 <div className="vn-toolbar">
                   <h2>내 대화 복기</h2>
-                  <span>AI 분석 · 이 기기에 저장</span>
+                  <span>
+                    {currentReview
+                      ? "저장된 AI 복기"
+                      : sampleMode
+                        ? "사전 작성 예시"
+                        : "AI 분석 · 이 기기에 저장"}
+                  </span>
                 </div>
                 {currentReview ? (
                   <>
@@ -916,14 +993,14 @@ export default function VoiceWorkspace({
                     </p>
                     <button
                       className="dd-secondary"
-                      disabled={
-                        busy || captureBusy || !consent || !config.available
-                      }
+                      disabled={busy || captureBusy || !canTalk}
                       onClick={() => void reviewPractice()}
                     >
-                      {session.review
-                        ? "이어진 대화까지 다시 복기"
-                        : "AI로 이 대화 복기하기"}
+                      {sampleMode
+                        ? "가상 대화의 복기 예시 보기"
+                        : session.review
+                          ? "이어진 대화까지 다시 복기"
+                          : "AI로 이 대화 복기하기"}
                     </button>
                     <small>
                       이 대화의 문자와 카드 설정을 전송해요. 음성 파일과 다른
@@ -948,7 +1025,7 @@ export default function VoiceWorkspace({
           {!session.isSample && pending && !busy && !complete && (
             <button
               className="dd-secondary dd-full"
-              disabled={!consent || !config.available}
+              disabled={!canTalk}
               onClick={() => void respond(session)}
             >
               상대 답변 다시 받기
@@ -968,7 +1045,7 @@ export default function VoiceWorkspace({
             !session.turns.at(-1)?.suggestions?.length && (
               <button
                 className="vn-get-choices dd-secondary dd-full"
-                disabled={busy || captureBusy || !consent || !config.available}
+                disabled={busy || captureBusy || !canTalk}
                 onClick={() => void suggestReplies()}
               >
                 <Icon name="chat" size={18} />내 목표에 맞는 답변 후보 3개 보기
@@ -988,6 +1065,11 @@ export default function VoiceWorkspace({
                   하나를 골라 내 말로 바꿔보세요. 고르는 것만으로 전송되지는
                   않아요.
                 </p>
+                {session.turns.at(-1)?.suggestionsSample && (
+                  <SampleNotice
+                    sample={session.turns.at(-1)!.suggestionsSample!}
+                  />
+                )}
                 <div className="vn-choice-list">
                   {session.turns.at(-1)!.suggestions!.map((s, i) => (
                     <button
@@ -1013,13 +1095,11 @@ export default function VoiceWorkspace({
               (session.turns.length > 0 && !pending && !complete)) && (
               <VoiceComposer
                 key={session.id}
-                config={config}
-                consent={consent}
-                disabled={
-                  busy ||
-                  (session.kind !== "recording" &&
-                    (!consent || !config.available))
+                config={session.kind === "recording" ? config : sampleConfig}
+                consent={
+                  sampleMode && session.kind !== "recording" ? false : consent
                 }
+                disabled={busy || (session.kind !== "recording" && !canTalk)}
                 requireText={session.kind !== "recording"}
                 submitLabel={
                   session.kind !== "recording"
@@ -1043,7 +1123,7 @@ export default function VoiceWorkspace({
                           session.turns
                             .map(
                               (t) =>
-                                `**${t.role === "assistant" ? (session.kind === "chat" ? sessionCharacter.name : session.context?.partner) || "AI 연습 상대" : t.role === "user" ? "나" : "녹음"}**\n\n${t.text || "(문자 변환 없는 음성)"}\n`,
+                                `**${t.role === "assistant" ? (session.kind === "chat" ? sessionCharacter.name : session.context?.partner) || "AI 연습 상대" : t.role === "user" ? "나" : "녹음"}**\n\n${t.sample ? "[사전 작성 샘플 · " + t.sample.topic + "] " + outageMessage(t.sample.outage) + "\n\n" : ""}${t.text || "(문자 변환 없는 음성)"}\n`,
                             )
                             .join("\n"),
                       ],
@@ -1112,7 +1192,7 @@ export default function VoiceWorkspace({
         <TermEditor
           key={seed.note?.id || seed.term}
           seed={seed}
-          config={config}
+          config={session?.kind === "recording" ? config : sampleConfig}
           onClose={() => setSeed(null)}
           onSaved={() => setNotice("우리 일의 말을 용어 노트에 저장했어요.")}
         />

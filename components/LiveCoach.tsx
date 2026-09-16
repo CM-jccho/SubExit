@@ -1,4 +1,8 @@
 "use client";
+import ConsentDisclosure from "./ConsentDisclosure";
+import SampleNotice, { SampleSwitch } from "./SampleNotice";
+import { sampledRequest } from "@/lib/resilient-ai";
+import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
 import AudioPlayer, { inspectAudio } from "./AudioPlayer";
@@ -30,7 +34,8 @@ export default function LiveCoach({
   const [consent, setConsent] = useState(false),
     [adult, setAdult] = useState(false),
     [sample, setSample] = useState(false),
-    [automatic, setAutomatic] = useState(false);
+    [automatic, setAutomatic] = useState(false),
+    [sampleMode, setSampleMode] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle"),
     [seconds, setSeconds] = useState(0),
     [input, setInput] = useState(""),
@@ -41,6 +46,7 @@ export default function LiveCoach({
   const [prepared, setPrepared] = useState(false),
     [inputMode, setInputMode] = useState<"voice" | "text">("voice"),
     [copied, setCopied] = useState(false);
+  const sampleHistory = useRef<string[]>([]);
   const version = useRef(0),
     busy = useRef(false),
     recorder = useRef<MediaRecorder | null>(null),
@@ -107,7 +113,7 @@ export default function LiveCoach({
     request.current = abort;
     const timeout = setTimeout(() => abort.abort(), 25000);
     try {
-      const r = await fetch(url, {
+      const r = await aiFetch(url, {
         method: "POST",
         headers,
         body,
@@ -122,7 +128,11 @@ export default function LiveCoach({
     }
   }
   async function coach(text: string, id = ++version.current) {
-    if (!allowed || !config.available || text.trim().length < 2) return;
+    if (
+      (!sampleMode && (!allowed || !config.available)) ||
+      text.trim().length < 2
+    )
+      return;
     busy.current = true;
     setPhase("coaching");
     setNotice("인식한 말을 바탕으로 답변 힌트를 준비하고 있어요.");
@@ -130,25 +140,52 @@ export default function LiveCoach({
     setResult(null);
     setCopied(false);
     try {
-      const data = await call(
-        "/api/coach",
-        JSON.stringify({
-          mode: "ai",
-          scenario,
-          context: profile,
-          tone,
-          opponent: text,
-          reply: "",
-          consent,
-          adultConsent: adult,
-          sampleConsent: sample,
-        }),
-        id,
-        { "Content-Type": "application/json" },
-      );
+      const abort = new AbortController();
+      request.current = abort;
+      const timeout = setTimeout(() => abort.abort(), 25000);
+      let data;
+      try {
+        data = await sampledRequest({
+          operation: "coach",
+          context:
+            profile?.situation ||
+            scenarios.find((s) => s.id === scenario)?.title ||
+            text,
+          previous: sampleHistory.current,
+          manual: sampleMode,
+          url: "/api/coach",
+          init: {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: abort.signal,
+            body: JSON.stringify({
+              mode: "ai",
+              scenario,
+              context: profile,
+              tone,
+              opponent: text,
+              reply: "",
+              consent,
+              adultConsent: adult,
+              sampleConsent: sample,
+            }),
+          },
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
       if (version.current === id) {
         setResult(data);
-        setNotice("답변 힌트가 준비됐어요. 내 상황에 맞게 활용해 보세요.");
+        if (data.sample)
+          sampleHistory.current = [
+            ...sampleHistory.current.slice(-11),
+            data.suggestion,
+          ];
+        setNotice(
+          data.sample
+            ? "사전 작성한 샘플 문장을 보여드려요. 현재 상황에 맞게 고쳐보세요."
+            : "답변 힌트가 준비됐어요. 내 상황에 맞게 활용해 보세요.",
+        );
       }
     } catch (e) {
       if (version.current === id)
@@ -167,7 +204,8 @@ export default function LiveCoach({
     }
   }
   async function listen() {
-    if (busy.current || !allowed || !config.voiceAvailable) return;
+    if (busy.current || sampleMode || !allowed || !config.voiceAvailable)
+      return;
     const id = ++version.current;
     busy.current = true;
     setPhase("permission");
@@ -271,6 +309,7 @@ export default function LiveCoach({
     }
   }
   async function transcribeBlob(blob: Blob, id = ++version.current) {
+    if (sampleMode || !allowed || !config.voiceAvailable) return;
     busy.current = true;
     setPhase("transcribing");
     setError("");
@@ -400,44 +439,53 @@ export default function LiveCoach({
               최대 8초씩 듣고, 처리 중에는 마이크가 꺼져요.
             </p>
           </div>
-          <fieldset className="dc-permissions">
-            <legend>전송 전 확인해 주세요</legend>
-            <p>
-              음성과 문장을 Google Gemini로 전송해요. 앱 서버는 대화 원문을
-              저장하지 않아요.
-            </p>
-            <label className="dd-check">
-              <input
-                type="checkbox"
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
-              />
-              대화 참여자에게 알리고 전송 동의를 받았어요.
-            </label>
-            <label className="dd-check">
-              <input
-                type="checkbox"
-                checked={adult}
-                onChange={(e) => setAdult(e.target.checked)}
-              />
-              만 18세 이상입니다.
-            </label>
-            {config.sampleOnly && (
+          <ConsentDisclosure
+            complete={allowed}
+            onRevoke={() => {
+              setConsent(false);
+              setAdult(false);
+              setSample(false);
+            }}
+          >
+            <fieldset className="dc-permissions">
+              <legend>전송 전 확인해 주세요</legend>
+              <p>
+                음성과 문장을 Google Gemini로 전송해요. 앱 서버는 대화 원문을
+                저장하지 않아요.
+              </p>
               <label className="dd-check">
                 <input
                   type="checkbox"
-                  checked={sample}
-                  onChange={(e) => setSample(e.target.checked)}
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
                 />
-                <span>
-                  개인정보·기밀 없는 자작·샘플 대화예요.
-                  <small>
-                    무료 API 입력은 Google 제품 개선에 사용될 수 있어요.
-                  </small>
-                </span>
+                대화 참여자에게 알리고 전송 동의를 받았어요.
               </label>
-            )}
-          </fieldset>
+              <label className="dd-check">
+                <input
+                  type="checkbox"
+                  checked={adult}
+                  onChange={(e) => setAdult(e.target.checked)}
+                />
+                만 18세 이상입니다.
+              </label>
+              {config.sampleOnly && (
+                <label className="dd-check">
+                  <input
+                    type="checkbox"
+                    checked={sample}
+                    onChange={(e) => setSample(e.target.checked)}
+                  />
+                  <span>
+                    개인정보·기밀 없는 자작·샘플 대화예요.
+                    <small>
+                      무료 API 입력은 Google 제품 개선에 사용될 수 있어요.
+                    </small>
+                  </span>
+                </label>
+              )}
+            </fieldset>
+          </ConsentDisclosure>
           {!config.available && (
             <p className="dd-notice">
               AI 연결을 확인하고 있어요. 연결이 안 되면{" "}
@@ -474,13 +522,26 @@ export default function LiveCoach({
               설정
             </button>
           </div>
+          <SampleSwitch
+            checked={sampleMode}
+            disabled={phase !== "idle"}
+            onChange={(v) => {
+              setSampleMode(v);
+              setResult(null);
+              setError("");
+              if (v) {
+                setInputMode("text");
+                setAutomatic(false);
+              }
+            }}
+          />
           <div className={"dc-coaching-grid " + (result ? "has-result" : "")}>
             <section className="dc-listen-panel">
               <div className="dc-mode-switch" aria-label="입력 방식">
                 <button
                   className={inputMode === "voice" ? "active" : ""}
                   aria-pressed={inputMode === "voice"}
-                  disabled={phase !== "idle"}
+                  disabled={phase !== "idle" || sampleMode}
                   onClick={() => setInputMode("voice")}
                 >
                   <Icon name="mic" size={18} />
@@ -577,6 +638,7 @@ export default function LiveCoach({
                   {error && phase === "idle" && (
                     <button
                       className="dd-secondary"
+                      disabled={sampleMode}
                       onClick={() => void transcribeBlob(clip.blob)}
                     >
                       음성 인식 다시 시도
@@ -607,8 +669,7 @@ export default function LiveCoach({
                   <button
                     className="dd-primary dd-full"
                     disabled={
-                      !allowed ||
-                      !config.available ||
+                      (!sampleMode && (!allowed || !config.available)) ||
                       phase !== "idle" ||
                       input.trim().length < 2
                     }
@@ -656,10 +717,15 @@ export default function LiveCoach({
               <div className="dc-answer-heading">
                 <Icon name="chat" size={20} />
                 <span>{character.name}의 한마디</span>
-                {result && <span className="dc-ai-label">AI 제안</span>}
+                {result && (
+                  <span className="dc-ai-label">
+                    {result.sample ? "사전 작성 샘플" : "AI 제안"}
+                  </span>
+                )}
               </div>
               {result ? (
                 <>
+                  {result.sample && <SampleNotice sample={result.sample} />}
                   <p className="dc-answer-label">이렇게 말해볼까요?</p>
                   {profile && (
                     <p className="dc-answer-goal">
@@ -700,15 +766,17 @@ export default function LiveCoach({
                       <Icon name="arrow" size={16} />
                     </button>
                   </div>
-                  <details className="dc-evidence">
-                    <summary>왜 이 문장을 제안했나요?</summary>
-                    <p>{result.reason}</p>
-                    <q>{result.evidence}</q>
-                    <small>
-                      {result.provider} · {result.model} · 코칭{" "}
-                      {(result.latencyMs / 1000).toFixed(1)}초
-                    </small>
-                  </details>
+                  {!result.sample && (
+                    <details className="dc-evidence">
+                      <summary>왜 이 문장을 제안했나요?</summary>
+                      <p>{result.reason}</p>
+                      <q>{result.evidence}</q>
+                      <small>
+                        {result.provider} · {result.model} · 코칭{" "}
+                        {(result.latencyMs / 1000).toFixed(1)}초
+                      </small>
+                    </details>
+                  )}
                   <p className="dc-answer-footnote">
                     상황에 맞는지 확인하고, 내 말로 전하세요.
                   </p>

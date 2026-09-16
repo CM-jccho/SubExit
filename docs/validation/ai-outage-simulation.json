@@ -1,0 +1,91 @@
+{
+  "generatedAt": "2026-09-16T08:12:30.453Z",
+  "method": "mocked_provider_responses",
+  "liveAICalls": 0,
+  "scenarios": 8,
+  "operations": 4,
+  "errorConditions": 15,
+  "verified": 480,
+  "authoredResponses": 128,
+  "authoredReviewExamples": 8,
+  "checks": {
+    "daily-429": 32,
+    "minute-429": 32,
+    "unknown-429": 32,
+    "app-429": 32,
+    "provider-502": 32,
+    "not-configured-503": 32,
+    "invalid-output-500": 32,
+    "network-error": 32,
+    "timeout": 32,
+    "malformed-json": 32,
+    "missing-reply": 32,
+    "invalid-input-400": 32,
+    "missing-consent-400": 32,
+    "too-large-413": 32,
+    "access-denied-403": 32
+  },
+  "limitations": [
+    "실제 Gemini 응답 품질이나 지연을 측정한 결과가 아닙니다.",
+    "음성 인식과 현재 대화 복기 결과를 예비 문장으로 대체하지 않습니다.",
+    "사용자 입력과 목표의 의미를 AI로 검증하지 않는 사전 작성 샘플입니다."
+  ],
+  "examples": [
+    {
+      "topic": "부탁하기",
+      "opening": "어떤 도움을 부탁하고 싶으세요?",
+      "followup": "제가 어떤 부분을 도우면 될까요?",
+      "candidate": "한 가지 부탁드려도 괜찮을까요?",
+      "hint": "부탁드릴 내용과 범위를 먼저 설명해도 괜찮을까요?"
+    },
+    {
+      "topic": "일정 조율",
+      "opening": "조율하고 싶은 일정이 있나요?",
+      "followup": "바꾸고 싶은 부분이 무엇인가요?",
+      "candidate": "일정을 조율할 수 있는지 먼저 여쭤봐도 될까요?",
+      "hint": "가능한 일정부터 함께 확인해 볼까요?"
+    },
+    {
+      "topic": "업무 범위 조율",
+      "opening": "업무에서 어떤 부분을 조율하고 싶으세요?",
+      "followup": "우선순위를 어떻게 생각하고 계신가요?",
+      "candidate": "진행하기 전에 범위를 먼저 확인해도 될까요?",
+      "hint": "지금 요청하신 범위와 우선순위를 먼저 확인해도 될까요?"
+    },
+    {
+      "topic": "정중한 거절",
+      "opening": "어떤 요청에 대해 이야기하고 싶으세요?",
+      "followup": "어느 부분이 부담되시는지 말씀해 주실래요?",
+      "candidate": "제 입장을 먼저 말씀드려도 될까요?",
+      "hint": "제 입장을 먼저 정리해서 말씀드려도 될까요?"
+    },
+    {
+      "topic": "면접·발표",
+      "opening": "먼저 어떤 이야기를 들려주시겠어요?",
+      "followup": "그때 본인이 맡은 역할을 조금 더 설명해 주실래요?",
+      "candidate": "핵심부터 말씀드린 뒤 실제 경험을 덧붙여도 될까요?",
+      "hint": "제가 직접 한 일과 그 과정에서 배운 점을 나눠 말씀드려도 될까요?"
+    },
+    {
+      "topic": "피드백 나누기",
+      "opening": "어떤 부분에 대해 의견을 나누고 싶으세요?",
+      "followup": "구체적으로 어떤 장면을 말씀하시는 건가요?",
+      "candidate": "구체적인 사례를 먼저 말씀드려도 될까요?",
+      "hint": "어떤 부분을 바꾸면 좋을지 구체적으로 말씀해 주실래요?"
+    },
+    {
+      "topic": "친구와 이야기",
+      "opening": "어떤 이야기를 나누고 싶으세요?",
+      "followup": "가장 먼저 전하고 싶은 마음은 무엇인가요?",
+      "candidate": "내 생각을 먼저 이야기해도 괜찮을까?",
+      "hint": "내가 어떻게 느꼈는지 먼저 이야기해도 될까?"
+    },
+    {
+      "topic": "일반 대화",
+      "opening": "어떤 이야기를 나누고 싶으세요?",
+      "followup": "조금 더 구체적으로 설명해 주실래요?",
+      "candidate": "제 생각을 먼저 말씀드려도 될까요?",
+      "hint": "제가 이해한 내용이 맞는지 먼저 확인해도 될까요?"
+    }
+  ]
+}

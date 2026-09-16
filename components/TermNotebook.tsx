@@ -1,4 +1,5 @@
 "use client";
+import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./CompanionUI";
@@ -111,7 +112,7 @@ export function TermEditor({
     abort.current = c;
     const timeout = setTimeout(() => c.abort(), 25000);
     try {
-      const r = await fetch("/api/terms", {
+      const r = await aiFetch("/api/terms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

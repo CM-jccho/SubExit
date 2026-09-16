@@ -1,4 +1,6 @@
 "use client";
+import ConsentDisclosure from "./ConsentDisclosure";
+import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
 import AudioPlayer, { inspectAudio, audioTime } from "./AudioPlayer";
@@ -27,23 +29,29 @@ export function AIConsent({
   disabled?: boolean;
 }) {
   return (
-    <label className="dd-check vn-consent">
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span>
-        만 18세 이상이며 음성·문장의 Gemini 전송에 동의해요.
-        {config.sampleOnly && (
-          <small>
-            개인정보·기밀 없는 자작 연습만 보내요. 무료 API 입력은 Google 제품
-            개선에 사용될 수 있어요.
-          </small>
-        )}
-      </span>
-    </label>
+    <ConsentDisclosure
+      complete={checked}
+      disabled={disabled}
+      onRevoke={() => onChange(false)}
+    >
+      <label className="dd-check vn-consent">
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        <span>
+          만 18세 이상이며 음성·문장의 Gemini 전송에 동의해요.
+          {config.sampleOnly && (
+            <small>
+              개인정보·기밀 없는 자작 연습만 보내요. 무료 API 입력은 Google 제품
+              개선에 사용될 수 있어요.
+            </small>
+          )}
+        </span>
+      </label>
+    </ConsentDisclosure>
   );
 }
 export default function VoiceComposer({
@@ -145,7 +153,7 @@ export default function VoiceComposer({
       form.append("consent", "true");
       form.append("adultConsent", "true");
       form.append("sampleConsent", String(config.sampleOnly));
-      const r = await fetch("/api/transcribe", {
+      const r = await aiFetch("/api/transcribe", {
         method: "POST",
         body: form,
         signal: controller.signal,
