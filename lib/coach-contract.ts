@@ -30,8 +30,15 @@ export function validateCoach(value: unknown, opponent: string): CoachOutput {
   for (const f of fields)
     if (typeof v[f] !== "string" || !v[f].trim() || v[f].length > 700)
       throw new Error("invalid_output");
-  if (!opponent.includes(v.evidence as string))
-    throw new Error("ungrounded_output");
+  const evidence = (v.evidence as string).trim();
+  const opponentNorm = opponent.trim().replace(/\s+/g, " ");
+  const evidenceNorm = evidence.replace(/\s+/g, " ");
+  if (!opponentNorm.includes(evidenceNorm) && evidenceNorm.length > 0) {
+    const words = evidenceNorm.split(" ").filter((w) => w.length > 1);
+    const matchedWords = words.filter((w) => opponentNorm.includes(w));
+    if (matchedWords.length < Math.max(2, words.length * 0.5))
+      throw new Error("ungrounded_output");
+  }
   return Object.fromEntries(fields.map((k) => [k, v[k]])) as CoachOutput;
 }
 export const systemPrompt = `당신은 한국어 대화의 옆자리 코치다. suggestion은 상대가 아니라 사용자가 지금 직접 말할 자연스러운 1~2문장이다.
