@@ -2278,3 +2278,16 @@
     align-self: center;
   }
 }
+
+.dc-answer-goal {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  color: #5e734c;
+  margin-top: 8px !important;
+}
+.dc-answer-goal > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
