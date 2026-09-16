@@ -96,6 +96,7 @@
   --room-rug: #d5ddbf;
   --room-ink: #5b6353;
   min-height: 430px;
+  overflow: clip;
   padding-top: 180px;
   background: linear-gradient(
     var(--room-wall) 0 140px,
@@ -414,6 +415,9 @@
   --room-sky: #25394d;
   --room-rug: #647074;
   --room-ink: #e7e4d3;
+}
+.dc-room-environment[data-period="night"]::before {
+  opacity: 0.12;
 }
 .dc-room-environment[data-period="night"] .dc-room-window {
   background:
