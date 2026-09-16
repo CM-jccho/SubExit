@@ -1,5 +1,11 @@
 import type { VoiceSession } from "./voice-notebook";
 import { reviewDrill, reviewKey } from "./practice-review";
+import {
+  conversationRoot,
+  sceneForSession,
+  type AjitSceneId,
+  type SceneStamp,
+} from "./ajit-scenes";
 
 export const gardenItems = [
   { id: "clay", name: "살구빛 화분", cost: 2 },
@@ -9,6 +15,8 @@ export const gardenItems = [
 export type GardenItem = (typeof gardenItems)[number]["id"];
 export type GardenQuest = "speak" | "reflect" | "retry";
 export type GardenState = {
+  ajitVersion?: 1;
+  stamps?: Partial<Record<AjitSceneId, SceneStamp>>;
   id: "practice-garden-v1";
   earned: number;
   spent: number;
@@ -68,7 +76,49 @@ export function earnGarden(state: GardenState, s: VoiceSession): GardenState {
     answers.some((t) => t.text.trim() !== s.gardenRetryOriginal!.trim())
   )
     add("retry", 3);
-  return { ...state, events, earned };
+  return stampScene({ ...state, events, earned }, s);
+}
+export function stampScene(state: GardenState, s: VoiceSession): GardenState {
+  const scene = sceneForSession(s),
+    root = conversationRoot(s);
+  if (
+    s.isSample ||
+    s.kind !== "practice" ||
+    !s.practicePlan ||
+    !scene ||
+    state.stamps?.[scene.id] ||
+    !(["speak", "reflect", "retry"] as const).every(
+      (q) => state.events[`${root}:${q}`]?.quest === q,
+    ) ||
+    !s.gardenRetryOriginal ||
+    !freshAnswers(s).some(
+      (t) => t.text.trim() !== s.gardenRetryOriginal!.trim(),
+    )
+  )
+    return state;
+  return {
+    ...state,
+    stamps: {
+      ...state.stamps,
+      [scene.id]: {
+        sourceSessionId: root,
+        replaySessionId: s.id,
+        completedAt: s.updatedAt,
+      },
+    },
+  };
+}
+export function migrateAjit(
+  state: GardenState,
+  sessions: VoiceSession[],
+): GardenState {
+  if (state.ajitVersion === 1) return state;
+  let next = state;
+  for (const s of [...sessions].sort((a, b) =>
+    a.updatedAt.localeCompare(b.updatedAt),
+  ))
+    next = stampScene(next, s);
+  return { ...next, ajitVersion: 1 };
 }
 export function decorateGarden(
   state: GardenState,
@@ -84,7 +134,7 @@ export function decorateGarden(
         : [...state.equipped, id],
     };
   if (state.earned - state.spent < item.cost)
-    throw new Error("물방울이 더 필요해요. 연습 퀘스트를 이어가세요.");
+    throw new Error("꾸미기 티켓이 더 필요해요. 연습 퀘스트를 이어가세요.");
   return {
     ...state,
     spent: state.spent + item.cost,

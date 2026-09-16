@@ -10,6 +10,7 @@ import "./ai-resilience.css";
 import "./learning-hub.css";
 import "./practical-learning.css";
 import "./practice-garden.css";
+import "./conversation-ajit.css";
 export const metadata = {
   title: "든든콜 · 내 상황을 기억하는 대화 코치",
   description:

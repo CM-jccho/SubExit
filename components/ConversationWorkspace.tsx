@@ -655,8 +655,8 @@ export default function ConversationWorkspace() {
                   className="garden-home-link"
                   onClick={() => navigate("room")}
                 >
-                  <strong>연습하고 내 새싹 키우기</strong>
-                  <span>퀘스트 3개 · 친구방 꾸미기 →</span>
+                  <strong>연습한 장면으로 아지트 채우기</strong>
+                  <span>부탁 · 거절 · 어려운 응대 →</span>
                 </button>
                 {(sampleCards.length > 0 || tour) && (
                   <section className="dc-starter-section">

@@ -157,3 +157,89 @@ test("sample answer partners do not block rewards for the user's own effort", ()
   s.turns[1].sample = { label: "사전 작성 샘플" };
   assert.equal(g.earnGarden(g.emptyGarden(), s).earned, 0);
 });
+
+const ajit = require("../lib/ajit-scenes.ts");
+function completedScene(id = "request", root = "session-ajit") {
+  const scene = ajit.ajitScenes.find((s) => s.id === id);
+  const original = reflect({ ...session(root), context: { ...scene.context } });
+  const drill = g.reflectionDrill(original);
+  drill.turns.push({
+    id: "new-answer",
+    role: "user",
+    text: "가능한 시간을 먼저 알려 주세요. 그 범위에 맞추겠습니다.",
+    terms: [],
+  });
+  return { original, drill };
+}
+test("each scene requires all three actions on the same original and its souvenir opens that record", async () => {
+  global.indexedDB = new IDBFactory();
+  for (const scene of ajit.ajitScenes) {
+    const { original, drill } = completedScene(scene.id, "session-" + scene.id);
+    await store.putSession(original);
+    assert.equal((await store.readGarden()).stamps?.[scene.id], undefined);
+    await store.putSession(drill);
+    const stamp = (await store.readGarden()).stamps[scene.id];
+    assert.equal(stamp.sourceSessionId, original.id);
+    assert.equal(stamp.replaySessionId, drill.id);
+    assert.equal(
+      (await store.getSession(stamp.sourceSessionId)).gardenReflection.rewrite,
+      original.gardenReflection.rewrite,
+    );
+  }
+  assert.equal(Object.keys((await store.readGarden()).stamps).length, 3);
+  assert.equal((await store.readGarden()).earned, 18);
+});
+test("legacy migration preserves tickets and owned items, and never pays again", () => {
+  const { original, drill } = completedScene();
+  let legacy = g.earnGarden(g.earnGarden(g.emptyGarden(), original), drill);
+  legacy = g.decorateGarden(legacy, "clay");
+  delete legacy.stamps;
+  const next = g.migrateAjit(legacy, [original, drill]);
+  assert.equal(next.earned, legacy.earned);
+  assert.equal(next.spent, legacy.spent);
+  assert.deepEqual(next.owned, legacy.owned);
+  assert.deepEqual(next.equipped, legacy.equipped);
+  assert.equal(next.stamps.request.sourceSessionId, original.id);
+  assert.deepEqual(g.migrateAjit(next, []), next);
+  assert.equal(
+    g.migrateAjit(g.emptyGarden(), [original, drill]).stamps,
+    undefined,
+  );
+});
+test("partial and sample histories never become stamps, deleted records never regenerate", async () => {
+  const { original, drill } = completedScene();
+  let state = g.earnGarden(g.emptyGarden(), original);
+  assert.equal(g.stampScene(state, drill).stamps, undefined);
+  state = g.earnGarden(state, drill);
+  const other = {
+    ...drill,
+    id: "another",
+    gardenRootId: "other-root",
+    context: ajit.ajitScenes[1].context,
+  };
+  assert.equal(g.stampScene(state, other).stamps.boundary, undefined);
+  assert.equal(
+    g.migrateAjit({ ...state, stamps: undefined }, [
+      { ...drill, isSample: true },
+    ]).stamps,
+    undefined,
+  );
+  global.indexedDB = new IDBFactory();
+  await store.putSession(original);
+  await store.putSession(drill);
+  const before = await store.readGarden();
+  await store.deleteSession(original.id);
+  assert.deepEqual((await store.readGarden()).stamps, before.stamps);
+  assert.equal(await store.getSession(original.id), undefined);
+});
+test("next-condition cards keep goals and boundaries without locking basic practice", () => {
+  for (const scene of ajit.ajitScenes) {
+    const basic = ajit.ajitCard(scene),
+      next = ajit.ajitCard(scene, true);
+    assert.equal(next.goal, basic.goal);
+    assert.equal(next.boundaries, basic.boundaries);
+    assert(next.situation.includes(scene.challenge));
+    assert.notEqual(next.id, basic.id);
+    assert.equal(ajit.sceneForSession({ context: next })?.id, scene.id);
+  }
+});
