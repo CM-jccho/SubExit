@@ -578,7 +578,9 @@
   margin-bottom: 20px;
 }
 .vn-dialog-head h2 {
-  font-size: 24px;
+  font-size: 20px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
   font-weight: 700;
 }
 .vn-dialog button:focus-visible,

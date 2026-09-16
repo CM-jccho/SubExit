@@ -665,6 +665,10 @@
 .dc-room-switcher button:first-child svg {
   transform: rotate(180deg);
 }
+.dc-room-dialog .dc-room-selected h2 {
+  font-size: 20px;
+  line-height: 1.4;
+}
 .dc-room-dialog .dc-room-selected {
   margin-bottom: 14px;
 }
@@ -746,7 +750,7 @@
     flex-basis: 58px;
   }
   .dc-room-dialog .dc-room-selected h2 {
-    font-size: 21px;
+    font-size: 19px;
   }
   .dc-room-dialog[open] {
     animation: room-card-enter 0.2s ease-out;
