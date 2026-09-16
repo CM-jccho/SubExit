@@ -1,5 +1,6 @@
 "use client";
 import MessengerPractice from "./MessengerPractice";
+import PracticeNavigation from "./PracticeNavigation";
 import UpcomingFeatures from "./UpcomingFeatures";
 import ConversationTraining from "./ConversationTraining";
 import DailyTalk from "./DailyTalk";
@@ -639,34 +640,7 @@ export default function ConversationWorkspace() {
                 {toast}
               </p>
             )}
-            {["library", "prompts", "training", "messenger"].includes(view) && (
-              <div className="daily-tabs" role="group" aria-label="연습 종류">
-                <button
-                  aria-pressed={view === "library"}
-                  onClick={() => navigate("library")}
-                >
-                  사람과 대화 연습
-                </button>
-                <button
-                  aria-pressed={view === "messenger"}
-                  onClick={() => navigate("messenger")}
-                >
-                  메시지 답장
-                </button>
-                <button
-                  aria-pressed={view === "training"}
-                  onClick={() => navigate("training")}
-                >
-                  기초 훈련
-                </button>
-                <button
-                  aria-pressed={view === "prompts"}
-                  onClick={() => navigate("prompts")}
-                >
-                  AI에게 요청하기
-                </button>
-              </div>
-            )}
+            <PracticeNavigation view={view} onNavigate={navigate} />
             {view === "messenger" && (
               <MessengerPractice
                 config={config}
