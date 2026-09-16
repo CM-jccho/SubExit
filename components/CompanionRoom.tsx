@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import RoomEnvironment from "./RoomEnvironment";
 import { Companion, Icon } from "./CompanionUI";
 import {
   allCompanions,
@@ -154,6 +155,196 @@ function CharacterEditor({
     </dialog>
   );
 }
+function CompanionCard({
+  selected,
+  characters,
+  history,
+  samples,
+  onSelect,
+  onClose,
+  onReturnFocus,
+  onEdit,
+  onChat,
+  onSession,
+  onCards,
+}: {
+  selected: CompanionCharacter;
+  characters: CompanionCharacter[];
+  history: VoiceSession[];
+  samples: VoiceSession[];
+  onSelect: (id: CompanionCharacter["id"]) => void;
+  onClose: () => void;
+  onReturnFocus: () => void;
+  onEdit: () => void;
+  onChat: () => void;
+  onSession: (id: string) => void;
+  onCards: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null),
+    content = useRef<HTMLDivElement>(null),
+    heading = useRef<HTMLHeadingElement>(null);
+  const restoreFocus = useRef(onReturnFocus);
+  restoreFocus.current = onReturnFocus;
+  useEffect(() => {
+    const el = dialog.current;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    el?.showModal();
+    heading.current?.focus({ preventScroll: true });
+    return () => {
+      el?.close();
+      document.body.style.overflow = overflow;
+      restoreFocus.current();
+    };
+  }, []);
+  useEffect(() => {
+    if (content.current) content.current.scrollTop = 0;
+  }, [selected.id]);
+  const index = characters.findIndex((c) => c.id === selected.id);
+  const historyItem = (s: VoiceSession) => (
+    <button key={s.id} onClick={() => onSession(s.id)}>
+      <strong>{s.title}</strong>
+      <span>
+        {new Date(s.updatedAt).toLocaleDateString("ko-KR")} · {s.turns.length}개
+        대화
+      </span>
+      <Icon name="arrow" size={16} />
+    </button>
+  );
+  return (
+    <dialog
+      ref={dialog}
+      className="dc-room-dialog"
+      aria-labelledby="room-card-name"
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
+      onClick={(e) => {
+        if (e.target !== e.currentTarget) return;
+        const r = e.currentTarget.getBoundingClientRect();
+        if (
+          e.clientX < r.left ||
+          e.clientX > r.right ||
+          e.clientY < r.top ||
+          e.clientY > r.bottom
+        )
+          onClose();
+      }}
+    >
+      <div className="dc-room-card-head">
+        <div className="dc-room-card-toolbar">
+          <span>친구의 대화 카드</span>
+          <div className="dc-room-switcher" aria-label="다른 친구 보기">
+            <button
+              className="vn-icon"
+              aria-label="이전 친구"
+              onClick={() =>
+                onSelect(
+                  characters[
+                    (index - 1 + characters.length) % characters.length
+                  ].id,
+                )
+              }
+            >
+              <Icon name="arrow" size={17} />
+            </button>
+            <span>
+              {index + 1} / {characters.length}
+            </span>
+            <button
+              className="vn-icon"
+              aria-label="다음 친구"
+              onClick={() =>
+                onSelect(characters[(index + 1) % characters.length].id)
+              }
+            >
+              <Icon name="arrow" size={17} />
+            </button>
+          </div>
+          <button
+            className="vn-icon"
+            aria-label="친구방으로 돌아가기"
+            onClick={onClose}
+          >
+            <Icon name="close" size={20} />
+          </button>
+        </div>
+        <div className="dc-room-selected">
+          <Companion small character={selected} />
+          <div>
+            <span>{selected.custom ? "내가 만든 친구" : "기본 친구"}</span>
+            <h2
+              id="room-card-name"
+              ref={heading}
+              tabIndex={-1}
+              aria-live="polite"
+            >
+              {selected.name}
+            </h2>
+            <p>{selected.specialty}</p>
+          </div>
+          <button
+            className="vn-icon"
+            aria-label={selected.name + " 설정 바꾸기"}
+            onClick={onEdit}
+          >
+            <Icon name="edit" size={19} />
+          </button>
+        </div>
+        <button className="dd-primary dd-full" onClick={onChat}>
+          지금 이야기하기 <Icon name="chat" size={18} />
+        </button>
+      </div>
+      <div className="dc-room-card-content" ref={content} key={selected.id}>
+        <h3>
+          최근 이야기 <span>{history.length}개</span>
+        </h3>
+        {history.length ? (
+          <>
+            <div className="dc-room-history">
+              {history.slice(0, 3).map(historyItem)}
+            </div>
+            {history.length > 3 && (
+              <details className="dc-room-older">
+                <summary>이전 대화 {history.length - 3}개 더 보기</summary>
+                <div className="dc-room-history">
+                  {history.slice(3).map(historyItem)}
+                </div>
+              </details>
+            )}
+          </>
+        ) : (
+          <p className="dc-room-empty">
+            아직 함께 나눈 이야기가 없어요. 위에서 첫 대화를 시작해 보세요.
+          </p>
+        )}
+        <button className="dd-link dc-room-card-practice" onClick={onCards}>
+          상황 카드로 대화 연습하기 <Icon name="arrow" size={16} />
+        </button>
+        {!!samples.length && (
+          <details className="dc-room-samples">
+            <summary>대화 예시 먼저 보기</summary>
+            {samples.map((s) => (
+              <button
+                className="dd-link"
+                key={s.id}
+                onClick={() => onSession(s.id)}
+              >
+                {s.title}
+                <Icon name="arrow" size={15} />
+              </button>
+            ))}
+          </details>
+        )}
+        <small className="dc-room-note">
+          AI 친구예요. 대화는 이 브라우저에 남아요. 새 대화에는 다른 기록을
+          자동으로 보내지 않아요.
+        </small>
+      </div>
+    </dialog>
+  );
+}
 export default function CompanionRoom({
   saved,
   onSaved,
@@ -167,9 +358,12 @@ export default function CompanionRoom({
   onSession: (id: string) => void;
   onCards: () => void;
 }) {
+  const room = useRef<HTMLDivElement>(null),
+    returnToCard = useRef(false);
   const characters = allCompanions(saved),
     [selectedId, setSelectedId] = useState(characters[0].id),
     [sessions, setSessions] = useState<VoiceSession[]>([]),
+    [cardOpen, setCardOpen] = useState(false),
     [editing, setEditing] = useState<CompanionCharacter | null>(null),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
@@ -207,7 +401,8 @@ export default function CompanionRoom({
         </div>
         <button
           className="dd-primary"
-          onClick={() =>
+          onClick={() => {
+            returnToCard.current = false;
             setEditing({
               id: `custom-${crypto.randomUUID()}`,
               name: "",
@@ -217,29 +412,18 @@ export default function CompanionRoom({
               persona:
                 "다정한 존댓말로 듣고, 짧은 예시와 함께 다음 행동을 정리해 줘요.",
               custom: true,
-            })
-          }
+            });
+          }}
         >
           <Icon name="plus" size={18} />
           친구 만들기
         </button>
       </section>
       <p className="dc-room-intro">
-        친구를 톡 눌러보세요. 지난 이야기를 꺼내거나 지금 궁금한 걸 물어볼 수
-        있어요.
+        친구를 누르면 대화 카드가 바로 열려요. 지난 이야기부터 이어가도 좋아요.
       </p>
-      <div className="dc-room-layout">
-        <section
-          className="dc-room-stage"
-          aria-label="캐릭터가 모여 있는 친구방"
-        >
-          <div className="dc-room-window" aria-hidden="true">
-            <span />
-            <span />
-          </div>
-          <div className="dc-room-sign" aria-hidden="true">
-            잠깐 쉬어가도 좋아요
-          </div>
+      <div className="dc-room-layout" ref={room}>
+        <RoomEnvironment>
           <div className="dc-room-actors">
             {characters.map((c, i) => (
               <button
@@ -249,7 +433,12 @@ export default function CompanionRoom({
                 }
                 aria-pressed={selected.id === c.id}
                 aria-label={c.name + " 선택"}
-                onClick={() => setSelectedId(c.id)}
+                aria-haspopup="dialog"
+                data-companion-id={c.id}
+                onClick={() => {
+                  setSelectedId(c.id);
+                  setCardOpen(true);
+                }}
                 style={
                   {
                     "--walk-delay": `${i * -1.9}s`,
@@ -267,78 +456,33 @@ export default function CompanionRoom({
               </button>
             ))}
           </div>
-          <span className="dc-room-rug" aria-hidden="true" />
-        </section>
-        <aside
-          className="dc-room-detail"
-          aria-label={selected.name + "의 대화 공간"}
-        >
-          <div className="dc-room-selected">
-            <Companion small character={selected} />
-            <div>
-              <span>{selected.custom ? "내가 만든 친구" : "기본 친구"}</span>
-              <h2>{selected.name}</h2>
-              <p>{selected.specialty}</p>
-            </div>
-            <button
-              className="vn-icon"
-              aria-label={selected.name + " 설정 바꾸기"}
-              onClick={() => setEditing(selected)}
-            >
-              <Icon name="edit" size={19} />
-            </button>
-          </div>
-          <button
-            className="dd-primary dd-full"
-            onClick={() => onChat(selected)}
-          >
-            지금 이야기하기 <Icon name="chat" size={18} />
-          </button>
-          <button className="dd-link" onClick={onCards}>
-            상황 카드로 대화 연습하기 <Icon name="arrow" size={16} />
-          </button>
-          <h3>
-            함께 나눈 이야기 <span>{history.length}</span>
-          </h3>
-          {history.length ? (
-            <div className="dc-room-history">
-              {history.map((s) => (
-                <button key={s.id} onClick={() => onSession(s.id)}>
-                  <strong>{s.title}</strong>
-                  <span>
-                    {new Date(s.updatedAt).toLocaleDateString("ko-KR")} ·{" "}
-                    {s.turns.length}개 대화
-                  </span>
-                  <Icon name="arrow" size={16} />
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="dc-room-empty">
-              아직 함께 나눈 이야기가 없어요. 한마디부터 시작해 볼까요?
-            </p>
-          )}
-          {samples.length > 0 && (
-            <details className="dc-room-samples">
-              <summary>대화 예시 먼저 보기</summary>
-              {samples.map((s) => (
-                <button
-                  className="dd-link"
-                  key={s.id}
-                  onClick={() => onSession(s.id)}
-                >
-                  {s.title}
-                  <Icon name="arrow" size={15} />
-                </button>
-              ))}
-            </details>
-          )}
-          <small className="dc-room-note">
-            AI 친구예요. 대화는 이 브라우저에 남아요. 새 대화에는 다른 기록을
-            자동으로 보내지 않아요.
-          </small>
-        </aside>
+        </RoomEnvironment>
       </div>
+      {cardOpen && (
+        <CompanionCard
+          selected={selected}
+          characters={characters}
+          history={history}
+          samples={samples}
+          onSelect={setSelectedId}
+          onClose={() => setCardOpen(false)}
+          onReturnFocus={() =>
+            room.current
+              ?.querySelector<HTMLButtonElement>(
+                `[data-companion-id="${selected.id}"]`,
+              )
+              ?.focus({ preventScroll: true })
+          }
+          onEdit={() => {
+            returnToCard.current = true;
+            setCardOpen(false);
+            setEditing(selected);
+          }}
+          onChat={() => onChat(selected)}
+          onSession={onSession}
+          onCards={onCards}
+        />
+      )}
       {notice && (
         <p className="dc-toast" role="status">
           {notice}
@@ -353,11 +497,15 @@ export default function CompanionRoom({
         <CharacterEditor
           key={editing.id}
           initial={editing}
-          onClose={() => setEditing(null)}
+          onClose={() => {
+            setEditing(null);
+            if (returnToCard.current) setCardOpen(true);
+          }}
           onSaved={(rows, id) => {
             onSaved(rows);
             setSelectedId(id);
             setEditing(null);
+            setCardOpen(true);
             setNotice(
               "친구를 저장했어요. 다시 방문해도 이 방에서 만날 수 있어요.",
             );
