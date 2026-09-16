@@ -581,7 +581,9 @@ test("workspace navigation preserves section across remount and browser back, an
     await act(async () => ui.root.render(null));
     await act(async () => ui.root.render(React.createElement(C)));
     await settle();
-    assert(document.querySelector("h1").textContent.includes("여기서 연습해요"));
+    assert(
+      document.querySelector("h1").textContent.includes("여기서 연습해요"),
+    );
     await act(async () => {
       window.history.back();
       await new Promise((r) => setTimeout(r, 20));
@@ -1336,4 +1338,440 @@ test("daily and prompt deep links round-trip while retaining their parent naviga
   }
   assert.equal(nav.workspaceSection("daily"), "home");
   assert.equal(nav.workspaceSection("prompts"), "library");
+});
+
+const training = require("../lib/conversation-training.ts");
+const trainingC = require("../components/ConversationTraining.tsx").default;
+function reviewedTrainingSource() {
+  const s = structuredClone(require("../lib/starter-data.ts").starterSession);
+  s.id = "training-source";
+  s.isSample = false;
+  const users = s.turns.filter((t) => t.role === "user");
+  s.review = reviews.validateReview(
+    {
+      strength: {
+        turnId: users[0].id,
+        quote: users[0].text,
+        note: "범위를 확인했어요.",
+      },
+      improvement: {
+        turnId: users[1].id,
+        quote: users[1].text,
+        note: "가능한 시간을 먼저 물어봐요.",
+        rewrite: "가능한 시간을 알려주실 수 있나요?",
+      },
+      focus: "가능한 시간을 확인하는 질문",
+    },
+    s.context,
+    s.turns,
+  );
+  return s;
+}
+test("training feedback is grounded in actual answers and task requests exclude unrelated history", async () =>
+  ai(async () => {
+    const route = require("../app/api/training/route.ts"),
+      exercise = training.findTraining("q-work");
+    let calls = 0;
+    gemini.geminiGenerate = async (system, parts) => {
+      calls++;
+      const input = JSON.parse(parts[0].text);
+      assert.equal(input.exercise.context, exercise.context);
+      assert(!parts[0].text.includes("PRIVATE"));
+      assert(system.includes("점수"));
+      return {
+        quote: exercise.example[0],
+        note: "모호한 표현을 골랐어요.",
+        nextAction: "질문을 한 가지로 좁혀봐요.",
+      };
+    };
+    const body = {
+      ...consent,
+      exerciseId: exercise.id,
+      answers: exercise.example,
+      origin: { quote: "PRIVATE" },
+      context: "PRIVATE",
+    };
+    assert.equal(
+      (await route.POST(req({ ...body, consent: false }))).status,
+      400,
+    );
+    assert.equal(
+      (await route.POST(req({ ...body, answers: ["한 줄"] }))).status,
+      400,
+    );
+    assert.equal(
+      (await route.POST(req({ ...body, exerciseId: "fake" }))).status,
+      400,
+    );
+    assert.equal(calls, 0);
+    const r = await route.POST(req(body));
+    assert.equal(r.status, 200);
+    assert.equal((await r.json()).feedback.quote, exercise.example[0]);
+    gemini.geminiGenerate = async () => ({
+      quote: "존재하지 않는 말",
+      note: "설명",
+      nextAction: "다음 행동",
+    });
+    const bad = await route.POST(req(body));
+    assert.equal(bad.status, 500);
+    assert.equal((await bad.json()).code, "ungrounded_output");
+  }));
+test("training completes without AI, keeps first and final expressions, reopens and gives no practice currency", async () => {
+  let ui = await mount(trainingC, {
+    config: { ...config, available: false },
+    onRecords() {},
+    onSession() {},
+  });
+  try {
+    let calls = 0;
+    global.fetch = async () => {
+      calls++;
+      throw Error("AI must not run");
+    };
+    await settle();
+    const e = training.findTraining("a-lunch");
+    await click(
+      [...document.querySelectorAll(".training-exercise")].find((b) =>
+        b.textContent.includes(e.title),
+      ),
+    );
+    assert.equal(button("저장하고 다듬기").disabled, true);
+    for (let i = 0; i < 3; i++)
+      await change(document.querySelectorAll("textarea")[i], e.example[i]);
+    await click(button("저장하고 다듬기"));
+    await settle();
+    let rows = await store.listSessions();
+    assert.equal(rows.length, 1);
+    assert(!rows[0].training.completedAt);
+    assert.deepEqual(rows[0].training.answers, e.example);
+    await change(
+      document.querySelectorAll("textarea")[2],
+      "최근에 추천하고 싶은 점심 메뉴가 있어요?",
+    );
+    await click(button("마무리 표현 저장"));
+    await settle();
+    rows = await store.listSessions();
+    const saved = rows[0];
+    assert(saved.training.completedAt);
+    assert.deepEqual(saved.training.answers, e.example);
+    assert.notEqual(saved.training.revised[2], saved.training.answers[2]);
+    assert.equal(calls, 0);
+    assert.equal((await store.readGarden()).earned, 0);
+    await act(async () => ui.root.render(null));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(trainingC, {
+          config,
+          initialSession: saved,
+          onRecords() {},
+          onSession() {},
+        }),
+      ),
+    );
+    await settle();
+    assert(document.body.textContent.includes("마무리 표현"));
+    assert(document.body.textContent.includes(saved.training.revised[2]));
+    assert.equal(calls, 0);
+    window.confirm = () => true;
+    await click(button("이 훈련 기록 삭제"));
+    await settle();
+    assert.equal((await store.listSessions()).length, 0);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("training quota keeps saved answers and allows finishing with authored guidance", async () => {
+  const e = training.findTraining("c-request");
+  const saved = {
+    id: "training-quota",
+    kind: "chat",
+    title: "훈련",
+    industry: "대화 트레이닝",
+    turns: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    training: { version: 1, exerciseId: e.id, answers: e.example },
+  };
+  const ui = await mount(trainingC, {
+    config,
+    initialSession: saved,
+    onRecords() {},
+    onSession() {},
+  });
+  try {
+    await store.putSession(saved);
+    global.fetch = async () =>
+      Response.json(
+        { code: "rate_limit", quotaKind: "daily", retryAfter: 60 },
+        { status: 429 },
+      );
+    await click(document.querySelector("input[type=checkbox]"));
+    await click(button("내 표현으로 AI 피드백 받기"));
+    await settle();
+    assert(document.body.textContent.includes("일일 한도"));
+    assert(document.body.textContent.includes("준비된 확인 기준"));
+    let stored = await store.getSession(saved.id);
+    assert.deepEqual(stored.training.answers, e.example);
+    assert(!stored.training.feedback);
+    await click(button("마무리 표현 저장"));
+    await settle();
+    stored = await store.getSession(saved.id);
+    assert(stored.training.completedAt);
+    assert(!stored.training.feedback);
+    assert.deepEqual(stored.training.revised, e.example);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("editing first training answers invalidates old feedback and completion without extra AI calls", async () => {
+  const e = training.findTraining("q-work");
+  const saved = {
+    id: "training-edit",
+    kind: "chat",
+    title: "훈련",
+    industry: "대화 트레이닝",
+    turns: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    training: {
+      version: 1,
+      exerciseId: e.id,
+      answers: e.example,
+      feedback: training.validateTrainingFeedback(
+        {
+          quote: e.example[0],
+          note: "모호한 단서를 찾았어요.",
+          nextAction: "범위를 확인해요.",
+        },
+        e.example,
+      ),
+    },
+  };
+  const ui = await mount(trainingC, {
+    config,
+    initialSession: saved,
+    onRecords() {},
+    onSession() {},
+  });
+  try {
+    await store.putSession(saved);
+    await click(button("첫 표현 다시 작성"));
+    await change(
+      document.querySelectorAll("textarea")[2],
+      "어떤 페이지를 먼저 바꿀까요?",
+    );
+    await click(button("저장하고 다듬기"));
+    await settle();
+    const row = await store.getSession(saved.id);
+    assert(!row.training.feedback);
+    assert(!row.training.completedAt);
+    assert.equal(row.training.answers[2], "어떤 페이지를 먼저 바꿀까요?");
+    assert.equal((await store.listSessions()).length, 1);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("training origin preserves same-scene context and refuses changed or deleted source reviews", () => {
+  const s = reviewedTrainingSource(),
+    origin = training.trainingOrigin(s);
+  assert.equal(training.suggestTraining(origin.focus), "followup");
+  const retry = training.trainingReplay(origin, s);
+  assert.deepEqual(retry.context, s.context);
+  assert.equal(retry.practicePlan.sourceSessionId, s.id);
+  assert.equal(retry.gardenRetryOriginal, s.turns[3].text);
+  assert.throws(() => training.trainingReplay(origin, undefined), /삭제/);
+  const edited = structuredClone(s);
+  edited.turns[1].text += " 추가 발화";
+  assert.throws(() => training.trainingReplay(origin, edited), /복기/);
+  edited.review.sourceKey = "changed";
+  assert.throws(() => training.trainingReplay(origin, edited), /달라졌어요/);
+});
+test("saved review opens targeted foundation training and completed training returns to the same scene", async () => {
+  const s = reviewedTrainingSource();
+  const C = require("../components/VoiceWorkspace.tsx").default;
+  const ui = await mount(C, { config, mode: "records", onChooseCard() {} });
+  try {
+    await store.putSession(s);
+    await act(async () => ui.root.render(null));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(C, {
+          config,
+          mode: "records",
+          initialSessionId: s.id,
+          onChooseCard() {},
+        }),
+      ),
+    );
+    await settle();
+    await click(button("이 복기에서 기초 훈련 시작"));
+    await settle();
+    assert(
+      document
+        .querySelector('[aria-pressed="true"]')
+        .textContent.includes("질문 이어가기"),
+    );
+    const e = training.findTraining("q-work");
+    await click(
+      [...document.querySelectorAll(".training-exercise")].find((b) =>
+        b.textContent.includes(e.title),
+      ),
+    );
+    for (let i = 0; i < 3; i++)
+      await change(document.querySelectorAll("textarea")[i], e.example[i]);
+    await click(button("저장하고 다듬기"));
+    await settle();
+    await click(button("마무리 표현 저장"));
+    await settle();
+    await click(button("원래 장면에서 다시 연습"));
+    await settle();
+    const rows = await store.listSessions(),
+      retry = rows.find((r) => r.practicePlan?.sourceSessionId === s.id);
+    assert(retry);
+    assert.deepEqual(retry.context, s.context);
+    assert(rows.some((r) => r.training?.origin?.sessionId === s.id));
+    assert(document.body.textContent.includes(s.review.focus));
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("foundation training deep links keep the library navigation and restore on reload", async () => {
+  const nav = require("../lib/workspace-navigation.ts");
+  assert.equal(nav.workspaceView("?view=training"), "training");
+  assert.equal(nav.workspaceSection("training"), "library");
+  assert.equal(
+    nav.workspaceUrl("https://test.local/?view=records", "training"),
+    "/?view=training",
+  );
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(C, {}, () => {
+    window.history.replaceState(null, "", "?view=training");
+    window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done");
+  });
+  try {
+    await settle();
+    assert.equal(document.querySelector("h1").textContent, "기초 훈련");
+    assert.equal(
+      document.querySelector('[aria-current="page"]').textContent,
+      "내 대화",
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("training feedback saves once, reopens without generation and ignores a response after leaving", async () => {
+  const e = training.findTraining("a-lunch"),
+    original = {
+      id: "training-feedback",
+      kind: "chat",
+      title: "훈련",
+      industry: "대화 트레이닝",
+      turns: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      training: { version: 1, exerciseId: e.id, answers: e.example },
+    };
+  const ui = await mount(trainingC, {
+    config,
+    initialSession: original,
+    onRecords() {},
+    onSession() {},
+  });
+  try {
+    await store.putSession(original);
+    let calls = 0;
+    global.fetch = async () => {
+      calls++;
+      return Response.json({
+        feedback: {
+          quote: e.example[0],
+          note: "취향에서 소재를 넓혔어요.",
+          nextAction: "상대 취향을 물어보세요.",
+        },
+      });
+    };
+    await click(document.querySelector("input[type=checkbox]"));
+    await click(button("내 표현으로 AI 피드백 받기"));
+    await settle();
+    let saved = await store.getSession(original.id);
+    assert.equal(calls, 1);
+    assert.equal(saved.training.feedback.quote, e.example[0]);
+    assert(!button("내 표현으로 AI 피드백 받기"));
+    await act(async () => ui.root.render(null));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(trainingC, {
+          config,
+          initialSession: saved,
+          onRecords() {},
+          onSession() {},
+        }),
+      ),
+    );
+    await settle();
+    assert.equal(calls, 1);
+    assert(document.body.textContent.includes("취향에서 소재를 넓혔어요."));
+    await click(button("첫 표현 다시 작성"));
+    await change(
+      document.querySelectorAll("textarea")[0],
+      "오늘은 새 메뉴가 궁금해요.",
+    );
+    await click(button("저장하고 다듬기"));
+    await settle();
+    let release;
+    global.fetch = () =>
+      new Promise((r) => {
+        release = r;
+      });
+    await click(document.querySelector("input[type=checkbox]"));
+    await click(button("내 표현으로 AI 피드백 받기"));
+    assert(release);
+    await act(async () => ui.root.render(null));
+    await act(async () =>
+      release(
+        Response.json({
+          feedback: {
+            quote: "오늘은 새 메뉴가 궁금해요.",
+            note: "설명",
+            nextAction: "질문해요.",
+          },
+        }),
+      ),
+    );
+    await settle();
+    saved = await store.getSession(original.id);
+    assert(!saved.training.feedback);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("failed training storage keeps editable input and retry creates only one record", async () => {
+  const ui = await mount(trainingC, { config, onRecords() {}, onSession() {} }),
+    oldPut = store.putSession;
+  try {
+    const e = training.findTraining("a-lunch");
+    await click(
+      [...document.querySelectorAll(".training-exercise")].find((b) =>
+        b.textContent.includes(e.title),
+      ),
+    );
+    for (let i = 0; i < 3; i++)
+      await change(document.querySelectorAll("textarea")[i], e.example[i]);
+    store.putSession = async () => {
+      throw Error("저장 공간을 확인해 주세요.");
+    };
+    await click(button("저장하고 다듬기"));
+    await settle();
+    assert.equal(document.querySelector("textarea").value, e.example[0]);
+    assert(button("저장하고 다듬기"));
+    assert.equal((await store.listSessions()).length, 0);
+    store.putSession = oldPut;
+    await click(button("저장하고 다듬기"));
+    await settle();
+    assert.equal((await store.listSessions()).length, 1);
+    assert(button("마무리 표현 저장"));
+  } finally {
+    store.putSession = oldPut;
+    await ui.cleanup();
+  }
 });

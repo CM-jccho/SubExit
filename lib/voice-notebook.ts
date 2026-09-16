@@ -32,6 +32,7 @@ export type VoiceTurn = {
   suggestionsSample?: SampleMeta;
 };
 export type VoiceSession = {
+  training?: import("./conversation-training").TrainingRecord;
   promptPractice?: {
     version: 1;
     taskId: string;

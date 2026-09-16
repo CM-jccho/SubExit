@@ -1,4 +1,5 @@
 "use client";
+import ConversationTraining from "./ConversationTraining";
 import DailyTalk from "./DailyTalk";
 import PromptPractice from "./PromptPractice";
 import ConsentDisclosure from "./ConsentDisclosure";
@@ -636,7 +637,7 @@ export default function ConversationWorkspace() {
                 {toast}
               </p>
             )}
-            {["library", "prompts"].includes(view) && (
+            {["library", "prompts", "training"].includes(view) && (
               <div className="daily-tabs" role="group" aria-label="연습 종류">
                 <button
                   aria-pressed={view === "library"}
@@ -645,12 +646,28 @@ export default function ConversationWorkspace() {
                   사람과 대화 연습
                 </button>
                 <button
+                  aria-pressed={view === "training"}
+                  onClick={() => navigate("training")}
+                >
+                  기초 훈련
+                </button>
+                <button
                   aria-pressed={view === "prompts"}
                   onClick={() => navigate("prompts")}
                 >
                   AI에게 요청하기
                 </button>
               </div>
+            )}
+            {view === "training" && (
+              <ConversationTraining
+                config={config}
+                onRecords={() => navigate("records")}
+                onSession={(s) => {
+                  navigate("records");
+                  setRecordId(s.id);
+                }}
+              />
             )}
             {view === "prompts" && (
               <PromptPractice
@@ -667,11 +684,14 @@ export default function ConversationWorkspace() {
                     </p>
                     <h1>
                       어려운 한마디,
-                      <br />여기서 연습해요.
+                      <br />
+                      여기서 연습해요.
                     </h1>
                     <p className="dc-welcome-desc">
-                      상대와 말해보고, 실제로 한 말을 돌아보며 다음 대화를 준비해요.
-                      <br className="dc-mobile-break" /> 가벼운 일상 이야기로 시작해도 좋아요.
+                      상대와 말해보고, 실제로 한 말을 돌아보며 다음 대화를
+                      준비해요.
+                      <br className="dc-mobile-break" /> 가벼운 일상 이야기로
+                      시작해도 좋아요.
                     </p>
                     <div className="daily-home-starts">
                       <button
