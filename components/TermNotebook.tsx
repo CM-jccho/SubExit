@@ -1,4 +1,5 @@
 "use client";
+import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./CompanionUI";
 import CompanionNudge from "./CompanionNudge";
@@ -299,9 +300,12 @@ export function TermEditor({
         뜻과 우리 업무에서의 사용을 직접 확인했어요.
       </label>
       {error && (
-        <p className="dd-error" role="alert">
-          {error}
-        </p>
+        <>
+          <p className="dd-error" role="alert">
+            {error}
+          </p>
+          <QuotaHelp error={error} />
+        </>
       )}
       <button
         className="dd-primary dd-full"
@@ -461,9 +465,12 @@ export default function TermNotebook({ config }: { config: AIConfig }) {
       </div>
       {notice && <CompanionNudge mood="done" text={notice} dismissible />}
       {error && (
-        <p className="dd-error" role="alert">
-          {error}
-        </p>
+        <>
+          <p className="dd-error" role="alert">
+            {error}
+          </p>
+          <QuotaHelp error={error} />
+        </>
       )}
       <div className="vn-term-list">
         {visible.map((t) => (

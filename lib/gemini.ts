@@ -1,8 +1,11 @@
+import { parseQuota } from "./quota";
 export function geminiConfig() {
   const keyConfigured = !!process.env.GEMINI_API_KEY?.trim();
   // Registering a key is enough to opt in; explicit switches remain authoritative.
   const enabled = (value: string | undefined) =>
-    value === undefined || value.trim() === "" || value.trim().toLowerCase() === "true";
+    value === undefined ||
+    value.trim() === "" ||
+    value.trim().toLowerCase() === "true";
   const available = keyConfigured && enabled(process.env.COACH_AI_ENABLED);
   return {
     available,
@@ -57,10 +60,12 @@ export async function geminiGenerate(
         }),
       },
     );
-    if (!response.ok)
-      throw new Error(
-        response.status === 429 ? "provider_rate_limit" : "provider_error",
+    if (response.status === 429)
+      throw parseQuota(
+        await response.json().catch(() => null),
+        response.headers.get("Retry-After"),
       );
+    if (!response.ok) throw new Error("provider_error");
     const body = await response.json();
     const content = body.candidates?.[0]?.content?.parts
       ?.filter((p: { thought?: boolean; text?: string }) => !p.thought)

@@ -1,4 +1,7 @@
+"use client";
 import type { CSSProperties } from "react";
+import { useCompanion } from "./CompanionTheme";
+import { companionColors, type CompanionCharacter } from "@/lib/companions";
 
 export type IconName =
   | "play"
@@ -69,13 +72,20 @@ export function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
 export function Companion({
   mood = "hello",
   small = false,
+  character,
 }: {
   mood?: "hello" | "listen" | "done" | "think" | "speak" | "rest";
   small?: boolean;
+  character?: CompanionCharacter;
 }) {
+  const inherited = useCompanion();
+  const current = character || inherited;
+  const colors = companionColors[current.color];
   return (
     <svg
       className={"dc-companion " + (small ? "is-small" : "") + " mood-" + mood}
+      data-character={current.id}
+      data-shape={current.shape}
       viewBox="0 0 280 230"
       fill="none"
       aria-hidden="true"
@@ -100,7 +110,7 @@ export function Companion({
         />
         <path
           d="M78 132c-15 4-22 20-13 26 6 4 16-3 24-10"
-          fill="#C8D6AC"
+          fill={colors.arm}
           stroke="#344B40"
           strokeWidth="2.5"
         />
@@ -110,13 +120,36 @@ export function Companion({
               ? "M191 119c13-1 21-17 29-12 10 8-6 31-22 34"
               : "M190 132c18-2 25 13 18 20-7 5-16-2-22-8"
           }
-          fill="#C8D6AC"
+          fill={colors.arm}
           stroke="#344B40"
           strokeWidth="2.5"
         />
+        {current.shape === "rabbit" && (
+          <g fill={colors.body} stroke="#344B40" strokeWidth="2.5">
+            <path d="M106 62C85 27 93 3 107 10c12 7 18 35 19 48Z" />
+            <path d="M152 58c0-36 11-57 23-47 12 11-1 37-10 52Z" />
+            <path
+              d="m108 23 7 29m53-29-7 29"
+              stroke={colors.accent}
+              strokeWidth="6"
+              strokeLinecap="round"
+            />
+          </g>
+        )}
+        {current.shape === "cat" && (
+          <g fill={colors.body} stroke="#344B40" strokeWidth="2.5">
+            <path d="m81 80 5-60 43 29M158 48l39-28 7 64" />
+          </g>
+        )}
         <path
-          d="M80 95c0-37 25-59 59-59s62 23 63 59l3 59c1 29-26 46-63 46-38 0-66-16-65-44z"
-          fill="#CFDDB9"
+          d={
+            current.shape === "owl"
+              ? "M75 89 82 35l39 15q19-6 37 0l39-15 10 54 2 58c5 36-25 53-67 53-43 0-70-17-67-52Z"
+              : current.shape === "rabbit"
+                ? "M82 99c-3-38 19-60 57-60s64 24 64 60l-2 57c-1 30-25 43-61 43-37 0-65-16-61-44Z"
+                : "M80 95c0-37 25-59 59-59s62 23 63 59l3 59c1 29-26 46-63 46-38 0-66-16-65-44z"
+          }
+          fill={colors.body}
           stroke="#344B40"
           strokeWidth="2.5"
         />
@@ -132,11 +165,24 @@ export function Companion({
         />
         <path
           d="m134 147 8 13 12-12"
-          fill="#D67651"
+          fill={colors.accent}
           stroke="#344B40"
           strokeWidth="2"
           strokeLinejoin="round"
         />
+        {current.shape === "owl" && (
+          <g fill="#FAF7EB" stroke={colors.accent} strokeWidth="2">
+            <circle cx="118" cy="103" r="23" />
+            <circle cx="160" cy="103" r="23" />
+            <path d="m138 111 4 8 5-8" fill={colors.accent} />
+          </g>
+        )}
+        {current.shape === "cat" && (
+          <g stroke="#344B40" strokeWidth="2" strokeLinecap="round">
+            <path d="m87 116 15 3m-17 5 15-1m80-4 14-3m-13 7 15 1" />
+            <path d="m136 113 6 5 6-5Z" fill={colors.accent} />
+          </g>
+        )}
         <g className="dc-companion-eyes" fill="#344B40">
           <ellipse cx="118" cy="104" rx="3.5" ry="5" />
           <ellipse cx="160" cy="104" rx="3.5" ry="5" />
@@ -151,16 +197,18 @@ export function Companion({
           stroke="#344B40"
           strokeWidth="2.5"
           strokeLinecap="round"
-          fill={mood === "done" ? "#D67651" : "none"}
+          fill={mood === "done" ? colors.accent : "none"}
         />
         <ellipse cx="104" cy="118" rx="9" ry="4" fill="#E7AF8C" />
         <ellipse cx="176" cy="118" rx="9" ry="4" fill="#E7AF8C" />
-        <path
-          d="M110 47q13-15 28-8"
-          stroke="#344B40"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
+        {current.shape === "round" && (
+          <path
+            d="M110 47q13-15 28-8"
+            stroke="#344B40"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+        )}
       </g>
       {!small && (
         <g className="dc-companion-note">
@@ -178,7 +226,7 @@ export function Companion({
               strokeLinecap="round"
             />
           ) : (
-            <g fill="#D67651">
+            <g fill={colors.accent}>
               <circle cx="208" cy="55" r="3" />
               <circle cx="221" cy="55" r="3" />
               <circle cx="234" cy="55" r="3" />

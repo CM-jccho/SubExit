@@ -1,6 +1,14 @@
 "use client";
+import {
+  reviewKey,
+  reviewDrill,
+  type PracticeReview,
+} from "@/lib/practice-review";
+import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
-import { Icon } from "./CompanionUI";
+import { CompanionProvider, useCompanion } from "./CompanionTheme";
+import { companionForSession, type CompanionCharacter } from "@/lib/companions";
+import { Companion, Icon } from "./CompanionUI";
 import CompanionNudge from "./CompanionNudge";
 import VoiceComposer, {
   AIConsent,
@@ -25,11 +33,17 @@ import type {
 const makeSession = (
   kind: VoiceSession["kind"],
   context?: ContextProfile,
+  companion?: CompanionCharacter,
 ): VoiceSession => {
   const now = new Date().toISOString();
   return {
     id: "session-" + crypto.randomUUID(),
-    title: context?.title || "새 음성 기록",
+    title:
+      context?.title ||
+      (kind === "chat" && companion
+        ? companion.name + "와 이야기"
+        : "새 음성 기록"),
+    companion,
     kind,
     context,
     industry: "",
@@ -43,13 +57,24 @@ export default function VoiceWorkspace({
   mode = "records",
   config,
   onChooseCard,
+  initialCompanion,
+  initialSessionId,
 }: {
   initialCard?: ConversationCard;
-  mode?: "practice" | "records";
+  mode?: "practice" | "records" | "chat";
+  initialCompanion?: CompanionCharacter;
+  initialSessionId?: string;
   config: AIConfig;
   onChooseCard: () => void;
 }) {
-  const [session, setSession] = useState<VoiceSession | null>(null),
+  const inheritedCompanion = useCompanion();
+  const [session, setSession] = useState<VoiceSession | null>(() =>
+      mode === "practice" && initialCard
+        ? makeSession("practice", initialCard, inheritedCompanion)
+        : mode === "chat" && initialCompanion
+          ? makeSession("chat", undefined, initialCompanion)
+          : null,
+    ),
     [sessions, setSessions] = useState<VoiceSession[]>([]),
     [consent, setConsent] = useState(false),
     [busy, setBusy] = useState(false),
@@ -78,8 +103,20 @@ export default function VoiceWorkspace({
   useEffect(() => {
     mounted.current = true;
     void refresh();
-    if (mode === "practice" && initialCard)
-      setSession(makeSession("practice", initialCard));
+    if (initialSessionId)
+      listSessions()
+        .then((rows) => {
+          if (!mounted.current) return;
+          const found = rows.find((s) => s.id === initialSessionId);
+          if (found) setSession(found);
+          else
+            setError(
+              "이 대화 기록을 찾지 못했어요. 삭제되었는지 확인해 주세요.",
+            );
+        })
+        .catch(() => {
+          if (mounted.current) setError("대화 기록을 불러오지 못했어요.");
+        });
     return () => {
       mounted.current = false;
       generation.current++;
@@ -158,6 +195,10 @@ export default function VoiceWorkspace({
   }
   async function respond(current: VoiceSession) {
     if (!consent || !config.available || busy) return;
+    if (!current.title.trim()) {
+      setError("기록 이름을 입력해 주세요.");
+      return;
+    }
     if (current.turns.length > 24) {
       setNotice(
         "이번 연습을 마쳤어요. 기록은 저장됐고, 같은 설정으로 다시 연습할 수 있어요.",
@@ -172,19 +213,28 @@ export default function VoiceWorkspace({
     setNotice("");
     const timeout = setTimeout(() => c.abort(), 25000);
     try {
-      const r = await fetch("/api/roleplay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          context: current.context,
-          industry: current.industry,
-          messages: current.turns.map((t) => ({ role: t.role, text: t.text })),
-          consent,
-          adultConsent: consent,
-          sampleConsent: consent,
-        }),
-        signal: c.signal,
-      });
+      const r = await fetch(
+        current.kind === "chat" ? "/api/companion" : "/api/roleplay",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            context: current.context,
+            ...(current.kind === "chat"
+              ? { companion: current.companion }
+              : {}),
+            industry: current.industry,
+            messages: current.turns.map((t) => ({
+              role: t.role,
+              text: t.text,
+            })),
+            consent,
+            adultConsent: consent,
+            sampleConsent: consent,
+          }),
+          signal: c.signal,
+        },
+      );
       const d = await r.json();
       if (generation.current !== id) return;
       if (!r.ok) throw new Error(d.error || "상대의 답변을 받지 못했어요.");
@@ -216,12 +266,69 @@ export default function VoiceWorkspace({
       if (generation.current === id) setBusy(false);
     }
   }
+  async function reviewPractice() {
+    if (!session?.context || busy || !consent) return;
+    const id = ++generation.current,
+      c = new AbortController();
+    abort.current = c;
+    setBusy(true);
+    setError("");
+    const timeout = setTimeout(() => c.abort(), 25000);
+    try {
+      const r = await fetch("/api/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: c.signal,
+        body: JSON.stringify({
+          context: session.context,
+          turns: session.turns.map((t) => ({
+            id: t.id,
+            role: t.role,
+            text: t.text,
+          })),
+          consent,
+          adultConsent: consent,
+          sampleConsent: consent,
+        }),
+      });
+      const d = await r.json();
+      if (generation.current !== id) return;
+      if (!r.ok) throw new Error(d.error || "대화를 복기하지 못했어요.");
+      await persist({ ...session, review: d.review as PracticeReview });
+      setNotice(
+        "내 말에서 찾은 복기를 저장했어요. 같은 장면을 다시 연습해 볼까요?",
+      );
+    } catch (e) {
+      if (generation.current === id)
+        setError(
+          e instanceof Error && e.name === "AbortError"
+            ? "복기가 지연됐어요. 대화 기록은 그대로 남아 있어요."
+            : e instanceof Error
+              ? e.message
+              : "복기하지 못했어요.",
+        );
+    } finally {
+      clearTimeout(timeout);
+      if (generation.current === id) setBusy(false);
+    }
+  }
+  async function startDrill() {
+    if (!session?.review) return;
+    try {
+      const next = reviewDrill(session, session.review);
+      await putSession(next);
+      open(next);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "재연습을 저장하지 못했어요.");
+    }
+  }
   async function saveDraft(draft: VoiceDraft) {
     if (!session) return;
     if (!session.title.trim()) throw new Error("기록 이름을 입력해 주세요.");
     const turn: VoiceTurn = {
       id: "turn-" + crypto.randomUUID(),
-      role: session.kind === "practice" ? "user" : "recording",
+      role: session.kind !== "recording" ? "user" : "recording",
       text: draft.text,
       clip: draft.clip,
       terms: [],
@@ -235,7 +342,7 @@ export default function VoiceWorkspace({
     await persist(next);
     setSuggestion(undefined);
     setNotice("음성과 문자를 이 기기에 저장했어요.");
-    if (session.kind === "practice") await respond(next);
+    if (session.kind !== "recording") await respond(next);
   }
   async function extract(turn: VoiceTurn) {
     if (!session) return;
@@ -410,9 +517,12 @@ export default function VoiceWorkspace({
     }
   }
   const pending =
-    session?.kind === "practice" && session.turns.at(-1)?.role === "user";
+    session &&
+    session.kind !== "recording" &&
+    session.turns.at(-1)?.role === "user";
   const complete =
-    session?.kind === "practice" &&
+    session &&
+    session.kind !== "recording" &&
     (session.turns.filter((t) => t.role === "user").length || 0) >= 12 &&
     session.turns.at(-1)?.role === "assistant";
   const matching = sessions.filter((s) =>
@@ -421,8 +531,16 @@ export default function VoiceWorkspace({
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
+  const currentReview =
+    session?.context &&
+    session.review?.sourceKey === reviewKey(session.context, session.turns)
+      ? session.review
+      : undefined;
+  const sessionCharacter = session
+    ? companionForSession(session)
+    : inheritedCompanion;
   return (
-    <>
+    <CompanionProvider value={sessionCharacter}>
       {!session ? (
         <>
           <section className="dc-page-top">
@@ -432,7 +550,9 @@ export default function VoiceWorkspace({
             </div>
             <button
               className="dd-primary"
-              onClick={() => open(makeSession("recording"))}
+              onClick={() =>
+                open(makeSession("recording", undefined, inheritedCompanion))
+              }
             >
               <Icon name="mic" size={18} />새 녹음
             </button>
@@ -467,15 +587,17 @@ export default function VoiceWorkspace({
                 onClick={() => open(s)}
               >
                 <span className={"vn-session-icon " + s.kind}>
-                  <Icon name={s.kind === "practice" ? "chat" : "mic"} />
+                  <Companion small character={companionForSession(s)} />
                 </span>
                 <span>
                   <small>
                     {s.isSample
                       ? "샘플 · 사전 작성 대화"
-                      : s.kind === "practice"
-                        ? "상대와 연습"
-                        : "음성 기록"}{" "}
+                      : s.kind === "chat"
+                        ? "친구와 대화"
+                        : s.kind === "practice"
+                          ? "상대와 연습"
+                          : "음성 기록"}{" "}
                     · {new Date(s.updatedAt).toLocaleDateString("ko-KR")}
                   </small>
                   <strong>{s.title}</strong>
@@ -512,9 +634,11 @@ export default function VoiceWorkspace({
           <section className="vn-session-heading">
             <div>
               <p className="dc-overline">
-                {session.kind === "practice"
-                  ? "내 상황으로 대화 연습"
-                  : "나의 음성 기록"}
+                {session.kind === "chat"
+                  ? sessionCharacter.name + "와 AI 대화"
+                  : session.kind === "practice"
+                    ? "내 상황으로 대화 연습"
+                    : "나의 음성 기록"}
               </p>
               <h1>{session.title}</h1>
               {session.isSample && (
@@ -558,6 +682,19 @@ export default function VoiceWorkspace({
               </label>
             </div>
           )}
+          {session.kind === "chat" && (
+            <div className="vn-persona">
+              <Companion small />
+              <div>
+                <strong>
+                  {sessionCharacter.name}
+                  <span>AI 대화 친구</span>
+                </strong>
+                <p>{sessionCharacter.specialty}</p>
+                <small>이 대화에서 나눈 내용을 바탕으로 답해요.</small>
+              </div>
+            </div>
+          )}
           {session.context && (
             <div className="vn-persona">
               <span className="vn-session-icon practice">
@@ -583,8 +720,8 @@ export default function VoiceWorkspace({
             <p>
               이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으며 브라우저
               데이터를 지우면 사라질 수 있어요. 음성 원본과 대화 문자를 내려받을
-              수 있어요. AI 문자 변환·연습·용어 설명을 요청하면 해당 입력을
-              Google Gemini에 전송해요.
+              수 있어요. AI 문자 변환·연습·친구 대화·복기·용어 설명을 요청하면
+              해당 입력을 Google Gemini에 전송해요.
             </p>
           </details>
           {!session.isSample && (
@@ -598,12 +735,14 @@ export default function VoiceWorkspace({
           {session.isSample && (
             <button
               className="dd-primary"
-              onClick={() => open(makeSession("practice", session.context))}
+              onClick={() =>
+                open(makeSession("practice", session.context, sessionCharacter))
+              }
             >
               이 상황으로 새 연습 시작 <Icon name="arrow" size={18} />
             </button>
           )}
-          {session.kind === "practice" && (
+          {session.kind !== "recording" && (
             <label className="dd-check vn-autoplay">
               <input
                 type="checkbox"
@@ -616,15 +755,23 @@ export default function VoiceWorkspace({
               상대 답변 자동 읽기 <span>기기 음성 사용</span>
             </label>
           )}
-          {session.kind === "practice" && !session.turns.length && (
+          {session.kind !== "recording" && !session.turns.length && (
             <div className="vn-start-practice" data-tour="practice-settings">
-              <CompanionNudge text="상대 역할은 제가 맡을게요. 시작하면 그 상황에 맞춰 말을 걸어요." />
+              <CompanionNudge
+                text={
+                  session.kind === "chat"
+                    ? "지금 궁금한 일부터 편하게 이야기해 주세요."
+                    : "상대 역할은 제가 맡을게요. 시작하면 그 상황에 맞춰 말을 걸어요."
+                }
+              />
               <button
                 className="dd-primary dd-full"
                 disabled={!consent || !config.available || busy}
                 onClick={() => void respond(session)}
               >
-                상대와 연습 시작
+                {session.kind === "chat"
+                  ? "친구와 대화 시작"
+                  : "상대와 연습 시작"}
                 <Icon name="play" size={18} />
               </button>
             </div>
@@ -635,7 +782,9 @@ export default function VoiceWorkspace({
                 <div className="vn-turn-meta">
                   <span>
                     {t.role === "assistant"
-                      ? session.context?.partner || "연습 상대"
+                      ? session.kind === "chat"
+                        ? sessionCharacter.name
+                        : session.context?.partner || "연습 상대"
                       : t.role === "user"
                         ? "나"
                         : "녹음 " + (i + 1)}
@@ -710,6 +859,80 @@ export default function VoiceWorkspace({
             ))}
             <div ref={end} />
           </div>
+          {session.practicePlan && (
+            <aside className="dc-drill-focus">
+              <strong>이번에 해볼 한 가지</strong>
+              <p>{session.practicePlan.focus}</p>
+              <small>
+                앞의 {session.practicePlan.carriedTurns}개 말풍선은 지난 대화의
+                맥락이에요. 마지막 상대 말에 새로 답해보세요.
+              </small>
+            </aside>
+          )}
+          {!session.isSample &&
+            session.kind === "practice" &&
+            session.turns.filter((t) => t.role === "user").length >= 2 && (
+              <section className="dc-review">
+                <div className="vn-toolbar">
+                  <h2>내 대화 복기</h2>
+                  <span>AI 분석 · 이 기기에 저장</span>
+                </div>
+                {currentReview ? (
+                  <>
+                    <article>
+                      <h3>잘한 점</h3>
+                      <blockquote>{currentReview.strength.quote}</blockquote>
+                      <p>{currentReview.strength.note}</p>
+                    </article>
+                    <article>
+                      <h3>다음에는 이렇게</h3>
+                      <blockquote>{currentReview.improvement.quote}</blockquote>
+                      <p>{currentReview.improvement.note}</p>
+                      <strong>다시 말해보기</strong>
+                      <p className="dc-review-rewrite">
+                        {currentReview.improvement.rewrite}
+                      </p>
+                    </article>
+                    <p>
+                      <strong>다음 연습의 목표</strong> · {currentReview.focus}
+                    </p>
+                    <button
+                      className="dd-primary"
+                      disabled={busy || captureBusy}
+                      onClick={() => void startDrill()}
+                    >
+                      이 장면부터 다시 연습 <Icon name="arrow" size={16} />
+                    </button>
+                    <small>
+                      내 원래 목표와 지킬 선은 유지돼요. 복기는 AI의 제안이므로
+                      실제 의도와 맞는지 확인해 주세요.
+                    </small>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      내가 실제로 한 말에서 잘한 점과 고쳐 말할 부분을 찾아요.
+                      분석한 장면은 다시 연습할 수 있어요.
+                    </p>
+                    <button
+                      className="dd-secondary"
+                      disabled={
+                        busy || captureBusy || !consent || !config.available
+                      }
+                      onClick={() => void reviewPractice()}
+                    >
+                      {session.review
+                        ? "이어진 대화까지 다시 복기"
+                        : "AI로 이 대화 복기하기"}
+                    </button>
+                    <small>
+                      이 대화의 문자와 카드 설정을 전송해요. 음성 파일과 다른
+                      대화는 보내지 않아요.
+                    </small>
+                  </>
+                )}
+              </section>
+            )}
           {speaking && (
             <CompanionNudge
               mood="speak"
@@ -794,12 +1017,12 @@ export default function VoiceWorkspace({
                 consent={consent}
                 disabled={
                   busy ||
-                  (session.kind === "practice" &&
+                  (session.kind !== "recording" &&
                     (!consent || !config.available))
                 }
-                requireText={session.kind === "practice"}
+                requireText={session.kind !== "recording"}
                 submitLabel={
-                  session.kind === "practice"
+                  session.kind !== "recording"
                     ? "내 답변 보내기"
                     : "음성과 문자 기록 저장"
                 }
@@ -820,7 +1043,7 @@ export default function VoiceWorkspace({
                           session.turns
                             .map(
                               (t) =>
-                                `**${t.role === "assistant" ? session.context?.partner || "AI 연습 상대" : t.role === "user" ? "나" : "녹음"}**\n\n${t.text || "(문자 변환 없는 음성)"}\n`,
+                                `**${t.role === "assistant" ? (session.kind === "chat" ? sessionCharacter.name : session.context?.partner) || "AI 연습 상대" : t.role === "user" ? "나" : "녹음"}**\n\n${t.text || "(문자 변환 없는 음성)"}\n`,
                             )
                             .join("\n"),
                       ],
@@ -833,18 +1056,22 @@ export default function VoiceWorkspace({
                 <Icon name="download" size={16} />
                 대화 문자 내려받기
               </button>
-              {session.context && (
+              {session.kind !== "recording" && !session.isSample && (
                 <button
                   className="dd-link"
                   disabled={busy || captureBusy}
                   onClick={() =>
                     open({
-                      ...makeSession("practice", session.context),
+                      ...makeSession(
+                        session.kind,
+                        session.context,
+                        sessionCharacter,
+                      ),
                       industry: session.industry,
                     })
                   }
                 >
-                  같은 설정으로 새 연습
+                  같은 설정으로 새 대화
                 </button>
               )}
               <button
@@ -873,9 +1100,12 @@ export default function VoiceWorkspace({
         </>
       )}
       {error && (
-        <p className="dd-error" role="alert">
-          {error}
-        </p>
+        <>
+          <p className="dd-error" role="alert">
+            {error}
+          </p>
+          <QuotaHelp error={error} />
+        </>
       )}
       {notice && <CompanionNudge mood="done" text={notice} dismissible />}
       {seed && (
@@ -887,6 +1117,6 @@ export default function VoiceWorkspace({
           onSaved={() => setNotice("우리 일의 말을 용어 노트에 저장했어요.")}
         />
       )}
-    </>
+    </CompanionProvider>
   );
 }

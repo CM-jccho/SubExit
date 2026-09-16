@@ -1,6 +1,8 @@
 "use client";
+import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
 import AudioPlayer, { inspectAudio } from "./AudioPlayer";
+import { useCompanion } from "./CompanionTheme";
 import CompanionNudge from "./CompanionNudge";
 import type { AudioClip } from "@/lib/voice-notebook";
 import { scenarios, tones, type Tone } from "@/lib/scenarios";
@@ -17,6 +19,7 @@ export default function LiveCoach({
   onDemo: () => void;
   profile?: ContextProfile;
 }) {
+  const character = useCompanion();
   const [scenario, setScenario] = useState("sales"),
     [tone, setTone] = useState<Tone>(profile?.tone || "firm_polite");
   const [config, setConfig] = useState({
@@ -350,7 +353,7 @@ export default function LiveCoach({
           <div className="dc-preflight-intro">
             <Companion small mood="listen" />
             <div>
-              <h2>곁이가 옆에서 도울게요.</h2>
+              <h2>{character.name}와 함께 준비해요.</h2>
               <p>상대 말을 듣고, 내 목표에 맞는 문장을 준비해요.</p>
             </div>
           </div>
@@ -636,9 +639,12 @@ export default function LiveCoach({
                 </details>
               )}
               {error && (
-                <p className="dd-error" role="alert">
-                  {error}
-                </p>
+                <>
+                  <p className="dd-error" role="alert">
+                    {error}
+                  </p>
+                  <QuotaHelp error={error} />
+                </>
               )}
             </section>
             <aside
@@ -649,7 +655,7 @@ export default function LiveCoach({
             >
               <div className="dc-answer-heading">
                 <Icon name="chat" size={20} />
-                <span>곁이의 한마디</span>
+                <span>{character.name}의 한마디</span>
                 {result && <span className="dc-ai-label">AI 제안</span>}
               </div>
               {result ? (

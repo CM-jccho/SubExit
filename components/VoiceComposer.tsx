@@ -1,4 +1,5 @@
 "use client";
+import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
 import AudioPlayer, { inspectAudio, audioTime } from "./AudioPlayer";
 import { Icon } from "./CompanionUI";
@@ -433,9 +434,12 @@ export default function VoiceComposer({
         </label>
       )}
       {error && (
-        <p className="dd-error" role="alert">
-          {error}
-        </p>
+        <>
+          <p className="dd-error" role="alert">
+            {error}
+          </p>
+          <QuotaHelp error={error} />
+        </>
       )}
       {(clip || text) && (
         <button

@@ -1,3 +1,4 @@
+import { isCompanionChoice, type CompanionChoice } from "./companions";
 import type { Tone } from "./scenarios";
 export type ContextProfile = {
   title: string;
@@ -9,6 +10,7 @@ export type ContextProfile = {
   tone: Tone;
 };
 export type ConversationCard = ContextProfile & {
+  companion?: CompanionChoice;
   id: string;
   createdAt: string;
   updatedAt: string;
@@ -98,6 +100,7 @@ export function parseCards(raw: string | null): ConversationCard[] {
             ? c.source
             : "manual",
           ...(c.isSample === true ? { isSample: true } : {}),
+          ...(isCompanionChoice(c.companion) ? { companion: c.companion } : {}),
         });
       } catch {}
     }
@@ -113,18 +116,30 @@ export function readCards() {
     return [];
   }
 }
-export function writeCards(cards: ConversationCard[]) {
+export function writeCards(
+  cards: ConversationCard[],
+  requestSamplesInitialized?: boolean,
+) {
   if (cards.length > 100)
     throw new Error("카드는 최대 100개까지 저장할 수 있어요.");
+  const previous = JSON.parse(localStorage.getItem(CARD_KEY) || "null");
   localStorage.setItem(
     CARD_KEY,
-    JSON.stringify({ version: 1, samplesInitialized: true, cards }),
+    JSON.stringify({
+      version: 1,
+      samplesInitialized: true,
+      requestSamplesInitialized:
+        requestSamplesInitialized ??
+        previous?.requestSamplesInitialized === true,
+      cards,
+    }),
   );
 }
 export function saveCard(
   profile: ContextProfile,
   source: ConversationCard["source"],
   existingId?: string,
+  companion?: CompanionChoice,
 ): ConversationCard[] {
   const clean = parseProfile(profile),
     cards = readCards(),
@@ -138,6 +153,9 @@ export function saveCard(
     lastUsedAt: old?.lastUsedAt || null,
     useCount: old?.useCount || 0,
     source,
+    companion: isCompanionChoice(companion)
+      ? companion
+      : old?.companion || "auto",
     ...(old?.isSample ? { isSample: true } : {}),
   };
   const next = [card, ...cards.filter((c) => c.id !== card.id)];
