@@ -15,6 +15,7 @@ export type ConversationCard = ContextProfile & {
   lastUsedAt: string | null;
   useCount: number;
   source: "guided" | "ai" | "manual";
+  isSample?: boolean;
 };
 export type SetupMessage = { role: "user" | "assistant"; text: string };
 export const CARD_KEY = "ddeundeun-conversation-cards-v1";
@@ -96,6 +97,7 @@ export function parseCards(raw: string | null): ConversationCard[] {
           source: ["guided", "ai", "manual"].includes(c.source)
             ? c.source
             : "manual",
+          ...(c.isSample === true ? { isSample: true } : {}),
         });
       } catch {}
     }
@@ -114,7 +116,10 @@ export function readCards() {
 export function writeCards(cards: ConversationCard[]) {
   if (cards.length > 100)
     throw new Error("카드는 최대 100개까지 저장할 수 있어요.");
-  localStorage.setItem(CARD_KEY, JSON.stringify({ version: 1, cards }));
+  localStorage.setItem(
+    CARD_KEY,
+    JSON.stringify({ version: 1, samplesInitialized: true, cards }),
+  );
 }
 export function saveCard(
   profile: ContextProfile,
@@ -133,6 +138,7 @@ export function saveCard(
     lastUsedAt: old?.lastUsedAt || null,
     useCount: old?.useCount || 0,
     source,
+    ...(old?.isSample ? { isSample: true } : {}),
   };
   const next = [card, ...cards.filter((c) => c.id !== card.id)];
   writeCards(next);

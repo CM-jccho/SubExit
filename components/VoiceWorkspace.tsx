@@ -471,8 +471,12 @@ export default function VoiceWorkspace({
                 </span>
                 <span>
                   <small>
-                    {s.kind === "practice" ? "상대와 연습" : "음성 기록"} ·{" "}
-                    {new Date(s.updatedAt).toLocaleDateString("ko-KR")}
+                    {s.isSample
+                      ? "샘플 · 사전 작성 대화"
+                      : s.kind === "practice"
+                        ? "상대와 연습"
+                        : "음성 기록"}{" "}
+                    · {new Date(s.updatedAt).toLocaleDateString("ko-KR")}
                   </small>
                   <strong>{s.title}</strong>
                   <span>
@@ -513,6 +517,13 @@ export default function VoiceWorkspace({
                   : "나의 음성 기록"}
               </p>
               <h1>{session.title}</h1>
+              {session.isSample && (
+                <p className="vn-caption">
+                  <span className="dc-sample-badge">샘플</span> 사용법을
+                  보여주는 가상의 대화예요. 녹음 원본은 없으며 ‘읽어주기’로 들을
+                  수 있어요. 삭제하기 전까지 남아요.
+                </p>
+              )}
             </div>
             {session.turns.length > 0 && (
               <span className="vn-saved">
@@ -576,12 +587,22 @@ export default function VoiceWorkspace({
               Google Gemini에 전송해요.
             </p>
           </details>
-          <AIConsent
-            config={config}
-            checked={consent}
-            onChange={setConsent}
-            disabled={busy || captureBusy}
-          />
+          {!session.isSample && (
+            <AIConsent
+              config={config}
+              checked={consent}
+              onChange={setConsent}
+              disabled={busy || captureBusy}
+            />
+          )}
+          {session.isSample && (
+            <button
+              className="dd-primary"
+              onClick={() => open(makeSession("practice", session.context))}
+            >
+              이 상황으로 새 연습 시작 <Icon name="arrow" size={18} />
+            </button>
+          )}
           {session.kind === "practice" && (
             <label className="dd-check vn-autoplay">
               <input
@@ -596,7 +617,7 @@ export default function VoiceWorkspace({
             </label>
           )}
           {session.kind === "practice" && !session.turns.length && (
-            <div className="vn-start-practice">
+            <div className="vn-start-practice" data-tour="practice-settings">
               <CompanionNudge text="상대 역할은 제가 맡을게요. 시작하면 그 상황에 맞춰 말을 걸어요." />
               <button
                 className="dd-primary dd-full"
@@ -665,15 +686,17 @@ export default function VoiceWorkspace({
                   )}
                   {t.text && (
                     <>
-                      <button
-                        className="dd-link"
-                        disabled={
-                          busy || captureBusy || !consent || !config.available
-                        }
-                        onClick={() => void extract(t)}
-                      >
-                        중요 용어 찾기
-                      </button>
+                      {!session.isSample && (
+                        <button
+                          className="dd-link"
+                          disabled={
+                            busy || captureBusy || !consent || !config.available
+                          }
+                          onClick={() => void extract(t)}
+                        >
+                          중요 용어 찾기
+                        </button>
+                      )}
                       <button
                         className="dd-link"
                         onClick={() => void term("", t.text)}
@@ -699,7 +722,7 @@ export default function VoiceWorkspace({
               text="대화의 맥락을 살펴보고 있어요. 잠시 기다려 주세요."
             />
           )}
-          {pending && !busy && !complete && (
+          {!session.isSample && pending && !busy && !complete && (
             <button
               className="dd-secondary dd-full"
               disabled={!consent || !config.available}
@@ -714,7 +737,8 @@ export default function VoiceWorkspace({
               text="이번 연습을 마쳤어요. 남겨둔 말을 읽어보고 필요한 표현을 모아보세요."
             />
           )}
-          {session.kind === "practice" &&
+          {!session.isSample &&
+            session.kind === "practice" &&
             !!session.turns.length &&
             !pending &&
             !complete &&
@@ -727,7 +751,8 @@ export default function VoiceWorkspace({
                 <Icon name="chat" size={18} />내 목표에 맞는 답변 후보 3개 보기
               </button>
             )}
-          {session.kind === "practice" &&
+          {!session.isSample &&
+            session.kind === "practice" &&
             !pending &&
             !complete &&
             !!session.turns.at(-1)?.suggestions?.length && (
@@ -760,27 +785,29 @@ export default function VoiceWorkspace({
                 </div>
               </details>
             )}
-          {(session.kind === "recording" ||
-            (session.turns.length > 0 && !pending && !complete)) && (
-            <VoiceComposer
-              key={session.id}
-              config={config}
-              consent={consent}
-              disabled={
-                busy ||
-                (session.kind === "practice" && (!consent || !config.available))
-              }
-              requireText={session.kind === "practice"}
-              submitLabel={
-                session.kind === "practice"
-                  ? "내 답변 보내기"
-                  : "음성과 문자 기록 저장"
-              }
-              onUse={saveDraft}
-              onActivity={setCaptureBusy}
-              suggestion={suggestion}
-            />
-          )}
+          {!session.isSample &&
+            (session.kind === "recording" ||
+              (session.turns.length > 0 && !pending && !complete)) && (
+              <VoiceComposer
+                key={session.id}
+                config={config}
+                consent={consent}
+                disabled={
+                  busy ||
+                  (session.kind === "practice" &&
+                    (!consent || !config.available))
+                }
+                requireText={session.kind === "practice"}
+                submitLabel={
+                  session.kind === "practice"
+                    ? "내 답변 보내기"
+                    : "음성과 문자 기록 저장"
+                }
+                onUse={saveDraft}
+                onActivity={setCaptureBusy}
+                suggestion={suggestion}
+              />
+            )}
           {session.turns.length > 0 && (
             <div className="vn-toolbar vn-session-tools">
               <button

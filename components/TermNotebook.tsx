@@ -495,6 +495,7 @@ export default function TermNotebook({ config }: { config: AIConfig }) {
               }
             >
               <small>
+                {t.isSample && <span className="dc-sample-badge">샘플</span>}
                 {t.industry || "업종 미지정"} ·{" "}
                 {t.reviewed
                   ? "직접 확인함"

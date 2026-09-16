@@ -7,6 +7,9 @@ import VoiceComposer from "./VoiceComposer";
 import TermNotebook from "./TermNotebook";
 import { Companion, HelpTip, Icon } from "./CompanionUI";
 import FirstConversation, { TOUR_KEY } from "./FirstConversation";
+import StorageStatus from "./StorageStatus";
+import { seedStarterData, starterCards } from "@/lib/starter-data";
+import { downloadBlob } from "@/lib/voice-notebook";
 import { tones } from "@/lib/scenarios";
 import {
   emptyProfile,
@@ -119,7 +122,7 @@ function ContextFacts({ profile }: { profile: ContextProfile }) {
         <dt>상황</dt>
         <dd>{profile.situation || "어떤 대화인지 알려주세요"}</dd>
       </div>
-      <div className="dc-goal">
+      <div className="dc-goal" data-tour="conversation-goal">
         <dt>원하는 결과</dt>
         <dd>{profile.goal || "이번 대화의 목표를 정해요"}</dd>
       </div>
@@ -157,16 +160,36 @@ export default function ConversationWorkspace() {
     [error, setError] = useState(""),
     [toast, setToast] = useState("");
   const [choices, setChoices] = useState<string[]>([]);
+  const [ready, setReady] = useState(false),
+    [storageError, setStorageError] = useState("");
+  const [tourStep, setTourStep] = useState(0);
   const [tour, setTour] = useState(false),
     [editFields, setEditFields] = useState(false);
   const controller = useRef<AbortController | null>(null),
     generation = useRef(0);
   useEffect(() => {
-    setCards(readCards());
-    try {
-      if (!localStorage.getItem(TOUR_KEY) && !window.location.search)
-        setTour(true);
-    } catch {}
+    let mounted = true;
+    seedStarterData()
+      .catch((e) => {
+        if (mounted)
+          setStorageError(
+            e instanceof Error
+              ? e.message
+              : "저장소를 확인하지 못했어요. 브라우저 저장 권한을 확인해 주세요.",
+          );
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setCards(readCards());
+        setReady(true);
+        try {
+          if (!localStorage.getItem(TOUR_KEY)) {
+            setView("home");
+            setTourStep(0);
+            setTour(true);
+          }
+        } catch {}
+      });
     const abort = new AbortController();
     fetch("/api/coach", { signal: abort.signal })
       .then((r) => r.json())
@@ -175,6 +198,7 @@ export default function ConversationWorkspace() {
     const sync = () => setCards(readCards());
     window.addEventListener("storage", sync);
     return () => {
+      mounted = false;
       abort.abort();
       controller.current?.abort();
       generation.current++;
@@ -184,6 +208,7 @@ export default function ConversationWorkspace() {
   useEffect(() => {
     if (query.get("tour") === "1") {
       setView("home");
+      setTourStep(0);
       setTour(true);
     } else if (query.get("view") === "records") setView("records");
     else if (query.get("view") === "terms") setView("terms");
@@ -366,13 +391,26 @@ export default function ConversationWorkspace() {
       ],
       { type: "application/json" },
     );
-    const url = URL.createObjectURL(blob),
-      a = document.createElement("a");
-    a.href = url;
-    a.download = "ddeundeun-my-conversations.json";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadBlob(blob, "ddeundeun-my-conversations.json");
   }
+  function beginTour() {
+    cancelRequest();
+    setView("home");
+    setTourStep(0);
+    setTour(true);
+    setError("");
+  }
+  function changeTourStep(next: number) {
+    setTourStep(next);
+    if (next === 0) setView("home");
+    else {
+      setActive((c) => c || cards.find((c) => c.isSample) || starterCards[0]);
+      setView(next === 3 ? "voicePractice" : "detail");
+    }
+  }
+  const personalCards = cards.filter((c) => !c.isSample);
+  const sampleCards = cards.filter((c) => c.isSample);
+
   const visible = searchCards(cards, search);
   const canSave = (() => {
     try {
@@ -422,19 +460,23 @@ export default function ConversationWorkspace() {
     setView("detail");
     window.scrollTo({ top: 0 });
   }
-  const cardList = (items: ConversationCard[]) => (
+  const cardList = (items: ConversationCard[], spotlight = false) => (
     <div className="dc-card-grid">
       {items.map((c, i) => (
         <button
           className="dc-saved-card"
           key={c.id}
+          data-tour={spotlight && i === 0 ? "starter-card" : undefined}
           onClick={() => openCard(c)}
         >
           <span className={"dc-card-avatar color-" + (i % 3)}>
             <Icon name="chat" size={25} />
           </span>
           <span className="dc-card-body">
-            <span className="dc-partner">{c.partner}</span>
+            <span className="dc-partner">
+              {c.isSample && <span className="dc-sample-badge">샘플</span>}
+              {c.partner}
+            </span>
             <strong>{c.title}</strong>
             <span className="dc-card-goal">{c.goal}</span>
             <small>
@@ -449,6 +491,16 @@ export default function ConversationWorkspace() {
       ))}
     </div>
   );
+  if (!ready)
+    return (
+      <div className="dd-root dc-root">
+        <div className="dc-shell">
+          <p className="dc-loading" role="status">
+            저장한 대화와 첫 사용 샘플을 불러오고 있어요.
+          </p>
+        </div>
+      </div>
+    );
   return (
     <div className="dd-root dc-root">
       <div className="dc-shell">
@@ -483,15 +535,17 @@ export default function ConversationWorkspace() {
           <button
             className="dc-help-button dc-icon-button"
             aria-label="첫 사용 가이드 다시 보기"
-            onClick={() => {
-              if (view === "live") navigate("guide");
-              setTour(true);
-            }}
+            onClick={beginTour}
           >
             <Icon name="help" />
           </button>
         </header>
         <main id="main-content" key={view}>
+          {storageError && (
+            <p className="dd-error" role="alert">
+              {storageError}
+            </p>
+          )}
           {toast && (
             <p className="dc-toast" role="status">
               <Icon name="check" size={18} />
@@ -524,6 +578,41 @@ export default function ConversationWorkspace() {
                   <span className="dc-character-name">당신의 옆자리, 곁이</span>
                 </div>
               </section>
+              {(sampleCards.length > 0 || tour) && (
+                <section className="dc-starter-section">
+                  <div className="dc-section-heading">
+                    <h2>처음이라면, 이 대화부터</h2>
+                    <span className="dc-sample-badge">가상의 샘플</span>
+                  </div>
+                  <p>
+                    카드를 눌러 상대와 목표를 살펴보세요. 내 상황에 맞게
+                    복사해서 바꿔도 좋아요.
+                  </p>
+                  {cardList(
+                    sampleCards.length ? sampleCards : [starterCards[0]],
+                    true,
+                  )}
+                  <div className="dc-starter-links">
+                    <button
+                      className="dd-link"
+                      onClick={() => navigate("records")}
+                    >
+                      대화 기록 예시 보기 <Icon name="arrow" size={16} />
+                    </button>
+                    <button
+                      className="dd-link"
+                      onClick={() => navigate("terms")}
+                    >
+                      용어 노트 예시 보기 <Icon name="arrow" size={16} />
+                    </button>
+                  </div>
+                  <small>
+                    {sampleCards.length
+                      ? "샘플은 직접 삭제하기 전까지 남아요."
+                      : "가이드에서만 보는 예시예요. 삭제한 샘플은 다시 저장하지 않아요."}
+                  </small>
+                </section>
+              )}
               <div className="vn-home-actions">
                 <button onClick={() => navigate("records")}>
                   <Icon name="mic" />
@@ -542,7 +631,7 @@ export default function ConversationWorkspace() {
                   <Icon name="arrow" size={18} />
                 </button>
               </div>
-              <button className="dc-tour-invite" onClick={() => setTour(true)}>
+              <button className="dc-tour-invite" onClick={beginTour}>
                 <span className="dc-invite-icon">
                   <Icon name="help" size={23} />
                 </span>
@@ -555,7 +644,7 @@ export default function ConversationWorkspace() {
               <section className="dc-recent">
                 <div className="dc-section-heading">
                   <h2>
-                    다시 꺼낼 대화 <span>{cards.length}</span>
+                    내가 준비한 대화 <span>{personalCards.length}</span>
                   </h2>
                   <button
                     className="dd-link"
@@ -565,8 +654,8 @@ export default function ConversationWorkspace() {
                     <Icon name="arrow" size={16} />
                   </button>
                 </div>
-                {cards.length ? (
-                  cardList(searchCards(cards, "").slice(0, 2))
+                {personalCards.length ? (
+                  cardList(searchCards(personalCards, "").slice(0, 2))
                 ) : (
                   <div className="dc-home-empty">
                     <span className="dc-empty-stack">
@@ -580,8 +669,11 @@ export default function ConversationWorkspace() {
                 )}
               </section>
               <p className="dc-footnote">
-                <Icon name="shield" size={15} />내 대화 카드는 이 기기에만
-                저장돼요.
+                <Icon name="shield" size={15} />
+                저장한 내용은 재방문해도 남아요 · 이 브라우저에 보관
+                <button className="dd-link" onClick={() => navigate("guide")}>
+                  저장 방식 확인
+                </button>
               </p>
             </>
           )}
@@ -645,7 +737,7 @@ export default function ConversationWorkspace() {
                     </span>
                     <button className="dd-link" onClick={exportData}>
                       <Icon name="download" size={17} />
-                      데이터 내려받기
+                      카드 내려받기
                     </button>
                   </div>
                 </>
@@ -960,7 +1052,9 @@ export default function ConversationWorkspace() {
                 <Icon name="back" size={18} />내 대화
               </button>
               <section className="dc-title">
-                <p className="dc-overline">준비해 둔 대화</p>
+                <p className="dc-overline">
+                  {active.isSample ? "샘플 · 가상의 상황" : "준비해 둔 대화"}
+                </p>
                 <h1>{active.title}</h1>
               </section>
               <div className="dc-detail-grid">
@@ -984,6 +1078,7 @@ export default function ConversationWorkspace() {
                   </p>
                   <button
                     className="dd-primary dd-full"
+                    data-tour="practice-button"
                     onClick={() => {
                       setView("voicePractice");
                       window.scrollTo({ top: 0 });
@@ -1038,7 +1133,7 @@ export default function ConversationWorkspace() {
                 <p className="dc-overline">필요할 때, 가볍게</p>
                 <h1>곁이와 이렇게 시작해요</h1>
               </section>
-              <button className="dc-guide-tour" onClick={() => setTour(true)}>
+              <button className="dc-guide-tour" onClick={beginTour}>
                 <Companion small />
                 <span>
                   <strong>직접 해보는 30초 가이드</strong>
@@ -1046,6 +1141,15 @@ export default function ConversationWorkspace() {
                 </span>
                 <Icon name="arrow" />
               </button>
+              <StorageStatus
+                onRestore={async () => {
+                  await seedStarterData(true);
+                  setCards(readCards());
+                }}
+                onCards={exportData}
+                onRecords={() => navigate("records")}
+                onTerms={() => navigate("terms")}
+              />
               <div className="dc-guide-steps">
                 {[
                   {
@@ -1169,7 +1273,7 @@ export default function ConversationWorkspace() {
                   이 예시로 내 카드 만들기
                   <Icon name="arrow" size={18} />
                 </button>
-                <button className="dd-link" onClick={() => setTour(true)}>
+                <button className="dd-link" onClick={beginTour}>
                   한 단계씩 따라 해보기
                 </button>
               </div>
@@ -1183,8 +1287,9 @@ export default function ConversationWorkspace() {
       </div>
       {tour && (
         <FirstConversation
+          step={tourStep}
+          onStep={changeTourStep}
           onClose={() => setTour(false)}
-          onCreate={() => start()}
         />
       )}
     </div>

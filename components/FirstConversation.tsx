@@ -1,183 +1,213 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Companion, Icon } from "./CompanionUI";
-
-export const TOUR_KEY = "ddeundeun-first-conversation-v1";
+export const TOUR_KEY = "ddeundeun-spotlight-guide-v2";
+const steps = [
+  {
+    target: "starter-card",
+    title: "우선, 이 카드를 눌러봐요",
+    text: "상대와 목표가 미리 들어 있어요. 아무것도 적지 않고 시작해도 괜찮아요.",
+    action: "이 카드 열기",
+    click: true,
+  },
+  {
+    target: "conversation-goal",
+    title: "내가 원하는 건 여기에!",
+    text: "상대에게 하고 싶은 말의 방향이에요. 지킬 선과 함께 기억해 두세요.",
+    action: "확인했어요",
+    click: false,
+  },
+  {
+    target: "practice-button",
+    title: "이제 상대와 연습해봐요",
+    text: "이 버튼을 누르면 저장한 상황의 상대와 대화를 주고받을 수 있어요.",
+    action: "연습 화면 열기",
+    click: true,
+  },
+  {
+    target: "practice-settings",
+    title: "준비되면, 한마디부터",
+    text: "전송 안내에 동의하고 ‘상대와 연습 시작’을 눌러요. 이후에는 녹음하거나 답변 후보를 골라 말할 수 있어요.",
+    action: "여기서 시작할게요",
+    click: false,
+  },
+];
+type Box = { left: number; top: number; width: number; height: number };
 export default function FirstConversation({
+  step,
+  onStep,
   onClose,
-  onCreate,
 }: {
+  step: number;
+  onStep: (step: number) => void;
   onClose: () => void;
-  onCreate: () => void;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const [step, setStep] = useState(0);
-  const [selected, setSelected] = useState(false);
-  const heading = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    const el = dialog.current;
-    el?.showModal();
-    return () => el?.close();
-  }, []);
-  useEffect(() => {
-    heading.current?.focus();
-  }, [step]);
-  const titles = [
-    "처음엔, 같이 해볼까요?",
-    "먼저, 내 상황을 꺼내요",
-    "상대가 이렇게 말했다면?",
-    "내 목표에 맞는 한마디",
-  ];
-  function finish(create = false) {
+  const dialog = useRef<HTMLDialogElement>(null),
+    panel = useRef<HTMLDivElement>(null),
+    next = useRef<HTMLButtonElement>(null);
+  const [box, setBox] = useState<Box | null>(null),
+    [placement, setPlacement] = useState({ top: 200, left: 20, below: true });
+  const current = steps[step];
+  function finish() {
     try {
       localStorage.setItem(TOUR_KEY, "seen");
     } catch {
-      /* Tour still closes if storage is unavailable. */
+      /* Closing still works without storage. */
     }
     onClose();
-    if (create) onCreate();
+  }
+  useEffect(() => {
+    const el = dialog.current,
+      previous = document.activeElement as HTMLElement | null;
+    el?.showModal();
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      el?.close();
+      document.body.style.overflow = overflow;
+      if (previous?.isConnected) previous.focus();
+    };
+  }, []);
+  useEffect(() => {
+    setBox(null);
+    let observer: ResizeObserver | undefined;
+    let frame = 0;
+    const measure = () => {
+      const target = document.querySelector<HTMLElement>(
+        `[data-tour="${current.target}"]`,
+      );
+      if (!target) return;
+      const r = target.getBoundingClientRect(),
+        gap = 22,
+        margin = 12;
+      const w = window.innerWidth,
+        h = window.innerHeight;
+      const height = panel.current?.offsetHeight || 270;
+      const width = Math.min(360, w - margin * 2);
+      const below =
+        r.bottom + gap + height <= h - margin || r.top < height + gap;
+      setBox({
+        left: Math.max(4, r.left - 5),
+        top: Math.max(4, r.top - 5),
+        width: Math.min(w - 8, r.width + 10),
+        height: r.height + 10,
+      });
+      setPlacement({
+        left: Math.max(margin, Math.min(r.left, w - width - margin)),
+        top: Math.max(
+          margin,
+          Math.min(
+            below ? r.bottom + gap : r.top - height - gap,
+            h - height - margin,
+          ),
+        ),
+        below,
+      });
+    };
+    // The parent renders the actual destination view; observe it instead of cloning UI.
+    frame = requestAnimationFrame(() => {
+      const target = document.querySelector<HTMLElement>(
+        `[data-tour="${current.target}"]`,
+      );
+      target?.scrollIntoView({ block: "center", behavior: "instant" });
+      measure();
+      next.current?.focus({ preventScroll: true });
+      if (typeof ResizeObserver !== "undefined") {
+        observer = new ResizeObserver(measure);
+        if (target) observer.observe(target);
+        if (panel.current) observer.observe(panel.current);
+      }
+    });
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+    };
+  }, [step, current.target]);
+  function advance() {
+    if (current.click) {
+      const target = document.querySelector<HTMLElement>(
+        `[data-tour="${current.target}"]`,
+      );
+      if (!target) return;
+      target.click();
+    }
+    if (step === steps.length - 1) finish();
+    else onStep(step + 1);
   }
   return (
     <dialog
       ref={dialog}
-      className="dc-tour"
-      aria-labelledby="tour-title"
+      className="dc-spotlight"
+      aria-labelledby="spotlight-title"
+      aria-describedby="spotlight-description"
       onCancel={(e) => {
         e.preventDefault();
         finish();
       }}
     >
-      <div className="dc-tour-top">
-        <span>든든콜 첫 걸음</span>
+      {box && (
+        <div className="dc-spotlight-hole" style={box} aria-hidden="true" />
+      )}
+      {box && current.click && (
         <button
-          className="dc-icon-button"
-          aria-label="튜토리얼 닫기"
-          onClick={() => finish()}
-        >
-          <Icon name="close" />
-        </button>
-      </div>
-      <div className="dc-tour-content" key={step}>
-        {step === 0 ? (
-          <Companion />
-        ) : (
-          <div className="dc-tour-progress" aria-label={`${step} / 3단계`}>
-            {[1, 2, 3].map((n) => (
-              <span key={n} className={n <= step ? "complete" : ""}>
-                {n < step ? <Icon name="check" size={15} /> : n}
-              </span>
-            ))}
-          </div>
-        )}
-        <h2 id="tour-title" ref={heading} tabIndex={-1}>
-          {titles[step]}
-        </h2>
-        <p className="dc-tour-sub">
-          {
-            [
-              "작은 대화 하나로 사용법을 익혀봐요.",
-              "상대와 목표를 기억하는 ‘대화 카드’예요.",
-              "아래 말풍선을 눌러 상대의 말을 골라보세요.",
-              "완벽한 답보다, 내가 전하고 싶은 말에 가깝게.",
-            ][step]
-          }
-        </p>
-        {step === 0 && (
-          <div className="dc-tour-map">
-            <span>
-              <Icon name="cards" />
-              상황 정하기
-            </span>
-            <b>→</b>
-            <span>
-              <Icon name="chat" />
-              상대 말 듣기
-            </span>
-            <b>→</b>
-            <span>
-              <Icon name="target" />
-              힌트 받기
-            </span>
-          </div>
-        )}
-        {step === 1 && (
-          <button
-            className={"dc-tour-card " + (selected ? "selected" : "")}
-            onClick={() => setSelected(!selected)}
-            aria-pressed={selected}
-          >
-            <span className="dc-tour-card-label">
-              <Icon name="cards" size={18} /> 연습용 카드{" "}
-              <span className="dc-choice-dot">
-                {selected && <Icon name="check" size={15} />}
-              </span>
-            </span>
-            <strong>팀장님과 마감 조율</strong>
-            <span>
-              상대 <b>업무를 요청한 팀장님</b>
-            </span>
-            <span>
-              목표 <b>추가 보고서 마감을 다음 주로</b>
-            </span>
-            <span>
-              지킬 선 <b>주말 근무는 약속하지 않기</b>
-            </span>
-          </button>
-        )}
-        {step === 2 && (
-          <div className="dc-tour-conversation">
-            <span className="dc-tour-person">팀장님</span>
-            <button
-              className={"dc-opponent-bubble " + (selected ? "selected" : "")}
-              onClick={() => setSelected(true)}
-              aria-pressed={selected}
-            >
-              보고서, 금요일까지 가능하죠?
-              <Icon name={selected ? "check" : "plus"} size={19} />
-            </button>
-            <p>
-              <Icon name="mic" size={16} /> 실제 코칭에서는 마이크나 직접
-              입력으로 전달해요.
-            </p>
-          </div>
-        )}
-        {step === 3 && (
-          <div className="dc-tour-answer">
-            <span>
-              <Icon name="target" size={16} /> 마감 조율이라는 내 목표를 담아서
-            </span>
-            <blockquote>
-              “현재 업무를 마치려면 시간이 더 필요해요. 추가 보고서는 다음
-              주까지로 조율할 수 있을까요?”
-            </blockquote>
-            <small>사용법을 보여주는 사전 작성 예시예요.</small>
-          </div>
-        )}
-      </div>
-      <div className="dc-tour-bottom">
-        <button
-          className="dd-primary dd-full"
-          disabled={(step === 1 || step === 2) && !selected}
-          onClick={() => {
-            if (step === 3) finish(true);
-            else {
-              setSelected(false);
-              setStep(step + 1);
+          className="dc-spotlight-hit"
+          style={box}
+          onClick={advance}
+          aria-label={current.action}
+        />
+      )}
+      <div
+        className="dc-spotlight-panel"
+        ref={panel}
+        style={{ top: placement.top, left: placement.left }}
+      >
+        {box && (
+          <svg
+            className={
+              "dc-sketch-arrow " +
+              (placement.below ? "points-up" : "points-down")
             }
-          }}
-        >
-          {
-            [
-              "30초만 함께 해보기",
-              selected ? "이 상황으로 연습하기" : "위 카드를 눌러주세요",
-              selected ? "답변 힌트 보기" : "상대의 말을 눌러주세요",
-              "이제 내 대화 만들기",
-            ][step]
-          }
-          <Icon name="arrow" size={19} />
-        </button>
-        <button className="dd-link" onClick={() => finish()}>
-          {step === 3 ? "홈으로 가기" : "건너뛰고 둘러보기"}
+            viewBox="0 0 80 52"
+            aria-hidden="true"
+          >
+            <path d="M68 45 C27 50 20 22 19 7 M8 19 L19 5 L32 17" />
+          </svg>
+        )}
+        <div className="dc-spotlight-top">
+          <span>
+            곁이와 첫 걸음 · {step + 1} / {steps.length}
+          </span>
+          <button aria-label="가이드 닫기" onClick={finish}>
+            <Icon name="close" size={19} />
+          </button>
+        </div>
+        <div className="dc-spotlight-title">
+          <Companion small mood={step === 3 ? "done" : "hello"} />
+          <h2 id="spotlight-title">{current.title}</h2>
+        </div>
+        <p id="spotlight-description">{current.text}</p>
+        <div className="dc-spotlight-controls">
+          {step > 0 && (
+            <button className="dd-link" onClick={() => onStep(step - 1)}>
+              이전
+            </button>
+          )}
+          <button
+            ref={next}
+            className="dd-primary"
+            disabled={!box}
+            onClick={advance}
+          >
+            {current.action}
+            <Icon name="arrow" size={17} />
+          </button>
+        </div>
+        <button className="dc-spotlight-skip" onClick={finish}>
+          건너뛰기 · 안내에서 다시 볼 수 있어요
         </button>
       </div>
     </dialog>
