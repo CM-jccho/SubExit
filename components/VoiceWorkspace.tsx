@@ -1004,7 +1004,7 @@ export default function VoiceWorkspace({
             )}
           {!session.isSample && session.kind === "practice" && (
             <GardenPractice
-              key={session.id}
+              key={"garden-" + session.id}
               session={session}
               disabled={captureBusy || busy}
               onSave={persist}
