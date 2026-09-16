@@ -1775,3 +1775,352 @@ test("failed training storage keeps editable input and retry creates only one re
     await ui.cleanup();
   }
 });
+
+const messenger = require("../lib/messenger.ts");
+const Messenger = require("../components/MessengerPractice.tsx").default;
+const msgExample = messenger.messengerExamples[0];
+async function fillMessenger(input = msgExample.input) {
+  for (const [label, key] of [
+    ["상대가 보낸 메시지", "message"],
+    ["내가 전하고 싶은 것", "goal"],
+    ["지킬 선", "boundary"],
+  ])
+    await change(
+      document.querySelector(`textarea[aria-label="${label}"]`),
+      input[key],
+    );
+}
+test("messenger API validates three tones and sends only the chosen message and constraints", async () =>
+  ai(async () => {
+    const route = require("../app/api/messenger/route.ts");
+    let calls = 0;
+    gemini.geminiGenerate = async (system, parts) => {
+      calls++;
+      const sent = JSON.parse(parts[0].text);
+      assert.equal(sent.input.goal, msgExample.input.goal);
+      assert(!parts[0].text.includes("PRIVATE"));
+      assert(system.includes("약속"));
+      return { candidates: msgExample.candidates };
+    };
+    const body = {
+      ...consent,
+      input: { ...msgExample.input, otherChats: "PRIVATE" },
+      otherChats: "PRIVATE",
+    };
+    assert.equal(
+      (await route.POST(req({ ...body, consent: false }))).status,
+      400,
+    );
+    assert.equal(
+      (
+        await route.POST(
+          req({ ...body, input: { ...body.input, message: "a".repeat(4001) } }),
+        )
+      ).status,
+      400,
+    );
+    assert.equal(calls, 0);
+    const r = await route.POST(req(body));
+    assert.equal(r.status, 200);
+    assert.equal((await r.json()).candidates.length, 3);
+    gemini.geminiGenerate = async () => ({
+      candidates: [
+        msgExample.candidates[0],
+        msgExample.candidates[0],
+        msgExample.candidates[2],
+      ],
+    });
+    assert.equal((await route.POST(req(body))).status, 500);
+  }));
+test("messenger authored example never calls AI; candidate edits, clipboard and saved provenance survive reopening", async () => {
+  const ui = await mount(Messenger, { config, onRecords() {} });
+  let calls = 0,
+    copied;
+  try {
+    global.fetch = async () => {
+      calls++;
+      throw Error("must not run");
+    };
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text) => {
+          copied = text;
+        },
+      },
+    });
+    await click(
+      [...document.querySelectorAll(".daily-topic-grid button")].find((b) =>
+        b.textContent.includes(msgExample.title),
+      ),
+    );
+    await settle();
+    assert.equal(calls, 0);
+    assert(document.body.textContent.includes("사전 작성 샘플"));
+    assert.equal(document.querySelector('[aria-label="보낼 답장"]').value, "");
+    await click(button("간결하게 후보 고르기"));
+    assert.equal(
+      document.querySelector('[aria-label="보낼 답장"]').value,
+      msgExample.candidates[1].text,
+    );
+    assert.equal((await store.listSessions())[0].messenger.draft, "");
+    await change(
+      document.querySelector('[aria-label="보낼 답장"]'),
+      "가능한 일정을 먼저 확인하겠습니다.",
+    );
+    await click(button("답장 복사"));
+    assert.equal(copied, "가능한 일정을 먼저 확인하겠습니다.");
+    assert.equal((await store.listSessions())[0].messenger.draft, "");
+    await click(button("답장 저장"));
+    await settle();
+    let saved = (await store.listSessions())[0];
+    assert.equal(saved.messenger.draft, copied);
+    assert.equal(saved.messenger.draftSource, "sample");
+    assert.equal((await store.readGarden()).earned, 0);
+    await act(async () => ui.root.render(null));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(Messenger, {
+          config,
+          initialSession: saved,
+          onRecords() {},
+        }),
+      ),
+    );
+    await settle();
+    assert.equal(
+      document.querySelector('[aria-label="보낼 답장"]').value,
+      copied,
+    );
+    assert.equal(calls, 0);
+    window.confirm = () => true;
+    await click(button("이 답장 기록 삭제"));
+    await settle();
+    assert.equal((await store.listSessions()).length, 0);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("messenger input remains saved after quota and can finish manually without fabricated candidates", async () => {
+  const ui = await mount(Messenger, { config, onRecords() {} });
+  try {
+    await fillMessenger();
+    await click(button("저장하고 답장 준비"));
+    await settle();
+    global.fetch = async () =>
+      Response.json({ quotaKind: "daily", retryAfter: 60 }, { status: 429 });
+    await click(document.querySelector("input[type=checkbox]"));
+    await click(button("말투별 AI 후보 받기"));
+    await settle();
+    let rows = await store.listSessions();
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].messenger.input.message, msgExample.input.message);
+    assert.equal(rows[0].messenger.candidates.length, 0);
+    assert(document.body.textContent.includes("일일 한도"));
+    await change(
+      document.querySelector('[aria-label="보낼 답장"]'),
+      "일정을 확인한 뒤 답변드리겠습니다.",
+    );
+    await click(button("답장 저장"));
+    await settle();
+    rows = await store.listSessions();
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].messenger.draftSource, "manual");
+    assert.equal(rows[0].messenger.source, "manual");
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("messenger AI updates one record, edited conditions create a separate record and old drafts stay intact", async () => {
+  const ui = await mount(Messenger, { config, onRecords() {} });
+  try {
+    await fillMessenger();
+    await click(button("저장하고 답장 준비"));
+    await settle();
+    global.fetch = async () =>
+      Response.json({ candidates: msgExample.candidates });
+    await click(document.querySelector("input[type=checkbox]"));
+    await click(button("말투별 AI 후보 받기"));
+    await settle();
+    let rows = await store.listSessions();
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].messenger.source, "ai");
+    await click(button("부드럽게 후보 고르기"));
+    await click(button("답장 저장"));
+    await settle();
+    const first = (await store.listSessions())[0];
+    await click(button("메시지·조건 수정"));
+    await change(
+      document.querySelector('[aria-label="내가 전하고 싶은 것"]'),
+      "새 업무의 범위를 먼저 확인하기",
+    );
+    await click(button("저장하고 답장 준비"));
+    await settle();
+    await click(button("말투별 AI 후보 받기"));
+    await settle();
+    rows = await store.listSessions();
+    assert.equal(rows.length, 2);
+    assert.equal(
+      rows.find((r) => r.id === first.id).messenger.draft,
+      first.messenger.draft,
+    );
+    assert(
+      rows.some(
+        (r) =>
+          r.messenger.input.goal === "새 업무의 범위를 먼저 확인하기" &&
+          r.messenger.source === "ai",
+      ),
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("messenger refuses late AI writes after leaving and clipboard failure keeps selectable draft", async () => {
+  const ui = await mount(Messenger, { config, onRecords() {} });
+  try {
+    await fillMessenger();
+    await click(button("저장하고 답장 준비"));
+    await settle();
+    await change(
+      document.querySelector('[aria-label="보낼 답장"]'),
+      "검토 후 답장하겠습니다.",
+    );
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw Error("blocked");
+        },
+      },
+    });
+    await click(button("답장 복사"));
+    assert(document.body.textContent.includes("자동 복사가 차단"));
+    assert.equal(
+      document.querySelector('[aria-label="보낼 답장"]').value,
+      "검토 후 답장하겠습니다.",
+    );
+    let release;
+    global.fetch = () => new Promise((r) => (release = r));
+    await click(document.querySelector("input[type=checkbox]"));
+    await click(button("말투별 AI 후보 받기"));
+    await settle();
+    assert(release);
+    await act(async () => ui.root.render(null));
+    await act(async () =>
+      release(Response.json({ candidates: msgExample.candidates })),
+    );
+    await settle();
+    const rows = await store.listSessions();
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].messenger.candidates.length, 0);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("messenger storage failure preserves input and does not start generation", async () => {
+  const old = store.putSession,
+    ui = await mount(Messenger, { config, onRecords() {} });
+  try {
+    await fillMessenger();
+    store.putSession = async () => {
+      throw Error("저장 실패");
+    };
+    await click(button("저장하고 답장 준비"));
+    await settle();
+    assert.equal(
+      document.querySelector('[aria-label="상대가 보낸 메시지"]').value,
+      msgExample.input.message,
+    );
+    assert.equal((await store.listSessions()).length, 0);
+    store.putSession = old;
+    await click(button("저장하고 답장 준비"));
+    await settle();
+    assert.equal((await store.listSessions()).length, 1);
+  } finally {
+    store.putSession = old;
+    await ui.cleanup();
+  }
+});
+test("upcoming features have explicit unavailable labels, no launch actions and distinguish existing recording support", async () => {
+  const C = require("../components/UpcomingFeatures.tsx").default,
+    ui = await mount(C);
+  try {
+    assert(document.body.textContent.includes("아직 사용할 수 없으며"));
+    assert(document.body.textContent.includes("2분·2.4MB"));
+    assert(document.body.textContent.includes("한 번에 생성한 대본"));
+    assert.equal(document.querySelectorAll("button,a,input").length, 0);
+    assert.equal(document.querySelectorAll(".upcoming-list article").length, 7);
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("messenger is discoverable from home and restores under the library menu by URL", async () => {
+  const nav = require("../lib/workspace-navigation.ts");
+  assert.equal(nav.workspaceView("?view=messenger"), "messenger");
+  assert.equal(nav.workspaceSection("messenger"), "library");
+  assert.equal(
+    nav.workspaceUrl("https://test.local", "messenger"),
+    "/?view=messenger",
+  );
+  const C = require("../components/ConversationWorkspace.tsx").default,
+    ui = await mount(C, {}, () =>
+      window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
+    );
+  try {
+    await settle();
+    await click(button("카톡·메신저 답장 다듬기 →"));
+    await settle();
+    assert.equal(document.querySelector("h1").textContent, "메시지 답장");
+    assert.equal(window.location.search, "?view=messenger");
+    assert.equal(
+      document.querySelector('[aria-current="page"]').textContent,
+      "내 대화",
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+test("opening an authored messenger example never overwrites a saved reply to the same message", async () => {
+  const now = new Date().toISOString(),
+    saved = {
+      id: "saved-messenger-example",
+      kind: "chat",
+      title: "내 답장",
+      industry: "메신저",
+      turns: [],
+      createdAt: now,
+      updatedAt: now,
+      messenger: {
+        version: 1,
+        input: msgExample.input,
+        candidates: msgExample.candidates,
+        source: "ai",
+        draft: "저장한 내 표현",
+        draftSource: "manual",
+        updatedAt: now,
+      },
+    };
+  const ui = await mount(Messenger, {
+    config,
+    initialSession: saved,
+    onRecords() {},
+  });
+  try {
+    await store.putSession(saved);
+    await click(button("메시지·조건 수정"));
+    await click(
+      [...document.querySelectorAll(".daily-topic-grid button")].find((b) =>
+        b.textContent.includes(msgExample.title),
+      ),
+    );
+    await settle();
+    const rows = await store.listSessions();
+    assert.equal(rows.length, 2);
+    assert.equal(
+      (await store.getSession(saved.id)).messenger.draft,
+      "저장한 내 표현",
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});

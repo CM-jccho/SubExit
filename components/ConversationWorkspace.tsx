@@ -1,4 +1,6 @@
 "use client";
+import MessengerPractice from "./MessengerPractice";
+import UpcomingFeatures from "./UpcomingFeatures";
 import ConversationTraining from "./ConversationTraining";
 import DailyTalk from "./DailyTalk";
 import PromptPractice from "./PromptPractice";
@@ -637,13 +639,19 @@ export default function ConversationWorkspace() {
                 {toast}
               </p>
             )}
-            {["library", "prompts", "training"].includes(view) && (
+            {["library", "prompts", "training", "messenger"].includes(view) && (
               <div className="daily-tabs" role="group" aria-label="연습 종류">
                 <button
                   aria-pressed={view === "library"}
                   onClick={() => navigate("library")}
                 >
                   사람과 대화 연습
+                </button>
+                <button
+                  aria-pressed={view === "messenger"}
+                  onClick={() => navigate("messenger")}
+                >
+                  메시지 답장
                 </button>
                 <button
                   aria-pressed={view === "training"}
@@ -658,6 +666,12 @@ export default function ConversationWorkspace() {
                   AI에게 요청하기
                 </button>
               </div>
+            )}
+            {view === "messenger" && (
+              <MessengerPractice
+                config={config}
+                onRecords={() => navigate("records")}
+              />
             )}
             {view === "training" && (
               <ConversationTraining
@@ -710,6 +724,12 @@ export default function ConversationWorkspace() {
                         가볍게 이야기하기 <Icon name="chat" size={20} />
                       </button>
                     </div>
+                    <button
+                      className="dd-link dc-own-situation"
+                      onClick={() => navigate("messenger")}
+                    >
+                      카톡·메신저 답장 다듬기 →
+                    </button>
                     <button
                       className="dd-link dc-own-situation"
                       onClick={() => start()}
@@ -1610,6 +1630,19 @@ export default function ConversationWorkspace() {
                   </button>
                 </div>
               </>
+            )}
+            {["library", "room", "records", "guide"].includes(view) && (
+              <UpcomingFeatures
+                area={
+                  view === "library"
+                    ? "conversation"
+                    : view === "room"
+                      ? "room"
+                      : view === "records"
+                        ? "audio"
+                        : "all"
+                }
+              />
             )}
           </main>
           <footer className="dc-footer">
