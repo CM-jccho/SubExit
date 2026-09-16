@@ -288,6 +288,55 @@ export default function VoiceWorkspace({
       if (generation.current === id) setBusy(false);
     }
   }
+  async function suggestReplies() {
+    if (!session || busy || !consent) return;
+    const id = ++generation.current,
+      c = new AbortController();
+    abort.current = c;
+    setBusy(true);
+    setError("");
+    const timeout = setTimeout(() => c.abort(), 25000);
+    try {
+      const r = await fetch("/api/roleplay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "suggest",
+          context: session.context,
+          industry: session.industry,
+          messages: session.turns.map((t) => ({ role: t.role, text: t.text })),
+          consent,
+          adultConsent: consent,
+          sampleConsent: consent,
+        }),
+        signal: c.signal,
+      });
+      const d = await r.json();
+      if (generation.current !== id) return;
+      if (!r.ok) throw new Error(d.error);
+      await persist({
+        ...session,
+        turns: session.turns.map((t, i) =>
+          i === session.turns.length - 1
+            ? { ...t, suggestions: d.suggestions }
+            : t,
+        ),
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      if (generation.current === id)
+        setError(
+          e instanceof Error && e.name === "AbortError"
+            ? "후보 생성이 지연됐어요. 다시 눌러 시도해 주세요."
+            : e instanceof Error
+              ? e.message
+              : "후보를 만들지 못했어요.",
+        );
+    } finally {
+      clearTimeout(timeout);
+      if (generation.current === id) setBusy(false);
+    }
+  }
   async function transcribeSaved(turn: VoiceTurn) {
     if (!session || !turn.clip) return;
     setError("");
@@ -666,10 +715,23 @@ export default function VoiceWorkspace({
             />
           )}
           {session.kind === "practice" &&
+            !!session.turns.length &&
+            !pending &&
+            !complete &&
+            !session.turns.at(-1)?.suggestions?.length && (
+              <button
+                className="vn-get-choices dd-secondary dd-full"
+                disabled={busy || captureBusy || !consent || !config.available}
+                onClick={() => void suggestReplies()}
+              >
+                <Icon name="chat" size={18} />내 목표에 맞는 답변 후보 3개 보기
+              </button>
+            )}
+          {session.kind === "practice" &&
             !pending &&
             !complete &&
             !!session.turns.at(-1)?.suggestions?.length && (
-              <details className="vn-reply-choices">
+              <details className="vn-reply-choices" open>
                 <summary>
                   <Icon name="chat" size={17} />
                   어떻게 답할까요? 후보 3개 보기

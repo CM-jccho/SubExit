@@ -133,7 +133,9 @@ test("roleplay preserves persona, industry and turn history without exposing key
     assert.equal(d.source, "ai");
     assert.deepEqual(d.terms, ["마감 일정"]);
     const passed = JSON.parse(sent.contents[0].parts[0].text);
-    assert.equal(passed.context.goal, exampleProfile.goal);
+    assert.equal(passed.context.goal, undefined);
+    assert.equal(passed.context.boundaries, undefined);
+    assert.equal(passed.context.situation, exampleProfile.situation);
     assert.equal(passed.industry, "IT 서비스 기획");
     assert.equal(passed.messages.length, 2);
     assert(!JSON.stringify(d).includes("test-key"));
@@ -284,3 +286,33 @@ test("audio and text persist together and delete as a single record", async () =
   await store.deleteSession(s.id);
   assert.equal(await store.getSession(s.id), undefined);
 });
+
+test("candidate coaching receives the goal separately from the practice partner", () =>
+  withAI(async () => {
+    let sent;
+    global.fetch = async (url, options) => {
+      sent = JSON.parse(options.body);
+      return output({
+        suggestions: [
+          "다음 주로 조율하고 싶어요.",
+          "다음 주에 진행할 수 있을까요?",
+          "우선순위를 확인하고 다음 주로 정해볼까요?",
+        ],
+      });
+    };
+    const r = await roleplay.POST(
+      req({
+        ...consent,
+        action: "suggest",
+        context: exampleProfile,
+        industry: "IT",
+        messages: [{ role: "assistant", text: "어떤 일정을 원하세요?" }],
+      }),
+    );
+    assert.equal(r.status, 200);
+    assert.equal((await r.json()).suggestions.length, 3);
+    assert.equal(
+      JSON.parse(sent.contents[0].parts[0].text).context.goal,
+      exampleProfile.goal,
+    );
+  }));
