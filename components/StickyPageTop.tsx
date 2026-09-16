@@ -5,12 +5,28 @@ export default function StickyPageTop({ children }: { children: ReactNode }) {
   const [compact, setCompact] = useState(false);
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setCompact(!entry.isIntersecting),
-      { rootMargin: "-100px 0px 0px 0px" },
-    );
-    if (sentinel.current) observer.observe(sentinel.current);
-    return () => observer.disconnect();
+    let observer: IntersectionObserver;
+    const observe = () => {
+      observer?.disconnect();
+      if (!sentinel.current) return;
+      const height =
+        parseFloat(
+          window
+            .getComputedStyle(sentinel.current)
+            .getPropertyValue("--header-height"),
+        ) || 76;
+      observer = new IntersectionObserver(
+        ([entry]) => setCompact(!entry.isIntersecting),
+        { rootMargin: `-${height}px 0px 0px 0px` },
+      );
+      observer.observe(sentinel.current);
+    };
+    observe();
+    window.addEventListener("resize", observe);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", observe);
+    };
   }, []);
   return (
     <>

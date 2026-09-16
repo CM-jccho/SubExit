@@ -187,8 +187,9 @@ export default function TrendSearch({ config }: { config: AIConfig }) {
                 }
               />
               <p className="vn-caption">
-                검색 결과는 이 화면에서만 표시해요. 게시일 미확인·오래된 자료는
-                최신 유행의 근거로 보기 어려워요.
+                뜻과 쓰임은 함께 표시된 원문에서도 확인해 주세요. 검색 결과는 이
+                화면에서만 표시해요. 게시일 미확인·오래된 자료는 최신 유행의
+                근거로 보기 어려워요.
               </p>
             </div>
           )}
