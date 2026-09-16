@@ -123,7 +123,14 @@ export function recordingDrill(
     industry: session.industry,
     companion: session.companion,
     languages: session.languages,
-    turns: [{ ...previous, id: "turn-" + crypto.randomUUID(), createdAt: now }],
+    turns: [
+      {
+        ...previous,
+        origin: "recording",
+        id: "turn-" + crypto.randomUUID(),
+        createdAt: now,
+      },
+    ],
     practicePlan: {
       focus: draft.review.focus,
       sourceSessionId: session.id,

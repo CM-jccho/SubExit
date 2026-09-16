@@ -286,7 +286,7 @@ export default function RecordingAnalysis({
               : e instanceof Error
                 ? e.message
                 : "코칭을 받지 못했어요.") +
-            " 녹음과 확인한 문자는 보관돼요. 아래 가상 예시는 별도로 볼 수 있어요.",
+            " 녹음과 확인한 문자는 보관돼요. 음성 기록 목록에서 가상 예시를 별도로 볼 수 있어요.",
         );
     } finally {
       clearTimeout(timer);

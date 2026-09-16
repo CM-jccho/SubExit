@@ -11,6 +11,7 @@ export type AudioClip = {
   name: string;
 };
 export type VoiceTurn = {
+  origin?: "recording";
   id: string;
   role: "user" | "assistant" | "recording";
   text: string;

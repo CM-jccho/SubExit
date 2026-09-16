@@ -89,6 +89,7 @@ export function reviewDrill(
       text: t.text,
       terms: [...t.terms],
       ...(t.sample ? { sample: t.sample } : {}),
+      ...(t.origin ? { origin: t.origin } : {}),
       createdAt: now,
     })),
     practicePlan: {

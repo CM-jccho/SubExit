@@ -236,6 +236,7 @@ test("recording draft, original audio and language survive storage; replay uses 
   assert.deepEqual(loaded.languages, s.languages);
   const replay = recording.recordingDrill(loaded, loaded.recordingAnalysis);
   assert.equal(replay.turns[0].text, example.segments[2].text);
+  assert.equal(replay.turns[0].origin, "recording");
   assert.equal(replay.context.goal, s.recordingAnalysis.context.goal);
   assert.deepEqual(replay.languages, s.languages);
   assert.throws(() =>
