@@ -126,6 +126,9 @@ test("first-run spotlight navigates actual screens, finishes without AI calls, a
   await act(async () => root.unmount());
   root = await render();
   assert.equal(document.querySelector("dialog[open]"), null);
+  assert.equal(window.location.search, "?view=records");
+  assert.equal(document.querySelector("h1").textContent, "대화 기록");
+  await click('button[aria-label="든든콜 홈"]');
   assert.equal(
     document.querySelectorAll(".dc-starter-section .dc-saved-card").length,
     2,

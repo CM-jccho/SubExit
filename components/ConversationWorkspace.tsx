@@ -3,7 +3,12 @@ import ConsentDisclosure from "./ConsentDisclosure";
 import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import {
+  workspaceSection,
+  workspaceView,
+  workspaceUrl,
+  type WorkspaceView as View,
+} from "@/lib/workspace-navigation";
 import LiveCoach from "./LiveCoach";
 import VoiceWorkspace from "./VoiceWorkspace";
 import VoiceComposer from "./VoiceComposer";
@@ -38,19 +43,6 @@ import {
   type ConversationCard,
   type SetupMessage,
 } from "@/lib/conversation-cards";
-type View =
-  | "room"
-  | "friendChat"
-  | "records"
-  | "voicePractice"
-  | "terms"
-  | "home"
-  | "guide"
-  | "library"
-  | "setup"
-  | "detail"
-  | "live"
-  | "demo";
 const labels: Record<keyof Omit<ContextProfile, "tone">, string> = {
   title: "카드 이름",
   myRole: "내 역할",
@@ -153,8 +145,7 @@ function ContextFacts({ profile }: { profile: ContextProfile }) {
   );
 }
 export default function ConversationWorkspace() {
-  const query = useSearchParams();
-  const [view, setView] = useState<View>("home"),
+  const [view, setViewState] = useState<View>("home"),
     [cards, setCards] = useState<ConversationCard[]>([]),
     [search, setSearch] = useState(""),
     [active, setActive] = useState<ConversationCard | null>(null);
@@ -210,7 +201,10 @@ export default function ConversationWorkspace() {
         setCards(readCards());
         setReady(true);
         try {
-          if (!localStorage.getItem(TOUR_KEY)) {
+          if (
+            !localStorage.getItem(TOUR_KEY) &&
+            workspaceView(window.location.search) === "home"
+          ) {
             setView("home");
             setTourStep(0);
             setTour(true);
@@ -239,20 +233,37 @@ export default function ConversationWorkspace() {
       window.removeEventListener("storage", sync);
     };
   }, []);
+  function setView(next: View) {
+    const url = workspaceUrl(window.location.href, next);
+    if (
+      url !==
+      window.location.pathname + window.location.search + window.location.hash
+    )
+      window.history.pushState(null, "", url);
+    setViewState(next);
+    window.scrollTo({ top: 0 });
+  }
   useEffect(() => {
+    const restore = () => {
+      cancelRequest();
+      setRecordId(undefined);
+      setToast("");
+      setError("");
+      setTour(false);
+      setViewState(workspaceView(window.location.search));
+      window.scrollTo({ top: 0 });
+    };
+    setViewState(workspaceView(window.location.search));
+    const query = new URLSearchParams(window.location.search);
     if (query.get("tour") === "1") {
-      setView("home");
       setTourStep(0);
       setTour(true);
-    } else if (query.get("view") === "room") setView("room");
-    else if (query.get("view") === "records") setView("records");
-    else if (query.get("view") === "terms") setView("terms");
-    else if (query.get("demo") === "1") setView("demo");
-    else if (query.get("live") === "1") {
-      setView("library");
-      setToast("코칭에 사용할 카드를 선택하거나 새로 만들어 주세요.");
     }
-  }, [query]);
+    if (query.get("live") === "1")
+      setToast("코칭에 사용할 카드를 선택하거나 새로 만들어 주세요.");
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, []);
   useEffect(() => {
     if (review && view === "setup") window.scrollTo({ top: 0 });
   }, [review, view]);
@@ -585,15 +596,17 @@ export default function ConversationWorkspace() {
                   { id: "home", text: "홈", icon: "home" },
                   { id: "library", text: "내 대화", icon: "cards" },
                   { id: "room", text: "친구방", icon: "chat" },
-                  { id: "records", text: "음성 기록", icon: "mic" },
+                  { id: "records", text: "대화 기록", icon: "mic" },
                   { id: "terms", text: "용어 노트", icon: "book" },
                   { id: "guide", text: "안내", icon: "help" },
                 ] as const
               ).map((n) => (
                 <button
                   key={n.id}
-                  aria-current={view === n.id ? "page" : undefined}
-                  className={view === n.id ? "active" : ""}
+                  aria-current={
+                    workspaceSection(view) === n.id ? "page" : undefined
+                  }
+                  className={workspaceSection(view) === n.id ? "active" : ""}
                   onClick={() => navigate(n.id)}
                 >
                   <Icon name={n.icon} size={21} />
@@ -626,21 +639,29 @@ export default function ConversationWorkspace() {
                 <section className="dc-welcome">
                   <div className="dc-welcome-copy">
                     <p className="dc-overline">
-                      말하기 어려운 순간, 내 편 하나
+                      대화 연습 → 복기 → 같은 장면 다시 연습
                     </p>
                     <h1>
-                      할 말이 막힐 땐,
+                      어려운 한마디,
                       <br />
-                      잠깐 기대세요.
+                      여기서 연습해요.
                     </h1>
                     <p className="dc-welcome-desc">
-                      내 상황을 기억하고,
-                      <br className="dc-mobile-break" /> 다음 한마디를 함께
-                      준비해요.
+                      상대와 말해보고, 실제로 한 말을 돌아보며
+                      <br className="dc-mobile-break" /> 다음 대화를 준비해요.
                     </p>
-                    <button className="dd-primary" onClick={() => start()}>
-                      대화 준비하기
+                    <button
+                      className="dd-primary"
+                      onClick={() => navigate("library")}
+                    >
+                      대화 연습 시작
                       <Icon name="arrow" size={20} />
+                    </button>
+                    <button
+                      className="dd-link dc-own-situation"
+                      onClick={() => start()}
+                    >
+                      내 상황으로 새 카드 만들기
                     </button>
                   </div>
                   <div className="dc-welcome-art">
@@ -651,13 +672,31 @@ export default function ConversationWorkspace() {
                     </span>
                   </div>
                 </section>
-                <button
-                  className="garden-home-link"
-                  onClick={() => navigate("room")}
-                >
-                  <strong>연습한 장면으로 아지트 채우기</strong>
-                  <span>부탁 · 거절 · 어려운 응대 →</span>
-                </button>
+                <div className="vn-home-actions">
+                  <button onClick={() => navigate("records")}>
+                    <Icon name="mic" />
+                    <span>
+                      <strong>녹음·파일로 복기하기</strong>
+                      <small>파일 첨부 → 문자·화자 확인 → 코칭</small>
+                    </span>
+                    <Icon name="arrow" size={18} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigate("library");
+                      setToast(
+                        "카드를 고른 뒤 ‘실제 대화에서 힌트 받기’를 눌러주세요. 최대 8초씩 듣고 힌트를 제안해요.",
+                      );
+                    }}
+                  >
+                    <Icon name="chat" />
+                    <span>
+                      <strong>대화 중 짧은 힌트 받기</strong>
+                      <small>카드 선택 후 시작 · 최대 8초씩</small>
+                    </span>
+                    <Icon name="arrow" size={18} />
+                  </button>
+                </div>
                 {(sampleCards.length > 0 || tour) && (
                   <section className="dc-starter-section">
                     <div className="dc-section-heading">
@@ -689,18 +728,6 @@ export default function ConversationWorkspace() {
                       >
                         샘플 모두 보기 <Icon name="arrow" size={16} />
                       </button>
-                      <button
-                        className="dd-link"
-                        onClick={() => navigate("records")}
-                      >
-                        대화 기록 예시 보기 <Icon name="arrow" size={16} />
-                      </button>
-                      <button
-                        className="dd-link"
-                        onClick={() => navigate("terms")}
-                      >
-                        용어 노트 예시 보기 <Icon name="arrow" size={16} />
-                      </button>
                     </div>
                     <small>
                       {sampleCards.length
@@ -723,29 +750,11 @@ export default function ConversationWorkspace() {
                     ))}
                   </div>
                   <span>
-                    <strong>나만의 친구방</strong>
-                    <small>친구를 만들고, 눌러서 이야기해요</small>
+                    <strong>친구방 · 대화 아지트</strong>
+                    <small>친구와 이야기하고, 연습한 장면을 모아요</small>
                   </span>
                   <Icon name="arrow" size={20} />
                 </button>
-                <div className="vn-home-actions">
-                  <button onClick={() => navigate("records")}>
-                    <Icon name="mic" />
-                    <span>
-                      <strong>목소리로 남기기</strong>
-                      <small>녹음 · 파일 · 문자 기록</small>
-                    </span>
-                    <Icon name="arrow" size={18} />
-                  </button>
-                  <button onClick={() => navigate("library")}>
-                    <Icon name="chat" />
-                    <span>
-                      <strong>상대와 대화 연습</strong>
-                      <small>내 상황에 맞춰 주고받기</small>
-                    </span>
-                    <Icon name="arrow" size={18} />
-                  </button>
-                </div>
                 <button className="dc-tour-invite" onClick={beginTour}>
                   <span className="dc-invite-icon">
                     <Icon name="help" size={23} />
@@ -872,6 +881,10 @@ export default function ConversationWorkspace() {
                     <Icon name="plus" size={18} />새 대화
                   </button>
                 </section>
+                <p className="dc-room-intro">
+                  상대·상황·목표를 저장한 카드예요. 주고받은 내용과 복기는 ‘대화
+                  기록’에서 다시 볼 수 있어요.
+                </p>
                 <label className="dc-search" htmlFor="card-search">
                   <Icon name="search" size={20} />
                   <input
@@ -1087,7 +1100,7 @@ export default function ConversationWorkspace() {
                         />
                         <p className="vn-caption">
                           설정 음성은 입력 보조로 사용해요. 음성 원본을
-                          보관하려면 ‘음성 기록’을 이용해 주세요.
+                          보관하려면 ‘대화 기록’을 이용해 주세요.
                         </p>
                       </details>
                       <form
@@ -1389,18 +1402,18 @@ export default function ConversationWorkspace() {
                   {[
                     {
                       icon: "cards",
-                      title: "내 상황을 준비해요",
-                      text: "누구와 어떤 이야기를 할지 알려주세요. 원하는 결과와 지킬 선을 카드로 기억해요.",
+                      title: "상대와 대화 연습",
+                      text: "카드를 고르거나 내 상황을 만들어요. AI가 상대 역할을 맡으면 목소리나 문자로 답해보세요.",
                     },
                     {
                       icon: "mic",
-                      title: "상대의 말을 전달해요",
-                      text: "대면 또는 다른 기기의 스피커폰 옆에서 최대 8초를 들려주세요. 직접 적어도 돼요.",
+                      title: "실제로 한 말로 복기",
+                      text: "대화 기록에서 내가 한 말과 코칭을 함께 확인해요. 바꾸고 싶은 한 문장을 내 말로 고쳐보세요.",
                     },
                     {
                       icon: "chat",
-                      title: "힌트를 내 말로 전해요",
-                      text: "제안된 문장을 확인하고 내 방식으로 말해보세요. 다음 대화에도 같은 카드를 꺼낼 수 있어요.",
+                      title: "같은 장면 다시 연습",
+                      text: "복기에서 다시 연습을 시작하면 목표와 지킬 선이 이어져요. 고친 문장을 다음 대화에서 써보세요.",
                     },
                   ].map((s, i) => (
                     <article key={s.title}>
@@ -1430,7 +1443,7 @@ export default function ConversationWorkspace() {
                     내 대화에서 카드를 고르고 ‘상대와 대화 연습’을 누르세요.
                     AI가 상대 역할로 말하면 녹음하거나 직접 입력해 답해요. 한
                     번씩 주고받는 방식이며 상대의 말은 기기 음성으로 읽어줘요.
-                    연습 음성과 문자는 음성 기록에 저장돼요.
+                    연습 음성과 문자는 대화 기록에 저장돼요.
                   </p>
                 </details>
                 <details className="dc-guide-faq">

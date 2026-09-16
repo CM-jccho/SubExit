@@ -447,11 +447,14 @@ export default function PracticeGarden({
       <p className="garden-notice" role="status">
         {notice}
       </p>
-      <small className="garden-policy">
-        기념품은 세 단계를 마친 장면의 기록이에요. 각 티켓 보상은 원본 대화별 한
-        번이며, 샘플 보기·후보 그대로 전송은 제외돼요. 기존 물방울 잔액과 소품을
-        그대로 이어받았어요. 이 브라우저에 저장되며 현금 가치는 없어요.
-      </small>
+      <details className="dc-guide-faq">
+        <summary>기념품·꾸미기 티켓은 어떻게 남나요?</summary>
+        <p className="garden-policy">
+          기념품은 연습·복기·재연습을 마친 장면의 기록이에요. 각 티켓 보상은
+          원본 대화별 한 번이며, 샘플 보기·후보 그대로 전송은 제외돼요. 기존
+          잔액과 소품은 유지돼요. 이 브라우저에 저장되며 현금 가치는 없어요.
+        </p>
+      </details>
       {selected && (
         <MemoryCard
           scene={selected}
