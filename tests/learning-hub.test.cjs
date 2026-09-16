@@ -562,6 +562,116 @@ test("free setup with unavailable AI accepts a local draft and clearly routes to
   }
 });
 
+test("workspace navigation preserves section across remount and browser back, and home scrolls to start", async () => {
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  let scrolls = 0;
+  const ui = await mount(C, {}, () => {
+    window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done");
+    window.history.replaceState(null, "", "?view=records");
+    window.scrollTo = ({ top }) => {
+      if (top === 0) scrolls++;
+    };
+  });
+  try {
+    await settle();
+    assert.equal(document.querySelector("h1").textContent, "대화 기록");
+    await click(button("든든콜 홈"));
+    assert.equal(window.location.search, "");
+    assert(scrolls > 0);
+    await act(async () => ui.root.render(null));
+    await act(async () => ui.root.render(React.createElement(C)));
+    await settle();
+    assert(
+      document.querySelector("h1").textContent.includes("여기서 연습해요"),
+    );
+    await act(async () => {
+      window.history.back();
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    await settle();
+    assert.equal(window.location.search, "?view=records");
+    assert.equal(document.querySelector("h1").textContent, "대화 기록");
+    assert.equal(
+      document.querySelector('[aria-current="page"]').textContent,
+      "대화 기록",
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("home practice opens a context card and practice keeps a discoverable records destination", async () => {
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(C, {}, () =>
+    window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
+  );
+  try {
+    await settle();
+    await click(button("대화 연습 시작"));
+    assert.equal(window.location.search, "?view=library");
+    const card = [...document.querySelectorAll(".dc-saved-card")].find((b) =>
+      b.textContent.includes("동료에게 검토 부탁하기"),
+    );
+    await click(card);
+    assert(
+      document.body.textContent.includes(
+        "검토할 부분과 가능한 시간을 정중하게 부탁하기",
+      ),
+    );
+    await click(button("상대와 대화 연습"));
+    assert.equal(window.location.search, "?view=records");
+    assert.equal(
+      document.querySelector('[aria-current="page"]').textContent,
+      "대화 기록",
+    );
+    assert(
+      document
+        .querySelector("h1")
+        .textContent.includes("동료에게 검토 부탁하기"),
+    );
+    await click(button("대화 기록 목록"));
+    assert.equal(document.querySelector("h1").textContent, "대화 기록");
+    const examples = [...document.querySelectorAll("details")].find((d) =>
+      d.querySelector("summary")?.textContent.includes("녹음 분석 예시"),
+    );
+    assert(examples && !examples.open);
+    assert(button("녹음·파일 추가"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("first deep-linked visit stays in its section instead of being replaced by onboarding", async () => {
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(C, {}, () =>
+    window.history.replaceState(null, "", "?view=records"),
+  );
+  try {
+    await settle();
+    assert.equal(document.querySelector("h1").textContent, "대화 기록");
+    assert(!document.querySelector("dialog[open]"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("reload destinations exclude transient drafts and old tutorial parameters", () => {
+  const {
+    workspaceUrl,
+    workspaceView,
+  } = require("../lib/workspace-navigation.ts");
+  assert.equal(
+    workspaceUrl("https://test.local/?tour=1&live=1#old", "home"),
+    "/",
+  );
+  for (const view of ["setup", "detail", "live"])
+    assert.equal(workspaceUrl("https://test.local", view), "/?view=library");
+  for (const view of ["voicePractice", "friendChat"])
+    assert.equal(workspaceUrl("https://test.local", view), "/?view=records");
+  assert.equal(workspaceView("?view=invalid"), "home");
+  assert.equal(workspaceView("?live=1"), "library");
+});
+
 const trends = require("../lib/trend-search.ts");
 const scenes = require("../lib/practical-scenes.ts");
 const observer = require("../lib/persona-observer.ts");

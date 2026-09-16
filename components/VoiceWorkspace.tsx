@@ -119,7 +119,7 @@ export default function VoiceWorkspace({
       )
       .catch(() =>
         setError(
-          "음성 기록을 불러오지 못했어요. 브라우저 저장 권한을 확인해 주세요.",
+          "대화 기록을 불러오지 못했어요. 브라우저 저장 권한을 확인해 주세요.",
         ),
       );
   useEffect(() => {
@@ -619,7 +619,7 @@ export default function VoiceWorkspace({
           <section className="dc-page-top">
             <div>
               <p className="dc-overline">말하고, 듣고, 다시 꺼내기</p>
-              <h1>음성 기록</h1>
+              <h1>대화 기록</h1>
             </div>
             <button
               className="dd-primary"
@@ -627,7 +627,8 @@ export default function VoiceWorkspace({
                 open(makeSession("recording", undefined, inheritedCompanion))
               }
             >
-              <Icon name="mic" size={18} />새 녹음
+              <Icon name="mic" size={18} />
+              녹음·파일 추가
             </button>
           </section>
           <CompanionNudge
@@ -645,14 +646,17 @@ export default function VoiceWorkspace({
           <label className="dc-search">
             <Icon name="search" size={18} />
             <input
-              aria-label="음성 기록 검색"
+              aria-label="대화 기록 검색"
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="제목, 상대, 대화 내용으로 찾기"
             />
           </label>
-          <RecordingExamples />
+          <details className="dc-guide-faq">
+            <summary>녹음 분석 예시 3개 · AI 없이 체험</summary>
+            <RecordingExamples />
+          </details>
           <div className="vn-session-list">
             {matching.map((s) => (
               <button
@@ -691,7 +695,7 @@ export default function VoiceWorkspace({
               <h2>
                 {search ? "찾는 기록이 없어요" : "첫 목소리를 남겨볼까요?"}
               </h2>
-              <p>새 녹음을 누르거나 대화 카드를 골라 연습해 보세요.</p>
+              <p>녹음·파일 추가를 누르거나 대화 카드를 골라 연습해 보세요.</p>
             </div>
           )}
         </>
@@ -703,7 +707,7 @@ export default function VoiceWorkspace({
             onClick={() => open(null)}
           >
             <Icon name="back" size={18} />
-            음성 기록 목록
+            대화 기록 목록
           </button>
           <section className="vn-session-heading">
             <div>
@@ -891,7 +895,7 @@ export default function VoiceWorkspace({
                         : session.context?.partner || "연습 상대"
                       : t.role === "user"
                         ? "나"
-                        : "녹음 " + (i + 1)}
+                        : (t.clip ? "녹음 " : "문자 기록 ") + (i + 1)}
                     {t.role === "assistant" && (
                       <small>
                         {t.origin === "recording"

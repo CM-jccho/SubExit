@@ -2291,3 +2291,9 @@
   flex-shrink: 0;
   margin-top: 2px;
 }
+
+.dc-own-situation {
+  display: block;
+  margin-top: 16px;
+  min-height: 44px;
+}

@@ -469,7 +469,7 @@ test("leaving a conversation during a failed request never saves a fallback into
     await click(document.querySelector(".vn-consent input"));
     global.fetch = () => new Promise((r) => (finish = r));
     await click(button("상대와 연습 시작"));
-    await click(button("음성 기록 목록"));
+    await click(button("대화 기록 목록"));
     await act(async () =>
       finish(Response.json({ code: "provider_error" }, { status: 502 })),
     );

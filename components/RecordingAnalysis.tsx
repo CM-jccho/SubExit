@@ -307,7 +307,11 @@ export default function RecordingAnalysis({
   return (
     <section className="learn-recording-analysis" aria-label="외부 녹음 코칭">
       <div className="vn-toolbar">
-        <h2>이 녹음으로 대화 돌아보기</h2>
+        <h2>
+          {source?.clip
+            ? "이 녹음으로 대화 돌아보기"
+            : "이 문자로 대화 돌아보기"}
+        </h2>
         <span>2분 · 2.4MB 이내</span>
       </div>
       <p>

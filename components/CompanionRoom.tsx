@@ -431,7 +431,6 @@ export default function CompanionRoom({
           친구 만들기
         </button>
       </StickyPageTop>
-      <PersonaObserver config={config} characters={characters} />
       <p className="dc-room-intro">
         친구를 누르면 대화 카드가 바로 열려요. 지난 이야기부터 이어가도 좋아요.
       </p>
@@ -514,7 +513,11 @@ export default function CompanionRoom({
           ))}
         </div>
       </details>
-      <CommunityPreview />
+      <details className="dc-guide-faq">
+        <summary>더 둘러보기 · 친구들 대화 관찰과 라운지 미리보기</summary>
+        <PersonaObserver config={config} characters={characters} />
+        <CommunityPreview />
+      </details>
       {cardOpen && (
         <CompanionCard
           selected={selected}
