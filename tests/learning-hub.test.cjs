@@ -2124,3 +2124,68 @@ test("opening an authored messenger example never overwrites a saved reply to th
     await ui.cleanup();
   }
 });
+
+test("chat composer opens typing immediately and remains ready for the next reply after saving", async () => {
+  const C = require("../components/VoiceComposer.tsx").default;
+  const sent = [];
+  const ui = await mount(C, {
+    config,
+    consent: false,
+    requireText: true,
+    textFirst: true,
+    submitLabel: "내 답변 보내기",
+    onUse: async (draft) => sent.push(draft.text),
+  });
+  try {
+    const input = document.querySelector("textarea");
+    assert(input);
+    await change(input, "오늘은 어렵지만 내일 오전에는 도울 수 있어요.");
+    await click(button("내 답변 보내기"));
+    assert.deepEqual(sent, ["오늘은 어렵지만 내일 오전에는 도울 수 있어요."]);
+    assert(document.querySelector("textarea"));
+    assert.equal(document.querySelector("textarea").value, "");
+    await change(
+      document.querySelector("textarea"),
+      "10시에 다시 이야기할까요?",
+    );
+    await click(button("내 답변 보내기"));
+    assert.equal(sent.length, 2);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("communication tips are private editable drafts and reopening a tip preserves the user's note", async () => {
+  const C = require("../components/TermNotebook.tsx").default;
+  const ui = await mount(C, { config });
+  try {
+    await settle();
+    assert(
+      document
+        .querySelector('[aria-label="용어 노트 공개 범위"]')
+        .textContent.includes("다른 이용자에게 공개되지 않아요"),
+    );
+    await click(button("소통 팁"));
+    await click(button("내 노트에 담기"));
+    assert.equal((await store.listTerms()).length, 0);
+    const fields = document.querySelectorAll(".vn-dialog textarea");
+    await change(
+      fields[fields.length - 1],
+      "우리 팀은 마감 전에 먼저 일정을 확인한다.",
+    );
+    await click(button("용어 노트에 저장"));
+    await settle();
+    assert.equal((await store.listTerms()).length, 1);
+    await click(button("내 노트에 담기"));
+    const reopened = document.querySelectorAll(".vn-dialog textarea");
+    assert.equal(
+      reopened[reopened.length - 1].value,
+      "우리 팀은 마감 전에 먼저 일정을 확인한다.",
+    );
+    await click(button("용어 노트에 저장"));
+    await settle();
+    assert.equal((await store.listTerms()).length, 1);
+  } finally {
+    await ui.cleanup();
+  }
+});

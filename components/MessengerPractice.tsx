@@ -22,7 +22,6 @@ import { aiFetch, AIServiceError, outageMessage } from "@/lib/ai-client";
 import { AIConsent, type AIConfig } from "./VoiceComposer";
 import { Companion } from "./CompanionUI";
 import { useCompanion } from "./CompanionTheme";
-import UpcomingFeatures from "./UpcomingFeatures";
 export default function MessengerPractice({
   config,
   initialSession,
@@ -611,7 +610,6 @@ export default function MessengerPractice({
           </button>
         </details>
       )}
-      <UpcomingFeatures area="messenger" />
     </section>
   );
 }

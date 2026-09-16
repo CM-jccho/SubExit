@@ -702,7 +702,7 @@ export default function VoiceWorkspace({
             </button>
           </section>
           <CompanionNudge
-            text="녹음파일도 여기에 모아둘 수 있어요. 연습한 대화도 함께 남아요."
+            text="끝난 대화를 돌아보려면 ‘녹음·파일 추가’를 누르세요. 문자로 바꾼 뒤 내 말·상대 말을 확인하고 코칭을 받아요."
             dismissible
           />
           <button className="vn-practice-invite" onClick={onChooseCard}>
@@ -793,8 +793,8 @@ export default function VoiceWorkspace({
                 {session.kind === "chat"
                   ? sessionCharacter.name + "와 AI 대화"
                   : session.kind === "practice"
-                    ? "내 상황으로 대화 연습"
-                    : "나의 음성 기록"}
+                    ? "AI와 역할 대화 연습"
+                    : "녹음 분석·코칭"}
               </p>
               <h1>{session.title}</h1>
               {session.isSample && (
@@ -947,7 +947,7 @@ export default function VoiceWorkspace({
                 text={
                   session.kind === "chat"
                     ? "지금 궁금한 일부터 편하게 이야기해 주세요."
-                    : "상대 역할은 제가 맡을게요. 시작하면 그 상황에 맞춰 말을 걸어요."
+                    : "AI가 상대 역할로 먼저 말해요. 내가 문자나 목소리로 답하면 대화가 이어져요."
                 }
               />
               <button
@@ -962,7 +962,15 @@ export default function VoiceWorkspace({
               </button>
             </div>
           )}
-          <div className="vn-turns">
+          <div
+            className={
+              "vn-turns " +
+              (session.kind !== "recording" ? "vn-chat-thread" : "")
+            }
+            aria-label={
+              session.kind !== "recording" ? "AI와 주고받는 대화" : "녹음 기록"
+            }
+          >
             {session.turns.map((t, i) => (
               <article key={t.id} className={"vn-turn " + t.role}>
                 <div className="vn-turn-meta">
@@ -1083,6 +1091,108 @@ export default function VoiceWorkspace({
                   }}
                 />
               </>
+            )}
+          {speaking && (
+            <CompanionNudge
+              mood="speak"
+              text="상대의 말을 읽고 있어요. 다 듣고 나서 편하게 답해보세요."
+            />
+          )}
+          {busy && (
+            <CompanionNudge
+              mood="think"
+              text="대화의 맥락을 살펴보고 있어요. 잠시 기다려 주세요."
+            />
+          )}
+          {!session.isSample && pending && !busy && !complete && (
+            <button
+              className="dd-secondary dd-full"
+              disabled={!canTalk}
+              onClick={() => void respond(session)}
+            >
+              상대 답변 다시 받기
+            </button>
+          )}
+          {complete && (
+            <CompanionNudge
+              mood="done"
+              text="이번 연습을 마쳤어요. 남겨둔 말을 읽어보고 필요한 표현을 모아보세요."
+            />
+          )}
+          {!session.isSample &&
+            session.kind === "practice" &&
+            !!session.turns.length &&
+            !pending &&
+            !complete &&
+            !session.turns.at(-1)?.suggestions?.length && (
+              <button
+                className="vn-get-choices dd-secondary dd-full"
+                disabled={busy || captureBusy || !canTalk}
+                onClick={() => void suggestReplies()}
+              >
+                <Icon name="chat" size={18} />내 목표에 맞는 답변 후보 3개 보기
+              </button>
+            )}
+          {!session.isSample &&
+            session.kind === "practice" &&
+            !pending &&
+            !complete &&
+            !!session.turns.at(-1)?.suggestions?.length && (
+              <details className="vn-reply-choices" open>
+                <summary>
+                  <Icon name="chat" size={17} />
+                  어떻게 답할까요? 후보 3개 보기
+                </summary>
+                <p className="vn-caption">
+                  하나를 골라 내 말로 바꿔보세요. 고르는 것만으로 전송되지는
+                  않아요.
+                </p>
+                {session.turns.at(-1)?.suggestionsSample && (
+                  <SampleNotice
+                    sample={session.turns.at(-1)!.suggestionsSample!}
+                  />
+                )}
+                <div className="vn-choice-list">
+                  {session.turns.at(-1)!.suggestions!.map((s, i) => (
+                    <button
+                      key={i}
+                      disabled={busy || captureBusy}
+                      onClick={() => {
+                        setSuggestion({ text: s, id: Date.now() });
+                        setNotice(
+                          "답변 후보를 입력칸에 넣었어요. 수정하거나 직접 읽어볼 수 있어요.",
+                        );
+                      }}
+                    >
+                      <span>0{i + 1}</span>
+                      {s}
+                      <Icon name="arrow" size={16} />
+                    </button>
+                  ))}
+                </div>
+              </details>
+            )}
+          {!session.isSample &&
+            (session.kind === "recording" ||
+              (session.turns.length > 0 && !pending && !complete)) && (
+              <VoiceComposer
+                key={session.id}
+                config={session.kind === "recording" ? config : sampleConfig}
+                consent={
+                  sampleMode && session.kind !== "recording" ? false : consent
+                }
+                disabled={busy || (session.kind !== "recording" && !canTalk)}
+                requireText={session.kind !== "recording"}
+                textFirst={session.kind !== "recording"}
+                submitLabel={
+                  session.kind !== "recording"
+                    ? "내 답변 보내기"
+                    : "음성과 문자 기록 저장"
+                }
+                onUse={saveDraft}
+                onActivity={setCaptureBusy}
+                suggestion={suggestion}
+              />
             )}
           {!session.isSample && session.kind === "practice" && (
             <GardenPractice
@@ -1208,107 +1318,6 @@ export default function VoiceWorkspace({
                   </>
                 )}
               </section>
-            )}
-          {speaking && (
-            <CompanionNudge
-              mood="speak"
-              text="상대의 말을 읽고 있어요. 다 듣고 나서 편하게 답해보세요."
-            />
-          )}
-          {busy && (
-            <CompanionNudge
-              mood="think"
-              text="대화의 맥락을 살펴보고 있어요. 잠시 기다려 주세요."
-            />
-          )}
-          {!session.isSample && pending && !busy && !complete && (
-            <button
-              className="dd-secondary dd-full"
-              disabled={!canTalk}
-              onClick={() => void respond(session)}
-            >
-              상대 답변 다시 받기
-            </button>
-          )}
-          {complete && (
-            <CompanionNudge
-              mood="done"
-              text="이번 연습을 마쳤어요. 남겨둔 말을 읽어보고 필요한 표현을 모아보세요."
-            />
-          )}
-          {!session.isSample &&
-            session.kind === "practice" &&
-            !!session.turns.length &&
-            !pending &&
-            !complete &&
-            !session.turns.at(-1)?.suggestions?.length && (
-              <button
-                className="vn-get-choices dd-secondary dd-full"
-                disabled={busy || captureBusy || !canTalk}
-                onClick={() => void suggestReplies()}
-              >
-                <Icon name="chat" size={18} />내 목표에 맞는 답변 후보 3개 보기
-              </button>
-            )}
-          {!session.isSample &&
-            session.kind === "practice" &&
-            !pending &&
-            !complete &&
-            !!session.turns.at(-1)?.suggestions?.length && (
-              <details className="vn-reply-choices" open>
-                <summary>
-                  <Icon name="chat" size={17} />
-                  어떻게 답할까요? 후보 3개 보기
-                </summary>
-                <p className="vn-caption">
-                  하나를 골라 내 말로 바꿔보세요. 고르는 것만으로 전송되지는
-                  않아요.
-                </p>
-                {session.turns.at(-1)?.suggestionsSample && (
-                  <SampleNotice
-                    sample={session.turns.at(-1)!.suggestionsSample!}
-                  />
-                )}
-                <div className="vn-choice-list">
-                  {session.turns.at(-1)!.suggestions!.map((s, i) => (
-                    <button
-                      key={i}
-                      disabled={busy || captureBusy}
-                      onClick={() => {
-                        setSuggestion({ text: s, id: Date.now() });
-                        setNotice(
-                          "답변 후보를 입력칸에 넣었어요. 수정하거나 직접 읽어볼 수 있어요.",
-                        );
-                      }}
-                    >
-                      <span>0{i + 1}</span>
-                      {s}
-                      <Icon name="arrow" size={16} />
-                    </button>
-                  ))}
-                </div>
-              </details>
-            )}
-          {!session.isSample &&
-            (session.kind === "recording" ||
-              (session.turns.length > 0 && !pending && !complete)) && (
-              <VoiceComposer
-                key={session.id}
-                config={session.kind === "recording" ? config : sampleConfig}
-                consent={
-                  sampleMode && session.kind !== "recording" ? false : consent
-                }
-                disabled={busy || (session.kind !== "recording" && !canTalk)}
-                requireText={session.kind !== "recording"}
-                submitLabel={
-                  session.kind !== "recording"
-                    ? "내 답변 보내기"
-                    : "음성과 문자 기록 저장"
-                }
-                onUse={saveDraft}
-                onActivity={setCaptureBusy}
-                suggestion={suggestion}
-              />
             )}
           {session.turns.length > 0 && (
             <div className="vn-toolbar vn-session-tools">

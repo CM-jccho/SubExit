@@ -53,8 +53,8 @@ export default function CommunityPreview() {
     <>
       <div className="learn-preview-invite">
         <span>
-          <small>다음에 만날 공간 · 준비 중</small>
-          <strong>익명 라운지</strong>
+          <small>가상 참가자 · 사전 작성 예시</small>
+          <strong>가상 커뮤니티 체험</strong>
           <p>
             비슷한 고민을 가진 사람들과 잠시 이야기하는 공간을 구상하고 있어요.
           </p>

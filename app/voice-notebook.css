@@ -955,3 +955,70 @@
 .vn-reply-choices .vn-choice-list {
   margin-top: 12px;
 }
+
+/* Keep the current reply beside the conversation, with secondary actions quieter. */
+.vn-chat-thread {
+  background: #f0f2ed;
+  border-radius: 20px;
+  padding: 20px;
+}
+.vn-chat-thread .vn-turn {
+  width: fit-content;
+  max-width: 88%;
+  padding: 14px 18px;
+}
+.vn-chat-thread .vn-turn.user {
+  width: fit-content;
+  background: #e2ecda;
+}
+.vn-chat-thread .vn-turn-actions {
+  border-top: 1px solid #dfe3d5;
+  padding-top: 8px;
+  margin-top: 10px;
+}
+.vn-privacy-note {
+  margin: 16px 0 22px;
+  padding: 16px 18px;
+  border: 1px solid #d7dfd0;
+  border-radius: 14px;
+  background: #f4f7ef;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.vn-privacy-note strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.vn-privacy-note p {
+  margin: 6px 0;
+}
+.vn-privacy-note summary {
+  cursor: pointer;
+}
+.vn-communication-tips h2 {
+  font-size: 20px;
+}
+.vn-communication-tips blockquote {
+  margin: 14px 0;
+  border-left: 3px solid #728462;
+  padding: 8px 16px;
+  line-height: 1.8;
+  background: #f4f7ef;
+}
+.dc-more-ways > button {
+  margin-top: 16px;
+}
+@media (max-width: 600px) {
+  .vn-chat-thread {
+    padding: 12px 8px;
+    gap: 14px;
+  }
+  .vn-chat-thread .vn-turn {
+    max-width: 94%;
+    padding: 12px;
+  }
+  .vn-communication-tips summary {
+    line-height: 1.7;
+  }
+}

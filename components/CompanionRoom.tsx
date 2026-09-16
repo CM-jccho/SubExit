@@ -137,9 +137,9 @@ function CharacterEditor({
         />
       </label>
       <p className="vn-caption">
-        이 설정은 친구방의 AI 대화에 사용해요. 카드로 역할 연습을 할 때는 카드의
-        상대와 상황을 따라요. 이 브라우저에 보관되며, 이전 대화에 저장된 모습은
-        유지돼요.
+        이 설정은 AI 대화 상대의 AI 대화에 사용해요. 카드로 역할 연습을 할 때는
+        카드의 상대와 상황을 따라요. 이 브라우저에 보관되며, 이전 대화에 저장된
+        모습은 유지돼요.
       </p>
       {error && (
         <p className="dd-error" role="alert">
@@ -159,7 +159,7 @@ function CharacterEditor({
           }
         }}
       >
-        친구방에 저장 <Icon name="check" size={18} />
+        AI 대화 상대에 저장 <Icon name="check" size={18} />
       </button>
     </dialog>
   );
@@ -273,7 +273,7 @@ function CompanionCard({
           </div>
           <button
             className="vn-icon"
-            aria-label="친구방으로 돌아가기"
+            aria-label="AI 대화 상대로 돌아가기"
             onClick={onClose}
           >
             <Icon name="close" size={20} />
@@ -409,9 +409,9 @@ export default function CompanionRoom({
     <>
       <StickyPageTop>
         <div>
-          <p className="dc-overline">이야기가 쌓이는 작은 공간</p>
+          <p className="dc-overline">역할을 고르고, 편하게 대화해요</p>
           <h1>
-            친구방 <span className="dc-count">{characters.length}</span>
+            AI 대화 상대 <span className="dc-count">{characters.length}</span>
           </h1>
         </div>
         <button
@@ -438,7 +438,8 @@ export default function CompanionRoom({
         <DailyInvite character={selected} onClick={() => onDaily(selected)} />
       )}
       <p className="dc-room-intro">
-        친구를 누르면 대화 카드가 바로 열려요. 지난 이야기부터 이어가도 좋아요.
+        캐릭터를 누르면 새 대화·지난 기록·역할 설정을 볼 수 있어요. 모든 상대는
+        AI이며 실제 이용자가 아니에요.
       </p>
       <div className="dc-room-layout" ref={room}>
         <RoomEnvironment>
@@ -485,7 +486,7 @@ export default function CompanionRoom({
       <details className="dc-response-friends">
         <summary>응대 연습 친구 초대하기 · 4가지 역할</summary>
         <p>
-          역할을 골라 친구방에 저장하세요. 모든 캐릭터는 연습을 위한 가상
+          역할을 골라 AI 대화 상대에 저장하세요. 모든 캐릭터는 연습을 위한 가상
           AI예요.
         </p>
         <div className="dc-invite-grid">
@@ -502,7 +503,7 @@ export default function CompanionRoom({
                     try {
                       const rows = saveCompanion(c);
                       onSaved(rows);
-                      setNotice(c.name + "를 친구방에 초대했어요.");
+                      setNotice(c.name + "를 AI 대화 상대에 초대했어요.");
                     } catch (e) {
                       setError(
                         e instanceof Error ? e.message : "저장하지 못했어요.",

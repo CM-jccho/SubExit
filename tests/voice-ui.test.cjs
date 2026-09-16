@@ -397,6 +397,12 @@ test("quota fallback preserves labels and candidate provenance after continuing 
     assert.equal(saved.turns[2].sample.source, "sample");
     assert.equal(calls, 1);
     assert.equal(document.querySelectorAll(".garden-practice").length, 1);
+    assert(
+      document
+        .querySelector(".vn-composer")
+        .compareDocumentPosition(document.querySelector(".garden-practice")) &
+        4,
+    );
     assert.equal(saved.turns[1].unchangedSuggestion, true);
     assert.equal((await store.readGarden()).earned, 0);
   } finally {

@@ -63,6 +63,7 @@ export default function VoiceComposer({
   requireText = false,
   onActivity,
   suggestion,
+  textFirst = false,
 }: {
   onUse: (draft: VoiceDraft) => Promise<void> | void;
   submitLabel?: string;
@@ -70,6 +71,7 @@ export default function VoiceComposer({
   consent: boolean;
   disabled?: boolean;
   requireText?: boolean;
+  textFirst?: boolean;
   onActivity?: (active: boolean) => void;
   suggestion?: { text: string; id: number };
 }) {
@@ -86,7 +88,7 @@ export default function VoiceComposer({
     [seconds, setSeconds] = useState(0),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
-    [typing, setTyping] = useState(false);
+    [typing, setTyping] = useState(textFirst);
   const recorder = useRef<MediaRecorder | null>(null),
     stream = useRef<MediaStream | null>(null),
     timer = useRef<ReturnType<typeof setInterval> | null>(null),
@@ -334,8 +336,12 @@ export default function VoiceComposer({
       await onUse({ clip, text: text.trim() });
       setText("");
       setClip(undefined);
-      setTyping(false);
-      setNotice("저장했어요. 이어서 다른 이야기를 남겨도 돼요.");
+      setTyping(textFirst);
+      setNotice(
+        textFirst
+          ? "답변을 보냈어요. 상대의 말을 보고 이어서 답해보세요."
+          : "저장했어요. 이어서 다른 이야기를 남겨도 돼요.",
+      );
     } catch (e) {
       setError(
         e instanceof Error
@@ -373,7 +379,8 @@ export default function VoiceComposer({
         <button
           type="button"
           className="vn-icon"
-          aria-label="직접 입력 열기"
+          aria-label={typing ? "직접 입력 접기" : "직접 입력 열기"}
+          aria-expanded={typing}
           disabled={working || disabled}
           onClick={() => setTyping((v) => !v)}
         >
@@ -406,7 +413,9 @@ export default function VoiceComposer({
         }
         text={
           notice ||
-          "마이크로 한 문장부터. 녹음은 1분, 파일은 2분·2.4MB까지 가능해요."
+          (textFirst
+            ? "내 답장을 적어 보내세요. 마이크로 말해도 좋아요."
+            : "마이크로 한 문장부터. 녹음은 1분, 파일은 2분·2.4MB까지 가능해요.")
         }
       />
       {working && phase !== "recording" && phase !== "saving" && (
@@ -429,7 +438,11 @@ export default function VoiceComposer({
       )}
       {(typing || text || clip) && (
         <label className="vn-label">
-          {clip ? "인식한 말 · 필요하면 고쳐주세요" : "직접 입력"}
+          {clip
+            ? "인식한 말 · 필요하면 고쳐주세요"
+            : textFirst
+              ? "내 답장"
+              : "직접 입력"}
           <textarea
             aria-label="인식한 말 또는 직접 입력"
             rows={3}
@@ -437,7 +450,11 @@ export default function VoiceComposer({
             value={text}
             disabled={working || disabled}
             onChange={(e) => setText(e.target.value)}
-            placeholder="인식하지 못한 부분은 직접 적어도 돼요."
+            placeholder={
+              textFirst
+                ? "상대에게 하듯 편하게 답해보세요."
+                : "인식하지 못한 부분은 직접 적어도 돼요."
+            }
           />
         </label>
       )}

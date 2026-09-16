@@ -118,7 +118,7 @@ test("selecting a friend immediately opens their card, switches friends in place
     assert.equal(dialog.querySelector(".dc-room-history"), null);
     await click("지금 이야기하기");
     assert.deepEqual(ui.calls.pop(), ["chat", "coco"]);
-    await click("친구방으로 돌아가기");
+    await click("AI 대화 상대로 돌아가기");
     assert.equal(document.querySelector("dialog[open]"), null);
     assert.equal(document.body.style.overflow, "");
     assert.equal(
@@ -152,7 +152,7 @@ test("Escape closes the card and edit cancel returns to one open card without le
       document.querySelector(".dc-room-dialog h2").textContent,
       "모아",
     );
-    await click("친구방으로 돌아가기");
+    await click("AI 대화 상대로 돌아가기");
     assert.equal(document.body.style.overflow, "");
   } finally {
     await ui.cleanup();

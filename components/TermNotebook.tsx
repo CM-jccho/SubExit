@@ -1,4 +1,5 @@
 "use client";
+import CommunicationTips from "./CommunicationTips";
 import StickyPageTop from "./StickyPageTop";
 import TrendSearch from "./TrendSearch";
 import TermCatalogue from "./TermCatalogue";
@@ -337,7 +338,7 @@ export default function TermNotebook({
   config: AIConfig;
   onAsk?: (c: CompanionCharacter) => void;
 }) {
-  const [tab, setTab] = useState<"notes" | "catalogue">("notes");
+  const [tab, setTab] = useState<"notes" | "catalogue" | "tips">("notes");
   const [terms, setTerms] = useState<TermNote[]>([]),
     [query, setQuery] = useState(""),
     [seed, setSeed] = useState<TermSeed | null>(null),
@@ -410,10 +411,24 @@ export default function TermNotebook({
           용어 추가
         </button>
       </StickyPageTop>
-      <CompanionNudge
-        text="같은 말도 업종과 세대마다 달라요. 분야별 예시에서 시작하거나 직접 뜻을 남겨보세요."
-        dismissible
-      />
+      <aside className="vn-privacy-note" aria-label="용어 노트 공개 범위">
+        <strong>
+          <Icon name="shield" size={16} /> 나만 보는 노트 · 이 브라우저에 저장
+        </strong>
+        <p>
+          다른 이용자에게 공개되지 않아요. 선택한 노트만 공유 창이나 내려받은
+          파일로 직접 전달할 수 있어요.
+        </p>
+        <details>
+          <summary>저장·AI 전송 안내</summary>
+          <p>
+            계정 동기화는 없으며 브라우저 데이터를 지우면 노트가 사라질 수
+            있어요. AI 뜻풀이를 요청하면 선택한 용어·업종·해당 대화 문맥을
+            Gemini에 전송해요. 파일 공유에는 뜻·예문·주의사항·내 메모가
+            포함되므로 내용을 확인해 주세요. 대화 원문과 음성은 제외돼요.
+          </p>
+        </details>
+      </aside>
       <div className="dc-mode-switch" aria-label="용어 보기">
         <button
           aria-pressed={tab === "notes"}
@@ -429,9 +444,46 @@ export default function TermNotebook({
         >
           분야별 표현 찾기 · {Object.keys(termGroups).length}개 분야
         </button>
+        <button
+          aria-pressed={tab === "tips"}
+          className={tab === "tips" ? "active" : ""}
+          onClick={() => setTab("tips")}
+        >
+          소통 팁
+        </button>
       </div>
-      <TrendSearch config={config} />
-      {tab === "catalogue" ? (
+      {tab === "catalogue" && <TrendSearch config={config} />}
+      {tab === "tips" ? (
+        <CommunicationTips
+          onSave={(tip) => {
+            const existing = terms.find(
+              (t) =>
+                t.term === tip.title &&
+                t.industry === "소통 팁 · " + tip.context,
+            );
+            setSeed({
+              term: tip.title,
+              quote: "",
+              industry: "소통 팁 · " + tip.context,
+              sessionId: "",
+              note: existing || {
+                id: "term-" + crypto.randomUUID(),
+                term: tip.title,
+                industry: "소통 팁 · " + tip.context,
+                meaning: tip.why,
+                usage: tip.after,
+                caution: "관계와 상황에 맞게 고쳐 쓰는 사전 작성 예시입니다.",
+                memo: "",
+                quote: "",
+                sessionId: "",
+                source: "manual",
+                reviewed: false,
+                updatedAt: new Date().toISOString(),
+              },
+            });
+          }}
+        />
+      ) : tab === "catalogue" ? (
         <TermCatalogue
           onAsk={onAsk}
           onSelect={(note) => {

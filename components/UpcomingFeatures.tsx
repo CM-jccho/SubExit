@@ -4,7 +4,7 @@ const upcoming = [
     area: "conversation",
     title: "고민 정리",
     description:
-      "선택지와 중요한 기준을 정리하고, 결정한 내용을 상대에게 말하는 연습으로 연결할 예정이에요.",
+      "선택지와 중요한 기준을 정리하고, 결정한 내용을 상대에게 말하는 연습으로 연결하는 방식을 검토하고 있어요.",
   },
   {
     id: "messenger",
@@ -18,7 +18,7 @@ const upcoming = [
     area: "room",
     title: "실시간 익명 커뮤니티",
     description:
-      "실제 참여자들이 대화를 나누는 공간을 준비하고 있어요. 현재 라운지는 가상 참가자가 있는 미리보기예요.",
+      "실제 참여자들이 대화를 나누는 공간을 검토하고 있어요. 현재 라운지는 가상 참가자가 있는 미리보기예요.",
   },
   {
     id: "agents",
@@ -32,7 +32,7 @@ const upcoming = [
     area: "audio",
     title: "긴 녹음·자동 화자 구분",
     description:
-      "긴 파일과 여러 사람의 대화를 다루는 기능을 준비하고 있어요. 현재는 2분·2.4MB 이내 파일에서 화자를 직접 확인해요.",
+      "긴 파일과 여러 사람의 대화를 다루는 기능을 검토하고 있어요. 현재는 2분·2.4MB 이내 파일에서 화자를 직접 확인해요.",
   },
   {
     id: "live",
@@ -46,21 +46,21 @@ const upcoming = [
     area: "storage",
     title: "계정 동기화·전체 백업",
     description:
-      "다른 기기에서도 기록을 이어보는 기능을 준비하고 있어요. 현재 기록은 이 브라우저에 저장돼요.",
+      "다른 기기에서도 기록을 이어보는 기능을 검토하고 있어요. 현재 기록은 이 브라우저에 저장돼요.",
   },
 ];
 export default function UpcomingFeatures({ area = "all" }: { area?: string }) {
   const items = upcoming.filter((x) => area === "all" || x.area === area);
   return (
     <details className="dc-guide-faq upcoming-features">
-      <summary>앞으로 추가될 기능 · 준비 중</summary>
+      <summary>앞으로 검토하는 방향</summary>
       <p>아래 기능은 아직 사용할 수 없으며 공개 일정은 정해지지 않았어요.</p>
       <div className="upcoming-list">
         {items.map((x) => (
           <article key={x.id}>
             <div>
               <h3>{x.title}</h3>
-              <span>준비 중</span>
+              <span>검토 중</span>
             </div>
             <p>{x.description}</p>
           </article>
