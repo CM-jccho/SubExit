@@ -2,6 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import LiveCoach from "./LiveCoach";
+import VoiceWorkspace from "./VoiceWorkspace";
+import VoiceComposer from "./VoiceComposer";
+import TermNotebook from "./TermNotebook";
 import { Companion, HelpTip, Icon } from "./CompanionUI";
 import FirstConversation, { TOUR_KEY } from "./FirstConversation";
 import { tones } from "@/lib/scenarios";
@@ -19,7 +22,17 @@ import {
   type ConversationCard,
   type SetupMessage,
 } from "@/lib/conversation-cards";
-type View = "home" | "guide" | "library" | "setup" | "detail" | "live" | "demo";
+type View =
+  | "records"
+  | "voicePractice"
+  | "terms"
+  | "home"
+  | "guide"
+  | "library"
+  | "setup"
+  | "detail"
+  | "live"
+  | "demo";
 const labels: Record<keyof Omit<ContextProfile, "tone">, string> = {
   title: "카드 이름",
   myRole: "내 역할",
@@ -133,12 +146,17 @@ export default function ConversationWorkspace() {
     [editingId, setEditingId] = useState<string | undefined>(),
     [review, setReview] = useState(false),
     [source, setSource] = useState<ConversationCard["source"]>("guided");
-  const [config, setConfig] = useState({ available: false, sampleOnly: true }),
+  const [config, setConfig] = useState({
+      available: false,
+      voiceAvailable: false,
+      sampleOnly: true,
+    }),
     [ai, setAi] = useState(false),
     [consent, setConsent] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [toast, setToast] = useState("");
+  const [choices, setChoices] = useState<string[]>([]);
   const [tour, setTour] = useState(false),
     [editFields, setEditFields] = useState(false);
   const controller = useRef<AbortController | null>(null),
@@ -167,7 +185,9 @@ export default function ConversationWorkspace() {
     if (query.get("tour") === "1") {
       setView("home");
       setTour(true);
-    } else if (query.get("demo") === "1") setView("demo");
+    } else if (query.get("view") === "records") setView("records");
+    else if (query.get("view") === "terms") setView("terms");
+    else if (query.get("demo") === "1") setView("demo");
     else if (query.get("live") === "1") {
       setView("library");
       setToast("코칭에 사용할 카드를 선택하거나 새로 만들어 주세요.");
@@ -189,6 +209,7 @@ export default function ConversationWorkspace() {
   }
   function start(existing?: ConversationCard) {
     cancelRequest();
+    setChoices([]);
     setEditingId(existing?.id);
     setProfile(existing || emptyProfile());
     setMessages(
@@ -224,6 +245,7 @@ export default function ConversationWorkspace() {
     if (!ai) {
       const d = guidedReply(next);
       setProfile(d.profile);
+      setChoices([]);
       setSource("guided");
       setMessages([...next, { role: "assistant", text: d.question }]);
       if (next.filter((m) => m.role === "user").length >= 4) setReview(true);
@@ -255,6 +277,7 @@ export default function ConversationWorkspace() {
       if (!r.ok) throw new Error(d.error || "정리 요청을 완료하지 못했어요.");
       const p = parseProfile(d.profile, false);
       setProfile(p);
+      setChoices(Array.isArray(d.choices) ? d.choices : []);
       setSource("ai");
       setMessages([
         ...next,
@@ -363,6 +386,28 @@ export default function ConversationWorkspace() {
     messages.filter((m) => m.role === "assistant").at(-1)?.text ||
     "어떤 대화를 준비하고 싶으세요?";
   const step = Math.min(messages.filter((m) => m.role === "user").length, 3);
+  const suggestedChoices = choices.length
+    ? choices
+    : [
+        [
+          "팀장님과 업무 일정을 조율하고 싶어요.",
+          "거래처의 무리한 요청에 답하고 싶어요.",
+          "친구와 약속을 정하고 싶어요.",
+        ],
+        profile.situation.includes("친구")
+          ? ["가까운 친구", "처음 만나는 지인", "함께하는 모임 사람"]
+          : ["업무를 요청한 팀장", "함께 일하는 동료", "거래처 담당자"],
+        [
+          "서로 가능한 일정을 합의하기",
+          "요청을 정중하게 거절하기",
+          "상대의 생각을 먼저 확인하기",
+        ],
+        [
+          "지킬 수 없는 약속은 하지 않기",
+          "관계를 해치지 않고 분명히 말하기",
+          "특별히 없어요",
+        ],
+      ][step];
   function navigate(next: View) {
     cancelRequest();
     setToast("");
@@ -419,7 +464,9 @@ export default function ConversationWorkspace() {
               [
                 { id: "home", text: "홈", icon: "home" },
                 { id: "library", text: "내 대화", icon: "cards" },
-                { id: "guide", text: "사용 안내", icon: "help" },
+                { id: "records", text: "음성 기록", icon: "mic" },
+                { id: "terms", text: "용어 노트", icon: "book" },
+                { id: "guide", text: "안내", icon: "help" },
               ] as const
             ).map((n) => (
               <button
@@ -477,6 +524,24 @@ export default function ConversationWorkspace() {
                   <span className="dc-character-name">당신의 옆자리, 곁이</span>
                 </div>
               </section>
+              <div className="vn-home-actions">
+                <button onClick={() => navigate("records")}>
+                  <Icon name="mic" />
+                  <span>
+                    <strong>목소리로 남기기</strong>
+                    <small>녹음 · 파일 · 문자 기록</small>
+                  </span>
+                  <Icon name="arrow" size={18} />
+                </button>
+                <button onClick={() => navigate("library")}>
+                  <Icon name="chat" />
+                  <span>
+                    <strong>상대와 대화 연습</strong>
+                    <small>내 상황에 맞춰 주고받기</small>
+                  </span>
+                  <Icon name="arrow" size={18} />
+                </button>
+              </div>
               <button className="dc-tour-invite" onClick={() => setTour(true)}>
                 <span className="dc-invite-icon">
                   <Icon name="help" size={23} />
@@ -520,6 +585,21 @@ export default function ConversationWorkspace() {
               </p>
             </>
           )}
+          {(view === "records" || view === "voicePractice") && (
+            <VoiceWorkspace
+              key={view + (view === "voicePractice" ? active?.id : "")}
+              mode={view === "voicePractice" ? "practice" : "records"}
+              initialCard={
+                view === "voicePractice" && active ? active : undefined
+              }
+              config={config}
+              onChooseCard={() => {
+                navigate("library");
+                setToast("카드를 고른 뒤 ‘상대와 대화 연습’을 눌러주세요.");
+              }}
+            />
+          )}
+          {view === "terms" && <TermNotebook config={config} />}
           {view === "library" && (
             <>
               <section className="dc-page-top">
@@ -558,9 +638,9 @@ export default function ConversationWorkspace() {
                     <span>
                       <Icon name="shield" size={16} /> 이 기기에 저장됨
                       <HelpTip label="내 대화 저장 안내">
-                        확인한 카드 내용만 이 브라우저에 저장해요. 브라우저
-                        데이터를 지우면 사라질 수 있으니, 필요하면 데이터를
-                        내려받아 보관하세요. 다른 기기와 자동 동기화되지 않아요.
+                        확인한 카드를 이 브라우저에 저장해요. 브라우저 데이터를
+                        지우면 사라질 수 있으니, 필요하면 데이터를 내려받아
+                        보관하세요. 다른 기기와 자동 동기화되지 않아요.
                       </HelpTip>
                     </span>
                     <button className="dd-link" onClick={exportData}>
@@ -657,7 +737,7 @@ export default function ConversationWorkspace() {
                     )}
                     <div className="dc-question">
                       <div className="dc-coach-avatar">
-                        <Companion small mood="listen" />
+                        <Companion small mood={busy ? "think" : "listen"} />
                       </div>
                       <div>
                         <span className="dc-question-name">
@@ -682,6 +762,47 @@ export default function ConversationWorkspace() {
                         </div>
                       </details>
                     )}
+                    <div className="vn-setup-choices">
+                      <p>가까운 답을 고르거나, 내 이야기로 바꿔보세요.</p>
+                      <div className="vn-choice-list">
+                        {suggestedChoices.map((choice, i) => (
+                          <button
+                            key={choice}
+                            disabled={busy}
+                            onClick={() => setInput(choice)}
+                          >
+                            <span>0{i + 1}</span>
+                            {choice}
+                            <Icon name="plus" size={15} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <details className="vn-setup-voice">
+                      <summary>
+                        <Icon name="mic" size={18} />
+                        타이핑 대신 말로 상황 설명하기
+                      </summary>
+                      <VoiceComposer
+                        config={config}
+                        consent={consent}
+                        disabled={busy}
+                        requireText
+                        submitLabel="인식한 말을 입력칸에 넣기"
+                        onUse={async (draft) => {
+                          const max = ai ? 800 : [800, 160, 400, 400][step];
+                          setInput(draft.text.slice(0, max));
+                          if (draft.text.length > max)
+                            setToast(
+                              `질문 입력 한도 ${max}자까지 넣었어요. 나머지는 다음 질문에 이어서 알려주세요.`,
+                            );
+                        }}
+                      />
+                      <p className="vn-caption">
+                        설정 음성은 입력 보조로 사용해요. 음성 원본을 보관하려면
+                        ‘음성 기록’을 이용해 주세요.
+                      </p>
+                    </details>
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
@@ -724,7 +845,7 @@ export default function ConversationWorkspace() {
                         </button>
                       </div>
                     </form>
-                    {ai && (
+                    {(ai || config.voiceAvailable) && (
                       <div className="dc-consent-note">
                         <label className="dd-check">
                           <input
@@ -855,17 +976,28 @@ export default function ConversationWorkspace() {
                 </section>
                 <aside className="dc-start-panel">
                   <Companion mood="listen" />
-                  <h2>이제, 옆에서 도울게요.</h2>
+                  <h2>상대와 먼저 연습해 볼까요?</h2>
                   <p>
-                    상대의 말을 들려주거나 적으면
-                    <br />내 목표에 맞는 한마디를 제안해요.
+                    저장한 상황의 상대와 음성으로 대화하고,
+                    <br />
+                    기록과 업무 용어를 함께 남겨요.
                   </p>
                   <button
                     className="dd-primary dd-full"
+                    onClick={() => {
+                      setView("voicePractice");
+                      window.scrollTo({ top: 0 });
+                    }}
+                  >
+                    <Icon name="chat" size={20} />
+                    상대와 대화 연습
+                  </button>
+                  <button
+                    className="dd-secondary dd-full"
                     onClick={() => useCard(active)}
                   >
                     <Icon name="mic" size={20} />
-                    코칭 시작
+                    실제 대화에서 힌트 받기
                   </button>
                   <span className="dc-small-caption">
                     대면 대화 · 다른 기기의 스피커폰
@@ -941,6 +1073,33 @@ export default function ConversationWorkspace() {
                 ))}
               </div>
               <details className="dc-guide-faq">
+                <summary>녹음하고 멈췄는데 다음엔 무엇을 하나요?</summary>
+                <p>
+                  ‘녹음 끝내기’를 누르면 파형과 재생 버튼이 나타나요. AI 전송에
+                  동의하면 문자로 바꾸며, 완료 후 인식한 말을 확인해 보내거나
+                  저장하세요. 실패해도 녹음을 재생하거나 문자 변환을 다시 시도할
+                  수 있어요. ‘처리 취소’는 진행 중인 인식을 중단해요.
+                </p>
+              </details>
+              <details className="dc-guide-faq">
+                <summary>상대와 음성 대화 연습은 어떻게 하나요?</summary>
+                <p>
+                  내 대화에서 카드를 고르고 ‘상대와 대화 연습’을 누르세요. AI가
+                  상대 역할로 말하면 녹음하거나 직접 입력해 답해요. 한 번씩
+                  주고받는 방식이며 상대의 말은 기기 음성으로 읽어줘요. 연습
+                  음성과 문자는 음성 기록에 저장돼요.
+                </p>
+              </details>
+              <details className="dc-guide-faq">
+                <summary>용어를 모아 동료에게 공유하려면?</summary>
+                <p>
+                  대화 문자의 단어를 누르거나 ‘중요 용어 찾기’를 사용하세요.
+                  업종별 뜻·예문·우리 팀 메모를 저장하고, 용어 노트에서 필요한
+                  항목을 선택해 가이드로 공유할 수 있어요. AI 설명은 초안이니
+                  팀에서 쓰는 뜻을 확인해 주세요.
+                </p>
+              </details>
+              <details className="dc-guide-faq">
                 <summary>실제 통화에서도 쓸 수 있나요?</summary>
                 <p>
                   다른 기기로 스피커폰 통화를 하거나 대면 대화할 때 사용하세요.
@@ -952,9 +1111,10 @@ export default function ConversationWorkspace() {
               <details className="dc-guide-faq">
                 <summary>내 대화는 어디에 저장되나요?</summary>
                 <p>
-                  직접 확인한 카드 내용만 이 브라우저에 저장돼요. 다른 기기로
-                  자동 동기화되지 않으며, 브라우저 데이터를 지우면 사라질 수
-                  있어요. 내 대화에서 데이터를 내려받아 보관할 수 있어요.
+                  카드와 음성 기록·연습 대화·용어 노트는 이 브라우저에 저장돼요.
+                  다른 기기로 자동 동기화되지 않으며, 브라우저 데이터를 지우면
+                  사라질 수 있어요. 내 대화에서 데이터를 내려받아 보관할 수
+                  있어요.
                 </p>
               </details>
               <div className="dc-guide-links">

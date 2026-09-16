@@ -1,6 +1,7 @@
 import "./globals.css";
 import "./coach.css";
 import "./conversation.css";
+import "./voice-notebook.css";
 export const metadata = {
   title: "든든콜 · 내 상황을 기억하는 대화 코치",
   description:
