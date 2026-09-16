@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import LiveCoach from "./LiveCoach";
+import { Companion, HelpTip, Icon } from "./CompanionUI";
+import FirstConversation, { TOUR_KEY } from "./FirstConversation";
 import { tones } from "@/lib/scenarios";
 import {
   emptyProfile,
@@ -17,7 +19,7 @@ import {
   type ConversationCard,
   type SetupMessage,
 } from "@/lib/conversation-cards";
-type View = "library" | "setup" | "detail" | "live" | "demo";
+type View = "home" | "guide" | "library" | "setup" | "detail" | "live" | "demo";
 const labels: Record<keyof Omit<ContextProfile, "tone">, string> = {
   title: "카드 이름",
   myRole: "내 역할",
@@ -121,7 +123,7 @@ function ContextFacts({ profile }: { profile: ContextProfile }) {
 }
 export default function ConversationWorkspace() {
   const query = useSearchParams();
-  const [view, setView] = useState<View>("library"),
+  const [view, setView] = useState<View>("home"),
     [cards, setCards] = useState<ConversationCard[]>([]),
     [search, setSearch] = useState(""),
     [active, setActive] = useState<ConversationCard | null>(null);
@@ -137,11 +139,17 @@ export default function ConversationWorkspace() {
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [toast, setToast] = useState("");
+  const [tour, setTour] = useState(false),
+    [editFields, setEditFields] = useState(false);
   const controller = useRef<AbortController | null>(null),
     generation = useRef(0),
     chatEnd = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     setCards(readCards());
+    try {
+      if (!localStorage.getItem(TOUR_KEY) && !window.location.search)
+        setTour(true);
+    } catch {}
     const abort = new AbortController();
     fetch("/api/coach", { signal: abort.signal })
       .then((r) => r.json())
@@ -178,7 +186,7 @@ export default function ConversationWorkspace() {
   function home() {
     cancelRequest();
     setError("");
-    setView("library");
+    setView("home");
     setCards(readCards());
   }
   function start(existing?: ConversationCard) {
@@ -190,8 +198,9 @@ export default function ConversationWorkspace() {
     );
     setInput("");
     setReview(!!existing);
+    setEditFields(!!existing);
     setSource(existing?.source || "guided");
-    setAi(false);
+    setAi(config.available);
     setConsent(false);
     setError("");
     setToast("");
@@ -199,7 +208,7 @@ export default function ConversationWorkspace() {
     window.scrollTo({ top: 0 });
   }
   async function send() {
-    if (!input.trim() || busy) return;
+    if (!input.trim() || busy || (ai && !consent)) return;
     const next: SetupMessage[] = [
       ...messages,
       { role: "user", text: input.trim() },
@@ -306,6 +315,7 @@ export default function ConversationWorkspace() {
     start();
     setProfile({ ...c, title: (c.title + " · 복사").slice(0, 60) });
     setSource("manual");
+    setEditFields(true);
     setReview(true);
   }
   function remove(c: ConversationCard) {
@@ -351,302 +361,472 @@ export default function ConversationWorkspace() {
       return false;
     }
   })();
+  const currentQuestion =
+    messages.filter((m) => m.role === "assistant").at(-1)?.text ||
+    "어떤 대화를 준비하고 싶으세요?";
+  const step = Math.min(messages.filter((m) => m.role === "user").length, 3);
+  function navigate(next: View) {
+    cancelRequest();
+    setToast("");
+    setError("");
+    setView(next);
+    setCards(readCards());
+    window.scrollTo({ top: 0 });
+  }
+  function openCard(c: ConversationCard) {
+    setActive(c);
+    setToast("");
+    setView("detail");
+    window.scrollTo({ top: 0 });
+  }
+  const cardList = (items: ConversationCard[]) => (
+    <div className="dc-card-grid">
+      {items.map((c, i) => (
+        <button
+          className="dc-saved-card"
+          key={c.id}
+          onClick={() => openCard(c)}
+        >
+          <span className={"dc-card-avatar color-" + (i % 3)}>
+            <Icon name="chat" size={25} />
+          </span>
+          <span className="dc-card-body">
+            <span className="dc-partner">{c.partner}</span>
+            <strong>{c.title}</strong>
+            <span className="dc-card-goal">{c.goal}</span>
+            <small>
+              {c.lastUsedAt
+                ? "최근 사용 " +
+                  new Date(c.lastUsedAt).toLocaleDateString("ko-KR")
+                : "준비 완료 · 언제든 다시 꺼내세요"}
+            </small>
+          </span>
+          <Icon name="arrow" size={20} />
+        </button>
+      ))}
+    </div>
+  );
   return (
     <div className="dd-root dc-root">
       <div className="dc-shell">
         <header className="dc-header">
-          <button className="dc-brand" onClick={home}>
-            든든콜
+          <button className="dc-brand" onClick={home} aria-label="든든콜 홈">
+            <span className="dc-brand-mark">
+              <Icon name="chat" size={22} />
+            </span>
+            든든콜<span className="dc-beta">BETA</span>
           </button>
-          <span>내 상황을 기억하는 대화 코치</span>
-          <button className="dc-home" onClick={home}>
-            내 대화
+          <nav className="dc-nav" aria-label="주 메뉴">
+            {(
+              [
+                { id: "home", text: "홈", icon: "home" },
+                { id: "library", text: "내 대화", icon: "cards" },
+                { id: "guide", text: "사용 안내", icon: "help" },
+              ] as const
+            ).map((n) => (
+              <button
+                key={n.id}
+                aria-current={view === n.id ? "page" : undefined}
+                className={view === n.id ? "active" : ""}
+                onClick={() => navigate(n.id)}
+              >
+                <Icon name={n.icon} size={21} />
+                <span>{n.text}</span>
+              </button>
+            ))}
+          </nav>
+          <button
+            className="dc-help-button dc-icon-button"
+            aria-label="첫 사용 가이드 다시 보기"
+            onClick={() => {
+              if (view === "live") navigate("guide");
+              setTour(true);
+            }}
+          >
+            <Icon name="help" />
           </button>
         </header>
-        <main>
+        <main id="main-content" key={view}>
           {toast && (
             <p className="dc-toast" role="status">
+              <Icon name="check" size={18} />
               {toast}
             </p>
           )}
+          {view === "home" && (
+            <>
+              <section className="dc-welcome">
+                <div className="dc-welcome-copy">
+                  <p className="dc-overline">말하기 어려운 순간, 내 편 하나</p>
+                  <h1>
+                    할 말이 막힐 땐,
+                    <br />
+                    잠깐 기대세요.
+                  </h1>
+                  <p className="dc-welcome-desc">
+                    내 상황을 기억하고,
+                    <br className="dc-mobile-break" /> 다음 한마디를 함께
+                    준비해요.
+                  </p>
+                  <button className="dd-primary" onClick={() => start()}>
+                    대화 준비하기
+                    <Icon name="arrow" size={20} />
+                  </button>
+                </div>
+                <div className="dc-welcome-art">
+                  <span className="dc-handnote">천천히 말해도 괜찮아요.</span>
+                  <Companion />
+                  <span className="dc-character-name">당신의 옆자리, 곁이</span>
+                </div>
+              </section>
+              <button className="dc-tour-invite" onClick={() => setTour(true)}>
+                <span className="dc-invite-icon">
+                  <Icon name="help" size={23} />
+                </span>
+                <span>
+                  <strong>어떻게 쓰는지 궁금하다면</strong>
+                  <small>30초, 첫 대화를 같이 해봐요</small>
+                </span>
+                <Icon name="arrow" size={20} />
+              </button>
+              <section className="dc-recent">
+                <div className="dc-section-heading">
+                  <h2>
+                    다시 꺼낼 대화 <span>{cards.length}</span>
+                  </h2>
+                  <button
+                    className="dd-link"
+                    onClick={() => navigate("library")}
+                  >
+                    전체 보기
+                    <Icon name="arrow" size={16} />
+                  </button>
+                </div>
+                {cards.length ? (
+                  cardList(searchCards(cards, "").slice(0, 2))
+                ) : (
+                  <div className="dc-home-empty">
+                    <span className="dc-empty-stack">
+                      <Icon name="cards" size={32} />
+                    </span>
+                    <div>
+                      <strong>준비한 대화가 여기에 모여요</strong>
+                      <p>한 번 정리한 상황은 다음에도 그대로.</p>
+                    </div>
+                  </div>
+                )}
+              </section>
+              <p className="dc-footnote">
+                <Icon name="shield" size={15} />내 대화 카드는 이 기기에만
+                저장돼요.
+              </p>
+            </>
+          )}
           {view === "library" && (
             <>
-              <section className="dc-library-top">
+              <section className="dc-page-top">
                 <div>
-                  <h1>내 대화</h1>
-                  <p>상대와 목표를 정리하고, 필요할 때 다시 꺼내세요.</p>
+                  <p className="dc-overline">나만의 대화 서랍</p>
+                  <h1>
+                    내 대화 <span className="dc-count">{cards.length}</span>
+                  </h1>
                 </div>
                 <button className="dd-primary" onClick={() => start()}>
-                  새 대화 준비
+                  <Icon name="plus" size={18} />새 대화
                 </button>
               </section>
-              {cards.length > 0 ? (
-                <section>
-                  <div className="dc-list-heading">
-                    <h2>
-                      저장한 대화 <span>{cards.length}</span>
-                    </h2>
+              <label className="dc-search" htmlFor="card-search">
+                <Icon name="search" size={20} />
+                <input
+                  id="card-search"
+                  type="search"
+                  placeholder="상대, 상황, 목표로 찾기"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </label>
+              {cards.length ? (
+                <>
+                  {cardList(visible)}
+                  {!visible.length && (
+                    <div className="dc-empty-state">
+                      <Icon name="search" size={32} />
+                      <h2>찾는 대화가 없어요</h2>
+                      <p>다른 단어로 검색해 보세요.</p>
+                    </div>
+                  )}
+                  <div className="dc-library-tools">
+                    <span>
+                      <Icon name="shield" size={16} /> 이 기기에 저장됨
+                      <HelpTip label="내 대화 저장 안내">
+                        확인한 카드 내용만 이 브라우저에 저장해요. 브라우저
+                        데이터를 지우면 사라질 수 있으니, 필요하면 데이터를
+                        내려받아 보관하세요. 다른 기기와 자동 동기화되지 않아요.
+                      </HelpTip>
+                    </span>
                     <button className="dd-link" onClick={exportData}>
+                      <Icon name="download" size={17} />
                       데이터 내려받기
                     </button>
                   </div>
-                  <label className="dc-search" htmlFor="card-search">
-                    <span>찾기</span>
-                    <input
-                      id="card-search"
-                      type="search"
-                      placeholder="상대, 상황, 목표로 찾아보세요"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
-                  </label>
-                  <div className="dc-card-grid">
-                    {visible.map((c) => (
-                      <button
-                        className="dc-saved-card"
-                        key={c.id}
-                        onClick={() => {
-                          setActive(c);
-                          setToast("");
-                          setView("detail");
-                        }}
-                      >
-                        <span className="dc-partner">{c.partner}</span>
-                        <h3>{c.title}</h3>
-                        <p>{c.goal}</p>
-                        <footer>
-                          <span>
-                            {c.lastUsedAt
-                              ? "최근 사용 " +
-                                new Date(c.lastUsedAt).toLocaleDateString(
-                                  "ko-KR",
-                                )
-                              : "아직 코칭에 사용하지 않았어요"}
-                          </span>
-                          <b>열기 ↗</b>
-                        </footer>
-                      </button>
-                    ))}
-                  </div>
-                  {visible.length === 0 && (
-                    <p className="dc-empty">
-                      찾는 카드가 없어요. 다른 단어로 검색해 보세요.
-                    </p>
-                  )}
-                </section>
+                </>
               ) : (
-                <section className="dc-empty-workspace">
-                  <p className="dc-overline">저장된 대화가 없습니다</p>
-                  <h2>누구와 어떤 이야기를 하려 하나요?</h2>
-                  <p>
-                    상황을 이야기하면 상대, 목표, 지킬 선을 정리해요.
-                    <br />
-                    확인한 내용만 저장하고 다음 대화에 다시 쓸 수 있어요.
-                  </p>
-                  <button className="dd-link" onClick={() => setView("demo")}>
-                    저장되는 내용과 코칭 예시 보기 →
+                <div className="dc-empty-state">
+                  <Companion mood="listen" />
+                  <h2>첫 대화를 준비해 볼까요?</h2>
+                  <p>정해진 유형 없이, 내 이야기를 적어주세요.</p>
+                  <button className="dd-secondary" onClick={() => start()}>
+                    첫 카드 만들기
+                    <Icon name="plus" size={18} />
                   </button>
-                </section>
+                </div>
               )}
-              <p className="dc-storage">
-                카드는 이 기기에 저장돼요. 다른 기기와 자동 동기화되지 않아요.
-              </p>
             </>
           )}
           {view === "setup" && (
             <>
-              <button className="dd-back" onClick={home}>
-                ← 내 대화로
+              <button className="dd-back" onClick={() => navigate("library")}>
+                <Icon name="back" size={18} />내 대화
               </button>
               <section className="dc-title">
                 <p className="dc-overline">
                   {editingId
-                    ? "카드 수정"
+                    ? "대화 카드 수정"
                     : review
-                      ? "카드 확인"
-                      : "대화로 정리"}
+                      ? "마지막으로 확인해요"
+                      : "나의 대화 준비"}
                 </p>
                 <h1>
                   {editingId
-                    ? "대화 설정 수정"
+                    ? "달라진 내용을 알려주세요"
                     : review
-                      ? "저장할 내용 확인"
-                      : "대화 준비하기"}
+                      ? "이렇게 기억해 둘게요"
+                      : "어떤 이야기를 하려 하나요?"}
                 </h1>
-                <p>
-                  {review
-                    ? "상대의 성격을 단정하기보다 역할과 상황을 적어 주세요."
-                    : "실명 대신 역할이나 관계로 적어도 충분해요."}
-                </p>
               </section>
-              <div className={"dc-setup-grid" + (review ? " dc-review" : "")}>
-                {!review && (
+              <div className="dc-setup-grid">
+                {!review ? (
                   <section className="dc-chat">
-                    <div className="dc-chat-heading">
-                      <strong>대화 도우미</strong>
-                      <span>{ai ? "AI로 정리" : "질문 안내"}</span>
+                    <div className="dc-mode-switch" aria-label="정리 방법">
+                      <button
+                        className={ai ? "active" : ""}
+                        aria-pressed={ai}
+                        disabled={
+                          !config.available || busy || messages.length > 1
+                        }
+                        onClick={() => setAi(true)}
+                      >
+                        <Icon name="chat" size={18} />
+                        자유롭게 이야기
+                      </button>
+                      <button
+                        className={!ai ? "active" : ""}
+                        aria-pressed={!ai}
+                        disabled={busy || messages.length > 1}
+                        onClick={() => setAi(false)}
+                      >
+                        <Icon name="edit" size={18} />
+                        하나씩 정리
+                      </button>
                     </div>
-                    {!review && (
-                      <details className="dc-ai-option">
-                        <summary>
-                          {config.available
-                            ? "AI와 자유롭게 정리하기"
-                            : "AI 연결 전에도 카드를 만들 수 있어요"}
-                        </summary>
-                        {config.available ? (
-                          <>
-                            <label className="dd-check">
-                              <input
-                                type="checkbox"
-                                checked={ai}
-                                disabled={busy || messages.length > 1}
-                                onChange={(e) => setAi(e.target.checked)}
-                              />
-                              AI가 대화를 읽고 필요한 내용만 물어봐요.
-                            </label>
-                            {ai && (
-                              <label className="dd-check">
-                                <input
-                                  type="checkbox"
-                                  checked={consent}
-                                  onChange={(e) => setConsent(e.target.checked)}
-                                />
-                                만 18세 이상이며, 입력을 Google Gemini로
-                                전송하는 데 동의해요.
-                                {config.sampleOnly
-                                  ? " 개인정보·기밀 없는 자작 대화만 쓰고, 무료 API 입력이 제품 개선에 쓰일 수 있음을 확인했어요."
-                                  : ""}
-                              </label>
-                            )}
-                          </>
-                        ) : (
-                          <p>
-                            현재는 질문 안내를 따라 자유롭게 답하거나 직접
-                            작성할 수 있어요. 외부 AI로 전송하지 않아요.
-                          </p>
-                        )}
+                    {!config.available && (
+                      <p className="dd-small">
+                        지금은 네 가지 질문으로 카드를 만들 수 있어요.
+                      </p>
+                    )}
+                    {!ai && (
+                      <div
+                        className="dc-question-progress"
+                        aria-label={`${step + 1} / 4 질문`}
+                      >
+                        {["상황", "상대", "목표", "지킬 선"].map((label, i) => (
+                          <span
+                            key={label}
+                            className={i <= step ? "active" : ""}
+                          >
+                            <i>
+                              {i < step ? (
+                                <Icon name="check" size={13} />
+                              ) : (
+                                i + 1
+                              )}
+                            </i>
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="dc-question">
+                      <div className="dc-coach-avatar">
+                        <Companion small mood="listen" />
+                      </div>
+                      <div>
+                        <span className="dc-question-name">
+                          곁이 · 대화 도우미
+                        </span>
+                        <p aria-live="polite">
+                          {busy
+                            ? "이야기에서 중요한 부분을 정리하고 있어요."
+                            : currentQuestion}
+                        </p>
+                      </div>
+                    </div>
+                    {messages.length > 1 && (
+                      <details className="dc-history">
+                        <summary>지금까지 나눈 이야기</summary>
+                        <div className="dc-messages">
+                          {messages.map((m, i) => (
+                            <p key={i} className={"dc-message " + m.role}>
+                              {m.text}
+                            </p>
+                          ))}
+                        </div>
                       </details>
                     )}
-                    <div className="dc-messages" aria-live="polite">
-                      {messages.map((m, i) => (
-                        <p key={i} className={"dc-message " + m.role}>
-                          {m.text}
-                        </p>
-                      ))}
-                      {messages.length === 0 && (
-                        <p className="dc-message assistant">
-                          저장된 내용을 수정하고 다시 사용해 보세요.
-                        </p>
-                      )}
-                      {busy && (
-                        <p className="dc-message assistant">
-                          말씀하신 내용을 정리하고 있어요…
-                        </p>
-                      )}
-                      <div ref={chatEnd} />
-                    </div>
-                    {!review && (
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          void send();
-                        }}
-                        className="dc-composer"
-                      >
-                        <label className="dc-sr" htmlFor="setup-message">
-                          대화 내용
-                        </label>
-                        <textarea
-                          id="setup-message"
-                          value={input}
-                          onChange={(e) => setInput(e.target.value)}
-                          maxLength={
-                            ai
-                              ? 800
-                              : [800, 160, 400, 400][
-                                  messages.filter((m) => m.role === "user")
-                                    .length
-                                ] || 400
-                          }
-                          rows={3}
-                          disabled={busy}
-                          placeholder="예: 팀장님께 보고서 마감을 조율하고 싶어요."
-                        />
-                        <div>
-                          <span>
-                            {input.length}/
-                            {ai
-                              ? 800
-                              : [800, 160, 400, 400][
-                                  messages.filter((m) => m.role === "user")
-                                    .length
-                                ] || 400}
-                          </span>
-                          <button
-                            className="dd-primary"
-                            type="submit"
-                            disabled={busy || !input.trim() || (ai && !consent)}
-                          >
-                            보내기 ↑
-                          </button>
-                        </div>
-                      </form>
-                    )}
-                    {!review && (
-                      <button
-                        className="dd-link"
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void send();
+                      }}
+                      className="dc-composer"
+                    >
+                      <label className="dc-sr" htmlFor="setup-message">
+                        대화 내용
+                      </label>
+                      <textarea
+                        id="setup-message"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        maxLength={ai ? 800 : [800, 160, 400, 400][step]}
+                        rows={4}
                         disabled={busy}
-                        onClick={() => {
-                          setReview(true);
-                          setSource("manual");
-                        }}
-                      >
-                        직접 카드 작성·확인하기 →
-                      </button>
+                        placeholder={
+                          ai || step === 0
+                            ? "예: 팀장님께 보고서 마감을 다음 주로 미루자고 이야기하고 싶어요."
+                            : [
+                                "",
+                                "예: 함께 일하는 팀장님",
+                                "예: 보고서 마감을 다음 주로 조율하기",
+                                "예: 주말 근무는 약속하고 싶지 않아요",
+                              ][step]
+                        }
+                      />
+                      <div>
+                        <span>
+                          {input.length}/{ai ? 800 : [800, 160, 400, 400][step]}
+                        </span>
+                        <button
+                          className="dd-primary"
+                          type="submit"
+                          disabled={busy || !input.trim() || (ai && !consent)}
+                        >
+                          {busy ? "정리 중" : ai ? "이야기 보내기" : "다음"}
+                          <Icon name="send" size={17} />
+                        </button>
+                      </div>
+                    </form>
+                    {ai && (
+                      <div className="dc-consent-note">
+                        <label className="dd-check">
+                          <input
+                            type="checkbox"
+                            checked={consent}
+                            disabled={busy}
+                            onChange={(e) => setConsent(e.target.checked)}
+                          />
+                          <span>
+                            만 18세 이상이며 Google Gemini 전송에 동의해요.
+                            {config.sampleOnly && (
+                              <small>
+                                개인정보·기밀 없는 자작 대화만 사용해요. 무료
+                                API 입력은 Google 제품 개선에 사용될 수 있어요.
+                              </small>
+                            )}
+                          </span>
+                        </label>
+                      </div>
                     )}
-                  </section>
-                )}
-                {review && (
-                  <section className="dc-profile-panel">
-                    {review && messages.length > 0 && (
-                      <button
-                        className="dd-link"
-                        onClick={() => setReview(false)}
-                      >
-                        ← 대화 내용 다시 보기
-                      </button>
-                    )}
-                    <p className="dc-overline">저장할 내용</p>
-                    <h2>{profile.title || "나의 대화 카드"}</h2>
-                    {review ? (
-                      <ProfileEditor profile={profile} onChange={setProfile} />
-                    ) : (
-                      <ContextFacts profile={profile} />
-                    )}
-                    <p className="dd-small">
-                      설정 대화 전체와 통화 원문은 저장하지 않아요. 확인한 카드
-                      내용만 남겨요.
-                    </p>
                     {error && (
                       <p className="dd-error" role="alert">
                         {error}
                       </p>
                     )}
-                    {review ? (
+                    <div className="dc-setup-bottom">
+                      <span>
+                        <Icon name="shield" size={15} />
+                        실명 대신 관계로 적어도 돼요.
+                      </span>
                       <button
-                        className="dd-primary dd-full"
-                        disabled={!canSave || busy}
-                        onClick={save}
-                      >
-                        {editingId ? "수정 내용 저장" : "대화 카드 저장"}
-                      </button>
-                    ) : (
-                      <button
-                        className="dd-secondary dd-full"
+                        className="dd-link"
                         disabled={busy}
-                        onClick={() => setReview(true)}
+                        onClick={() => {
+                          setEditFields(true);
+                          setReview(true);
+                          setSource("manual");
+                        }}
                       >
-                        카드 내용 확인하기
+                        직접 작성
+                      </button>
+                    </div>
+                  </section>
+                ) : (
+                  <section className="dc-profile-panel dc-review-panel">
+                    <div className="dc-review-heading">
+                      <span className="dc-round-icon">
+                        <Icon name="cards" size={25} />
+                      </span>
+                      <div>
+                        <p className="dc-overline">나의 대화 카드</p>
+                        <h2>{profile.title || "제목을 정해 주세요"}</h2>
+                      </div>
+                      {!editingId && (
+                        <span className="dc-ready-pill">
+                          <Icon name="check" size={14} />
+                          초안
+                        </span>
+                      )}
+                    </div>
+                    {editFields || !canSave ? (
+                      <ProfileEditor profile={profile} onChange={setProfile} />
+                    ) : (
+                      <ContextFacts profile={profile} />
+                    )}
+                    {!editFields && canSave && (
+                      <button
+                        className="dd-link"
+                        onClick={() => setEditFields(true)}
+                      >
+                        <Icon name="edit" size={16} />
+                        내용 수정하기
+                      </button>
+                    )}
+                    <div className="dc-save-note">
+                      <Icon name="shield" size={18} />
+                      <span>확인한 카드만 이 기기에 저장해요.</span>
+                      <HelpTip label="무엇이 저장되나요?">
+                        지금 보이는 상대·상황·목표·지킬 선을 저장해 다음 코칭에
+                        사용해요. 설정 대화 전체나 통화 원문은 저장하지 않아요.
+                      </HelpTip>
+                    </div>
+                    {error && (
+                      <p className="dd-error" role="alert">
+                        {error}
+                      </p>
+                    )}
+                    <button
+                      className="dd-primary dd-full"
+                      disabled={!canSave || busy}
+                      onClick={save}
+                    >
+                      {editingId ? "수정 내용 저장" : "내 대화로 저장"}
+                      <Icon name="check" size={18} />
+                    </button>
+                    {!!messages.length && (
+                      <button
+                        className="dd-link"
+                        onClick={() => setReview(false)}
+                      >
+                        이야기 더 나누기
                       </button>
                     )}
                   </section>
@@ -656,51 +836,52 @@ export default function ConversationWorkspace() {
           )}
           {view === "detail" && active && (
             <>
-              <button className="dd-back" onClick={home}>
-                ← 내 대화로
+              <button className="dd-back" onClick={() => navigate("library")}>
+                <Icon name="back" size={18} />내 대화
               </button>
               <section className="dc-title">
-                <p className="dc-overline">저장한 대화</p>
+                <p className="dc-overline">준비해 둔 대화</p>
                 <h1>{active.title}</h1>
-                <p>이 맥락을 바탕으로 다음에 말할 문장을 제안해요.</p>
               </section>
               <div className="dc-detail-grid">
                 <section className="dc-profile-panel">
+                  <div className="dc-panel-heading">
+                    <h2>내가 기억할 것</h2>
+                    <button className="dd-link" onClick={() => start(active)}>
+                      <Icon name="edit" size={16} />
+                      수정
+                    </button>
+                  </div>
                   <ContextFacts profile={active} />
-                  <button className="dd-link" onClick={() => start(active)}>
-                    설정 수정하기 →
-                  </button>
                 </section>
                 <aside className="dc-start-panel">
-                  <p className="dc-overline">다음 단계</p>
-                  <h2>이 맥락으로 코칭받기</h2>
+                  <Companion mood="listen" />
+                  <h2>이제, 옆에서 도울게요.</h2>
                   <p>
-                    상대의 말을 적거나 짧게 들려주세요.
-                    <br />
-                    저장한 목표와 지킬 선을 함께 참고해요.
+                    상대의 말을 들려주거나 적으면
+                    <br />내 목표에 맞는 한마디를 제안해요.
                   </p>
                   <button
                     className="dd-primary dd-full"
                     onClick={() => useCard(active)}
                   >
-                    이 카드로 코칭 시작
+                    <Icon name="mic" size={20} />
+                    코칭 시작
                   </button>
-                  <p className="dd-small">
-                    {config.available
-                      ? "실제 AI 결과는 상황에 맞는지 확인한 뒤 사용하세요."
-                      : "AI 연결은 아직 준비 중이에요. 카드 저장·수정은 지금 사용할 수 있어요."}
-                  </p>
+                  <span className="dc-small-caption">
+                    대면 대화 · 다른 기기의 스피커폰
+                  </span>
                 </aside>
               </div>
               <div className="dc-card-tools">
                 <span>
-                  코칭 화면을 연 횟수 {active.useCount}회 · 수정{" "}
+                  최근 수정{" "}
                   {new Date(active.updatedAt).toLocaleDateString("ko-KR")}
                 </span>
                 <button onClick={() => duplicate(active)}>
                   복사해서 만들기
                 </button>
-                <button onClick={() => remove(active)}>카드 삭제</button>
+                <button onClick={() => remove(active)}>삭제</button>
               </div>
               {error && (
                 <p className="dd-error" role="alert">
@@ -720,22 +901,84 @@ export default function ConversationWorkspace() {
               onDemo={() => setView("demo")}
             />
           )}
+          {view === "guide" && (
+            <>
+              <section className="dc-title">
+                <p className="dc-overline">필요할 때, 가볍게</p>
+                <h1>곁이와 이렇게 시작해요</h1>
+              </section>
+              <button className="dc-guide-tour" onClick={() => setTour(true)}>
+                <Companion small />
+                <span>
+                  <strong>직접 해보는 30초 가이드</strong>
+                  <small>카드부터 코칭까지, 하나씩 따라 해봐요.</small>
+                </span>
+                <Icon name="arrow" />
+              </button>
+              <div className="dc-guide-steps">
+                {[
+                  {
+                    icon: "cards",
+                    title: "내 상황을 준비해요",
+                    text: "누구와 어떤 이야기를 할지 알려주세요. 원하는 결과와 지킬 선을 카드로 기억해요.",
+                  },
+                  {
+                    icon: "mic",
+                    title: "상대의 말을 전달해요",
+                    text: "대면 또는 다른 기기의 스피커폰 옆에서 최대 8초를 들려주세요. 직접 적어도 돼요.",
+                  },
+                  {
+                    icon: "chat",
+                    title: "힌트를 내 말로 전해요",
+                    text: "제안된 문장을 확인하고 내 방식으로 말해보세요. 다음 대화에도 같은 카드를 꺼낼 수 있어요.",
+                  },
+                ].map((s, i) => (
+                  <article key={s.title}>
+                    <span className="dc-guide-number">0{i + 1}</span>
+                    <Icon name={s.icon as "cards" | "mic" | "chat"} size={27} />
+                    <h2>{s.title}</h2>
+                    <p>{s.text}</p>
+                  </article>
+                ))}
+              </div>
+              <details className="dc-guide-faq">
+                <summary>실제 통화에서도 쓸 수 있나요?</summary>
+                <p>
+                  다른 기기로 스피커폰 통화를 하거나 대면 대화할 때 사용하세요.
+                  같은 휴대폰의 통화 음성을 직접 가져오지는 못해요. 최대 8초씩
+                  입력하고 처리 중에는 마이크가 꺼져요. 대화 참여자의 동의를
+                  받은 뒤 사용해 주세요.
+                </p>
+              </details>
+              <details className="dc-guide-faq">
+                <summary>내 대화는 어디에 저장되나요?</summary>
+                <p>
+                  직접 확인한 카드 내용만 이 브라우저에 저장돼요. 다른 기기로
+                  자동 동기화되지 않으며, 브라우저 데이터를 지우면 사라질 수
+                  있어요. 내 대화에서 데이터를 내려받아 보관할 수 있어요.
+                </p>
+              </details>
+              <div className="dc-guide-links">
+                <a href="/practice?demo=1">
+                  문장 연습하기
+                  <Icon name="arrow" size={18} />
+                </a>
+                <a href="/evidence">
+                  서비스·데이터 안내
+                  <Icon name="arrow" size={18} />
+                </a>
+              </div>
+            </>
+          )}
           {view === "demo" && (
             <>
               <button className="dd-back" onClick={home}>
-                ← 내 대화로
+                <Icon name="back" size={18} />
+                홈으로
               </button>
               <section className="dc-title">
-                <p className="dc-overline">흐름 예시 · 실제 AI 결과 아님</p>
-                <h1>
-                  같은 말도,
-                  <br />내 목표에 맞게.
-                </h1>
-                <p>
-                  “금요일까지 가능하죠?”에 무조건 거절하는 답을 주는 대신,
-                  <br />
-                  저장한 상황과 목표를 함께 참고하는 방식이에요.
-                </p>
+                <p className="dc-overline">사전 작성된 흐름 예시</p>
+                <h1>같은 말도, 내 목표에 맞게.</h1>
               </section>
               <div className="dc-detail-grid">
                 <section className="dc-profile-panel">
@@ -745,14 +988,12 @@ export default function ConversationWorkspace() {
                 <aside className="dc-demo-cue">
                   <span>상대의 말</span>
                   <p>“보고서, 금요일까지 가능하죠?”</p>
-                  <span>이 카드에 맞춰 준비한 예시</span>
+                  <span>내 목표를 담은 답변 예시</span>
                   <blockquote>
                     현재 업무를 유지하면 금요일 완료는 어렵습니다. 어떤 일을
                     먼저 진행할지 정해 주시면, 가능한 일정을 말씀드리겠습니다.
                   </blockquote>
-                  <small>
-                    사전 작성된 예시이며 실시간 분석 결과가 아닙니다.
-                  </small>
+                  <small>실시간 AI 결과가 아닌 사용법 예시예요.</small>
                 </aside>
               </div>
               <div className="dd-actions">
@@ -762,26 +1003,31 @@ export default function ConversationWorkspace() {
                     start();
                     setProfile({ ...exampleProfile });
                     setReview(true);
+                    setEditFields(true);
                     setSource("manual");
                   }}
                 >
-                  이 예시를 내 카드로 바꾸기
+                  이 예시로 내 카드 만들기
+                  <Icon name="arrow" size={18} />
                 </button>
-                <button className="dd-link" onClick={() => start()}>
-                  내 이야기로 처음부터 시작
+                <button className="dd-link" onClick={() => setTour(true)}>
+                  한 단계씩 따라 해보기
                 </button>
               </div>
             </>
           )}
         </main>
         <footer className="dc-footer">
-          <span>든든콜</span>
-          <div>
-            <a href="/practice?demo=1">문장 연습</a>
-            <a href="/evidence">서비스·데이터 안내 ↗</a>
-          </div>
+          <span>조금 더 나다운 대화, 든든콜</span>
+          <a href="/evidence">서비스·데이터 안내</a>
         </footer>
       </div>
+      {tour && (
+        <FirstConversation
+          onClose={() => setTour(false)}
+          onCreate={() => start()}
+        />
+      )}
     </div>
   );
 }
