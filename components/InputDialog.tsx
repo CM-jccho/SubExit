@@ -23,7 +23,8 @@ export default function InputDialog({
   children: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null),
-    heading = useRef<HTMLHeadingElement>(null);
+    heading = useRef<HTMLHeadingElement>(null),
+    body = useRef<HTMLDivElement>(null);
   const titleId = useId();
   useLayoutEffect(() => {
     const element = dialog.current;
@@ -37,14 +38,37 @@ export default function InputDialog({
         `${viewport?.height || window.innerHeight}px`,
       );
       element.style.setProperty("--input-top", `${viewport?.offsetTop || 0}px`);
+      // Scroll only the content pane; never pan the page or hide the header.
+      const pane = body.current;
+      const active = document.activeElement;
+      if (pane && active instanceof window.HTMLElement && pane.contains(active)) {
+        const bounds = pane.getBoundingClientRect();
+        const field = active.getBoundingClientRect();
+        if (field.top < bounds.top || field.bottom > bounds.bottom) {
+          pane.scrollTop += field.top - bounds.top - 8;
+        }
+      }
     };
     resize();
     document.body.style.overflow = "hidden";
     element.showModal();
-    (focusTarget?.current || heading.current)?.focus({ preventScroll: true });
+    // Opening a mobile dialog should not summon the keyboard before the user
+    // chooses typing, recording, or a file. Desktop keeps its typing shortcut.
+    const mobile = window.matchMedia(
+      "(max-width: 600px), (pointer: coarse)",
+    ).matches;
+    (mobile ? heading.current : focusTarget?.current || heading.current)?.focus(
+      {
+        preventScroll: true,
+      },
+    );
+    window.addEventListener("resize", resize);
+    element.addEventListener("focusin", resize);
     viewport?.addEventListener("resize", resize);
     viewport?.addEventListener("scroll", resize);
     return () => {
+      window.removeEventListener("resize", resize);
+      element.removeEventListener("focusin", resize);
       viewport?.removeEventListener("resize", resize);
       viewport?.removeEventListener("scroll", resize);
       element.close();
@@ -78,7 +102,9 @@ export default function InputDialog({
               닫기
             </button>
           </header>
-          {children}
+          <div ref={body} className="input-dialog-body">
+            {children}
+          </div>
         </>
       )}
     </dialog>

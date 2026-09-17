@@ -2845,10 +2845,17 @@ test("input dialog keeps the same focused input across typing and viewport chang
       assert.equal(document.querySelector("textarea"), input);
       assert.equal(document.activeElement, input);
     }
+    const pane = dialog.querySelector(".input-dialog-body");
+    assert(!pane.contains(dialog.querySelector(".input-dialog-head")));
+    pane.getBoundingClientRect = () => ({ top: 100, bottom: 320 });
+    input.getBoundingClientRect = () => ({ top: 420, bottom: 600 });
     viewport.height = 360;
     viewport.offsetTop = 40;
     viewport.dispatchEvent(new window.Event("resize"));
     assert.equal(dialog.style.getPropertyValue("--input-height"), "360px");
+    assert.equal(dialog.style.getPropertyValue("--input-top"), "40px");
+    assert.equal(pane.scrollTop, 312);
+    assert.equal(document.activeElement, input);
     assert.equal(opens, 1);
     assert.equal(closes, 0);
     assert.equal(scrolls, 0);
@@ -2860,8 +2867,15 @@ test("input dialog keeps the same focused input across typing and viewport chang
     assert(!document.querySelector("textarea"));
     assert.equal(document.activeElement, trigger);
     assert.equal(document.body.style.overflow, "");
+    const matchMedia = window.matchMedia;
+    window.matchMedia = () => ({ matches: true });
     await click(trigger);
     assert.equal(document.querySelector("textarea").value, "안녕하세요");
+    assert.equal(document.activeElement, dialog.querySelector("h2"));
+    // Keyboard is requested only after an explicit tap into the editor.
+    document.querySelector("textarea").focus();
+    assert.equal(document.activeElement, document.querySelector("textarea"));
+    window.matchMedia = matchMedia;
   } finally {
     await ui.cleanup();
   }
