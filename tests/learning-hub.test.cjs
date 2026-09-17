@@ -2472,7 +2472,7 @@ test("focused home has one scenario browser and supporting tools remain reachabl
     );
     assert.equal(
       document.querySelectorAll(".dc-starter-section .dc-saved-card").length,
-      2,
+      1,
     );
     assert.equal(document.querySelector(".vn-home-actions"), null);
     assert.equal(document.querySelector(".dc-tour-invite"), null);

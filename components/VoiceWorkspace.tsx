@@ -812,42 +812,66 @@ export default function VoiceWorkspace({
               </span>
             )}
           </section>
-          {!session.turns.length && (
-            <div className="vn-session-settings">
-              <label className="vn-label">
-                기록 이름
-                <input
-                  value={session.title}
-                  maxLength={80}
-                  disabled={busy || captureBusy}
-                  onChange={(e) =>
-                    setSession({ ...session, title: e.target.value })
-                  }
-                />
-              </label>
-              <label className="vn-label">
-                업종·하는 일
-                <input
-                  value={session.industry}
-                  maxLength={120}
-                  disabled={busy || captureBusy}
-                  onChange={(e) =>
-                    setSession({ ...session, industry: e.target.value })
-                  }
-                  placeholder="예: IT 서비스 기획 · 파트너 영업"
-                />
-              </label>
-            </div>
+          {(session.kind !== "recording" || !session.turns.length) && (
+            <details className="vn-start-options">
+              <summary>
+                {session.kind === "recording"
+                  ? "기록 이름·업종 설정"
+                  : "언어·자동 읽기·기록 설정"}
+              </summary>
+              {!session.turns.length && (
+                <div className="vn-session-settings">
+                  <label className="vn-label">
+                    기록 이름
+                    <input
+                      value={session.title}
+                      maxLength={80}
+                      disabled={busy || captureBusy}
+                      onChange={(e) =>
+                        setSession({ ...session, title: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="vn-label">
+                    업종·하는 일
+                    <input
+                      value={session.industry}
+                      maxLength={120}
+                      disabled={busy || captureBusy}
+                      onChange={(e) =>
+                        setSession({ ...session, industry: e.target.value })
+                      }
+                      placeholder="예: IT 서비스 기획 · 파트너 영업"
+                    />
+                  </label>
+                </div>
+              )}
+              {!session.isSample &&
+                session.kind !== "recording" &&
+                !session.turns.length && (
+                  <LanguagePicker
+                    value={session.languages || defaultLanguages}
+                    disabled={busy || captureBusy}
+                    onChange={(languages) =>
+                      setSession({ ...session, languages })
+                    }
+                  />
+                )}
+              {session.kind !== "recording" && (
+                <label className="dd-check vn-autoplay">
+                  <input
+                    type="checkbox"
+                    checked={autoplay}
+                    onChange={(e) => {
+                      setAutoplay(e.target.checked);
+                      if (!e.target.checked) stopAudio();
+                    }}
+                  />
+                  상대 답변 자동 읽기 <span>기기 음성 사용</span>
+                </label>
+              )}
+            </details>
           )}
-          {!session.isSample &&
-            session.kind !== "recording" &&
-            !session.turns.length && (
-              <LanguagePicker
-                value={session.languages || defaultLanguages}
-                disabled={busy || captureBusy}
-                onChange={(languages) => setSession({ ...session, languages })}
-              />
-            )}
           {session.languages &&
             session.turns.length > 0 &&
             session.kind !== "recording" && (
@@ -928,19 +952,6 @@ export default function VoiceWorkspace({
             >
               이 상황으로 새 연습 시작 <Icon name="arrow" size={18} />
             </button>
-          )}
-          {session.kind !== "recording" && (
-            <label className="dd-check vn-autoplay">
-              <input
-                type="checkbox"
-                checked={autoplay}
-                onChange={(e) => {
-                  setAutoplay(e.target.checked);
-                  if (!e.target.checked) stopAudio();
-                }}
-              />
-              상대 답변 자동 읽기 <span>기기 음성 사용</span>
-            </label>
           )}
           {session.kind !== "recording" && !session.turns.length && (
             <div className="vn-start-practice" data-tour="practice-settings">

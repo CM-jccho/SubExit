@@ -558,3 +558,68 @@
     margin-left: auto;
   }
 }
+
+/* One preparation panel keeps the next action beside the user's goal. */
+.dc-detail-compact,
+.dc-detail-tools {
+  max-width: 740px;
+  margin-inline: auto;
+}
+.dc-detail-compact .dc-profile-panel {
+  padding: 20px 24px;
+}
+.dc-detail-compact .dc-panel-heading .dc-companion {
+  width: 52px;
+  flex-shrink: 0;
+}
+.dc-detail-compact .dc-facts {
+  margin-top: 12px;
+}
+.dc-detail-compact .dc-facts > div {
+  margin-bottom: 14px;
+}
+.dc-detail-compact .dc-facts dd {
+  line-height: 1.6;
+}
+.dc-detail-extra,
+.dc-detail-alternative {
+  margin-block: 16px;
+  color: #52604b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.dc-detail-extra > summary,
+.dc-detail-alternative > summary,
+.vn-start-options > summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 12px;
+}
+.dc-detail-extra > summary:focus-visible,
+.dc-detail-alternative > summary:focus-visible,
+.vn-start-options > summary:focus-visible {
+  outline: 3px solid #355e48;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+.dc-detail-alternative > p {
+  margin: 4px 0 16px;
+}
+.dc-detail-tools .dc-card-tools {
+  margin-top: 0;
+  flex-wrap: wrap;
+}
+.vn-start-options {
+  margin: 10px 0;
+  font-size: 13px;
+  color: #52604b;
+}
+@media (max-width: 760px) {
+  .dc-detail-compact .dc-profile-panel {
+    padding: 16px;
+  }
+  .focus-home-controls > .dd-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
