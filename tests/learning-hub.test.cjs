@@ -429,18 +429,28 @@ test("editing a recording transcript resets speaker assignments and cannot submi
     },
   });
   try {
-    await click(button("수정 문자 저장 · 화자 확인"));
+    await click(button("다음 · 누가 말했나요?"));
     assert(saved.segments.every((s) => s.role === "unknown"));
     assert(button("확인한 대화 코칭받기").disabled);
+    await click(button("전부 내 말이에요"));
+    assert(
+      [...document.querySelectorAll(".learn-segments select")].every(
+        (el) => el.value === "user",
+      ),
+    );
+    assert(
+      button("확인한 대화 코칭받기").disabled,
+      "speaker shortcut still requires confirmation",
+    );
     await change(document.querySelector(".learn-segments select"), "assistant");
-    await click(button("화자·목표 저장"));
+    await click(button("말한 사람·목표 저장"));
     assert.equal(saved.segments[0].role, "assistant");
     await click(button("문자 다시 수정"));
     await change(
       document.querySelector("textarea"),
       source.text + "\n새로 확인한 말",
     );
-    await click(button("수정 문자 저장 · 화자 확인"));
+    await click(button("다음 · 누가 말했나요?"));
     assert.equal(saved.segments.length, 5);
     assert(saved.segments.every((s) => s.role === "unknown"));
     assert.equal(saved.confirmed, false);
@@ -3506,4 +3516,24 @@ test("mobile keyboard guard reveals page editors, restores navigation on close a
   } finally {
     await ui.cleanup();
   }
+});
+
+test("a single unformatted solo recording can be coached without inventing a partner", () => {
+  const segments = recording.splitRecordingTranscript(
+    "오늘은 일정 변경을 차분하게 요청하는 연습을 해볼게요.",
+  );
+  assert.equal(segments.length, 1);
+  assert.equal(segments[0].role, "unknown");
+  const input = recording.validateRecordingInput({
+    ...draft(),
+    segments: segments.map((s) => ({ ...s, role: "user" })),
+  });
+  assert.equal(input.turns.length, 1);
+  assert.equal(input.turns[0].role, "user");
+  assert.throws(() =>
+    recording.validateRecordingInput({ ...draft(), segments }),
+  );
+  const long = recording.splitRecordingTranscript("가".repeat(9000));
+  assert.equal(long.map((s) => s.text).join(""), "가".repeat(9000));
+  assert(long.every((s) => s.text.length <= 4000));
 });

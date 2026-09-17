@@ -116,3 +116,8 @@ html {
 .input-dialog .vn-label {
   gap: 10px;
 }
+
+/* Programmatic heading focus announces the dialog without a decorative ring. */
+.input-dialog-head h2:focus {
+  outline: none;
+}

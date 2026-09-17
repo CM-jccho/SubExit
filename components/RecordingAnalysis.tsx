@@ -76,7 +76,7 @@ export function RecordingExamples() {
           >
             <small>가상 녹음의 문자 · 사전 작성 코칭</small>
             <strong>{e.title}</strong>
-            <span>문자 확인 → 화자 확인 → 코칭 결과</span>
+            <span>문자 확인 → 말한 사람 확인 → 코칭 결과</span>
             <em>예시 열기 →</em>
           </button>
         ))}
@@ -315,11 +315,11 @@ export default function RecordingAnalysis({
             ? "이 녹음으로 대화 돌아보기"
             : "이 문자로 대화 돌아보기"}
         </h2>
-        <span>60,000자 · 600개 발화까지</span>
+        <span>녹음·문자 코칭</span>
       </div>
       <p>
-        문자 변환 후 발화마다 줄을 나누고, 내 말과 상대 말을 직접 확인해 주세요.
-        자동 화자 분리와 억양 분석은 제공하지 않아요.
+        녹음한 내용이나 대화 문자를 그대로 넣어 주세요. 다음 화면에서 누가
+        말했는지만 확인하면 돼요. 혼자 말한 녹음도 코칭할 수 있어요.
       </p>
       {source?.clip?.transcription && !source.clip.transcription.complete && (
         <p className="learn-callout">
@@ -363,7 +363,7 @@ export default function RecordingAnalysis({
             </label>
           )}
           <ol className="learn-steps">
-            {["문자 수정", "화자·목표 확인", "코칭"].map((s, i) => (
+            {["문자 수정", "말한 사람·목표 확인", "코칭"].map((s, i) => (
               <li
                 className={step === i + 1 ? "active" : ""}
                 key={s}
@@ -400,7 +400,7 @@ export default function RecordingAnalysis({
           {step === 1 && (
             <>
               <label className="vn-label">
-                코칭할 문자 · 말하는 사람이 바뀔 때 줄바꿈
+                코칭받을 내용
                 <textarea
                   rows={7}
                   maxLength={RECORDING_MAX_TEXT}
@@ -409,7 +409,7 @@ export default function RecordingAnalysis({
                   onChange={(e) =>
                     edit({ transcript: e.target.value, segments: [] })
                   }
-                  placeholder="상대가 한 말\n내가 한 말\n상대가 이어서 한 말"
+                  placeholder="녹음한 내용이나 대화를 그대로 넣어 주세요."
                 />
               </label>
               <small>
@@ -425,11 +425,11 @@ export default function RecordingAnalysis({
                 onClick={() => {
                   const segments = splitRecordingTranscript(draft.transcript);
                   if (
-                    segments.length < 2 ||
+                    segments.length < 1 ||
                     segments.length > RECORDING_MAX_SEGMENTS
                   ) {
                     setError(
-                      "화자별로 줄을 나눠 2~600개의 발화로 정리해 주세요. ‘나:’와 ‘상대:’ 표기가 있으면 화자 선택에 반영돼요.",
+                      "내용이 너무 많아요. 코칭받고 싶은 장면만 남겨 주세요.",
                     );
                     return;
                   }
@@ -440,19 +440,37 @@ export default function RecordingAnalysis({
                   );
                 }}
               >
-                수정 문자 저장 · 화자 확인 <Icon name="arrow" size={16} />
+                다음 · 누가 말했나요? <Icon name="arrow" size={16} />
               </button>
             </>
           )}
           {step === 2 && (
             <>
               <p className="vn-caption">
-                총 {draft.segments.length}개 발화 · 화자 미지정{" "}
-                {draft.segments.filter((s) => s.role === "unknown").length}개.
-                ‘나:’, ‘상대:’로 표시한 화자는 반영했으니 확인해 주세요.
+                혼자 녹음했다면 ‘전부 내 말이에요’를 누르세요. 대화 녹음이라면
+                각 내용에서 내 말과 상대 말을 선택해 주세요. 자동으로 말한
+                사람을 추측하지 않아요.
               </p>
+              <button
+                className="dd-secondary"
+                disabled={locked}
+                onClick={() =>
+                  edit({
+                    segments: draft.segments.map((s) => ({
+                      ...s,
+                      role: "user",
+                    })),
+                    context: {
+                      ...draft.context,
+                      partner: draft.context.partner || "혼자 말하기",
+                    },
+                  })
+                }
+              >
+                전부 내 말이에요
+              </button>
               {draft.segments.length > 20 && (
-                <nav className="vn-toolbar" aria-label="화자 확인 페이지">
+                <nav className="vn-toolbar" aria-label="말한 사람 확인 페이지">
                   <button
                     className="dd-secondary"
                     disabled={locked || segmentPage === 0}
@@ -480,7 +498,7 @@ export default function RecordingAnalysis({
                   .map((segment, i) => (
                     <div key={segment.id}>
                       <label className="vn-label">
-                        발화 {segmentPage * 20 + i + 1}의 화자
+                        내용 {segmentPage * 20 + i + 1} · 누가 말했나요?
                         <select
                           disabled={locked}
                           value={segment.role}
@@ -554,8 +572,8 @@ export default function RecordingAnalysis({
                 disabled={locked}
               />
               <p className="vn-caption">
-                이번 코칭에는 확인한 문자·화자·목표를 보내요. 음성 원본은 다시
-                전송하지 않아요.
+                이번 코칭에는 확인한 문자·말한 사람·목표를 보내요. 음성 원본은
+                다시 전송하지 않아요.
               </p>
               <div className="vn-toolbar">
                 <button
@@ -570,7 +588,7 @@ export default function RecordingAnalysis({
                   disabled={locked}
                   onClick={() => void save(draft, 2)}
                 >
-                  화자·목표 저장
+                  말한 사람·목표 저장
                 </button>
                 <button
                   className="dd-primary"
@@ -601,29 +619,35 @@ export default function RecordingAnalysis({
                   disabled={locked}
                   onClick={() => setStep(2)}
                 >
-                  화자·목표 다시 확인
+                  말한 사람·목표 다시 확인
                 </button>
-                <button
-                  className="dd-primary"
-                  disabled={locked}
-                  onClick={async () => {
-                    try {
-                      await onPractice(recordingDrill(session, draft));
-                    } catch (e) {
-                      setError(
-                        e instanceof Error
-                          ? e.message
-                          : "재연습을 열지 못했어요.",
-                      );
-                    }
-                  }}
-                >
-                  이 장면 다시 연습 <Icon name="arrow" size={16} />
-                </button>
+                {draft.segments[
+                  draft.segments.findIndex(
+                    (s) => s.id === validReview.improvement.turnId,
+                  ) - 1
+                ]?.role === "assistant" && (
+                  <button
+                    className="dd-primary"
+                    disabled={locked}
+                    onClick={async () => {
+                      try {
+                        await onPractice(recordingDrill(session, draft));
+                      } catch (e) {
+                        setError(
+                          e instanceof Error
+                            ? e.message
+                            : "재연습을 열지 못했어요.",
+                        );
+                      }
+                    }}
+                  >
+                    이 장면 다시 연습 <Icon name="arrow" size={16} />
+                  </button>
+                )}
               </div>
               <small>
-                인용한 원문과 내 목표가 맞는지 확인해 주세요. 재연습에서는 녹음
-                속 상대의 직전 말을 가져와 AI가 역할을 이어가요.
+                인용한 원문과 내 목표가 맞는지 확인해 주세요. 상대의 직전 말이
+                있는 장면은 이어서 대화 연습도 할 수 있어요.
               </small>
             </>
           )}
