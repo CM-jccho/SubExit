@@ -1,5 +1,14 @@
 "use client";
 import MessengerPractice from "./MessengerPractice";
+import ConversationFocusPicker from "./ConversationFocusPicker";
+import {
+  FOCUS_KEY,
+  parseFocus,
+  curatedCards,
+  focusInfo,
+  type ConversationFocus,
+} from "@/lib/conversation-focus";
+import PracticeNavigation from "./PracticeNavigation";
 import UpcomingFeatures from "./UpcomingFeatures";
 import ConversationTraining from "./ConversationTraining";
 import DailyTalk from "./DailyTalk";
@@ -31,7 +40,12 @@ import {
   type CompanionCharacter,
 } from "@/lib/companions";
 import StorageStatus from "./StorageStatus";
-import { seedStarterData, starterCards } from "@/lib/starter-data";
+import {
+  seedStarterData,
+  starterCards,
+  requestCards,
+} from "@/lib/starter-data";
+import { practicalCards } from "@/lib/practical-scenes";
 import { downloadBlob } from "@/lib/voice-notebook";
 import { tones } from "@/lib/scenarios";
 import {
@@ -150,6 +164,9 @@ function ContextFacts({ profile }: { profile: ContextProfile }) {
   );
 }
 export default function ConversationWorkspace() {
+  const [focus, setFocus] = useState<ConversationFocus | null>(null);
+  const [browseAll, setBrowseAll] = useState(false);
+  const effectiveFocus = browseAll ? "all" : focus;
   const [view, setViewState] = useState<View>("home"),
     [cards, setCards] = useState<ConversationCard[]>([]),
     [search, setSearch] = useState(""),
@@ -186,6 +203,7 @@ export default function ConversationWorkspace() {
   useEffect(() => {
     let mounted = true;
     try {
+      setFocus(parseFocus(localStorage.getItem(FOCUS_KEY)));
       setCompanions(readSavedCompanions());
     } catch (e) {
       setStorageError(
@@ -207,6 +225,8 @@ export default function ConversationWorkspace() {
         setReady(true);
         try {
           if (
+            focusInfo(parseFocus(localStorage.getItem(FOCUS_KEY)))?.cardIds
+              .length &&
             !localStorage.getItem(TOUR_KEY) &&
             workspaceView(window.location.search) === "home"
           ) {
@@ -222,6 +242,8 @@ export default function ConversationWorkspace() {
       .then(setConfig)
       .catch(() => {});
     const sync = (event: StorageEvent) => {
+      if (event.key === FOCUS_KEY || event.key === null)
+        setFocus(parseFocus(localStorage.getItem(FOCUS_KEY)));
       setCards(readCards());
       if (event.key === COMPANIONS_KEY || event.key === null) {
         try {
@@ -475,14 +497,49 @@ export default function ConversationWorkspace() {
     setTourStep(next);
     if (next === 0) setView("home");
     else {
-      setActive((c) => c || cards.find((c) => c.isSample) || starterCards[0]);
+      setActive(
+        (c) =>
+          c ||
+          curatedCards(cards, effectiveFocus).find((c) => c.isSample) ||
+          tourCard,
+      );
       setView(next === 3 ? "voicePractice" : "detail");
     }
   }
   const personalCards = cards.filter((c) => !c.isSample);
-  const sampleCards = cards.filter((c) => c.isSample);
+  const tourCard =
+    curatedCards(
+      [...starterCards, ...requestCards, ...practicalCards],
+      effectiveFocus,
+    )[0] || starterCards[0];
+  const focusedCards = curatedCards(cards, effectiveFocus);
+  const sampleCards = focusedCards.filter((c) => c.isSample);
 
-  const visible = searchCards(cards, search);
+  const visible = searchCards(focusedCards, search);
+  function chooseFocus(next: ConversationFocus) {
+    setFocus(next);
+    setBrowseAll(false);
+    setSearch("");
+    try {
+      localStorage.setItem(
+        FOCUS_KEY,
+        JSON.stringify({ version: 1, focus: next }),
+      );
+      if (
+        view === "home" &&
+        next !== "all" &&
+        next !== "custom" &&
+        !localStorage.getItem(TOUR_KEY)
+      ) {
+        setTourStep(0);
+        setTour(true);
+      }
+    } catch {
+      setToast(
+        "선택은 이번 화면에 적용했어요. 브라우저 저장이 제한되어 재방문하면 다시 선택해야 해요.",
+      );
+    }
+  }
   const canSave = (() => {
     try {
       parseProfile(profile);
@@ -639,33 +696,21 @@ export default function ConversationWorkspace() {
                 {toast}
               </p>
             )}
-            {["library", "prompts", "training", "messenger"].includes(view) && (
-              <div className="daily-tabs" role="group" aria-label="연습 종류">
-                <button
-                  aria-pressed={view === "library"}
-                  onClick={() => navigate("library")}
-                >
-                  사람과 대화 연습
-                </button>
-                <button
-                  aria-pressed={view === "messenger"}
-                  onClick={() => navigate("messenger")}
-                >
-                  메시지 답장
-                </button>
-                <button
-                  aria-pressed={view === "training"}
-                  onClick={() => navigate("training")}
-                >
-                  기초 훈련
-                </button>
-                <button
-                  aria-pressed={view === "prompts"}
-                  onClick={() => navigate("prompts")}
-                >
-                  AI에게 요청하기
-                </button>
-              </div>
+            <PracticeNavigation view={view} onNavigate={navigate} />
+            {["home", "library", "room", "terms"].includes(view) && !tour && (
+              <ConversationFocusPicker
+                value={focus}
+                onCreate={() => {
+                  chooseFocus("custom");
+                  start();
+                }}
+                onChange={chooseFocus}
+                browsing={browseAll}
+                onBrowse={() => {
+                  setBrowseAll((v) => !v);
+                  setSearch("");
+                }}
+              />
             )}
             {view === "messenger" && (
               <MessengerPractice
@@ -689,7 +734,7 @@ export default function ConversationWorkspace() {
                 onRecords={() => navigate("records")}
               />
             )}
-            {view === "home" && (
+            {view === "home" && (focus || tour) && (
               <>
                 <section className="dc-welcome">
                   <div className="dc-welcome-copy">
@@ -749,7 +794,12 @@ export default function ConversationWorkspace() {
                 {(sampleCards.length > 0 || tour) && (
                   <section className="dc-starter-section">
                     <div className="dc-section-heading">
-                      <h2>처음이라면, 이 대화부터</h2>
+                      <h2>
+                        {focusInfo(effectiveFocus)
+                          ? focusInfo(effectiveFocus)!.label +
+                            "에서 꺼내볼 대화"
+                          : "처음이라면, 이 대화부터"}
+                      </h2>
                       <span className="dc-sample-badge">가상의 샘플</span>
                     </div>
                     <p>
@@ -767,15 +817,18 @@ export default function ConversationWorkspace() {
                                   Number(a.id.includes("request")),
                               )
                               .slice(0, 2)
-                        : [starterCards[0]],
+                        : [tourCard],
                       true,
                     )}
                     <div className="dc-starter-links">
                       <button
                         className="dd-link"
-                        onClick={() => navigate("library")}
+                        onClick={() => {
+                          setBrowseAll(true);
+                          navigate("library");
+                        }}
                       >
-                        샘플 모두 보기 <Icon name="arrow" size={16} />
+                        전체 샘플 둘러보기 <Icon name="arrow" size={16} />
                       </button>
                     </div>
                     <small>
@@ -884,6 +937,8 @@ export default function ConversationWorkspace() {
             )}
             {view === "room" && (
               <CompanionRoom
+                key={effectiveFocus || "unset"}
+                focus={effectiveFocus}
                 onDaily={(c) => {
                   setChatCharacter(c);
                   navigate("daily");
@@ -945,6 +1000,7 @@ export default function ConversationWorkspace() {
             )}
             {view === "terms" && (
               <TermNotebook
+                focus={effectiveFocus}
                 config={config}
                 onAsk={(c) => {
                   setChatCharacter(c);
@@ -959,7 +1015,8 @@ export default function ConversationWorkspace() {
                   <div>
                     <p className="dc-overline">나만의 대화 서랍</p>
                     <h1>
-                      내 대화 <span className="dc-count">{cards.length}</span>
+                      내 대화{" "}
+                      <span className="dc-count">{focusedCards.length}</span>
                     </h1>
                   </div>
                   <button className="dd-primary" onClick={() => start()}>
@@ -967,8 +1024,10 @@ export default function ConversationWorkspace() {
                   </button>
                 </section>
                 <p className="dc-room-intro">
-                  상대·상황·목표를 저장한 카드예요. 주고받은 내용과 복기는 ‘대화
-                  기록’에서 다시 볼 수 있어요.
+                  {effectiveFocus && effectiveFocus !== "all"
+                    ? "선택한 맥락의 예시와 내가 만든 카드를 모았어요."
+                    : "내가 만든 카드와 선택한 예시가 모여요."}{" "}
+                  주고받은 내용과 복기는 ‘대화 기록’에서 다시 볼 수 있어요.
                 </p>
                 <label className="dc-search" htmlFor="card-search">
                   <Icon name="search" size={20} />
@@ -987,8 +1046,16 @@ export default function ConversationWorkspace() {
                     {!visible.length && (
                       <div className="dc-empty-state">
                         <Icon name="search" size={32} />
-                        <h2>찾는 대화가 없어요</h2>
-                        <p>다른 단어로 검색해 보세요.</p>
+                        <h2>
+                          {search
+                            ? "찾는 대화가 없어요"
+                            : "선택한 맥락에 저장된 카드가 없어요"}
+                        </h2>
+                        <p>
+                          {search
+                            ? "다른 단어로 검색하거나 전체 둘러보기를 선택해 보세요."
+                            : "새 대화를 만들거나 위에서 다른 맥락을 선택해 주세요."}
+                        </p>
                       </div>
                     )}
                     <div className="dc-library-tools">
@@ -1402,7 +1469,7 @@ export default function ConversationWorkspace() {
                       함께할 도우미 · {currentCharacter.name}
                     </span>
                     <p>
-                      저장한 상황의 상대와 음성으로 대화하고,
+                      저장한 상황의 상대와 문자나 음성으로 대화하고,
                       <br />
                       기록과 업무 용어를 함께 남겨요.
                     </p>

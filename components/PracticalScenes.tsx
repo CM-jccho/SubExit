@@ -77,18 +77,22 @@ function ScenePreview({
 }
 export default function PracticalScenes({
   onPractice,
+  ids,
 }: {
+  ids?: readonly string[];
   onPractice: (card: ConversationCard) => void;
 }) {
   const [scene, setScene] = useState<PracticalScene | null>(null);
+  const rows = practicalScenes.filter((s) => !ids || ids.includes(s.id));
+  if (!rows.length) return null;
   return (
     <section className="dc-practical-scenes" aria-label="어려운 응대 연습">
       <div className="vn-toolbar">
         <h2>막막했던 그 장면부터</h2>
-        <small>교사 · 아르바이트생</small>
+        <small>응대 상황 예시</small>
       </div>
       <div className="dc-scene-grid">
-        {practicalScenes.map((s) => (
+        {rows.map((s) => (
           <button key={s.id} aria-haspopup="dialog" onClick={() => setScene(s)}>
             <small>{s.label}</small>
             <strong>{s.hook}</strong>
