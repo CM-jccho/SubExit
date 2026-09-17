@@ -16,9 +16,9 @@ import "./conversation-training.css";
 import "./messenger.css";
 import "./focus-visuals.css";
 export const metadata = {
-  title: "든든콜 · 내 상황을 기억하는 대화 코치",
+  title: "든든콜 · 대화 연습과 복기",
   description:
-    "상대와 내 목표를 대화 카드로 저장하고, 필요한 순간 내 맥락에 맞는 다음 한 문장을 준비하세요.",
+    "내 상황으로 대화하고, 실제로 한 말을 근거로 복기한 뒤 같은 장면을 다시 연습하세요.",
 };
 export default function RootLayout({
   children,

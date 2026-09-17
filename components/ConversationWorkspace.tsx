@@ -706,10 +706,9 @@ export default function ConversationWorkspace() {
                 [
                   { id: "home", text: "홈", icon: "home" },
                   { id: "library", text: "내 대화", icon: "cards" },
-                  { id: "room", text: "AI 대화 상대", icon: "chat" },
-                  { id: "records", text: "대화 기록", icon: "mic" },
-                  { id: "terms", text: "용어 노트", icon: "book" },
-                  { id: "guide", text: "안내", icon: "help" },
+                  { id: "records", text: "녹음·기록", icon: "mic" },
+                  { id: "messenger", text: "메시지 답장", icon: "chat" },
+                  { id: "more", text: "더보기", icon: "book" },
                 ] as const
               ).map((n) => (
                 <button
@@ -761,16 +760,6 @@ export default function ConversationWorkspace() {
                   start();
                 }}
                 onChange={chooseFocus}
-                sampleCount={allSampleCount}
-                onBrowse={
-                  view === "home"
-                    ? () => {
-                        setBrowseAll(true);
-                        setSearch("");
-                        navigate("library");
-                      }
-                    : undefined
-                }
               />
             )}
             <div
@@ -805,34 +794,20 @@ export default function ConversationWorkspace() {
                   <section className="focus-home-heading">
                     <div>
                       <p className="dc-overline">
-                        대화 연습 · 복기 · 다시 연습
+                        연습 → 내 말로 복기 → 같은 장면 다시 연습
                       </p>
                       <h1>
                         {focusInfo(focus)?.label
                           ? `${focusInfo(focus)!.label} 대화 연습`
                           : "대화 연습"}
                       </h1>
-                      <p>아래에서 연습할 장면을 골라 시작하세요.</p>
                     </div>
-                    <button
-                      className="dd-primary"
-                      onClick={() => navigate("library")}
-                    >
-                      대화 연습 시작 <Icon name="arrow" size={20} />
-                    </button>
                   </section>
                   {(sampleCards.length > 0 || tour) && (
-                    <section className="dc-starter-section focus-practice-first">
-                      <div className="dc-section-heading">
-                        <h2>
-                          {focusInfo(effectiveFocus)
-                            ? focusInfo(effectiveFocus)!.label +
-                              "에서 꺼내볼 대화"
-                            : "처음이라면, 이 대화부터"}
-                        </h2>
-                        <span className="dc-sample-badge">가상의 샘플</span>
-                      </div>
-                      <p>연습할 장면을 눌러 시작해 보세요.</p>
+                    <section
+                      className="dc-starter-section focus-practice-first"
+                      aria-label="추천 연습 장면"
+                    >
                       {cardList(
                         sampleCards.length
                           ? tour
@@ -847,140 +822,109 @@ export default function ConversationWorkspace() {
                           : [tourCard],
                         true,
                       )}
-                      <div className="dc-starter-links">
-                        <button
-                          className="dd-link"
-                          onClick={() => {
-                            setBrowseAll(true);
-                            navigate("library");
-                          }}
-                        >
-                          모든 연습 상황 보기 ({allSampleCount}){" "}
-                          <Icon name="arrow" size={16} />
-                        </button>
-                      </div>
-                      <small>
-                        {sampleCards.length
-                          ? "샘플은 직접 삭제하기 전까지 남아요."
-                          : "가이드에서만 보는 예시예요. 삭제한 샘플은 다시 저장하지 않아요."}
-                      </small>
                     </section>
                   )}
-                  <div className="vn-home-actions">
-                    <button onClick={() => navigate("records")}>
-                      <Icon name="mic" />
-                      <span>
-                        <strong>녹음 분석·코칭</strong>
-                        <small>끝난 대화의 녹음 → 문자·화자 확인 → 코칭</small>
-                      </span>
-                      <Icon name="arrow" size={18} />
+                  {!sampleCards.length && !tour && (
+                    <p className="focus-empty">
+                      연습할 대화를 직접 만들어 보세요.
+                    </p>
+                  )}
+                  <div className="focus-home-controls">
+                    <button className="dd-primary" onClick={() => start()}>
+                      <Icon name="plus" size={18} /> 내 상황 만들기
                     </button>
                     <button
-                      onClick={() => navigate("messenger")}
-                      aria-label="카톡·메신저 답장 다듬기 →"
-                    >
-                      <Icon name="chat" />
-                      <span>
-                        <strong>메시지 답장 다듬기</strong>
-                        <small>
-                          받은 메시지 붙여넣기 → 답장 후보 → 수정·복사
-                        </small>
-                      </span>
-                      <Icon name="arrow" size={18} />
-                    </button>
-                  </div>
-                  <details className="dc-guide-faq dc-more-ways">
-                    <summary>다른 방식으로 대화하기</summary>
-                    <button
-                      className="dd-secondary"
+                      className="dd-link"
                       onClick={() => {
-                        setChatCharacter(undefined);
-                        navigate("daily");
+                        setBrowseAll(true);
+                        setSearch("");
+                        navigate("library");
                       }}
                     >
-                      가볍게 이야기하기 <Icon name="chat" size={20} />
+                      모든 연습 상황 보기 ({allSampleCount}){" "}
+                      <Icon name="arrow" size={16} />
                     </button>
-                    <button
-                      className="dc-room-invite"
-                      onClick={() => navigate("room")}
-                    >
-                      <div className="dc-room-friends">
-                        {["dundi", "moa", "tori", "coco"].map((id) => (
-                          <Companion
-                            key={id}
-                            small
-                            character={resolveCompanion(
-                              id,
-                              undefined,
-                              companions,
-                            )}
-                          />
-                        ))}
-                      </div>
-                      <span>
-                        <strong>AI 대화 상대</strong>
-                        <small>상대 만들기 · 자유 대화 · 지난 기록 보기</small>
-                      </span>
-                      <Icon name="arrow" size={20} />
-                    </button>
-                    <div className="vn-home-actions">
-                      <button
-                        onClick={() => {
-                          navigate("library");
-                          setToast(
-                            "카드를 고른 뒤 ‘실제 대화에서 힌트 받기’를 눌러주세요. 최대 8초씩 듣고 힌트를 제안해요.",
-                          );
-                        }}
-                      >
-                        <Icon name="chat" />
-                        <span>
-                          <strong>대화 중 짧은 힌트 받기</strong>
-                          <small>
-                            진행 중인 대화에서 최대 8초 녹음 → 다음 한마디 힌트
-                          </small>
-                        </span>
-                        <Icon name="arrow" size={18} />
-                      </button>
-                    </div>
-                  </details>
-                  <button className="dc-tour-invite" onClick={beginTour}>
-                    <span className="dc-invite-icon">
-                      <Icon name="help" size={23} />
-                    </span>
-                    <span>
-                      <strong>어떻게 쓰는지 궁금하다면</strong>
-                      <small>30초, 첫 대화를 같이 해봐요</small>
-                    </span>
-                    <Icon name="arrow" size={20} />
-                  </button>
+                  </div>
                   {personalCards.length > 0 && (
                     <section className="dc-recent">
                       <div className="dc-section-heading">
-                        <h2>
-                          내가 준비한 대화 <span>{personalCards.length}</span>
-                        </h2>
+                        <h2>내가 준비한 대화</h2>
                         <button
                           className="dd-link"
                           onClick={() => navigate("library")}
                         >
-                          전체 보기
-                          <Icon name="arrow" size={16} />
+                          내 대화 모두 보기 <Icon name="arrow" size={16} />
                         </button>
                       </div>
-                      {cardList(searchCards(personalCards, "").slice(0, 2))}
+                      {cardList(searchCards(personalCards, "").slice(0, 1))}
                     </section>
                   )}
-                  <p className="dc-footnote">
-                    <Icon name="shield" size={15} />
-                    저장한 내용은 재방문해도 남아요 · 이 브라우저에 보관
-                    <button
-                      className="dd-link"
-                      onClick={() => navigate("guide")}
-                    >
-                      저장 방식 확인
-                    </button>
-                  </p>
                 </>
+              )}
+              {view === "more" && (
+                <section className="focus-more">
+                  <div className="dc-title">
+                    <h1>더보기</h1>
+                    <p>연습에 필요한 표현과 대화 상대를 찾아보세요.</p>
+                  </div>
+                  <div className="focus-tool-grid">
+                    {(
+                      [
+                        {
+                          id: "terms",
+                          icon: "book",
+                          label: "용어 노트",
+                          description: "업종별 표현 · 나만의 뜻과 메모",
+                        },
+                        {
+                          id: "training",
+                          icon: "cards",
+                          label: "기초 훈련",
+                          description: "질문하기 · 생각 넓히기 · 핵심 전달",
+                        },
+                        {
+                          id: "room",
+                          icon: "chat",
+                          label: "AI 대화 상대",
+                          description: "상대 만들기 · 역할 연습 · 자유 대화",
+                        },
+                        {
+                          id: "daily",
+                          icon: "chat",
+                          label: "가볍게 이야기하기",
+                          description: "일상 주제로 짧은 대화",
+                        },
+                        {
+                          id: "prompts",
+                          icon: "edit",
+                          label: "AI 요청 연습",
+                          description: "원하는 결과를 명확하게 요청하기",
+                        },
+                        {
+                          id: "guide",
+                          icon: "help",
+                          label: "사용·저장 안내",
+                          description: "첫 사용 가이드 · 백업 · AI 연결 도움말",
+                        },
+                      ] as const
+                    ).map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          if (item.id === "daily") setChatCharacter(undefined);
+                          navigate(item.id);
+                        }}
+                      >
+                        <Icon name={item.icon} size={22} />
+                        <span>
+                          <strong>{item.label}</strong>
+                          <small>{item.description}</small>
+                        </span>
+                        <Icon name="arrow" size={16} />
+                      </button>
+                    ))}
+                  </div>
+                </section>
               )}
               {view === "daily" && (
                 <DailyTalk
@@ -1620,9 +1564,9 @@ export default function ConversationWorkspace() {
                         함께할 도우미 · {currentCharacter.name}
                       </span>
                       <p>
-                        저장한 상황의 상대와 문자나 음성으로 대화하고,
+                        직접 답해 보고, 내가 한 말을 근거로 복기한 뒤
                         <br />
-                        기록과 업무 용어를 함께 남겨요.
+                        같은 장면을 다시 연습해요.
                       </p>
                       <button
                         className="dd-primary dd-full"
@@ -1855,7 +1799,7 @@ export default function ConversationWorkspace() {
             </div>
           </main>
           <footer className="dc-footer">
-            <span>조금 더 나다운 대화, 든든콜</span>
+            <span>대화 연습과 복기, 든든콜</span>
             <a href="/evidence">서비스·데이터 안내</a>
           </footer>
         </div>

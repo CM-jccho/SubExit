@@ -290,6 +290,14 @@ test("AI review persists, reopens without another generation, and starts a drill
     await settle();
     assert.equal(calls, 1);
     assert(document.body.textContent.includes("확인하고 약속하기"));
+    const evidence = document.querySelector("[data-review-evidence]");
+    assert(evidence && !evidence.open);
+    assert(!document.querySelector(".dc-review-rewrite").closest("details"));
+    await click(evidence.querySelector("summary"));
+    assert(evidence.open);
+    assert(evidence.textContent.includes("다음 주 월요일에 공유하겠습니다."));
+    assert(evidence.textContent.includes("가능한 날짜부터 확인해요."));
+
     assert((await store.getSession(session.id)).review);
   } finally {
     await ui.cleanup();

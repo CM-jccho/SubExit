@@ -8,15 +8,11 @@ import {
 export default function ConversationFocusPicker({
   value,
   onChange,
-  onBrowse,
-  sampleCount = 0,
   onCreate,
   editing,
   onEditingChange,
 }: {
   value: ConversationFocus | null;
-  onBrowse?: () => void;
-  sampleCount?: number;
   onCreate?: () => void;
   editing: boolean;
   onEditingChange: (editing: boolean) => void;
@@ -36,20 +32,14 @@ export default function ConversationFocusPicker({
         <button className="dd-link" onClick={() => onEditingChange(true)}>
           선택 바꾸기
         </button>
-        {onBrowse && (
-          <button className="dd-link" onClick={onBrowse}>
-            모든 연습 상황 보기 ({sampleCount}) <Icon name="arrow" size={16} />
-          </button>
-        )}
       </aside>
     );
   return (
     <section className="focus-picker" aria-label="대화 맥락 선택">
       <div className="focus-intro">
         <div className="focus-intro-copy">
-          <p className="dc-overline">관심 상황 선택</p>
           <h1>어떤 상황의 대화를 연습할까요?</h1>
-          <p>관심 상황을 고르면, 다음 화면에서 연습할 장면을 보여드려요.</p>
+          <p>나에게 필요한 상황부터 골라보세요.</p>
         </div>
       </div>
       <div className="focus-options">

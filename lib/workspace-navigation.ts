@@ -1,4 +1,5 @@
 export type WorkspaceView =
+  | "more"
   | "messenger"
   | "training"
   | "daily"
@@ -18,9 +19,8 @@ export type WorkspaceView =
 
 // Drafts and active calls are transient. Reload returns to their saved collection.
 export function workspaceSection(view: WorkspaceView): WorkspaceView {
-  if (view === "prompts" || view === "training" || view === "messenger")
-    return "library";
-  if (view === "daily") return "home";
+  if (view === "prompts" || view === "training") return "library";
+  if (["daily", "room", "terms", "guide"].includes(view)) return "more";
   if (["setup", "detail", "live"].includes(view)) return "library";
   if (["voicePractice", "friendChat"].includes(view)) return "records";
   return view;
@@ -33,6 +33,7 @@ export function workspaceView(search: string): WorkspaceView {
   if (query.get("demo") === "1") return "demo";
   const view = query.get("view");
   return [
+    "more",
     "messenger",
     "training",
     "daily",
@@ -53,7 +54,15 @@ export function workspaceUrl(href: string, view: WorkspaceView): string {
   const url = new URL(href);
   for (const key of ["view", "tour", "live", "demo"])
     url.searchParams.delete(key);
-  const section = ["prompts", "daily", "training", "messenger"].includes(view)
+  const section = [
+    "prompts",
+    "daily",
+    "training",
+    "messenger",
+    "room",
+    "terms",
+    "guide",
+  ].includes(view)
     ? view
     : workspaceSection(view);
   if (section !== "home") url.searchParams.set("view", section);
