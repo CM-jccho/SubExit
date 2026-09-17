@@ -1,4 +1,3 @@
-import { useState } from "react";
 import FocusScene from "./FocusScene";
 import { Icon } from "./CompanionUI";
 import {
@@ -12,17 +11,20 @@ export default function ConversationFocusPicker({
   onBrowse,
   sampleCount = 0,
   onCreate,
+  editing,
+  onEditingChange,
 }: {
   value: ConversationFocus | null;
   onBrowse?: () => void;
   sampleCount?: number;
   onCreate?: () => void;
+  editing: boolean;
+  onEditingChange: (editing: boolean) => void;
   onChange: (focus: ConversationFocus) => void;
 }) {
-  const [editing, setEditing] = useState(false);
   function choose(next: ConversationFocus) {
     onChange(next);
-    setEditing(false);
+    onEditingChange(false);
   }
   if (value && !editing)
     return (
@@ -31,7 +33,7 @@ export default function ConversationFocusPicker({
           <small>내 관심 상황</small>
           <strong>{focusInfo(value)?.label || "아직 정하지 않음"}</strong>
         </span>
-        <button className="dd-link" onClick={() => setEditing(true)}>
+        <button className="dd-link" onClick={() => onEditingChange(true)}>
           선택 바꾸기
         </button>
         {onBrowse && (
@@ -45,9 +47,9 @@ export default function ConversationFocusPicker({
     <section className="focus-picker" aria-label="대화 맥락 선택">
       <div className="focus-intro">
         <div className="focus-intro-copy">
-          <p className="dc-overline">나에게 필요한 대화부터</p>
-          <h1>지금 어떤 대화를 준비하세요?</h1>
-          <p>장면을 고르면 나에게 맞는 연습을 먼저 보여드려요.</p>
+          <p className="dc-overline">관심 상황 선택</p>
+          <h1>어떤 상황의 대화를 연습할까요?</h1>
+          <p>관심 상황을 고르면, 다음 화면에서 연습할 장면을 보여드려요.</p>
         </div>
       </div>
       <div className="focus-options">
@@ -82,7 +84,7 @@ export default function ConversationFocusPicker({
           아직 정하지 않았어요 · 전체 둘러보기
         </button>
         {value && (
-          <button className="dd-link" onClick={() => setEditing(false)}>
+          <button className="dd-link" onClick={() => onEditingChange(false)}>
             선택 유지하기
           </button>
         )}

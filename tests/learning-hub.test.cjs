@@ -597,11 +597,7 @@ test("workspace navigation preserves section across remount and browser back, an
     await act(async () => ui.root.render(null));
     await act(async () => ui.root.render(React.createElement(C)));
     await settle();
-    assert(
-      document
-        .querySelector("h1")
-        .textContent.includes("어떤 말을 연습해볼까요?"),
-    );
+    assert(document.querySelector("h1").textContent.includes("대화 연습"));
     await act(async () => {
       window.history.back();
       await new Promise((r) => setTimeout(r, 20));
@@ -2329,6 +2325,62 @@ test("curation hides unrelated samples until selection, keeps personal cards, an
       0,
     );
     assert(!cards.readCards().some((c) => c.id === "card-scene-parent-hours"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("editing the interest selection hides practice content and cancel preserves the current list and search", async () => {
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(C, {}, () => {
+    localStorage.setItem("ddeundeun-spotlight-guide-v2", "done");
+    localStorage.setItem(
+      "ddeundeun-conversation-focus-v1",
+      JSON.stringify({ version: 1, focus: "education" }),
+    );
+  });
+  try {
+    await settle();
+    assert(
+      document
+        .querySelector(".focus-home-heading h1")
+        .textContent.includes("학부모 상담"),
+    );
+    await click(button("선택 바꾸기"));
+    assert(document.querySelector('[aria-label="대화 맥락 선택"]'));
+    assert.equal(
+      document.querySelector(".focus-workspace-content").hidden,
+      true,
+    );
+    await click(button("선택 유지하기"));
+    assert.equal(
+      document.querySelector(".focus-workspace-content").hidden,
+      false,
+    );
+    assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
+    await click(button("대화 연습 시작"));
+    await change(document.querySelector("#card-search"), "상담 시간");
+    await click(button("선택 바꾸기"));
+    assert.equal(
+      document.querySelector(".focus-workspace-content").hidden,
+      true,
+    );
+    await click(button("선택 유지하기"));
+    assert.equal(document.querySelector("#card-search").value, "상담 시간");
+    await click(button("선택 바꾸기"));
+    await click(document.querySelector('[data-focus="work"]'));
+    assert.equal(
+      document.querySelector(".focus-workspace-content").hidden,
+      false,
+    );
+    assert.equal(document.querySelector("#card-search").value, "");
+    await click(button("홈"));
+    assert(
+      document
+        .querySelector(".focus-home-heading h1")
+        .textContent.includes("직장 업무"),
+    );
+    assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
   } finally {
     await ui.cleanup();
   }
