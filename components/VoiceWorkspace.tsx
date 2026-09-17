@@ -91,7 +91,7 @@ export default function VoiceWorkspace({
 }: {
   onRoom?: () => void;
   initialCard?: ConversationCard;
-  mode?: "practice" | "records" | "chat";
+  mode?: "practice" | "records" | "chat" | "recording";
   initialCompanion?: CompanionCharacter;
   initialSessionId?: string;
   config: AIConfig;
@@ -103,7 +103,9 @@ export default function VoiceWorkspace({
         ? makeSession("practice", initialCard, inheritedCompanion)
         : mode === "chat" && initialCompanion
           ? makeSession("chat", undefined, initialCompanion)
-          : null,
+          : mode === "recording"
+            ? makeSession("recording", undefined, inheritedCompanion)
+            : null,
     ),
     [sessions, setSessions] = useState<VoiceSession[]>([]),
     [trainingFrom, setTrainingFrom] = useState<TrainingOrigin>(),
@@ -681,8 +683,8 @@ export default function VoiceWorkspace({
         <>
           <section className="dc-page-top">
             <div>
-              <p className="dc-overline">말하고, 듣고, 다시 꺼내기</p>
-              <h1>대화 기록</h1>
+              <p className="dc-overline">연습·답장·녹음을 한곳에서</p>
+              <h1>내 기록</h1>
             </div>
             <button
               className="dd-primary"

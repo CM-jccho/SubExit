@@ -27,7 +27,11 @@ export default function ConversationFocusPicker({
       <aside className="focus-current" aria-label="선택한 대화 맥락">
         <span>
           <small>내 관심 상황</small>
-          <strong>{focusInfo(value)?.label || "아직 정하지 않음"}</strong>
+          <strong>
+            {value === "all"
+              ? "모든 상황"
+              : focusInfo(value)?.label || "내 상황"}
+          </strong>
         </span>
         <button className="dd-link" onClick={() => onEditingChange(true)}>
           선택 바꾸기

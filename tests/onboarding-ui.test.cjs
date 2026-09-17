@@ -107,6 +107,7 @@ test("first-run spotlight navigates actual screens, finishes without AI calls, a
   let root = await render();
   assert.equal(document.querySelector("dialog[open]"), null);
   assert.equal(document.querySelectorAll(".dc-saved-card").length, 0);
+  await click('button[data-purpose="library"]');
   await click('button[data-focus="work"]');
   assert(document.querySelector("dialog[open]"));
   assert.equal(
@@ -130,12 +131,10 @@ test("first-run spotlight navigates actual screens, finishes without AI calls, a
   root = await render();
   assert.equal(document.querySelector("dialog[open]"), null);
   assert.equal(window.location.search, "?view=records");
-  assert.equal(document.querySelector("h1").textContent, "대화 기록");
+  assert.equal(document.querySelector("h1").textContent, "내 기록");
   await click('button[aria-label="든든콜 홈"]');
-  assert.equal(
-    document.querySelectorAll(".dc-starter-section .dc-saved-card").length,
-    1,
-  );
+  assert.equal(document.querySelectorAll("[data-purpose]").length, 4);
+  assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
   await click('button[aria-label="첫 사용 가이드 다시 보기"]');
   assert(document.querySelector("dialog[open]"));
   await act(async () =>

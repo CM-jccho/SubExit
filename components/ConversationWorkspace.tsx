@@ -1,4 +1,5 @@
 "use client";
+import HomeActions from "./HomeActions";
 import MessengerPractice from "./MessengerPractice";
 import { canLeaveWorkspace } from "@/lib/navigation-guard";
 import ConversationFocusPicker from "./ConversationFocusPicker";
@@ -266,9 +267,9 @@ export default function ConversationWorkspace() {
             focusInfo(parseFocus(localStorage.getItem(FOCUS_KEY)))?.cardIds
               .length &&
             !localStorage.getItem(TOUR_KEY) &&
-            workspaceView(window.location.search) === "home"
+            workspaceView(window.location.search) === "library"
           ) {
-            setView("home");
+            setView("library");
             setTourStep(0);
             setTour(true);
           }
@@ -542,14 +543,14 @@ export default function ConversationWorkspace() {
     if (!canLeaveWorkspace()) return;
     setFocusEditing(false);
     cancelRequest();
-    setView("home");
+    setView("library");
     setTourStep(0);
     setTour(true);
     setError("");
   }
   function changeTourStep(next: number) {
     setTourStep(next);
-    if (next === 0) setView("home");
+    if (next === 0) setView("library");
     else {
       setActive(
         (c) =>
@@ -601,7 +602,7 @@ export default function ConversationWorkspace() {
         JSON.stringify({ version: 1, focus: next }),
       );
       if (
-        view === "home" &&
+        view === "library" &&
         next !== "all" &&
         next !== "custom" &&
         !localStorage.getItem(TOUR_KEY)
@@ -717,10 +718,7 @@ export default function ConversationWorkspace() {
       ))}
     </div>
   );
-  const choosingFocus =
-    !tour &&
-    ["home", "library", "room", "terms"].includes(view) &&
-    (!focus || focusEditing);
+  const choosingFocus = !tour && view === "library" && (!focus || focusEditing);
   const currentCharacter =
     view === "setup"
       ? resolveCompanion(companionChoice, profile, companions)
@@ -754,9 +752,7 @@ export default function ConversationWorkspace() {
               {(
                 [
                   { id: "home", text: "홈", icon: "home" },
-                  { id: "library", text: "내 대화", icon: "cards" },
-                  { id: "records", text: "녹음·기록", icon: "mic" },
-                  { id: "messenger", text: "메시지 답장", icon: "chat" },
+                  { id: "records", text: "내 기록", icon: "book" },
                   { id: "more", text: "더보기", icon: "book" },
                 ] as const
               ).map((n) => (
@@ -793,13 +789,22 @@ export default function ConversationWorkspace() {
                 {toast}
               </p>
             )}
-            <div
-              hidden={choosingFocus}
-              style={{ display: choosingFocus ? "none" : "contents" }}
-            >
-              <PracticeNavigation view={view} onNavigate={navigate} />
-            </div>
-            {["home", "library", "room", "terms"].includes(view) && !tour && (
+            <PracticeNavigation view={view} onNavigate={navigate} />
+            {view === "library" && !tour && (
+              <div className="purpose-support" aria-label="대화 연습 도구">
+                <button
+                  className="dd-link"
+                  onClick={() => navigate("recording")}
+                >
+                  <Icon name="mic" size={18} />내 녹음으로 복기
+                </button>
+                <button className="dd-link" onClick={() => navigate("room")}>
+                  <Icon name="chat" size={18} />
+                  연습 상대 선택
+                </button>
+              </div>
+            )}
+            {view === "library" && !tour && (
               <ConversationFocusPicker
                 value={focus}
                 editing={focusEditing}
@@ -838,7 +843,16 @@ export default function ConversationWorkspace() {
                   onRecords={() => navigate("records")}
                 />
               )}
-              {view === "home" && (focus || tour) && (
+              {view === "home" && (
+                <HomeActions
+                  onNavigate={navigate}
+                  onResume={(id) => {
+                    navigate("records");
+                    setRecordId(id);
+                  }}
+                />
+              )}
+              {view === "library" && tour && (
                 <>
                   <section className="focus-home-heading">
                     <div>
@@ -919,7 +933,7 @@ export default function ConversationWorkspace() {
                 <section className="focus-more">
                   <div className="dc-title">
                     <h1>더보기</h1>
-                    <p>연습에 필요한 표현과 대화 상대를 찾아보세요.</p>
+                    <p>용어와 대화 상대, 사용 안내를 모았어요.</p>
                   </div>
                   <div className="focus-tool-grid">
                     {(
@@ -929,12 +943,6 @@ export default function ConversationWorkspace() {
                           icon: "book",
                           label: "용어 노트",
                           description: "업종별 표현 · 나만의 뜻과 메모",
-                        },
-                        {
-                          id: "training",
-                          icon: "cards",
-                          label: "기초 훈련",
-                          description: "질문하기 · 생각 넓히기 · 핵심 전달",
                         },
                         {
                           id: "room",
@@ -947,12 +955,6 @@ export default function ConversationWorkspace() {
                           icon: "chat",
                           label: "가볍게 이야기하기",
                           description: "일상 주제로 짧은 대화",
-                        },
-                        {
-                          id: "prompts",
-                          icon: "edit",
-                          label: "AI 요청 연습",
-                          description: "원하는 결과를 명확하게 요청하기",
                         },
                         {
                           id: "guide",
@@ -1019,6 +1021,7 @@ export default function ConversationWorkspace() {
                 />
               )}
               {(view === "records" ||
+                view === "recording" ||
                 view === "voicePractice" ||
                 view === "friendChat") && (
                 <VoiceWorkspace
@@ -1032,11 +1035,13 @@ export default function ConversationWorkspace() {
                         : recordId || "")
                   }
                   mode={
-                    view === "friendChat"
-                      ? "chat"
-                      : view === "voicePractice"
-                        ? "practice"
-                        : "records"
+                    view === "recording"
+                      ? "recording"
+                      : view === "friendChat"
+                        ? "chat"
+                        : view === "voicePractice"
+                          ? "practice"
+                          : "records"
                   }
                   initialCompanion={chatCharacter}
                   initialSessionId={recordId}
@@ -1061,7 +1066,7 @@ export default function ConversationWorkspace() {
                   }}
                 />
               )}
-              {view === "library" && (
+              {view === "library" && !tour && (
                 <>
                   <section className="dc-page-top">
                     <div>
@@ -1069,7 +1074,7 @@ export default function ConversationWorkspace() {
                       <h1>
                         {effectiveFocus === "all"
                           ? "모든 연습 상황"
-                          : "내 대화"}{" "}
+                          : "대화 연습"}{" "}
                         <span className="dc-count">{focusedCards.length}</span>
                       </h1>
                     </div>
@@ -1229,7 +1234,8 @@ export default function ConversationWorkspace() {
                     className="dd-back"
                     onClick={() => navigate("library")}
                   >
-                    <Icon name="back" size={18} />내 대화
+                    <Icon name="back" size={18} />
+                    대화 연습
                   </button>
                   <section className="dc-title">
                     <p className="dc-overline">
@@ -1587,7 +1593,8 @@ export default function ConversationWorkspace() {
                     className="dd-back"
                     onClick={() => navigate("library")}
                   >
-                    <Icon name="back" size={18} />내 대화
+                    <Icon name="back" size={18} />
+                    대화 연습
                   </button>
                   <section className="dc-title">
                     <p className="dc-overline">
@@ -1674,6 +1681,10 @@ export default function ConversationWorkspace() {
                   <section className="dc-title">
                     <p className="dc-overline">필요할 때, 가볍게</p>
                     <h1>{currentCharacter.name}와 이렇게 시작해요</h1>
+                    <p>
+                      홈에서 필요한 연습을 고르고, 저장한 결과는 내 기록에서
+                      이어보세요.
+                    </p>
                   </section>
                   <button className="dc-guide-tour" onClick={beginTour}>
                     <Companion small />
@@ -1734,10 +1745,11 @@ export default function ConversationWorkspace() {
                   <details className="dc-guide-faq">
                     <summary>상대와 음성 대화 연습은 어떻게 하나요?</summary>
                     <p>
-                      내 대화에서 카드를 고르고 ‘상대와 대화 연습’을 누르세요.
-                      AI가 상대 역할로 말하면 녹음하거나 직접 입력해 답해요. 한
-                      번씩 주고받는 방식이며 상대의 말은 기기 음성으로 읽어줘요.
-                      연습 음성과 문자는 대화 기록에 저장돼요.
+                      홈의 ‘대화 연습’에서 카드를 고르고 ‘상대와 대화 연습’을
+                      누르세요. AI가 상대 역할로 말하면 녹음하거나 직접 입력해
+                      답해요. 한 번씩 주고받는 방식이며 상대의 말은 기기
+                      음성으로 읽어줘요. 연습 음성과 문자는 대화 기록에
+                      저장돼요.
                     </p>
                   </details>
                   <details className="dc-guide-faq">
@@ -1764,7 +1776,8 @@ export default function ConversationWorkspace() {
                       캐릭터 설정과 카드, 음성·연습·친구 대화, 복기와 용어
                       노트는 이 브라우저에 저장돼요. 다른 기기로 자동 동기화되지
                       않으며, 브라우저 데이터를 지우면 사라질 수 있어요. 내
-                      대화에서 데이터를 내려받아 보관할 수 있어요.
+                      기록에서 음성과 문자를, 대화 연습에서 카드를 내려받을 수
+                      있어요.
                     </p>
                   </details>
                   <details className="dc-guide-faq">

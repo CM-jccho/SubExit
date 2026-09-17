@@ -1,0 +1,185 @@
+/* Four purposes on Home; support tools live on their own destinations. */
+.purpose-home {
+  max-width: 850px;
+  margin: 24px auto 40px;
+}
+.purpose-heading {
+  margin-bottom: 28px;
+}
+.purpose-heading p {
+  color: #5b6b5e;
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+.purpose-heading h1 {
+  font-size: clamp(25px, 4vw, 34px);
+  line-height: 1.35;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+.purpose-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.purpose-card {
+  position: relative;
+  text-align: left;
+  border: 1px solid #d4dccf;
+  border-radius: 20px;
+  background: #fffefa;
+  color: #243e30;
+  padding: 24px;
+  min-height: 202px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.purpose-card:hover {
+  border-color: #53785d;
+}
+.purpose-card:focus-visible,
+.purpose-recent button:focus-visible {
+  outline: 3px solid #355e48;
+  outline-offset: 4px;
+}
+.purpose-card-art {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+  font-size: 12px;
+  color: #5a685b;
+}
+.purpose-card-art > svg {
+  box-sizing: content-box;
+  border-radius: 15px;
+  padding: 12px;
+  background: #e1ead8;
+}
+.tone-sky .purpose-card-art > svg {
+  background: #deedf3;
+  color: #33596b;
+}
+.tone-peach .purpose-card-art > svg {
+  background: #f5e5d7;
+  color: #7b5034;
+}
+.tone-lilac .purpose-card-art > svg {
+  background: #eae4f3;
+  color: #605075;
+}
+.purpose-card > strong {
+  font-size: 21px;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+.purpose-description {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #536053;
+  padding-right: 20px;
+  word-break: keep-all;
+}
+.purpose-card-arrow {
+  position: absolute;
+  right: 20px;
+  bottom: 24px;
+}
+.purpose-recent {
+  border-top: 1px solid #d4dccf;
+  margin-top: 28px;
+  padding-top: 18px;
+}
+.purpose-recent > span {
+  color: #5b6b5e;
+  font-size: 13px;
+}
+.purpose-recent button {
+  width: 100%;
+  padding: 16px 0;
+  border: 0;
+  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  color: #294733;
+  cursor: pointer;
+}
+.purpose-recent strong {
+  font-size: 16px;
+  line-height: 1.5;
+}
+.purpose-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #536053;
+}
+.purpose-breadcrumb button {
+  min-height: 44px;
+}
+.purpose-support {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-bottom: 12px;
+}
+.purpose-support button {
+  min-height: 44px;
+}
+@media (max-width: 760px) {
+  .dc-nav {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .purpose-home {
+    margin-top: 14px;
+  }
+  .purpose-heading {
+    margin-bottom: 20px;
+  }
+  .purpose-grid {
+    gap: 10px;
+  }
+  .purpose-card {
+    padding: 16px 14px;
+    border-radius: 16px;
+    min-height: 198px;
+  }
+  .purpose-card-art {
+    margin-bottom: 16px;
+  }
+  .purpose-card-art > span {
+    display: none;
+  }
+  .purpose-card-art > svg {
+    padding: 10px;
+    width: 26px;
+    height: 26px;
+  }
+  .purpose-card > strong {
+    font-size: 18px;
+  }
+  .purpose-description {
+    font-size: 13px;
+    padding-right: 0;
+  }
+  .purpose-card-arrow {
+    display: none;
+  }
+}
+@media (max-width: 340px) {
+  .purpose-grid {
+    grid-template-columns: 1fr;
+  }
+  .purpose-card {
+    min-height: 0;
+  }
+}
