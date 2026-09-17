@@ -1,4 +1,5 @@
 "use client";
+import type { ConversationFocus } from "@/lib/conversation-focus";
 import CommunicationTips from "./CommunicationTips";
 import StickyPageTop from "./StickyPageTop";
 import TrendSearch from "./TrendSearch";
@@ -332,13 +333,17 @@ export function TermEditor({
   );
 }
 export default function TermNotebook({
+  focus = null,
   config,
   onAsk,
 }: {
   config: AIConfig;
   onAsk?: (c: CompanionCharacter) => void;
+  focus?: ConversationFocus | null;
 }) {
-  const [tab, setTab] = useState<"notes" | "catalogue" | "tips">("notes");
+  const [tab, setTab] = useState<"notes" | "catalogue" | "tips">(
+    focus && focus !== "all" ? "catalogue" : "notes",
+  );
   const [terms, setTerms] = useState<TermNote[]>([]),
     [query, setQuery] = useState(""),
     [seed, setSeed] = useState<TermSeed | null>(null),
@@ -485,6 +490,8 @@ export default function TermNotebook({
         />
       ) : tab === "catalogue" ? (
         <TermCatalogue
+          key={focus || "unset"}
+          focus={focus}
           onAsk={onAsk}
           onSelect={(note) => {
             const existing = terms.find(

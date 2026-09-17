@@ -7,6 +7,7 @@ import PracticalScenes from "./PracticalScenes";
 import { responseFriends } from "@/lib/practical-scenes";
 import type { ConversationCard } from "@/lib/conversation-cards";
 import type { AIConfig } from "./VoiceComposer";
+import { focusInfo, type ConversationFocus } from "@/lib/conversation-focus";
 import CommunityPreview from "./CommunityPreview";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import RoomEnvironment from "./RoomEnvironment";
@@ -355,6 +356,7 @@ function CompanionCard({
   );
 }
 export default function CompanionRoom({
+  focus = "all",
   config,
   onPractice,
   saved,
@@ -364,6 +366,7 @@ export default function CompanionRoom({
   onCards,
   onDaily,
 }: {
+  focus?: ConversationFocus | null;
   onDaily?: (c: CompanionCharacter) => void;
   config: AIConfig;
   onPractice: (card: ConversationCard) => void;
@@ -375,7 +378,16 @@ export default function CompanionRoom({
 }) {
   const room = useRef<HTMLDivElement>(null),
     returnToCard = useRef(false);
-  const characters = allCompanions(saved),
+  const [showAll, setShowAll] = useState(false);
+  const preferred: readonly string[] = focusInfo(focus)?.companionIds || [];
+  const characters = allCompanions(saved).filter(
+      (c) =>
+        showAll ||
+        focus === "all" ||
+        c.custom ||
+        preferred.includes(c.id) ||
+        (!preferred.length && c.id === "dundi"),
+    ),
     [selectedId, setSelectedId] = useState(characters[0].id),
     [sessions, setSessions] = useState<VoiceSession[]>([]),
     [cardOpen, setCardOpen] = useState(false),
@@ -437,6 +449,9 @@ export default function CompanionRoom({
       {onDaily && (
         <DailyInvite character={selected} onClick={() => onDaily(selected)} />
       )}
+      <button className="dd-link" onClick={() => setShowAll((v) => !v)}>
+        {showAll ? "내 선택에 맞는 상대만 보기" : "전체 대화 상대 보기"}
+      </button>
       <p className="dc-room-intro">
         캐릭터를 누르면 새 대화·지난 기록·역할 설정을 볼 수 있어요. 모든 상대는
         AI이며 실제 이용자가 아니에요.
@@ -482,9 +497,20 @@ export default function CompanionRoom({
         onPractice={onPractice}
         onSession={onSession}
       />
-      <PracticalScenes onPractice={onPractice} />
+      <PracticalScenes
+        onPractice={onPractice}
+        ids={
+          showAll || focus === "all"
+            ? undefined
+            : focus === "education"
+              ? ["parent-hours"]
+              : focus === "service"
+                ? ["refund-pressure", "verbal-boundary"]
+                : []
+        }
+      />
       <details className="dc-response-friends">
-        <summary>응대 연습 친구 초대하기 · 4가지 역할</summary>
+        <summary>응대 역할 더 찾아보기</summary>
         <p>
           역할을 골라 AI 대화 상대에 저장하세요. 모든 캐릭터는 연습을 위한 가상
           AI예요.

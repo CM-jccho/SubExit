@@ -105,6 +105,9 @@ test("first-run spotlight navigates actual screens, finishes without AI calls, a
     await settle();
   };
   let root = await render();
+  assert.equal(document.querySelector("dialog[open]"), null);
+  assert.equal(document.querySelectorAll(".dc-saved-card").length, 0);
+  await click('button[data-focus="work"]');
   assert(document.querySelector("dialog[open]"));
   assert.equal(
     document.querySelectorAll(".dc-starter-section .dc-saved-card").length,

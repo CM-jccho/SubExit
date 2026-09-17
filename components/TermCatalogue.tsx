@@ -1,4 +1,5 @@
 "use client";
+import { focusInfo, type ConversationFocus } from "@/lib/conversation-focus";
 import { useState } from "react";
 import {
   termCatalogue,
@@ -10,15 +11,20 @@ import type { CompanionCharacter } from "@/lib/companions";
 export default function TermCatalogue({
   onSelect,
   onAsk,
+  focus = null,
 }: {
+  focus?: ConversationFocus | null;
   onSelect: (note: TermNote) => void;
   onAsk?: (c: CompanionCharacter) => void;
 }) {
-  const [group, setGroup] = useState(""),
+  const recommended: readonly string[] = focusInfo(focus)?.termGroups || [];
+  const [group, setGroup] = useState(recommended.length ? "recommended" : ""),
     [query, setQuery] = useState("");
   const rows = termCatalogue.filter(
     (row) =>
-      (!group || group === row.group) &&
+      (!group ||
+        group === row.group ||
+        (group === "recommended" && recommended.includes(row.group))) &&
       [row.note.term, row.note.meaning, row.note.industry]
         .join(" ")
         .toLowerCase()
@@ -37,6 +43,11 @@ export default function TermCatalogue({
         <label className="vn-label">
           분야
           <select value={group} onChange={(e) => setGroup(e.target.value)}>
+            {recommended.length > 0 && (
+              <option value="recommended">
+                {focusInfo(focus)?.label}에 맞는 분야
+              </option>
+            )}
             <option value="">모든 분야</option>
             {Object.entries(termGroups).map(([k, v]) => (
               <option key={k} value={k}>

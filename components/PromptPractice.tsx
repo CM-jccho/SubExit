@@ -168,13 +168,13 @@ export default function PromptPractice({
     );
   }
   return (
-    <section className="prompt-practice" aria-label="AI에게 요청하기">
+    <section className="prompt-practice" aria-label="AI 요청 연습">
       <div className="dc-page-top">
         <div>
           <p className="dc-overline">
             요청 → 결과 확인 → 조건 보완 → 다시 실행
           </p>
-          <h1>AI에게 요청하기</h1>
+          <h1>AI 요청 연습</h1>
         </div>
         <button className="dd-link" disabled={busy} onClick={onRecords}>
           저장한 결과 보기

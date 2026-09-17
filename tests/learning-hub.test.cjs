@@ -488,8 +488,16 @@ test("free setup remains selectable after a guided answer and preserves entered 
     exports: { useSearchParams: () => new URLSearchParams() },
   };
   const C = require("../components/ConversationWorkspace.tsx").default;
-  const ui = await mount(C, {}, () =>
-    window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
+  const ui = await mount(
+    C,
+    {},
+    () => (
+      window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
+      window.localStorage.setItem(
+        "ddeundeun-conversation-focus-v1",
+        JSON.stringify({ version: 1, focus: "all" }),
+      )
+    ),
   );
   try {
     await settle();
@@ -533,7 +541,11 @@ test("free setup remains selectable after a guided answer and preserves entered 
 test("free setup with unavailable AI accepts a local draft and clearly routes to manual confirmation", async () => {
   const C = require("../components/ConversationWorkspace.tsx").default;
   const ui = await mount(C, {}, () => {
-    window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done");
+    (window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
+      window.localStorage.setItem(
+        "ddeundeun-conversation-focus-v1",
+        JSON.stringify({ version: 1, focus: "all" }),
+      ));
     global.fetch = async () =>
       Response.json({ ...config, available: false, voiceAvailable: false });
   });
@@ -566,7 +578,11 @@ test("workspace navigation preserves section across remount and browser back, an
   const C = require("../components/ConversationWorkspace.tsx").default;
   let scrolls = 0;
   const ui = await mount(C, {}, () => {
-    window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done");
+    (window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
+      window.localStorage.setItem(
+        "ddeundeun-conversation-focus-v1",
+        JSON.stringify({ version: 1, focus: "all" }),
+      ));
     window.history.replaceState(null, "", "?view=records");
     window.scrollTo = ({ top }) => {
       if (top === 0) scrolls++;
@@ -602,8 +618,16 @@ test("workspace navigation preserves section across remount and browser back, an
 
 test("home practice opens a context card and practice keeps a discoverable records destination", async () => {
   const C = require("../components/ConversationWorkspace.tsx").default;
-  const ui = await mount(C, {}, () =>
-    window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
+  const ui = await mount(
+    C,
+    {},
+    () => (
+      window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
+      window.localStorage.setItem(
+        "ddeundeun-conversation-focus-v1",
+        JSON.stringify({ version: 1, focus: "all" }),
+      )
+    ),
   );
   try {
     await settle();
@@ -1646,7 +1670,11 @@ test("foundation training deep links keep the library navigation and restore on 
   const C = require("../components/ConversationWorkspace.tsx").default;
   const ui = await mount(C, {}, () => {
     window.history.replaceState(null, "", "?view=training");
-    window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done");
+    (window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
+      window.localStorage.setItem(
+        "ddeundeun-conversation-focus-v1",
+        JSON.stringify({ version: 1, focus: "all" }),
+      ));
   });
   try {
     await settle();
@@ -2063,8 +2091,16 @@ test("messenger is discoverable from home and restores under the library menu by
     "/?view=messenger",
   );
   const C = require("../components/ConversationWorkspace.tsx").default,
-    ui = await mount(C, {}, () =>
-      window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
+    ui = await mount(
+      C,
+      {},
+      () => (
+        window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
+        window.localStorage.setItem(
+          "ddeundeun-conversation-focus-v1",
+          JSON.stringify({ version: 1, focus: "all" }),
+        )
+      ),
     );
   try {
     await settle();
@@ -2185,6 +2221,136 @@ test("communication tips are private editable drafts and reopening a tip preserv
     await click(button("용어 노트에 저장"));
     await settle();
     assert.equal((await store.listTerms()).length, 1);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("curation hides unrelated samples until selection, keeps personal cards, and preserves the choice while browsing all", async () => {
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  const focus = require("../lib/conversation-focus.ts");
+  const cards = require("../lib/conversation-cards.ts");
+  const ui = await mount(C, {}, () =>
+    window.localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
+  );
+  try {
+    await settle();
+    assert(document.querySelector('[aria-label="대화 맥락 선택"]'));
+    assert.equal(document.querySelectorAll(".dc-saved-card").length, 0);
+    await click(document.querySelector('[data-focus="education"]'));
+    assert.equal(
+      document.querySelectorAll(".dc-starter-section .dc-saved-card").length,
+      1,
+    );
+    assert(
+      document
+        .querySelector(".dc-starter-section")
+        .textContent.includes("상담 시간"),
+    );
+    assert(
+      !document
+        .querySelector(".dc-starter-section")
+        .textContent.includes("환불"),
+    );
+    assert.equal(
+      focus.parseFocus(localStorage.getItem(focus.FOCUS_KEY)),
+      "education",
+    );
+    const personal = {
+      ...require("../lib/starter-data.ts").requestCards[1],
+      id: "card-my-unrelated",
+      isSample: false,
+      title: "내가 만든 약속 대화",
+    };
+    cards.writeCards([...cards.readCards(), personal]);
+    await click(button("대화 연습 시작"));
+    assert.equal(document.querySelectorAll(".dc-saved-card").length, 2);
+    assert(document.body.textContent.includes(personal.title));
+    await click(button("전체 둘러보기"));
+    assert(document.querySelectorAll(".dc-saved-card").length > 2);
+    assert.equal(
+      focus.parseFocus(localStorage.getItem(focus.FOCUS_KEY)),
+      "education",
+    );
+    await click(button("내 선택만 보기"));
+    assert.equal(document.querySelectorAll(".dc-saved-card").length, 2);
+    await act(async () => ui.root.render(null));
+    await act(async () => ui.root.render(React.createElement(C)));
+    await settle();
+    assert.equal(document.querySelectorAll(".dc-saved-card").length, 2);
+    const saved = cards.readCards();
+    cards.writeCards(saved.filter((c) => c.id !== "card-scene-parent-hours"));
+    await click(button("홈"));
+    assert.equal(
+      document.querySelectorAll(".dc-starter-section .dc-saved-card").length,
+      0,
+    );
+    assert(!cards.readCards().some((c) => c.id === "card-scene-parent-hours"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("curated glossary starts with the chosen field and still permits browsing every field", async () => {
+  const C = require("../components/TermCatalogue.tsx").default;
+  const ui = await mount(C, { focus: "education", onSelect() {} });
+  try {
+    assert.equal(document.querySelector("select").value, "recommended");
+    const recommended = [...document.querySelectorAll(".learn-term small")].map(
+      (x) => x.textContent,
+    );
+    assert(recommended.length > 0);
+    assert(recommended.every((t) => /학교생활|교육/.test(t)));
+    await change(document.querySelector("select"), "");
+    assert(
+      document.querySelectorAll(".learn-term").length > recommended.length,
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("curation values validate stored versions and never hide personally authored cards", () => {
+  const { parseFocus, curatedCards } = require("../lib/conversation-focus.ts");
+  assert.equal(parseFocus("{broken"), null);
+  assert.equal(parseFocus(JSON.stringify({ version: 2, focus: "work" })), null);
+  assert.equal(
+    parseFocus(JSON.stringify({ version: 1, focus: "unknown" })),
+    null,
+  );
+  const data = [
+    ...require("../lib/starter-data.ts").starterCards,
+    {
+      ...require("../lib/starter-data.ts").requestCards[0],
+      id: "mine",
+      isSample: false,
+    },
+  ];
+  assert.deepEqual(
+    curatedCards(data, null).map((x) => x.id),
+    ["mine"],
+  );
+  assert.deepEqual(
+    curatedCards(data, "education").map((x) => x.id),
+    ["mine"],
+  );
+  assert.equal(curatedCards(data, "all").length, data.length);
+});
+
+test("writing a custom situation bypasses fixed categories and never opens an unrelated sample tutorial", async () => {
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(C);
+  try {
+    await settle();
+    await click(button("내 상황 직접 설명하기"));
+    assert.equal(document.querySelector("dialog[open]"), null);
+    assert.equal(
+      require("../lib/conversation-focus.ts").parseFocus(
+        localStorage.getItem("ddeundeun-conversation-focus-v1"),
+      ),
+      "custom",
+    );
+    assert(document.querySelector(".dc-question"));
   } finally {
     await ui.cleanup();
   }
