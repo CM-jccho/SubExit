@@ -1,5 +1,6 @@
 "use client";
 import CompactField, { fieldExamples } from "./CompactField";
+import useHorizontalSwipe from "./useHorizontalSwipe";
 import { useAIConsent, ConsentSettings } from "./ConsentSession";
 import HomeActions from "./HomeActions";
 import { supportTools, supportLabel } from "@/lib/support-tools";
@@ -718,6 +719,19 @@ export default function ConversationWorkspace() {
       ))}
     </div>
   );
+  const swipeEnabled =
+    !tour && ["home", "records", "more"].includes(view) && !recordId;
+  const pageSwipe = useHorizontalSwipe({
+    enabled: swipeEnabled,
+    onNext: () => {
+      if (view === "home") navigate("records");
+      else if (view === "records") navigate("more");
+    },
+    onPrevious: () => {
+      if (view === "more") navigate("records");
+      else if (view === "records") navigate("home");
+    },
+  });
   const choosingFocus = !tour && view === "library" && (!focus || focusEditing);
   const currentCharacter =
     view === "setup"
@@ -742,15 +756,11 @@ export default function ConversationWorkspace() {
       <div className="dd-root dc-root">
         <div className="dc-shell">
           <header className="dc-header">
-            <button
-              className="dc-brand"
-              onClick={home}
-              aria-label="스픽코칭 홈"
-            >
+            <button className="dc-brand" onClick={home} aria-label="곁말 홈">
               <span className="dc-brand-mark">
                 <Icon name="chat" size={22} />
               </span>
-              스픽코칭<span className="dc-beta">BETA</span>
+              곁말<span className="dc-beta">BETA</span>
             </button>
             <nav className="dc-nav" aria-label="주 메뉴">
               {(
@@ -782,7 +792,17 @@ export default function ConversationWorkspace() {
             </button>
           </header>
           <ConsentSettings />
-          <main id="main-content" key={view}>
+          <main
+            id="main-content"
+            key={view}
+            {...pageSwipe}
+            className={swipeEnabled ? "swipe-page" : undefined}
+          >
+            {swipeEnabled && (
+              <p className="gesture-hint page-gesture-hint">
+                좌우로 밀어 홈 · 내 기록 · 더보기 이동
+              </p>
+            )}
             {storageError && (
               <p className="dd-error" role="alert">
                 {storageError}
@@ -945,6 +965,15 @@ export default function ConversationWorkspace() {
                   <div className="dc-title">
                     <h1>더보기</h1>
                     <p>대화를 준비할 때 쓰는 보조 도구예요.</p>
+                    <button
+                      type="button"
+                      className="dd-secondary"
+                      onClick={() =>
+                        window.dispatchEvent(new Event("gyeotmal-show-intro"))
+                      }
+                    >
+                      곁말 소개 다시 보기
+                    </button>
                   </div>
                   <div className="focus-tool-grid">
                     {supportTools.map((item) => (
@@ -1847,7 +1876,7 @@ export default function ConversationWorkspace() {
             </div>
           </main>
           <footer className="dc-footer">
-            <span>대화 중 다음 한마디, 스픽코칭</span>
+            <span>곁말 · 당신의 말 곁에</span>
             <a href="/evidence">서비스·데이터 안내</a>
           </footer>
         </div>

@@ -156,7 +156,7 @@ export default function CoachExperience() {
   }
   function exportNotes() {
     const text =
-      `# 스픽코칭 · ${scenario.title}\n\n${localDay()} · ${demo ? "샘플 복기 (개인 평가 아님)" : "직접 답변 연습"}\n\n` +
+      `# 곁말 · ${scenario.title}\n\n${localDay()} · ${demo ? "샘플 복기 (개인 평가 아님)" : "직접 답변 연습"}\n\n` +
       scenario.rounds
         .map((r, i) => {
           const e = entries.find((a) => a.id === r.id);
@@ -189,7 +189,7 @@ export default function CoachExperience() {
           <span className="dd-logo" aria-hidden="true">
             ··
           </span>
-          스픽코칭<span className="dd-beta">beta</span>
+          곁말<span className="dd-beta">beta</span>
         </a>
         <p className="dd-tagline">
           말하기 어려운 순간,
@@ -655,7 +655,7 @@ export default function CoachExperience() {
           </>
         )}
         <footer className="dd-footer">
-          스픽코칭 · Wanted AI Championship 2026{" "}
+          곁말 · Wanted AI Championship 2026{" "}
           <a href="/evidence">구현 범위와 데이터 안내 ↗</a>
         </footer>
       </main>

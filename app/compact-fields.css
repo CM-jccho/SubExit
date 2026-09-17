@@ -187,3 +187,42 @@
     animation: none !important;
   }
 }
+.launch-swipe {
+  touch-action: pan-y pinch-zoom;
+}
+.launch-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+.launch-actions .dd-primary,
+.launch-actions .dd-secondary {
+  flex: 1;
+  min-height: 48px;
+}
+.launch-skip {
+  display: block;
+  margin: 10px auto 0;
+  min-height: 44px;
+}
+.gesture-hint {
+  color: #647362;
+  font-size: 12px;
+  text-align: center;
+  margin: 10px 0;
+}
+.page-gesture-hint {
+  display: none;
+}
+@media (max-width: 900px) {
+  .page-gesture-hint {
+    display: block;
+  }
+}
+@media (min-width: 901px) {
+  .launch-intro .gesture-hint {
+    display: none;
+  }
+}

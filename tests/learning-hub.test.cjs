@@ -618,7 +618,7 @@ test("workspace navigation preserves section across remount and browser back, an
   try {
     await settle();
     assert.equal(document.querySelector("h1").textContent, "내 기록");
-    await click(button("스픽코칭 홈"));
+    await click(button("곁말 홈"));
     assert.equal(window.location.search, "");
     assert(scrolls > 0);
     await act(async () => ui.root.render(null));
@@ -3645,6 +3645,78 @@ test("first launch intro is dismissible and does not return on a later visit", a
     assert(!document.querySelector("dialog[open]"));
   } finally {
     delete global.location;
+    await ui.cleanup();
+  }
+});
+
+async function swipeOn(node, from, to, move = to) {
+  const touch = ([clientX, clientY]) => ({ clientX, clientY });
+  await act(async () => {
+    Simulate.touchStart(node, { touches: [touch(from)] });
+    Simulate.touchMove(node, { touches: [touch(move)] });
+    Simulate.touchEnd(node, { touches: [], changedTouches: [touch(to)] });
+  });
+}
+
+test("onboarding distinguishes next from start and supports safe bidirectional swipes", async () => {
+  const Intro = require("../components/LaunchIntro.tsx").default;
+  const ui = await mount(Intro, {}, () => {
+    window.innerWidth = 390;
+  });
+  try {
+    assert(button("다음").classList.contains("dd-secondary"));
+    assert(button("건너뛰고 시작하기"));
+    assert(!button("내 대화 시작하기"));
+    const panel = document.querySelector(".launch-swipe");
+    await swipeOn(panel, [250, 150], [80, 155]);
+    assert(document.body.textContent.includes("정답 대신, 나다운 한마디"));
+    await swipeOn(panel, [80, 150], [250, 155]);
+    assert(document.body.textContent.includes("하고 싶은 말을 삼킨 당신에게"));
+    await swipeOn(panel, [250, 150], [80, 400]);
+    await swipeOn(panel, [10, 150], [250, 150]);
+    await swipeOn(panel, [250, 150], [220, 150]);
+    assert(document.body.textContent.includes("하고 싶은 말을 삼킨 당신에게"));
+    await swipeOn(panel, [250, 150], [80, 150]);
+    await swipeOn(panel, [250, 150], [80, 150]);
+    assert(button("내 대화 시작하기").classList.contains("dd-primary"));
+    assert(!button("다음"));
+    await swipeOn(panel, [250, 150], [80, 150]);
+    assert(
+      document.querySelector("dialog[open]"),
+      "last swipe must not dismiss the intro",
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("mobile main tabs swipe without hijacking inputs, vertical scrolling or dialogs", async () => {
+  const Workspace = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(Workspace, {}, () => {
+    window.innerWidth = 390;
+    localStorage.setItem("ddeundeun-spotlight-guide-v2", "done");
+  });
+  try {
+    await settle();
+    await swipeOn(document.querySelector("main"), [280, 200], [100, 200]);
+    assert(window.location.search.includes("records"));
+    const input = document.querySelector('input[type="search"]');
+    assert(input);
+    await swipeOn(input, [280, 200], [100, 200]);
+    assert(window.location.search.includes("records"));
+    await swipeOn(document.querySelector("main"), [280, 200], [100, 450]);
+    assert(window.location.search.includes("records"));
+    await swipeOn(document.querySelector("main"), [280, 200], [100, 200]);
+    assert(window.location.search.includes("more"));
+    await swipeOn(document.querySelector("main"), [100, 200], [280, 200]);
+    assert(window.location.search.includes("records"));
+    const dialog = document.createElement("dialog");
+    dialog.open = true;
+    document.body.appendChild(dialog);
+    await swipeOn(document.querySelector("main"), [280, 200], [100, 200]);
+    assert(window.location.search.includes("records"));
+    dialog.remove();
+  } finally {
     await ui.cleanup();
   }
 });
