@@ -137,7 +137,7 @@ export class SpeechStream {
 }
 
 // One in-flight request and one replaceable pending snapshot. Never accumulate
-// requests for every partial word; keep within the existing 12/min API limit.
+// requests for every partial word; keep within the quick-coach 24/min API limit.
 export class LatestCoachQueue<T> {
   private pending = "";
   private lastSent = "";
@@ -153,8 +153,8 @@ export class LatestCoachQueue<T> {
       busy: (busy: boolean) => void;
       error: (error: unknown) => void;
     },
-    private interval = 6000,
-    private settle = 650,
+    private interval = 3000,
+    private settle = 350,
   ) {}
   update(text: string) {
     const next = tailTranscript(text);

@@ -22,6 +22,7 @@ import "./purpose-home.css";
 import "./live-speech.css";
 import "./chat-flow.css";
 import "./mobile-keyboard.css";
+import "./compact-fields.css";
 export const metadata = {
   title: "스픽코칭 · 대화 중 다음 한마디",
   description:

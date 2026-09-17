@@ -1,4 +1,5 @@
 "use client";
+import CompactField, { fieldExamples } from "./CompactField";
 import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -529,30 +530,22 @@ export default function MessengerPractice({
             </select>
           </label>
         </div>
-        <label className="messenger-field">
-          내가 전하고 싶은 것
-          <textarea
-            aria-label="내가 전하고 싶은 것"
-            rows={2}
-            maxLength={500}
-            value={input.goal}
-            disabled={busy || copying}
-            onChange={(e) => setInput({ ...input, goal: e.target.value })}
-            placeholder="예: 가능한 시간을 먼저 확인하고 싶어요."
-          />
-        </label>
-        <label className="messenger-field">
-          지킬 선 · 선택
-          <textarea
-            aria-label="지킬 선"
-            rows={2}
-            maxLength={500}
-            value={input.boundary}
-            disabled={busy || copying}
-            onChange={(e) => setInput({ ...input, boundary: e.target.value })}
-            placeholder="예: 오늘 마치겠다고 약속하지 않기"
-          />
-        </label>
+        <CompactField
+          label="내가 전하고 싶은 것"
+          value={input.goal}
+          maxLength={500}
+          disabled={busy || copying}
+          examples={fieldExamples.goal}
+          onChange={(value) => setInput({ ...input, goal: value })}
+        />
+        <CompactField
+          label="지킬 선 · 선택"
+          value={input.boundary}
+          maxLength={500}
+          disabled={busy || copying}
+          examples={fieldExamples.boundaries}
+          onChange={(value) => setInput({ ...input, boundary: value })}
+        />
         <button
           className="dd-primary"
           disabled={busy || copying || !valid}

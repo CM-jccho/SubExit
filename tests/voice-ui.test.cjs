@@ -158,7 +158,7 @@ test("finishing a live recording transcribes it instead of discarding it, with c
       requested++;
       return new Promise((r) => (resolveVoice = r));
     };
-    await click(button("상대 말 8초 듣기"));
+    await click(button("상대 말 4초 듣기"));
     assert(document.body.textContent.includes("듣는 중"));
     await click(button("녹음 끝내고 음성 인식"));
     assert.equal(requested, 1);
@@ -651,7 +651,7 @@ test("live hint sample mode uses the existing transcript without another AI call
       calls++;
       return Response.json({ text: "가능한 조건부터 확인하고 싶어요." });
     };
-    await click(button("상대 말 8초 듣기"));
+    await click(button("상대 말 4초 듣기"));
     await click(button("녹음 끝내고 음성 인식"));
     assert.equal(calls, 1);
     await click(document.querySelector(".dc-sample-switch input"));
@@ -837,7 +837,7 @@ test("supported browser defaults to streaming while retaining short-recording an
     await click(button("이 설정으로 시작"));
     assert(button("실시간 듣기 시작"));
     await click(button("짧게 녹음 · 직접 입력"));
-    assert(button("상대 말 8초 듣기"));
+    assert(button("상대 말 4초 듣기"));
     await click(
       [
         ...document.querySelectorAll(".dc-listen-panel .dc-mode-switch button"),

@@ -547,14 +547,15 @@ test("free setup remains selectable after a guided answer and preserves entered 
       "아직 보내지 않은 추가 맥락",
     );
     await click(button("하나씩 정리"));
+    await click(button("어떤 상황인가요? · 필수 수정"));
     assert(
       document
-        .querySelector("#profile-situation")
+        .querySelector('[aria-label="어떤 상황인가요? · 필수"]')
         .value.includes("팀장님과 일정을"),
     );
     assert(
       document
-        .querySelector("#profile-situation")
+        .querySelector('[aria-label="어떤 상황인가요? · 필수"]')
         .value.includes("아직 보내지 않은"),
     );
   } finally {
@@ -588,9 +589,10 @@ test("free setup with unavailable AI accepts a local draft and clearly routes to
     await act(async () =>
       Simulate.submit(document.querySelector("form.dc-composer")),
     );
+    await click(button("어떤 상황인가요? · 필수 수정"));
     assert(
       document
-        .querySelector("#profile-situation")
+        .querySelector('[aria-label="어떤 상황인가요? · 필수"]')
         .value.includes("도움이 필요한 이유"),
     );
     assert(document.body.textContent.includes("AI 연결 전이라"));
@@ -1837,12 +1839,16 @@ async function fillMessenger(input = msgExample.input) {
   for (const [label, key] of [
     ["상대가 보낸 메시지", "message"],
     ["내가 전하고 싶은 것", "goal"],
-    ["지킬 선", "boundary"],
-  ])
+    ["지킬 선 · 선택", "boundary"],
+  ]) {
+    if (key !== "message")
+      await click(button(label + " 입력") || button(label + " 수정"));
     await change(
       document.querySelector(`textarea[aria-label="${label}"]`),
       input[key],
     );
+    if (key !== "message") await click(button("입력 완료"));
+  }
 }
 test("messenger API validates three tones and sends only the chosen message and constraints", async () =>
   ai(async () => {
@@ -2012,10 +2018,12 @@ test("messenger AI updates one record, edited conditions create a separate recor
     await settle();
     const first = (await store.listSessions())[0];
     await click(button("메시지·조건 수정"));
+    await click(button("내가 전하고 싶은 것 수정"));
     await change(
       document.querySelector('[aria-label="내가 전하고 싶은 것"]'),
       "새 업무의 범위를 먼저 확인하기",
     );
+    await click(button("입력 완료"));
     await click(button("저장하고 답장 준비"));
     await settle();
     if (button("답장 쓰기")) await click(button("답장 쓰기"));
@@ -3287,7 +3295,7 @@ test("live assistance retains its purpose through reload, skips the rehearsal to
       document.querySelector("h1").textContent,
       "지금 대화 도움받기",
     );
-    assert(document.body.textContent.includes("최대 8초"));
+    assert(document.body.textContent.includes("최대 4초"));
     assert(document.body.textContent.includes("처리 중에는"));
     await click(button("이 상황 미리 연습하기"));
     assert(document.querySelector('[data-tour="practice-settings"]'));
@@ -3536,4 +3544,160 @@ test("a single unformatted solo recording can be coached without inventing a par
   const long = recording.splitRecordingTranscript("가".repeat(9000));
   assert.equal(long.map((s) => s.text).join(""), "가".repeat(9000));
   assert(long.every((s) => s.text.length <= 4000));
+});
+
+test("quick coaching requests a smaller grounded response and still rejects invented evidence", async () =>
+  ai(async () => {
+    const route = require("../app/api/coach/route.ts");
+    const { scenarios } = require("../lib/scenarios.ts");
+    const body = {
+      mode: "ai",
+      quick: true,
+      scenario: scenarios[0].id,
+      tone: "warm",
+      opponent: "오늘 완료해 주세요",
+      reply: "",
+      ...consent,
+    };
+    gemini.geminiGenerate = async (system, parts, schema, signal, options) => {
+      assert.equal(options.maxOutputTokens, 500);
+      assert.deepEqual(schema.required, ["suggestion", "evidence", "reason"]);
+      return {
+        suggestion: "우선순위를 확인해도 될까요?",
+        evidence: "오늘 완료해 주세요",
+        reason: "일정을 확인하는 질문이에요.",
+      };
+    };
+    const response = await route.POST(req(body));
+    assert.equal(response.status, 200);
+    assert.equal(
+      (await response.json()).suggestion,
+      "우선순위를 확인해도 될까요?",
+    );
+    gemini.geminiGenerate = async () => ({
+      suggestion: "확인하겠습니다.",
+      evidence: "없는 말",
+      reason: "확인",
+    });
+    assert.notEqual((await route.POST(req(body))).status, 200);
+  }));
+
+test("compact fields start small, allow editable examples, preserve completed values and cancel edits", async () => {
+  const Field = require("../components/CompactField.tsx").default;
+  function Harness() {
+    const [value, setValue] = React.useState("");
+    return React.createElement(Field, {
+      label: "원하는 결과",
+      value,
+      onChange: setValue,
+      maxLength: 100,
+      examples: ["정중하게 거절하고 싶어요."],
+    });
+  }
+  const ui = await mount(Harness);
+  try {
+    assert(!document.querySelector("textarea"));
+    await click(button("원하는 결과 입력"));
+    await click(button("정중하게 거절하고 싶어요."));
+    assert.equal(
+      document.querySelector("textarea").value,
+      "정중하게 거절하고 싶어요.",
+    );
+    await change(
+      document.querySelector("textarea"),
+      "가능한 시간을 정하고 싶어요.",
+    );
+    await click(button("입력 완료"));
+    assert(!document.querySelector("textarea"));
+    assert(button("원하는 결과 수정").textContent.includes("가능한 시간을"));
+    await click(button("원하는 결과 수정"));
+    await change(document.querySelector("textarea"), "취소할 수정");
+    await click(button("취소"));
+    await click(button("원하는 결과 수정"));
+    assert.equal(
+      document.querySelector("textarea").value,
+      "가능한 시간을 정하고 싶어요.",
+    );
+    await click(button("말해서 입력"));
+    assert(document.body.textContent.includes("키보드의 마이크"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("first launch intro is dismissible and does not return on a later visit", async () => {
+  const Intro = require("../components/LaunchIntro.tsx").default;
+  const ui = await mount(Intro, {}, () => {
+    global.location = window.location;
+  });
+  try {
+    assert(document.querySelector("dialog[open]"));
+    assert(document.body.textContent.includes("하고 싶은 말을 삼킨 당신에게"));
+    await click(button("다음"));
+    assert(document.body.textContent.includes("정답 대신, 나다운 한마디"));
+    await click(button("다음"));
+    assert(document.body.textContent.includes("후회보다, 다음을 위한 연습"));
+    await click(button("내 대화 시작하기"));
+    assert(!document.querySelector("dialog[open]"));
+    assert.equal(localStorage.getItem("speakcoaching-intro-v1"), "seen");
+    await act(async () => ui.root.render(null));
+    await act(async () => ui.root.render(React.createElement(Intro)));
+    assert(!document.querySelector("dialog[open]"));
+  } finally {
+    delete global.location;
+    await ui.cleanup();
+  }
+});
+
+test("compact dictation requires opt-in, appends recognized words and stops the microphone on completion", async () => {
+  const Field = require("../components/CompactField.tsx").default;
+  let engine, saved;
+  class Engine {
+    constructor() {
+      engine = this;
+    }
+    start() {
+      this.onstart();
+    }
+    abort() {
+      this.aborted = true;
+    }
+  }
+  const ui = await mount(
+    Field,
+    {
+      label: "상황",
+      value: "기존 내용",
+      maxLength: 100,
+      onChange: (text) => {
+        saved = text;
+      },
+    },
+    () => {
+      window.SpeechRecognition = Engine;
+    },
+  );
+  try {
+    await click(button("상황 수정"));
+    await click(button("말해서 입력"));
+    assert.equal(engine, undefined);
+    await act(async () =>
+      document.querySelector('input[type="checkbox"]').click(),
+    );
+    await click(button("말해서 입력"));
+    await act(async () =>
+      engine.onresult({
+        results: [{ isFinal: true, 0: { transcript: "새로 인식한 말" } }],
+      }),
+    );
+    assert.equal(
+      document.querySelector("textarea").value,
+      "기존 내용 새로 인식한 말",
+    );
+    await click(button("입력 완료"));
+    assert.equal(saved, "기존 내용 새로 인식한 말");
+    assert(engine.aborted);
+  } finally {
+    await ui.cleanup();
+  }
 });

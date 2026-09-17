@@ -1,4 +1,5 @@
 "use client";
+import CompactField, { fieldExamples } from "./CompactField";
 import { useAIConsent, ConsentSettings } from "./ConsentSession";
 import HomeActions from "./HomeActions";
 import { supportTools, supportLabel } from "@/lib/support-tools";
@@ -95,28 +96,19 @@ function ProfileEditor({
   return (
     <div className="dc-editor">
       {(Object.keys(labels) as (keyof typeof labels)[]).map((k) => (
-        <label key={k} htmlFor={"profile-" + k}>
-          {labels[k]}
-          {["title", "partner", "situation", "goal"].includes(k) && (
-            <span>필수</span>
-          )}
-          {["situation", "goal", "boundaries"].includes(k) ? (
-            <textarea
-              id={"profile-" + k}
-              rows={2}
-              maxLength={maxima[k]}
-              value={profile[k]}
-              onChange={(e) => onChange({ ...profile, [k]: e.target.value })}
-            />
-          ) : (
-            <input
-              id={"profile-" + k}
-              maxLength={maxima[k]}
-              value={profile[k]}
-              onChange={(e) => onChange({ ...profile, [k]: e.target.value })}
-            />
-          )}
-        </label>
+        <CompactField
+          key={k}
+          label={
+            labels[k] +
+            (["title", "partner", "situation", "goal"].includes(k)
+              ? " · 필수"
+              : "")
+          }
+          value={profile[k]}
+          maxLength={maxima[k]}
+          examples={fieldExamples[k]}
+          onChange={(value) => onChange({ ...profile, [k]: value })}
+        />
       ))}
       <label htmlFor="profile-tone">
         내 말투

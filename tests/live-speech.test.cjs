@@ -44,7 +44,7 @@ test("coaching serializes requests, coalesces new speech and respects the six-se
   assert.equal(calls.length, 1);
   resolve({});
   await tick(t, 0);
-  await tick(t, 4999);
+  await tick(t, 1999);
   assert.equal(calls.length, 1);
   await tick(t, 1);
   assert.equal(calls.length, 2);

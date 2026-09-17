@@ -178,6 +178,7 @@ export default function LiveCoach({
             signal: abort.signal,
             body: JSON.stringify({
               mode: "ai",
+              quick: true,
               scenario,
               context: profile,
               tone,
@@ -303,7 +304,7 @@ export default function LiveCoach({
       );
       timer.current = setTimeout(() => {
         if (rec.state === "recording") rec.stop();
-      }, 8000);
+      }, 4000);
     } catch (e) {
       release();
       if (version.current === id) {
@@ -374,7 +375,7 @@ export default function LiveCoach({
         ? "녹음 완료 · 아래에서 확인해 주세요"
         : "마이크 꺼짐",
     permission: "마이크 권한 확인 중",
-    listening: `듣는 중 · ${seconds}/8초`,
+    listening: `듣는 중 · ${seconds}/4초`,
     transcribing: "들린 말을 글로 바꾸는 중 · 마이크 꺼짐",
     coaching: "다음 한 문장을 준비 중 · 마이크 꺼짐",
   }[phase];
@@ -487,7 +488,7 @@ export default function LiveCoach({
               대면 또는 <strong>다른 기기의 스피커폰 옆</strong>에서 사용해요.
               {supportsLive
                 ? " 자막을 보며 계속 듣고, 말이 정리되면 코칭받아요."
-                : " 이 브라우저에서는 최대 8초씩 녹음해요. 이 방식은 처리 중에는 마이크가 꺼져요. 직접 입력도 가능해요."}
+                : " 이 브라우저에서는 최대 4초씩 녹음해요. 이 방식은 처리 중에는 마이크가 꺼져요. 직접 입력도 가능해요."}
             </p>
           </div>
           <AIConsent
@@ -621,7 +622,7 @@ export default function LiveCoach({
                       aria-label={
                         phase === "listening"
                           ? "여기까지 듣기"
-                          : "상대 말 8초 듣기"
+                          : "상대 말 4초 듣기"
                       }
                       disabled={
                         phase !== "listening" &&
@@ -640,7 +641,7 @@ export default function LiveCoach({
                         : "눌러서 상대 말 듣기"}
                     </strong>
                     <span>
-                      한 번에 최대 8초
+                      한 번에 최대 4초
                       <HelpTip label="마이크 사용 안내">
                         상대 말이 끝나면 버튼을 다시 눌러도 돼요. 인식된 문장을
                         확인한 뒤 코칭을 요청하세요. 자동 화자 구분은 지원하지

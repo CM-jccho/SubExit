@@ -1,4 +1,5 @@
 "use client";
+import CompactField, { fieldExamples } from "./CompactField";
 import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
 import { emptyProfile } from "@/lib/conversation-cards";
@@ -534,20 +535,17 @@ export default function RecordingAnalysis({
                     ["boundaries", "지킬 선 · 선택", 400],
                   ] as const
                 ).map(([key, label, max]) => (
-                  <label className="vn-label" key={key}>
-                    {label}
-                    <textarea
-                      rows={2}
-                      maxLength={max}
-                      disabled={locked}
-                      value={draft.context[key]}
-                      onChange={(e) =>
-                        edit({
-                          context: { ...draft.context, [key]: e.target.value },
-                        })
-                      }
-                    />
-                  </label>
+                  <CompactField
+                    key={key}
+                    label={label}
+                    maxLength={max}
+                    disabled={locked}
+                    value={draft.context[key]}
+                    examples={fieldExamples[key]}
+                    onChange={(value) =>
+                      edit({ context: { ...draft.context, [key]: value } })
+                    }
+                  />
                 ))}
               </div>
               <label className="dd-check">

@@ -86,6 +86,7 @@ export default function LiveSpeechPanel({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             mode: "ai",
+            quick: true,
             scenario,
             context: profile,
             tone,
@@ -287,7 +288,7 @@ export default function LiveSpeechPanel({
       )}
       <p className="live-stream-note">
         자막은 바로 표시하고, 코칭은 인식이 확정된 말을 모아 갱신해요. 반복
-        요청은 최소 6초 간격이며 응답 시간은 연결 상태에 따라 달라요.
+        요청은 최소 3초 간격이며 응답 시간은 연결 상태에 따라 달라요.
       </p>
       <p className="live-stream-note">
         상대 목소리가 잘 들리는 곳에서 사용하세요. 내 목소리와 상대를 자동
