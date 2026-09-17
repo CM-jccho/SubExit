@@ -103,6 +103,30 @@ export default function Evidence() {
           별개입니다. 실제 타인의 대화를 입력하기 전에 참여자의 동의와 적절한
           데이터 처리 조건을 확인해야 합니다.
         </p>
+        <h2>외부 소프트웨어와 데이터 출처</h2>
+        <p>
+          Next.js·React 등 외부 패키지를 사용합니다.{" "}
+          <a href="/licenses/third-party-notices.txt">
+            주요 패키지의 저작권·라이선스 고지
+          </a>
+          와 <a href="/licenses/dependency-inventory.json">의존성 목록</a>을
+          제공합니다. 안내 글꼴은 Nanum Pen Script의 일부를 수정한 Ddeundeun
+          Guide Pen이며{" "}
+          <a href="/licenses/nanum-pen-OFL.txt">SIL Open Font License 1.1</a>을
+          따릅니다.
+        </p>
+        <p>
+          방의 모델 날씨는 <a href="https://open-meteo.com/">Open-Meteo</a>에서
+          가져와 온도·상태·방 분위기로 표시합니다. 데이터는{" "}
+          <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+          이며 API 사용은 별도{" "}
+          <a href="https://open-meteo.com/en/terms">이용 조건</a>을 따릅니다.
+        </p>
+        <p>
+          이 시연의 AI 기능은 성인 대상입니다. 학교·또래 표현 예시는 성인의 세대
+          간 대화 연습을 위한 가상 상황이며, 실제 학생 연결이나 미성년자 대상 AI
+          서비스가 아닙니다.
+        </p>
         <h2>검증 범위</h2>
         <p>
           카드 저장·검색·수정·맥락 전달은 코드 테스트로 검증합니다. 실제 키를

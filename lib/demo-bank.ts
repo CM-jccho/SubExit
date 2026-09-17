@@ -11,6 +11,16 @@ export type SampleMeta = {
 };
 export const demoCases = bank.cases;
 export type SampleOperation = "partner" | "companion" | "suggestions" | "coach";
+// Use the confirmed purpose as well as situation when choosing an authored example.
+export function practiceSampleContext(context?: {
+  title: string;
+  situation: string;
+  goal: string;
+}) {
+  return context
+    ? [context.title, context.goal, context.situation].join(" ")
+    : "";
+}
 export function chooseDemoCase(text: string) {
   const lower = text.toLocaleLowerCase();
   const responseScene = demoCases.find(

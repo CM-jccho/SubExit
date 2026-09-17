@@ -1,3 +1,5 @@
+> 이전 버전 기록입니다. 현재 제출 문안과 상태는 [08-final-submission.md](08-final-submission.md)를 우선 확인하세요.
+
 # 구현 검증 기록
 
 기준 main `8e8ca4b89337c93f3872f5bad3dabb914fc44cb6` (#23). 변경 브랜치명 `codex/hackathon-coach-upgrade`를 사용한다.

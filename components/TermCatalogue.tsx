@@ -78,11 +78,12 @@ export default function TermCatalogue({
               className="dd-secondary"
               onClick={() => onAsk(schoolCompanion)}
             >
-              중학생 AI 역할에게 물어보기
+              세대 표현을 AI 역할에게 물어보기
             </button>
           )}
           <small>
-            하루는 가상의 AI 역할이에요. 실제 중학생과 연결하지 않아요.
+            성인의 세대 간 대화 연습을 위한 가상 역할이에요. 실제 학생과
+            연결하지 않아요.
           </small>
         </div>
       )}

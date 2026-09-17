@@ -20,6 +20,7 @@ import {
   type PracticeReview,
 } from "@/lib/practice-review";
 import SampleNotice, { SampleSwitch, ReviewExample } from "./SampleNotice";
+import { practiceSampleContext } from "@/lib/demo-bank";
 import { sampledRequest } from "@/lib/resilient-ai";
 import {
   aiFetch,
@@ -265,7 +266,7 @@ export default function VoiceWorkspace({
         context:
           current.kind === "chat"
             ? current.turns.at(-1)?.text || current.companion?.specialty || ""
-            : current.context?.situation || "",
+            : practiceSampleContext(current.context),
         previous: current.turns
           .filter((t) => t.role === "assistant")
           .map((t) => t.text),
@@ -475,7 +476,7 @@ export default function VoiceWorkspace({
       const d = await sampledRequest({
         operation: "suggestions",
         language: session.languages?.mine,
-        context: session.context?.situation || "",
+        context: practiceSampleContext(session.context),
         previous: session.turns.at(-1)?.suggestions || [],
         manual: sampleMode,
         url: "/api/roleplay",
@@ -1224,7 +1225,7 @@ export default function VoiceWorkspace({
               <section className="dc-review">
                 {reviewOutage && (
                   <ReviewExample
-                    context={session.context?.situation || ""}
+                    context={practiceSampleContext(session.context)}
                     outage={reviewOutage}
                   />
                 )}
