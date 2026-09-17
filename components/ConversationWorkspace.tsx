@@ -1,11 +1,13 @@
 "use client";
 import MessengerPractice from "./MessengerPractice";
 import ConversationFocusPicker from "./ConversationFocusPicker";
+import FocusScene from "./FocusScene";
 import {
   FOCUS_KEY,
   parseFocus,
   curatedCards,
   focusInfo,
+  focusOptions,
   type ConversationFocus,
 } from "@/lib/conversation-focus";
 import PracticeNavigation from "./PracticeNavigation";
@@ -166,11 +168,11 @@ function ContextFacts({ profile }: { profile: ContextProfile }) {
 export default function ConversationWorkspace() {
   const [focus, setFocus] = useState<ConversationFocus | null>(null);
   const [browseAll, setBrowseAll] = useState(false);
-  const effectiveFocus = browseAll ? "all" : focus;
   const [view, setViewState] = useState<View>("home"),
     [cards, setCards] = useState<ConversationCard[]>([]),
     [search, setSearch] = useState(""),
     [active, setActive] = useState<ConversationCard | null>(null);
+  const effectiveFocus = view === "library" && browseAll ? "all" : focus;
   const [profile, setProfile] = useState<ContextProfile>(emptyProfile()),
     [messages, setMessages] = useState<SetupMessage[]>([]),
     [input, setInput] = useState(""),
@@ -514,8 +516,28 @@ export default function ConversationWorkspace() {
     )[0] || starterCards[0];
   const focusedCards = curatedCards(cards, effectiveFocus);
   const sampleCards = focusedCards.filter((c) => c.isSample);
+  const allSampleCount = cards.filter((c) => c.isSample).length;
+  const selectedSampleCount = curatedCards(cards, focus).filter(
+    (c) => c.isSample,
+  ).length;
 
   const visible = searchCards(focusedCards, search);
+  const visiblePersonal = visible.filter((c) => !c.isSample);
+  const visibleSamples = visible.filter((c) => c.isSample);
+  const sampleGroups = focusOptions
+    .filter((option) => option.id !== "custom")
+    .map((option) => ({
+      ...option,
+      cards: visibleSamples.filter((c) =>
+        (option.cardIds as readonly string[]).includes(c.id),
+      ),
+    }));
+  const otherSamples = visibleSamples.filter(
+    (c) =>
+      !sampleGroups.some((group) =>
+        group.cards.some((item) => item.id === c.id),
+      ),
+  );
   function chooseFocus(next: ConversationFocus) {
     setFocus(next);
     setBrowseAll(false);
@@ -598,24 +620,41 @@ export default function ConversationWorkspace() {
           data-tour={spotlight && i === 0 ? "starter-card" : undefined}
           onClick={() => openCard(c)}
         >
-          <span className={"dc-card-avatar color-" + (i % 3)}>
-            <Companion
-              small
-              character={resolveCompanion(c.companion, c, companions)}
+          {spotlight ? (
+            <FocusScene
+              focus={
+                focusOptions.find((option) =>
+                  (option.cardIds as readonly string[]).includes(c.id),
+                )?.id || "custom"
+              }
+              compact
             />
-          </span>
+          ) : (
+            <span className={"dc-card-avatar color-" + (i % 3)}>
+              <Companion
+                small
+                character={resolveCompanion(c.companion, c, companions)}
+              />
+            </span>
+          )}
           <span className="dc-card-body">
             <span className="dc-partner">
               {c.isSample && <span className="dc-sample-badge">샘플</span>}
-              {c.partner}
+              {spotlight
+                ? focusOptions.find((option) =>
+                    (option.cardIds as readonly string[]).includes(c.id),
+                  )?.label || "내 상황"
+                : c.partner}
             </span>
             <strong>{c.title}</strong>
             <span className="dc-card-goal">{c.goal}</span>
             <small>
-              {c.lastUsedAt
-                ? "최근 사용 " +
-                  new Date(c.lastUsedAt).toLocaleDateString("ko-KR")
-                : "준비 완료 · 언제든 다시 꺼내세요"}
+              {spotlight
+                ? "상황 확인하고 연습 →"
+                : c.lastUsedAt
+                  ? "최근 사용 " +
+                    new Date(c.lastUsedAt).toLocaleDateString("ko-KR")
+                  : "준비 완료 · 언제든 다시 꺼내세요"}
             </small>
           </span>
           <Icon name="arrow" size={20} />
@@ -705,11 +744,16 @@ export default function ConversationWorkspace() {
                   start();
                 }}
                 onChange={chooseFocus}
-                browsing={browseAll}
-                onBrowse={() => {
-                  setBrowseAll((v) => !v);
-                  setSearch("");
-                }}
+                sampleCount={allSampleCount}
+                onBrowse={
+                  view === "home"
+                    ? () => {
+                        setBrowseAll(true);
+                        setSearch("");
+                        navigate("library");
+                      }
+                    : undefined
+                }
               />
             )}
             {view === "messenger" && (
@@ -736,38 +780,64 @@ export default function ConversationWorkspace() {
             )}
             {view === "home" && (focus || tour) && (
               <>
-                <section className="dc-welcome">
-                  <div className="dc-welcome-copy">
-                    <p className="dc-overline">
-                      대화 연습 → 복기 → 같은 장면 다시 연습
-                    </p>
-                    <h1>
-                      어려운 한마디,
-                      <br />
-                      여기서 연습해요.
-                    </h1>
-                    <p className="dc-welcome-desc">
-                      상황을 고르면 AI가 상대 역할을 맡아요.
-                      <br className="dc-mobile-break" /> 내가 답하고, 함께
-                      복기한 뒤 다시 연습해요.
-                    </p>
-                    <div className="daily-home-starts">
+                <section className="focus-home-heading">
+                  <div>
+                    <p className="dc-overline">대화 연습 · 복기 · 다시 연습</p>
+                    <h1>어떤 말을 연습해볼까요?</h1>
+                    <p>상황을 고르고, AI 상대와 한마디씩 주고받아 보세요.</p>
+                  </div>
+                  <button
+                    className="dd-primary"
+                    onClick={() => navigate("library")}
+                  >
+                    대화 연습 시작 <Icon name="arrow" size={20} />
+                  </button>
+                </section>
+                {(sampleCards.length > 0 || tour) && (
+                  <section className="dc-starter-section focus-practice-first">
+                    <div className="dc-section-heading">
+                      <h2>
+                        {focusInfo(effectiveFocus)
+                          ? focusInfo(effectiveFocus)!.label +
+                            "에서 꺼내볼 대화"
+                          : "처음이라면, 이 대화부터"}
+                      </h2>
+                      <span className="dc-sample-badge">가상의 샘플</span>
+                    </div>
+                    <p>연습할 장면을 눌러 시작해 보세요.</p>
+                    {cardList(
+                      sampleCards.length
+                        ? tour
+                          ? sampleCards.slice(0, 2)
+                          : [...sampleCards]
+                              .sort(
+                                (a, b) =>
+                                  Number(b.id.includes("request")) -
+                                  Number(a.id.includes("request")),
+                              )
+                              .slice(0, 2)
+                        : [tourCard],
+                      true,
+                    )}
+                    <div className="dc-starter-links">
                       <button
-                        className="dd-primary"
-                        onClick={() => navigate("library")}
+                        className="dd-link"
+                        onClick={() => {
+                          setBrowseAll(true);
+                          navigate("library");
+                        }}
                       >
-                        대화 연습 시작 <Icon name="arrow" size={20} />
+                        모든 연습 상황 보기 ({allSampleCount}){" "}
+                        <Icon name="arrow" size={16} />
                       </button>
                     </div>
-                  </div>
-                  <div className="dc-welcome-art">
-                    <span className="dc-handnote">천천히 말해도 괜찮아요.</span>
-                    <Companion />
-                    <span className="dc-character-name">
-                      당신의 옆자리, {currentCharacter.name}
-                    </span>
-                  </div>
-                </section>
+                    <small>
+                      {sampleCards.length
+                        ? "샘플은 직접 삭제하기 전까지 남아요."
+                        : "가이드에서만 보는 예시예요. 삭제한 샘플은 다시 저장하지 않아요."}
+                    </small>
+                  </section>
+                )}
                 <div className="vn-home-actions">
                   <button onClick={() => navigate("records")}>
                     <Icon name="mic" />
@@ -791,53 +861,6 @@ export default function ConversationWorkspace() {
                     <Icon name="arrow" size={18} />
                   </button>
                 </div>
-                {(sampleCards.length > 0 || tour) && (
-                  <section className="dc-starter-section">
-                    <div className="dc-section-heading">
-                      <h2>
-                        {focusInfo(effectiveFocus)
-                          ? focusInfo(effectiveFocus)!.label +
-                            "에서 꺼내볼 대화"
-                          : "처음이라면, 이 대화부터"}
-                      </h2>
-                      <span className="dc-sample-badge">가상의 샘플</span>
-                    </div>
-                    <p>
-                      카드를 눌러 상대와 목표를 살펴보세요. 내 상황에 맞게
-                      복사해서 바꿔도 좋아요.
-                    </p>
-                    {cardList(
-                      sampleCards.length
-                        ? tour
-                          ? sampleCards.slice(0, 2)
-                          : [...sampleCards]
-                              .sort(
-                                (a, b) =>
-                                  Number(b.id.includes("request")) -
-                                  Number(a.id.includes("request")),
-                              )
-                              .slice(0, 2)
-                        : [tourCard],
-                      true,
-                    )}
-                    <div className="dc-starter-links">
-                      <button
-                        className="dd-link"
-                        onClick={() => {
-                          setBrowseAll(true);
-                          navigate("library");
-                        }}
-                      >
-                        전체 샘플 둘러보기 <Icon name="arrow" size={16} />
-                      </button>
-                    </div>
-                    <small>
-                      {sampleCards.length
-                        ? "샘플은 직접 삭제하기 전까지 남아요."
-                        : "가이드에서만 보는 예시예요. 삭제한 샘플은 다시 저장하지 않아요."}
-                    </small>
-                  </section>
-                )}
                 <details className="dc-guide-faq dc-more-ways">
                   <summary>다른 방식으로 대화하기</summary>
                   <button
@@ -1013,9 +1036,9 @@ export default function ConversationWorkspace() {
               <>
                 <section className="dc-page-top">
                   <div>
-                    <p className="dc-overline">나만의 대화 서랍</p>
+                    <p className="dc-overline">상황을 고르고 대화 연습</p>
                     <h1>
-                      내 대화{" "}
+                      {effectiveFocus === "all" ? "모든 연습 상황" : "내 대화"}{" "}
                       <span className="dc-count">{focusedCards.length}</span>
                     </h1>
                   </div>
@@ -1024,10 +1047,46 @@ export default function ConversationWorkspace() {
                   </button>
                 </section>
                 <p className="dc-room-intro">
-                  {effectiveFocus && effectiveFocus !== "all"
-                    ? "선택한 맥락의 예시와 내가 만든 카드를 모았어요."
-                    : "내가 만든 카드와 선택한 예시가 모여요."}{" "}
-                  주고받은 내용과 복기는 ‘대화 기록’에서 다시 볼 수 있어요.
+                  {effectiveFocus === "all"
+                    ? "업무·고객 응대·학부모 상담·일상 예시를 분야별로 모았어요."
+                    : "관심 상황의 예시부터 연습하거나, 내 상황을 직접 만들어 보세요."}
+                </p>
+                {focus && focus !== "all" && (
+                  <div
+                    className="focus-list-filters"
+                    role="group"
+                    aria-label="연습 예시 범위"
+                  >
+                    <button
+                      aria-pressed={!browseAll}
+                      onClick={() => {
+                        setBrowseAll(false);
+                        setSearch("");
+                      }}
+                    >
+                      {focusInfo(focus)?.label} 예시{" "}
+                      <span>{selectedSampleCount}</span>
+                    </button>
+                    <button
+                      aria-pressed={browseAll}
+                      onClick={() => {
+                        setBrowseAll(true);
+                        setSearch("");
+                      }}
+                    >
+                      모든 분야 예시 <span>{allSampleCount}</span>
+                    </button>
+                  </div>
+                )}
+                <p className="focus-results-status" role="status">
+                  {search
+                    ? `검색 결과 ${visible.length}개`
+                    : `${effectiveFocus === "all" ? "모든 분야" : focusInfo(focus)?.label || "선택한 상황"} 예시 ${sampleCards.length}개 · 내가 만든 대화 ${personalCards.length}개`}
+                  {browseAll && focus !== "all" && (
+                    <span>
+                      내 관심 상황은 {focusInfo(focus)?.label}으로 유지돼요.
+                    </span>
+                  )}
                 </p>
                 <label className="dc-search" htmlFor="card-search">
                   <Icon name="search" size={20} />
@@ -1042,7 +1101,53 @@ export default function ConversationWorkspace() {
                 </label>
                 {cards.length ? (
                   <>
-                    {cardList(visible)}
+                    {visiblePersonal.length > 0 && (
+                      <section
+                        className="focus-card-group"
+                        aria-label="내가 만든 대화"
+                      >
+                        <h2>
+                          내가 만든 대화 <span>{visiblePersonal.length}</span>
+                        </h2>
+                        {cardList(visiblePersonal)}
+                      </section>
+                    )}
+                    {sampleGroups
+                      .filter((group) => group.cards.length > 0)
+                      .map((group) => (
+                        <section
+                          key={group.id}
+                          className="focus-card-group"
+                          data-category={group.id}
+                          aria-label={`${group.label} 연습 예시`}
+                        >
+                          <h2>
+                            <Icon
+                              name={
+                                group.id === "work"
+                                  ? "cards"
+                                  : group.id === "education"
+                                    ? "book"
+                                    : "chat"
+                              }
+                              size={20}
+                            />
+                            {group.label} <span>{group.cards.length}</span>
+                          </h2>
+                          {cardList(group.cards)}
+                        </section>
+                      ))}
+                    {otherSamples.length > 0 && (
+                      <section
+                        className="focus-card-group"
+                        aria-label="기타 연습 예시"
+                      >
+                        <h2>
+                          기타 연습 예시 <span>{otherSamples.length}</span>
+                        </h2>
+                        {cardList(otherSamples)}
+                      </section>
+                    )}
                     {!visible.length && (
                       <div className="dc-empty-state">
                         <Icon name="search" size={32} />

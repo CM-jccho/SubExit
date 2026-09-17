@@ -598,7 +598,9 @@ test("workspace navigation preserves section across remount and browser back, an
     await act(async () => ui.root.render(React.createElement(C)));
     await settle();
     assert(
-      document.querySelector("h1").textContent.includes("여기서 연습해요"),
+      document
+        .querySelector("h1")
+        .textContent.includes("어떤 말을 연습해볼까요?"),
     );
     await act(async () => {
       window.history.back();
@@ -2266,14 +2268,55 @@ test("curation hides unrelated samples until selection, keeps personal cards, an
     await click(button("대화 연습 시작"));
     assert.equal(document.querySelectorAll(".dc-saved-card").length, 2);
     assert(document.body.textContent.includes(personal.title));
-    await click(button("전체 둘러보기"));
+    await click(button("모든 분야 예시 7"));
     assert(document.querySelectorAll(".dc-saved-card").length > 2);
     assert.equal(
       focus.parseFocus(localStorage.getItem(focus.FOCUS_KEY)),
       "education",
     );
-    await click(button("내 선택만 보기"));
+    await click(button("학부모 상담 예시 1"));
     assert.equal(document.querySelectorAll(".dc-saved-card").length, 2);
+    await click(button("홈"));
+    assert.equal(document.querySelector(".dc-welcome-art"), null);
+    assert.equal(
+      document.querySelectorAll(".dc-starter-section .dc-saved-card").length,
+      1,
+    );
+    const browse = button("모든 연습 상황 보기 (7)");
+    assert(browse.textContent.includes("7"));
+    await click(browse);
+    assert.equal(window.location.search, "?view=library");
+    assert(document.querySelector("h1").textContent.includes("모든 연습 상황"));
+    assert.equal(
+      document.querySelectorAll(".focus-card-group[data-category]").length,
+      4,
+    );
+    assert.equal(document.querySelectorAll(".dc-saved-card").length, 8);
+    assert(
+      document
+        .querySelector(".focus-results-status")
+        .textContent.includes("모든 분야 예시 7개"),
+    );
+    assert.equal(
+      button("모든 분야 예시 7").getAttribute("aria-pressed"),
+      "true",
+    );
+    assert.equal(
+      focus.parseFocus(localStorage.getItem(focus.FOCUS_KEY)),
+      "education",
+    );
+    await click(button("홈"));
+    assert.equal(
+      document.querySelectorAll(".dc-starter-section .dc-saved-card").length,
+      1,
+    );
+    assert(
+      !document
+        .querySelector(".dc-starter-section")
+        .textContent.includes("환불"),
+    );
+    await click(button("대화 연습 시작"));
+    await click(button("학부모 상담 예시 1"));
     await act(async () => ui.root.render(null));
     await act(async () => ui.root.render(React.createElement(C)));
     await settle();

@@ -115,6 +115,32 @@ test("AI evidence must match actual input", () => {
     validateCoach({ ...output, suggestion: "" }, data.opponent),
   );
 });
+test("coach rejects changed meaning and assembled evidence even when most words overlap", () => {
+  const opponent = "환불은 불가능합니다. 주문번호를 확인하겠습니다.";
+  for (const evidence of [
+    "환불은 가능합니다. 주문번호를 확인하겠습니다.",
+    "주문번호를 환불은 불가능합니다.",
+    "환불은 불가능합니다. 주문번호를 확인하겠습니다. 내일까지 처리합니다.",
+  ]) {
+    assert.throws(
+      () => validateCoach({ ...output, evidence }, opponent),
+      /ungrounded_output/,
+    );
+  }
+  for (const [text, evidence] of [
+    ["주문번호를\n 확인하겠습니다.", "주문번호를 확인하겠습니다."],
+    [
+      "Refunds are not available. Please share your order number.",
+      "Refunds are not available.",
+    ],
+    ["返金はできません。注文番号を確認します。", "注文番号を確認します。"],
+  ]) {
+    assert.equal(
+      validateCoach({ ...output, evidence }, text).evidence,
+      evidence,
+    );
+  }
+});
 test("sample API labels source and rejects invalid scenario", async () => {
   const r = await coach.POST(
     req({ ...data, mode: "sample", roundId: "sales-1" }),
