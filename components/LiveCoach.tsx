@@ -68,12 +68,12 @@ export default function LiveCoach({
     panel = useRef<HTMLElement | null>(null);
   const allowed = consent && adult && (!config.sampleOnly || sample);
   useEffect(() => {
-    if (!consent && prepared) {
+    if (!consent && prepared && !sampleMode) {
       cancel();
       setLiveActive(false);
       setPrepared(false);
     }
-  }, [consent, prepared]);
+  }, [consent, prepared, sampleMode]);
   function release() {
     if (timer.current) clearTimeout(timer.current);
     if (ticker.current) clearInterval(ticker.current);
@@ -500,20 +500,37 @@ export default function LiveCoach({
           />
           {!config.available && (
             <p className="dd-notice">
-              AI 연결을 확인하고 있어요. 연결이 안 되면{" "}
-              <button className="dd-link" onClick={onDemo}>
-                예시를 볼 수 있어요.
-              </button>
+              AI 연결을 확인하고 있어요. 기다리는 동안 아래에서 이 상황을 샘플로
+              체험할 수 있어요.
             </p>
           )}
           <button
             className="dd-primary dd-full"
             disabled={!allowed || !config.available}
-            onClick={() => setPrepared(true)}
+            onClick={() => {
+              setSampleMode(false);
+              setPrepared(true);
+            }}
           >
             이 설정으로 시작
             <Icon name="arrow" size={19} />
           </button>
+          <button
+            className="dd-secondary dd-full"
+            onClick={() => {
+              setSampleMode(true);
+              setInputMode("text");
+              setAutomatic(false);
+              setError("");
+              setNotice("");
+              setPrepared(true);
+            }}
+          >
+            이 상황을 샘플로 체험하기
+          </button>
+          <p className="dc-small-caption">
+            AI 전송이나 동의 없이 사전 작성 예시로 체험해요.
+          </p>
         </section>
       ) : (
         <>
@@ -541,6 +558,7 @@ export default function LiveCoach({
               setSampleMode(v);
               setResult(null);
               setError("");
+              setNotice("");
               if (v) {
                 setInputMode("text");
                 setAutomatic(false);
@@ -681,7 +699,12 @@ export default function LiveCoach({
                       ? "다 말했으면 녹음 끝내기를 눌러주세요."
                       : phase === "coaching"
                         ? "내 목표와 지킬 선을 보고 답변을 준비하고 있어요."
-                        : notice || "마이크를 누르고 한 문장을 들려주세요."
+                        : notice ||
+                          (sampleMode
+                            ? "상대 말을 입력하면 이 상황의 사전 작성 예시를 보여드려요."
+                            : inputMode === "text"
+                              ? "상대가 방금 한 말을 아래에 적어주세요."
+                              : "마이크를 누르고 한 문장을 들려주세요.")
                   }
                 />
                 {clip && (

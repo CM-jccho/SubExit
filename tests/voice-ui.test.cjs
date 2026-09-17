@@ -684,6 +684,60 @@ test("leaving a conversation during a failed request never saves a fallback into
   }
 });
 
+test("live sample starts without AI consent or connectivity and keeps the selected friend context", async () => {
+  const ui = await mount(
+    LiveCoach,
+    {
+      profile: require("../lib/starter-data.ts").requestCards[1],
+      onBack: () => {},
+      onDemo: () => {
+        throw new Error("Must keep selected context");
+      },
+    },
+    () => {
+      global.fetch = async () =>
+        Response.json({
+          available: false,
+          voiceAvailable: false,
+          sampleOnly: true,
+        });
+    },
+  );
+  try {
+    assert.equal(button("이 설정으로 시작").disabled, true);
+    let calls = 0;
+    global.fetch = async () => {
+      calls++;
+      throw new Error("No AI calls in sample mode");
+    };
+    await click(button("이 상황을 샘플로 체험하기"));
+    const input = document.querySelector("#live-text");
+    assert(input, "Sample must open direct text input without consent");
+    assert.doesNotMatch(document.body.textContent, /마이크를 누르고 한 문장을/);
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement.prototype,
+        "value",
+      ).set.call(input, "왜 약속을 변경하자는건데?");
+      input.dispatchEvent(new window.Event("input", { bubbles: true }));
+    });
+    await click(button("답변 힌트 받기"));
+    assert.match(
+      document.querySelector(".dc-answer-panel").textContent,
+      /친구와 약속 조정/,
+    );
+    assert.equal(calls, 0);
+    await click(document.querySelector(".dc-sample-switch input"));
+    assert.equal(
+      button("이 설정으로 시작").disabled,
+      true,
+      "Leaving sample cannot bypass AI consent",
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+
 test("live hint sample mode uses the existing transcript without another AI call or invented evidence", async () => {
   const ui = await mount(LiveCoach, { onBack: () => {}, onDemo: () => {} });
   let calls = 0;

@@ -33,6 +33,7 @@ export type VoiceTurn = {
   suggestionsSample?: SampleMeta;
 };
 export type VoiceSession = {
+  sampleMode?: boolean;
   messenger?: import("./messenger").MessengerRecord;
   training?: import("./conversation-training").TrainingRecord;
   promptPractice?: {

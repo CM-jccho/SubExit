@@ -1611,7 +1611,7 @@ export default function ConversationWorkspace() {
                       </button>
                       <p className="dc-small-caption">
                         {purpose === "live"
-                          ? "상대 말을 최대 8초씩 들려주거나 입력해 답변 힌트를 받아요."
+                          ? "상대 말을 들려주거나 직접 입력해 답변 힌트를 받아요. 지원 브라우저에서는 계속 들으며 자막을 보여줘요."
                           : "문자나 목소리로 직접 답하고, 끝나면 내 말을 복기해요."}
                       </p>
                     </section>
@@ -1717,7 +1717,7 @@ export default function ConversationWorkspace() {
                       {
                         icon: "mic",
                         title: "대화 중 다음 한마디",
-                        text: "상대 말을 최대 8초씩 들려주거나 입력하면 AI가 내 목표에 맞는 답변을 제안해요. 처리 중에는 듣지 않아요.",
+                        text: "상대 말을 들려주거나 입력하면 AI가 내 목표에 맞는 답변을 제안해요. 지원 브라우저에서는 계속 듣고, 그 외에는 최대 4초씩 녹음한 뒤 처리해요.",
                       },
                       {
                         icon: "chat",
@@ -1770,8 +1770,10 @@ export default function ConversationWorkspace() {
                     <p>
                       다른 기기로 스피커폰 통화를 하거나 대면 대화할 때
                       사용하세요. 같은 휴대폰의 통화 음성을 직접 가져오지는
-                      못해요. 최대 8초씩 입력하고 처리 중에는 마이크가 꺼져요.
-                      대화 참여자의 동의를 받은 뒤 사용해 주세요.
+                      못해요. 지원 브라우저에서는 계속 들을 수 있어요. 짧게
+                      녹음하는 방식에서는 최대 4초씩 입력하며 처리 중에는
+                      마이크가 꺼져요. 대화 참여자의 동의를 받은 뒤 사용해
+                      주세요.
                     </p>
                   </details>
                   <details className="dc-guide-faq">

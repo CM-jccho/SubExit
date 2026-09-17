@@ -2123,7 +2123,8 @@ test("upcoming features have explicit unavailable labels, no launch actions and 
     ui = await mount(C);
   try {
     assert(document.body.textContent.includes("아직 사용할 수 없으며"));
-    assert(document.body.textContent.includes("2분·2.4MB"));
+    assert(document.body.textContent.includes("30분·50MB"));
+    assert(document.body.textContent.includes("지원 브라우저에서는 계속 듣고"));
     assert(document.body.textContent.includes("한 번에 생성한 대본"));
     assert.equal(document.querySelectorAll("button,a,input").length, 0);
     assert.equal(document.querySelectorAll(".upcoming-list article").length, 7);
@@ -2236,6 +2237,32 @@ test("chat composer opens typing immediately and remains ready for the next repl
     );
     await click(button("내 답변 보내기"));
     assert.equal(sent.length, 2);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("opening the glossary with a conversation focus still shows saved personal notes first", async () => {
+  const C = require("../components/TermNotebook.tsx").default;
+  const ui = await mount(C, { config, focus: "work" });
+  try {
+    await settle();
+    assert.equal(button("내 노트").getAttribute("aria-pressed"), "true");
+    await click(button("용어 추가"));
+    await change(
+      document.querySelector(
+        'input[placeholder="저장할 단어나 표현을 입력해 주세요"]',
+      ),
+      "우선순위를 함께 정하다",
+    );
+    await click(button("이 표현 바로 저장"));
+    await settle();
+    assert.equal((await store.listTerms()).length, 1);
+    assert.match(
+      document.querySelector("main")?.textContent || document.body.textContent,
+      /우선순위를 함께 정하다/,
+    );
+    assert.equal(button("내 노트").getAttribute("aria-pressed"), "true");
   } finally {
     await ui.cleanup();
   }
@@ -3032,6 +3059,51 @@ test("messenger saves to a read-only record, keeps closed edits and reopens sele
         .textContent.includes("자동 복사가 차단"),
     );
     assert.equal((await store.listSessions()).length, 1);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("explicit sample practice preference survives leaving and reopening without granting AI consent", async () => {
+  const Workspace = require("../components/VoiceWorkspace.tsx").default;
+  const ui = await mount(Workspace, {
+    config,
+    mode: "practice",
+    initialCard: require("../lib/starter-data.ts").requestCards[1],
+    onChooseCard() {},
+  });
+  try {
+    await click(document.querySelector(".dc-sample-switch input"));
+    await settle();
+    await click(button("상대와 연습 시작"));
+    await settle();
+    const saved = (await store.listSessions())[0];
+    assert.equal(saved.sampleMode, true);
+    assert.equal(saved.turns.length, 1);
+    await act(async () => ui.root.render(null));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(Workspace, {
+          config,
+          mode: "records",
+          initialSessionId: saved.id,
+          onChooseCard() {},
+        }),
+      ),
+    );
+    await settle();
+    assert.equal(
+      document.querySelector(".dc-sample-switch input").checked,
+      true,
+    );
+    await click(document.querySelector(".dc-sample-switch input"));
+    await settle();
+    assert.equal((await store.getSession(saved.id)).sampleMode, false);
+    assert.equal(
+      document.querySelector(".vn-consent input").checked,
+      false,
+      "Stored mode is not consent",
+    );
   } finally {
     await ui.cleanup();
   }

@@ -354,9 +354,7 @@ export default function TermNotebook({
   onAsk?: (c: CompanionCharacter) => void;
   focus?: ConversationFocus | null;
 }) {
-  const [tab, setTab] = useState<"notes" | "catalogue" | "tips">(
-    focus && focus !== "all" ? "catalogue" : "notes",
-  );
+  const [tab, setTab] = useState<"notes" | "catalogue" | "tips">("notes");
   const [terms, setTerms] = useState<TermNote[]>([]),
     [query, setQuery] = useState(""),
     [seed, setSeed] = useState<TermSeed | null>(null),

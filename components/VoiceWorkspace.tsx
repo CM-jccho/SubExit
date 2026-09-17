@@ -121,7 +121,7 @@ export default function VoiceWorkspace({
     [sessions, setSessions] = useState<VoiceSession[]>([]),
     [trainingFrom, setTrainingFrom] = useState<TrainingOrigin>(),
     [consent, setConsent] = useAIConsent(),
-    [sampleMode, setSampleMode] = useState(false),
+    [sampleMode, setSampleModeState] = useState(false),
     [reviewOutage, setReviewOutage] = useState<AIOutage | null>(null),
     [busy, setBusy] = useState(false),
     [responding, setResponding] = useState(false),
@@ -137,6 +137,7 @@ export default function VoiceWorkspace({
     generation = useRef(0),
     mounted = useRef(true);
   const thread = useRef<HTMLDivElement>(null);
+  const sampleModeRef = useRef(false);
   const followConversation = useRef(false);
   const latestTurnId = session?.turns.at(-1)?.id;
   useEffect(() => {
@@ -169,8 +170,10 @@ export default function VoiceWorkspace({
         .then((rows) => {
           if (!mounted.current) return;
           const found = rows.find((s) => s.id === initialSessionId);
-          if (found) setSession(found);
-          else
+          if (found) {
+            setSession(found);
+            restoreSampleMode(found);
+          } else
             setError(
               "이 대화 기록을 찾지 못했어요. 삭제되었는지 확인해 주세요.",
             );
@@ -240,11 +243,42 @@ export default function VoiceWorkspace({
     speechSynthesis.speak(utterance);
   }
   async function persist(next: VoiceSession) {
+    next = {
+      ...next,
+      sampleMode: next.kind !== "recording" && sampleModeRef.current,
+    };
     await putSession(next);
     if (mounted.current) {
       setSession(next);
       setSessions((rows) => [next, ...rows.filter((s) => s.id !== next.id)]);
     }
+  }
+  function restoreSampleMode(next: VoiceSession | null) {
+    sampleModeRef.current =
+      next?.kind !== "recording" && next?.sampleMode === true;
+    setSampleModeState(sampleModeRef.current);
+  }
+  function setSampleMode(value: boolean) {
+    sampleModeRef.current = value;
+    setSampleModeState(value);
+    if (!session) return;
+    const next = { ...session, sampleMode: value };
+    setSession(next);
+    // Saving a preference must not reopen a screen the user has left.
+    void putSession(next)
+      .then(() => {
+        if (mounted.current)
+          setSessions((rows) => [
+            next,
+            ...rows.filter((s) => s.id !== next.id),
+          ]);
+      })
+      .catch(() => {
+        if (mounted.current)
+          setError(
+            "연습 방식 설정을 저장하지 못했어요. 브라우저 저장 권한을 확인해 주세요.",
+          );
+      });
   }
   function open(s: VoiceSession | null) {
     // Let the parent change the primary destination as well as the content.
@@ -268,7 +302,7 @@ export default function VoiceWorkspace({
     setTermStatus(null);
     setTermRequestId(null);
     setSession(s);
-    if (s?.kind === "recording") setSampleMode(false);
+    restoreSampleMode(s);
     setReviewOutage(null);
     window.scrollTo({ top: 0 });
   }
