@@ -1,6 +1,7 @@
 "use client";
 import MessengerPractice from "./MessengerPractice";
 import ConversationFocusPicker from "./ConversationFocusPicker";
+import FocusScene from "./FocusScene";
 import {
   FOCUS_KEY,
   parseFocus,
@@ -760,12 +761,9 @@ export default function ConversationWorkspace() {
                       </button>
                     </div>
                   </div>
-                  <div className="dc-welcome-art">
+                  <div className="dc-welcome-art focus-welcome-art">
                     <span className="dc-handnote">천천히 말해도 괜찮아요.</span>
-                    <Companion />
-                    <span className="dc-character-name">
-                      당신의 옆자리, {currentCharacter.name}
-                    </span>
+                    <FocusScene focus={focus || "all"} />
                   </div>
                 </section>
                 <div className="vn-home-actions">

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import FocusScene from "./FocusScene";
+import { Icon } from "./CompanionUI";
 import {
   focusInfo,
   focusOptions,
@@ -46,11 +48,18 @@ export default function ConversationFocusPicker({
     );
   return (
     <section className="focus-picker" aria-label="대화 맥락 선택">
-      <p className="dc-overline">나에게 필요한 대화부터</p>
-      <h1>지금 어떤 대화를 준비하세요?</h1>
-      <p>
-        하나만 고르면 관련 상황과 표현을 먼저 보여드려요. 언제든 바꿀 수 있어요.
-      </p>
+      <div className="focus-intro">
+        <div className="focus-intro-copy">
+          <p className="dc-overline">나에게 필요한 대화부터</p>
+          <h1>지금 어떤 대화를 준비하세요?</h1>
+          <p>
+            연습하고 싶은 장면을 골라보세요.
+            <br />
+            나에게 맞는 상황과 표현부터 함께 준비해요.
+          </p>
+        </div>
+        <FocusScene />
+      </div>
       <div className="focus-options">
         {focusOptions
           .filter((option) => option.id !== "custom")
@@ -58,11 +67,18 @@ export default function ConversationFocusPicker({
             <button
               key={option.id}
               data-focus={option.id}
+              aria-label={`${option.label} ${option.example}`}
               aria-pressed={value === option.id}
               onClick={() => choose(option.id)}
             >
-              <strong>{option.label}</strong>
-              <span>{option.example}</span>
+              <FocusScene focus={option.id} compact />
+              <div className="focus-option-copy">
+                <strong>{option.label}</strong>
+                <span>{option.example}</span>
+                <i className="focus-option-arrow" aria-hidden="true">
+                  <Icon name="arrow" size={18} />
+                </i>
+              </div>
             </button>
           ))}
       </div>

@@ -1,0 +1,301 @@
+.focus-picker {
+  max-width: 1040px;
+  padding: 0;
+  margin: 20px auto 36px;
+}
+.focus-intro {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 36px;
+  border-radius: 28px;
+  background: #f1f0e5;
+  overflow: hidden;
+}
+.focus-intro-copy {
+  position: relative;
+  z-index: 1;
+}
+.focus-intro .dc-overline {
+  color: #49644d;
+  letter-spacing: 0.04em;
+}
+.focus-intro h1 {
+  max-width: 390px;
+  font-size: clamp(26px, 3.2vw, 38px);
+  line-height: 1.4;
+  letter-spacing: -0.05em;
+  margin: 12px 0;
+  text-wrap: balance;
+}
+.focus-intro-copy > p:last-child {
+  color: #596452;
+  font-size: 15px;
+  line-height: 1.8;
+  margin: 0;
+}
+.focus-scene {
+  --scene-wall: #dfe6d0;
+  --scene-window: #e7d9b9;
+  --scene-paper: #f8f6ea;
+  --scene-shadow: #d4dcc6;
+  --scene-outline: #b6c5a8;
+  --scene-ink: #688257;
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 360 / 230;
+  isolation: isolate;
+  pointer-events: none;
+}
+.scene-service {
+  --scene-wall: #f0dac8;
+  --scene-window: #ead0ab;
+  --scene-shadow: #e8cdb9;
+  --scene-outline: #d7b59c;
+  --scene-ink: #9c7052;
+}
+.scene-education {
+  --scene-wall: #e3deed;
+  --scene-window: #d6dbea;
+  --scene-shadow: #d6cfe3;
+  --scene-outline: #bcb0ce;
+  --scene-ink: #87749d;
+}
+.scene-daily {
+  --scene-wall: #dbe9ec;
+  --scene-window: #d1e0cf;
+  --scene-shadow: #ccdfe2;
+  --scene-outline: #a6c3cb;
+  --scene-ink: #5c8490;
+}
+.focus-scene > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.focus-scene-character,
+.focus-scene-friend {
+  position: absolute;
+  left: 4%;
+  bottom: 7%;
+  width: 60%;
+}
+.focus-scene-friend {
+  left: 46%;
+  bottom: 9%;
+  width: 52%;
+  transform: rotate(-5deg);
+}
+.scene-all .focus-scene-character,
+.scene-custom .focus-scene-character {
+  left: 2%;
+  bottom: 9%;
+  width: 54%;
+  transform: rotate(4deg);
+}
+.focus-scene .dc-companion.is-small {
+  width: 100%;
+  height: auto;
+  margin: 0;
+}
+.focus-scene-bubble {
+  animation: focus-bubble-float 5s ease-in-out infinite;
+}
+.focus-options {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0 20px;
+}
+.focus-options > button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: 1px solid #dadfd0;
+  background: #fffef9;
+  border-radius: 20px;
+  overflow: hidden;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+.focus-options .focus-scene {
+  max-width: none;
+  background: #eff2e7;
+}
+.focus-options [data-focus="service"] .focus-scene {
+  background: #faf0e6;
+}
+.focus-options [data-focus="education"] .focus-scene {
+  background: #f2eff7;
+}
+.focus-options [data-focus="daily"] .focus-scene {
+  background: #edf5f5;
+}
+.focus-option-copy {
+  position: relative;
+  flex: 1;
+  padding: 16px 18px 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.focus-options strong {
+  font-size: 18px;
+  color: #354635;
+  padding-right: 22px;
+  margin-bottom: 8px;
+}
+.focus-options .focus-option-copy > span {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #636c5c;
+}
+.focus-option-arrow {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  color: #657b55;
+  transition: transform 180ms ease;
+}
+.focus-options > button:hover,
+.focus-options > button:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px #344b4010;
+  background: #fffef9;
+  border-color: #7e946c;
+}
+.focus-options > button:hover .focus-option-arrow,
+.focus-options > button:focus-visible .focus-option-arrow {
+  transform: translateX(3px);
+}
+.focus-options > button[aria-pressed="true"] {
+  border-color: #4c6c45;
+  box-shadow: inset 0 0 0 1px #4c6c45;
+  background: #f2f6ec;
+}
+.focus-picker > .vn-toolbar {
+  justify-content: center;
+  gap: 10px 20px;
+}
+.focus-picker > small {
+  display: block;
+  text-align: center;
+  color: #707767;
+  font-size: 12px;
+  line-height: 1.7;
+  margin-top: 14px;
+}
+.focus-welcome-art {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+}
+.focus-welcome-art:before {
+  display: none;
+}
+.focus-welcome-art .dc-handnote {
+  align-self: center;
+}
+@keyframes focus-bubble-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@media (max-width: 760px) {
+  .focus-intro {
+    padding: 16px 22px;
+    gap: 0;
+  }
+  .focus-intro h1 {
+    font-size: 27px;
+  }
+  .focus-intro-copy > p:last-child {
+    font-size: 13px;
+  }
+  .focus-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .focus-options .focus-scene {
+    aspect-ratio: 360 / 195;
+    overflow: hidden;
+  }
+  .focus-options .focus-scene > svg {
+    height: auto;
+  }
+  .focus-options .focus-scene-character {
+    bottom: -6%;
+  }
+  .focus-welcome-art {
+    width: 240px;
+    height: auto;
+    margin: 0 auto 12px;
+  }
+}
+@media (max-width: 480px) {
+  .focus-picker {
+    margin-top: 8px;
+  }
+  .focus-intro {
+    grid-template-columns: 1fr;
+    padding: 22px 22px 0;
+    border-radius: 22px;
+  }
+  .focus-intro h1 {
+    font-size: 27px;
+    max-width: 260px;
+    margin: 8px 0;
+  }
+  .focus-intro > .focus-scene {
+    width: 220px;
+    justify-self: end;
+    margin: -6px -4px 0 0;
+  }
+  .focus-options {
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .focus-options > button {
+    padding: 0;
+    border-radius: 16px;
+  }
+  .focus-option-copy {
+    padding: 12px 12px 14px;
+  }
+  .focus-options strong {
+    font-size: 16px;
+  }
+  .focus-options .focus-option-copy > span {
+    font-size: 12px;
+  }
+  .focus-option-arrow {
+    top: 13px;
+    right: 10px;
+  }
+  .focus-picker > .vn-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .focus-picker > .vn-toolbar button {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .focus-scene *,
+  .focus-options > button,
+  .focus-option-arrow {
+    animation: none !important;
+    transition: none !important;
+  }
+  .focus-options > button:hover,
+  .focus-options > button:focus-visible {
+    transform: none;
+  }
+}
