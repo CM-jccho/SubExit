@@ -28,12 +28,11 @@ for (const ext of [".ts", ".tsx"])
   };
 const { test } = require("node:test"),
   assert = require("node:assert/strict");
-const { JSDOM } = require("jsdom"),
+const { JSDOM, VirtualConsole } = require("jsdom"),
   React = require("react"),
   { act } = React,
-  { createRoot } = require("react-dom/client"),
-  { Simulate } = require("react-dom/test-utils"),
   { IDBFactory } = require("fake-indexeddb");
+let createRoot, Simulate;
 const recording = require("../lib/recording-analysis.ts"),
   reviews = require("../lib/practice-review.ts"),
   store = require("../lib/voice-notebook.ts"),
@@ -98,7 +97,14 @@ async function ai(fn) {
   }
 }
 async function mount(C, props = {}, prepare = () => {}) {
-  const dom = new JSDOM('<div id="root"></div>', { url: "https://test.local" });
+  const browserErrors = [],
+    virtualConsole = new VirtualConsole();
+  virtualConsole.sendTo(console);
+  virtualConsole.on("jsdomError", (error) => browserErrors.push(error));
+  const dom = new JSDOM('<div id="root"></div>', {
+    url: "https://test.local",
+    virtualConsole,
+  });
   const old = {
     window: global.window,
     document: global.document,
@@ -113,6 +119,10 @@ async function mount(C, props = {}, prepare = () => {}) {
     value: window.navigator,
     configurable: true,
   });
+  // React detects input-event support when imported. Import after the DOM exists
+  // so focus uses modern events, rather than the legacy IE attachEvent path.
+  ({ createRoot } = require("react-dom/client"));
+  ({ Simulate } = require("react-dom/test-utils"));
   global.IS_REACT_ACT_ENVIRONMENT = true;
   global.indexedDB = new IDBFactory();
   window.matchMedia = () => ({ matches: false });
@@ -138,6 +148,11 @@ async function mount(C, props = {}, prepare = () => {}) {
       global.fetch = old.fetch;
       global.localStorage = old.localStorage;
       Object.defineProperty(global, "navigator", old.navigator);
+      assert.deepEqual(
+        browserErrors,
+        [],
+        "Unhandled JSDOM errors must fail the test",
+      );
     },
   };
 }
@@ -1521,7 +1536,7 @@ test("training quota keeps saved answers and allows finishing with authored guid
     onSession() {},
   });
   try {
-    await store.putSession(saved);
+    await act(async () => store.putSession(saved));
     global.fetch = async () =>
       Response.json(
         { code: "rate_limit", quotaKind: "daily", retryAfter: 60 },
@@ -1576,7 +1591,7 @@ test("editing first training answers invalidates old feedback and completion wit
     onSession() {},
   });
   try {
-    await store.putSession(saved);
+    await act(async () => store.putSession(saved));
     await click(button("첫 표현 다시 작성"));
     await change(
       document.querySelectorAll("textarea")[2],
@@ -1613,7 +1628,7 @@ test("saved review opens targeted foundation training and completed training ret
   const C = require("../components/VoiceWorkspace.tsx").default;
   const ui = await mount(C, { config, mode: "records", onChooseCard() {} });
   try {
-    await store.putSession(s);
+    await act(async () => store.putSession(s));
     await act(async () => ui.root.render(null));
     await act(async () =>
       ui.root.render(
@@ -1704,7 +1719,7 @@ test("training feedback saves once, reopens without generation and ignores a res
     onSession() {},
   });
   try {
-    await store.putSession(original);
+    await act(async () => store.putSession(original));
     let calls = 0;
     global.fetch = async () => {
       calls++;
@@ -2140,7 +2155,7 @@ test("opening an authored messenger example never overwrites a saved reply to th
     onRecords() {},
   });
   try {
-    await store.putSession(saved);
+    await act(async () => store.putSession(saved));
     await click(button("메시지·조건 수정"));
     await click(
       [...document.querySelectorAll(".daily-topic-grid button")].find((b) =>
