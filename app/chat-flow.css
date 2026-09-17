@@ -104,10 +104,10 @@
   font-size: 13px;
 }
 .dc-root .dd-back {
-  border: 1px solid #d4dfd1;
-  border-radius: 12px;
-  background: #fffefa;
-  padding: 8px 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 8px 0;
   color: #395940;
   font-weight: 600;
 }
@@ -134,12 +134,14 @@
 .purpose-alternatives .purpose-support {
   margin: 0;
   padding: 8px 0;
-  gap: 8px;
+  gap: 8px 24px;
 }
 .purpose-support > button {
-  border: 1px solid #d4dfd1;
-  border-radius: 10px;
-  padding: 8px 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  min-height: 44px;
+  padding: 8px 0;
 }
 .learn-speaker-check {
   scroll-margin-top: 100px;
