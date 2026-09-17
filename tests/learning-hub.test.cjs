@@ -3526,6 +3526,143 @@ test("term extraction includes the end of long transcripts and renders selectabl
     }
   }));
 
+test("term finding offers consent at the clicked record, saves results and reports empty, invalid and quota responses inline", async () => {
+  const Workspace = require("../components/VoiceWorkspace.tsx").default;
+  const {
+    ConsentSessionProvider,
+  } = require("../components/ConsentSession.tsx");
+  const saved = session();
+  saved.turns = [
+    {
+      ...source,
+      clip: undefined,
+      text: "SLA와 API를 확인해 주세요.",
+      terms: [],
+    },
+  ];
+  delete saved.recordingAnalysis;
+  const ui = await mount(() => null);
+  try {
+    await act(async () => store.putSession(saved));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(
+          ConsentSessionProvider,
+          null,
+          React.createElement(Workspace, {
+            config,
+            mode: "records",
+            initialSessionId: saved.id,
+            onChooseCard() {},
+          }),
+        ),
+      ),
+    );
+    await settle();
+    let requests = 0;
+    let response = { terms: ["SLA", "API"] };
+    let status = 200;
+    global.fetch = async (url, init) => {
+      requests++;
+      assert.equal(url, "/api/terms");
+      const sent = JSON.parse(init.body);
+      assert.equal(sent.text, saved.turns[0].text);
+      assert.equal(sent.consent, true);
+      return Response.json(response, { status });
+    };
+    assert(
+      !document
+        .querySelector(".vn-turn-actions")
+        .textContent.includes("AI 동의 필요"),
+    );
+    await click(button("중요 용어 찾기"));
+    assert.equal(requests, 0);
+    assert(document.querySelector(".vn-turn .vn-term-help"));
+    assert.equal(document.querySelectorAll(".vn-consent input").length, 1);
+    assert(button("용어 찾기 시작").disabled);
+    await click(document.querySelector(".vn-term-help input"));
+    assert.equal(requests, 0, "consenting alone must not send data");
+    await click(button("용어 찾기 시작"));
+    await settle();
+    assert.equal(requests, 1);
+    assert.equal(
+      document.querySelectorAll(".vn-term-results button").length,
+      2,
+    );
+    assert.deepEqual(
+      (await store.listSessions()).find((s) => s.id === saved.id).turns[0]
+        .terms,
+      ["SLA", "API"],
+    );
+    response = { terms: null };
+    await click(button("중요 용어 찾기"));
+    assert.match(
+      document.querySelector(".vn-turn [role=alert]").textContent,
+      /응답을 확인하지 못/,
+    );
+    assert.equal(
+      document.querySelectorAll(".vn-term-results button").length,
+      2,
+    );
+    response = { terms: [] };
+    await click(button("중요 용어 찾기"));
+    await settle();
+    assert.match(
+      document.querySelector(".vn-term-status").textContent,
+      /찾은 용어가 없어요/,
+    );
+    response = { code: "provider_rate_limit", quotaKind: "daily" };
+    status = 429;
+    await click(button("중요 용어 찾기"));
+    assert.match(
+      document.querySelector(".vn-turn [role=alert]").textContent,
+      /일일 한도/,
+    );
+    const before = requests;
+    await click(button("표현 직접 스크랩"));
+    await settle();
+    assert(document.querySelector("dialog[open]"));
+    assert.equal(
+      requests,
+      before,
+      "manual scrap remains available during an AI outage",
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("unavailable term extraction explains the problem beside the record without sending a request", async () => {
+  const Workspace = require("../components/VoiceWorkspace.tsx").default;
+  const saved = session();
+  const ui = await mount(() => null);
+  try {
+    await act(async () => store.putSession(saved));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(Workspace, {
+          config: { ...config, available: false },
+          mode: "records",
+          initialSessionId: saved.id,
+          onChooseCard() {},
+        }),
+      ),
+    );
+    await settle();
+    global.fetch = async () => {
+      throw new Error("must not call unavailable AI");
+    };
+    await click(button("중요 용어 찾기"));
+    assert.match(
+      document.querySelector(".vn-term-help").textContent,
+      /AI 연결이 준비되지 않아/,
+    );
+    assert.equal(button("용어 찾기 시작"), undefined);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
 test("mobile keyboard guard reveals page editors, restores navigation on close and ignores hardware keyboards and pinch zoom", async () => {
   const Guard = require("../components/MobileKeyboardViewport.tsx").default;
   let viewport,

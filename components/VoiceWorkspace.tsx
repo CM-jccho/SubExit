@@ -106,7 +106,9 @@ export default function VoiceWorkspace({
   const [termStatus, setTermStatus] = useState<{
     id: string;
     text: string;
+    error?: boolean;
   } | null>(null);
+  const [termRequestId, setTermRequestId] = useState<string | null>(null);
   const [session, setSession] = useState<VoiceSession | null>(() =>
       mode === "practice" && initialCard
         ? makeSession("practice", initialCard, inheritedCompanion)
@@ -263,6 +265,8 @@ export default function VoiceWorkspace({
     setSuggestion(undefined);
     setError("");
     setNotice("");
+    setTermStatus(null);
+    setTermRequestId(null);
     setSession(s);
     if (s?.kind === "recording") setSampleMode(false);
     setReviewOutage(null);
@@ -452,7 +456,9 @@ export default function VoiceWorkspace({
     if (session.kind !== "recording") void respond(next);
   }
   async function extract(turn: VoiceTurn) {
-    if (!session) return;
+    if (!session || busy || captureBusy || !consent || !config.available)
+      return;
+    setTermRequestId(null);
     setTermStatus({ id: turn.id, text: "중요 용어를 찾고 있어요…" });
     setError("");
     setBusy(true);
@@ -477,6 +483,11 @@ export default function VoiceWorkspace({
       const d = await r.json();
       if (generation.current !== id) return;
       if (!r.ok) throw new Error(d.error);
+      if (
+        !Array.isArray(d.terms) ||
+        d.terms.some((word: unknown) => typeof word !== "string")
+      )
+        throw new Error("용어 응답을 확인하지 못했어요. 다시 시도해 주세요.");
       await persist({
         ...session,
         turns: session.turns.map((t) =>
@@ -497,13 +508,16 @@ export default function VoiceWorkspace({
       });
     } catch (e) {
       if (generation.current === id)
-        setError(
-          e instanceof Error && e.name === "AbortError"
-            ? "용어 찾기가 지연됐어요. 다시 시도해 주세요."
-            : e instanceof Error
-              ? e.message
-              : "용어를 찾지 못했어요.",
-        );
+        setTermStatus({
+          id: turn.id,
+          error: true,
+          text:
+            e instanceof Error && e.name === "AbortError"
+              ? "용어 찾기가 지연됐어요. 다시 시도해 주세요."
+              : e instanceof Error
+                ? e.message
+                : "용어를 찾지 못했어요.",
+        });
     } finally {
       clearTimeout(timeout);
       if (generation.current === id) {
@@ -1154,37 +1168,22 @@ export default function VoiceWorkspace({
                     {t.text && (
                       <>
                         {!session.isSample && (
-                          <>
-                            <button
-                              className="dd-link"
-                              aria-label="중요 용어 찾기"
-                              disabled={busy || captureBusy}
-                              onClick={() => {
-                                if (
-                                  !consent ||
-                                  !config.available ||
-                                  sampleMode
-                                ) {
-                                  setError(
-                                    !consent
-                                      ? "중요 용어 찾기는 AI 전송 동의가 필요해요. 위의 전송 안내에서 동의해 주세요. 표현 직접 스크랩은 동의 없이 저장할 수 있어요."
-                                      : sampleMode
-                                        ? "샘플 모드에서는 AI 용어 추출을 사용하지 않아요. 표현 직접 스크랩을 이용해 주세요."
-                                        : "AI 연결을 확인해 주세요. 표현 직접 스크랩은 바로 사용할 수 있어요.",
-                                  );
-                                  return;
-                                }
-                                void extract(t);
-                              }}
-                            >
-                              용어 찾기
-                            </button>
-                            {!consent && !sampleMode && (
-                              <span className="vn-action-hint">
-                                AI 동의 필요
-                              </span>
-                            )}
-                          </>
+                          <button
+                            className="dd-link"
+                            aria-label="중요 용어 찾기"
+                            disabled={busy || captureBusy}
+                            onClick={() => {
+                              if (!consent || !config.available || sampleMode) {
+                                setTermRequestId(t.id);
+                                setTermStatus(null);
+                                setError("");
+                                return;
+                              }
+                              void extract(t);
+                            }}
+                          >
+                            용어 찾기
+                          </button>
                         )}
                         <button
                           className="dd-link"
@@ -1205,10 +1204,65 @@ export default function VoiceWorkspace({
                       </>
                     )}
                   </div>
+                  {termRequestId === t.id && (
+                    <section
+                      className="vn-term-help"
+                      aria-label="용어 찾기 안내"
+                    >
+                      <p>
+                        {!config.available
+                          ? "AI 연결이 준비되지 않아 용어를 찾을 수 없어요. 원하는 표현은 스크랩으로 직접 저장할 수 있어요."
+                          : sampleMode
+                            ? "용어 찾기는 AI 기능이에요. 전송에 동의한 뒤 AI 모드로 전환해 실행할 수 있어요."
+                            : "이 기록의 문장에서 용어를 찾아드려요. 처음 한 번 AI 전송 동의가 필요해요."}
+                      </p>
+                      {config.available && (
+                        <AIConsent
+                          priority={-1}
+                          config={config}
+                          checked={consent}
+                          onChange={setConsent}
+                          disabled={busy || captureBusy}
+                        />
+                      )}
+                      <div className="vn-term-help-actions">
+                        {config.available && (
+                          <button
+                            className="dd-secondary"
+                            disabled={!consent || busy || captureBusy}
+                            onClick={() => {
+                              setSampleMode(false);
+                              void extract(t);
+                            }}
+                          >
+                            {sampleMode
+                              ? "AI로 전환하고 용어 찾기"
+                              : "용어 찾기 시작"}
+                          </button>
+                        )}
+                        <button
+                          className="dd-link"
+                          onClick={() => setTermRequestId(null)}
+                        >
+                          닫기
+                        </button>
+                      </div>
+                    </section>
+                  )}
                   {termStatus?.id === t.id && (
-                    <p className="vn-caption" role="status">
-                      {termStatus.text}
-                    </p>
+                    <div className="vn-term-status">
+                      <p
+                        className={termStatus.error ? "dd-error" : "vn-caption"}
+                        role={termStatus.error ? "alert" : "status"}
+                      >
+                        {termStatus.text}
+                      </p>
+                      {termStatus.error && (
+                        <p className="vn-caption">
+                          원하는 표현은 위의 ‘스크랩’으로 직접 저장할 수 있어요.
+                        </p>
+                      )}
+                    </div>
                   )}
                   {!!t.terms.length && (
                     <div
