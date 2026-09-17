@@ -6,12 +6,14 @@ import {
   type ConversationFocus,
 } from "@/lib/conversation-focus";
 export default function ConversationFocusPicker({
+  purpose = "practice",
   value,
   onChange,
   onCreate,
   editing,
   onEditingChange,
 }: {
+  purpose?: "live" | "practice";
   value: ConversationFocus | null;
   onCreate?: () => void;
   editing: boolean;
@@ -42,7 +44,11 @@ export default function ConversationFocusPicker({
     <section className="focus-picker" aria-label="대화 맥락 선택">
       <div className="focus-intro">
         <div className="focus-intro-copy">
-          <h1>어떤 상황의 대화를 연습할까요?</h1>
+          <h1>
+            {purpose === "live"
+              ? "어떤 대화를 돕고 싶으세요?"
+              : "어떤 상황의 대화를 연습할까요?"}
+          </h1>
           <p>나에게 필요한 상황부터 골라보세요.</p>
         </div>
       </div>

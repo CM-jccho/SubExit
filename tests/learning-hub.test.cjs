@@ -516,8 +516,8 @@ test("free setup remains selectable after a guided answer and preserves entered 
   );
   try {
     await settle();
-    await click(button("대화 연습"));
-    await click(button("새 대화"));
+    await click(button("미리 연습하기"));
+    await click(button("내 상황 만들기"));
     await click(button("하나씩 정리"));
     await change(
       document.querySelector("#setup-message"),
@@ -566,8 +566,8 @@ test("free setup with unavailable AI accepts a local draft and clearly routes to
   });
   try {
     await settle();
-    await click(button("대화 연습"));
-    await click(button("새 대화"));
+    await click(button("미리 연습하기"));
+    await click(button("내 상황 만들기"));
     assert(!button("자유롭게 이야기").disabled);
     await click(button("자유롭게 이야기"));
     await change(
@@ -612,7 +612,9 @@ test("workspace navigation preserves section across remount and browser back, an
     await act(async () => ui.root.render(null));
     await act(async () => ui.root.render(React.createElement(C)));
     await settle();
-    assert(document.querySelector("h1").textContent.includes("어떤 연습"));
+    assert(
+      document.querySelector("h1").textContent.includes("다음에 뭐라고 말할지"),
+    );
     await act(async () => {
       window.history.back();
       await new Promise((r) => setTimeout(r, 20));
@@ -644,7 +646,7 @@ test("home practice opens a context card and practice keeps a discoverable recor
   );
   try {
     await settle();
-    await click(button("대화 연습"));
+    await click(button("미리 연습하기"));
     assert.equal(window.location.search, "?view=library");
     const card = [...document.querySelectorAll(".dc-saved-card")].find((b) =>
       b.textContent.includes("동료에게 검토 부탁하기"),
@@ -666,7 +668,7 @@ test("home practice opens a context card and practice keeps a discoverable recor
         .querySelector("h1")
         .textContent.includes("동료에게 검토 부탁하기"),
     );
-    await click(button("대화 기록 목록"));
+    await click(button("내 기록으로"));
     assert.equal(document.querySelector("h1").textContent, "내 기록");
     const examples = [...document.querySelectorAll("details")].find((d) =>
       d.querySelector("summary")?.textContent.includes("녹음 분석 예시"),
@@ -2111,7 +2113,7 @@ test("upcoming features have explicit unavailable labels, no launch actions and 
 test("messenger has a dedicated home action and restores by URL", async () => {
   const nav = require("../lib/workspace-navigation.ts");
   assert.equal(nav.workspaceView("?view=messenger"), "messenger");
-  assert.equal(nav.workspaceSection("messenger"), "home");
+  assert.equal(nav.workspaceSection("messenger"), "more");
   assert.equal(
     nav.workspaceUrl("https://test.local", "messenger"),
     "/?view=messenger",
@@ -2130,13 +2132,14 @@ test("messenger has a dedicated home action and restores by URL", async () => {
     );
   try {
     await settle();
+    await click(button("더보기"));
     await click(button("메시지 답장"));
     await settle();
     assert.equal(document.querySelector("h1").textContent, "메시지 답장");
     assert.equal(window.location.search, "?view=messenger");
     assert.equal(
       document.querySelector('[aria-current="page"]').textContent,
-      "홈",
+      "더보기",
     );
   } finally {
     await ui.cleanup();
@@ -2263,7 +2266,7 @@ test("curation starts after choosing practice, keeps personal cards and preserve
     await settle();
     assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
     assert.equal(document.querySelectorAll(".dc-saved-card").length, 0);
-    await click(button("대화 연습"));
+    await click(button("미리 연습하기"));
     assert(document.querySelector('[aria-label="대화 맥락 선택"]'));
     await click(document.querySelector('[data-focus="education"]'));
     assert.equal(document.querySelectorAll(".dc-saved-card").length, 1);
@@ -2281,7 +2284,7 @@ test("curation starts after choosing practice, keeps personal cards and preserve
     };
     cards.writeCards([...cards.readCards(), personal]);
     await click(button("홈"));
-    await click(button("대화 연습"));
+    await click(button("미리 연습하기"));
     assert.equal(document.querySelectorAll(".dc-saved-card").length, 2);
     assert(document.body.textContent.includes(personal.title));
     await click(button("모든 분야 예시 7"));
@@ -2304,7 +2307,7 @@ test("curation starts after choosing practice, keeps personal cards and preserve
       cards.readCards().filter((c) => c.id !== "card-scene-parent-hours"),
     );
     await click(button("홈"));
-    await click(button("대화 연습"));
+    await click(button("미리 연습하기"));
     assert.equal(document.querySelectorAll(".dc-saved-card").length, 1);
     assert(!cards.readCards().some((c) => c.id === "card-scene-parent-hours"));
   } finally {
@@ -2327,7 +2330,7 @@ test("editing practice interest hides only its list and preserves search when ca
       document.querySelector('[aria-label="선택한 대화 맥락"]'),
       null,
     );
-    await click(button("대화 연습"));
+    await click(button("미리 연습하기"));
     await change(document.querySelector("#card-search"), "상담 시간");
     await click(button("선택 바꾸기"));
     assert(document.querySelector('[aria-label="대화 맥락 선택"]'));
@@ -2345,7 +2348,7 @@ test("editing practice interest hides only its list and preserves search when ca
     );
     assert.equal(document.querySelector("#card-search").value, "");
     await click(button("홈"));
-    assert.equal(document.querySelectorAll("[data-purpose]").length, 4);
+    assert.equal(document.querySelectorAll("[data-purpose]").length, 2);
     assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
   } finally {
     await ui.cleanup();
@@ -2403,7 +2406,7 @@ test("writing a custom situation bypasses fixed categories and never opens an un
   const ui = await mount(C);
   try {
     await settle();
-    await click(button("대화 연습"));
+    await click(button("미리 연습하기"));
     await click(button("내 상황 직접 설명하기"));
     assert.equal(document.querySelector("dialog[open]"), null);
     assert.equal(
@@ -2418,7 +2421,7 @@ test("writing a custom situation bypasses fixed categories and never opens an un
   }
 });
 
-test("four home purposes have distinct destinations while More contains only support tools", async () => {
+test("home prioritizes live assistance, offers rehearsal second and separates supporting destinations", async () => {
   const C = require("../components/ConversationWorkspace.tsx").default;
   const ui = await mount(C, {}, () =>
     localStorage.setItem("ddeundeun-spotlight-guide-v2", "done"),
@@ -2431,101 +2434,54 @@ test("four home purposes have distinct destinations while More contains only sup
       ),
       ["홈", "내 기록", "더보기"],
     );
-    assert.equal(document.querySelectorAll("[data-purpose]").length, 4);
-    for (const id of ["messenger", "training", "prompts", "library"]) {
-      await click(document.querySelector(`[data-purpose="${id}"]`));
-      await settle();
-      assert.equal(window.location.search, `?view=${id}`);
-      const expectedHeading = {
-        messenger: "메시지 답장",
-        training: "대화 기초 훈련",
-        prompts: "AI 요청 연습",
-        library: "어떤 상황의 대화를 연습할까요?",
-        terms: "용어 노트",
-        room: "AI 대화 상대",
-        daily: "오늘의 한마디",
-        guide: "이렇게 시작해요",
-      }[id];
-      assert(
-        document.querySelector("h1").textContent.includes(expectedHeading),
-        `${id} must show its own content`,
-      );
-      assert.equal(
-        document.querySelector(".dc-nav [aria-current=page]").textContent,
-        "홈",
-      );
-      assert.equal(document.querySelectorAll("[data-purpose]").length, 0);
-      assert.equal(
-        document.querySelectorAll(".practice-navigation-items").length,
-        0,
-      );
-      if (id !== "library")
-        assert.equal(
-          document.querySelector('[aria-label="대화 맥락 선택"]'),
-          null,
-        );
-      await click(button("홈으로"));
-    }
+    assert.equal(document.querySelectorAll("[data-purpose]").length, 2);
+    assert.equal(document.querySelectorAll(".practice-loop li").length, 3);
+    assert(!button("AI 요청 연습"));
+    assert(!button("대화 기초 훈련"));
+    await click(button("미리 연습하기"));
+    assert.equal(window.location.search, "?view=library");
+    assert(document.querySelector("h1").textContent.includes("어떤 상황"));
+    await click(button("홈으로"));
     await click(button("더보기"));
-    assert.equal(document.querySelector("h1").textContent, "더보기");
-    assert.equal(document.querySelectorAll("[data-purpose]").length, 0);
-    const labels = [
-      ...document.querySelectorAll(".focus-tool-grid strong"),
-    ].map((s) => s.textContent);
-    assert.deepEqual(labels, [
-      "용어 노트",
-      "AI 대화 상대",
-      "가볍게 이야기하기",
-      "사용·저장 안내",
-    ]);
+    assert.deepEqual(
+      [...document.querySelectorAll(".focus-tool-grid strong")].map(
+        (s) => s.textContent,
+      ),
+      ["메시지 답장", "용어 노트", "AI 대화 상대", "사용·저장 안내"],
+    );
     for (const [label, id] of [
+      ["메시지 답장", "messenger"],
       ["용어 노트", "terms"],
       ["AI 대화 상대", "room"],
-      ["가볍게 이야기하기", "daily"],
       ["사용·저장 안내", "guide"],
     ]) {
-      await click(
-        [...document.querySelectorAll(".focus-tool-grid button")].find(
-          (b) => b.querySelector("strong").textContent === label,
-        ),
-      );
+      await click(button(label));
       await settle();
       assert.equal(window.location.search, `?view=${id}`);
-      const expectedHeading = {
-        messenger: "메시지 답장",
-        training: "대화 기초 훈련",
-        prompts: "AI 요청 연습",
-        library: "어떤 상황의 대화를 연습할까요?",
-        terms: "용어 노트",
-        room: "AI 대화 상대",
-        daily: "오늘의 한마디",
-        guide: "이렇게 시작해요",
-      }[id];
-      assert(
-        document.querySelector("h1").textContent.includes(expectedHeading),
-        `${id} must show its own content`,
-      );
+      assert(document.querySelector("h1").textContent.includes(label));
       assert.equal(
         document.querySelector(".dc-nav [aria-current=page]").textContent,
         "더보기",
       );
-      assert.equal(document.querySelector(".purpose-breadcrumb"), null);
+      assert.equal(
+        document.querySelector(".purpose-breadcrumb [aria-current=location]")
+          .textContent,
+        label,
+      );
       assert.equal(
         document.querySelector('[aria-label="대화 맥락 선택"]'),
         null,
       );
+      if (id === "room") {
+        assert(!document.body.textContent.includes("라운지 미리보기"));
+        assert(!document.body.textContent.includes("친구들 대화 관찰"));
+      }
       await act(async () => ui.root.render(null));
       await act(async () => ui.root.render(React.createElement(C)));
       await settle();
-      assert.equal(window.location.search, `?view=${id}`);
-      assert(
-        document.querySelector("h1").textContent.includes(expectedHeading),
-        `${id} must show its own content`,
-      );
-      assert(
-        document.querySelector("h1").textContent.includes(expectedHeading),
-      );
-      await click(button("더보기"));
+      assert(document.querySelector("h1").textContent.includes(label));
+      await click(button("더보기로"));
+      assert.equal(window.location.search, "?view=more");
     }
   } finally {
     await ui.cleanup();
@@ -3115,7 +3071,7 @@ test("conversation keeps its composer mounted and closes input after saving, whi
     );
     await click(button("답변 작성 닫기"));
     window.confirm = () => false;
-    await click(button("대화 기록 목록"));
+    await click(button("내 기록으로"));
     assert(button("입력 이어쓰기"));
     assert.equal((await store.getSession(original.id)).turns.length, 3);
     await click(button("입력 이어쓰기"));
@@ -3126,7 +3082,7 @@ test("conversation keeps its composer mounted and closes input after saving, whi
     );
     await click(button("답변 작성 닫기"));
     window.confirm = () => true;
-    await click(button("대화 기록 목록"));
+    await click(button("내 기록으로"));
     assert(!button("입력 이어쓰기"));
   } finally {
     await ui.cleanup();
@@ -3184,7 +3140,7 @@ test("practice recording entry opens a new recording without requiring interest 
   );
   try {
     await settle();
-    await click(button("대화 연습"));
+    await click(button("미리 연습하기"));
     await click(button("내 녹음으로 복기"));
     await settle();
     assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
@@ -3195,6 +3151,121 @@ test("practice recording entry opens a new recording without requiring interest 
     assert(document.querySelector(".input-launcher"));
     assert.equal(
       (await store.listSessions()).filter((r) => !r.isSample).length,
+      0,
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("returning from active practice updates the record list, URL and primary navigation together", async () => {
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(C, {}, () => {
+    localStorage.setItem("ddeundeun-spotlight-guide-v2", "done");
+    localStorage.setItem(
+      "ddeundeun-conversation-focus-v1",
+      JSON.stringify({ version: 1, focus: "all" }),
+    );
+  });
+  try {
+    await settle();
+    await click(button("미리 연습하기"));
+    await click(document.querySelector(".dc-saved-card"));
+    await click(document.querySelector('[data-tour="practice-button"]'));
+    await settle();
+    assert.equal(
+      document.querySelector(".dc-nav [aria-current=page]").textContent,
+      "홈",
+    );
+    await click(document.querySelector(".vn-consent input"));
+    global.fetch = async () =>
+      Response.json({ reply: "어떤 부탁인가요?", terms: [] });
+    await click(button("상대와 연습 시작"));
+    await settle();
+    // An unfinished editor must remain accessible if the user cancels leaving.
+    await click(button("답변 쓰기"));
+    await change(
+      document.querySelector('textarea[aria-label="인식한 말 또는 직접 입력"]'),
+      "아직 보내지 않은 말",
+    );
+    await click(button("답변 작성 닫기"));
+    window.confirm = () => false;
+    await click(button("내 기록으로"));
+    assert(button("입력 이어쓰기"));
+    assert.equal(
+      document.querySelector(".dc-nav [aria-current=page]").textContent,
+      "홈",
+    );
+    window.confirm = () => true;
+    await click(button("내 기록으로"));
+    await settle();
+    assert.equal(document.querySelector("h1").textContent, "내 기록");
+    assert.equal(window.location.search, "?view=records");
+    assert.equal(
+      document.querySelector(".dc-nav [aria-current=page]").textContent,
+      "내 기록",
+    );
+    assert.equal(
+      (await store.listSessions()).filter((s) => !s.isSample).length,
+      1,
+    );
+    await click(button("연습할 상황 고르기"));
+    assert(document.querySelector(".dc-saved-card"));
+    assert.equal(window.location.search, "?view=library");
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("live assistance retains its purpose through reload, skips the rehearsal tour and opens live coaching before optional practice", async () => {
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(C);
+  try {
+    await settle();
+    assert(
+      document
+        .querySelector('[data-purpose="live"]')
+        .classList.contains("dd-primary"),
+    );
+    assert(
+      document
+        .querySelector('[data-purpose="library"]')
+        .classList.contains("dd-secondary"),
+    );
+    await click(button("지금 대화 도움받기"));
+    assert.equal(window.location.search, "?view=library&purpose=live");
+    assert(document.querySelector("h1").textContent.includes("어떤 대화를"));
+    await click(document.querySelector('[data-focus="work"]'));
+    assert(!document.querySelector('[role="dialog"]'));
+    assert(document.querySelector("h1").textContent.includes("대화 상황 선택"));
+    await act(async () => ui.root.render(null));
+    await act(async () => ui.root.render(React.createElement(C)));
+    await settle();
+    assert.equal(window.location.search, "?view=library&purpose=live");
+    assert(document.querySelector("h1").textContent.includes("대화 상황 선택"));
+    await click(document.querySelector(".dc-saved-card"));
+    assert.equal(
+      document
+        .querySelector('[data-tour="practice-button"]')
+        .textContent.trim(),
+      "이 상황으로 도움받기",
+    );
+    await click(button("이 상황으로 도움받기"));
+    await settle();
+    assert.equal(
+      document.querySelector("h1").textContent,
+      "지금 대화 도움받기",
+    );
+    assert(document.body.textContent.includes("최대 8초"));
+    assert(document.body.textContent.includes("처리 중에는"));
+    await click(button("이 상황 미리 연습하기"));
+    assert(document.querySelector('[data-tour="practice-settings"]'));
+    assert.equal(
+      new URLSearchParams(window.location.search).get("purpose"),
+      null,
+    );
+    assert.equal(
+      (await store.listSessions()).filter((s) => !s.isSample).length,
       0,
     );
   } finally {

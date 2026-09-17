@@ -88,8 +88,10 @@ export default function VoiceWorkspace({
   initialCompanion,
   initialSessionId,
   onRoom,
+  onRecords,
 }: {
   onRoom?: () => void;
+  onRecords?: () => void;
   initialCard?: ConversationCard;
   mode?: "practice" | "records" | "chat" | "recording";
   initialCompanion?: CompanionCharacter;
@@ -220,6 +222,12 @@ export default function VoiceWorkspace({
     }
   }
   function open(s: VoiceSession | null) {
+    // Let the parent change the primary destination as well as the content.
+    // Its navigation handler owns the unsaved-input guard.
+    if (!s && onRecords) {
+      onRecords();
+      return;
+    }
     if (!canLeaveWorkspace()) return;
     generation.current++;
     abort.current?.abort();
@@ -700,11 +708,15 @@ export default function VoiceWorkspace({
             text="끝난 대화를 돌아보려면 ‘녹음·파일 추가’를 누르세요. 문자로 바꾼 뒤 내 말·상대 말을 확인하고 코칭을 받아요."
             dismissible
           />
-          <button className="vn-practice-invite" onClick={onChooseCard}>
+          <button
+            className="vn-practice-invite"
+            aria-label="연습할 상황 고르기"
+            onClick={onChooseCard}
+          >
             <Icon name="chat" />
             <span>
-              <strong>저장한 상대와 대화 연습하기</strong>
-              <small>내가 말하면, 그 상황의 상대가 답해요.</small>
+              <strong>연습할 상황 고르기</strong>
+              <small>내가 만든 상황이나 연습 예시를 골라 시작해요.</small>
             </span>
             <Icon name="arrow" />
           </button>
@@ -779,8 +791,7 @@ export default function VoiceWorkspace({
             disabled={captureBusy}
             onClick={() => open(null)}
           >
-            <Icon name="back" size={18} />
-            대화 기록 목록
+            <Icon name="back" size={18} />내 기록으로
           </button>
           <section className="vn-session-heading">
             <div>

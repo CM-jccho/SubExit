@@ -1,14 +1,12 @@
 "use client";
 import StickyPageTop from "./StickyPageTop";
 import { DailyInvite } from "./DailyTalk";
-import PersonaObserver from "./PersonaObserver";
 import PracticeGarden from "./PracticeGarden";
 import PracticalScenes from "./PracticalScenes";
 import { responseFriends } from "@/lib/practical-scenes";
 import type { ConversationCard } from "@/lib/conversation-cards";
 import type { AIConfig } from "./VoiceComposer";
 import { focusInfo, type ConversationFocus } from "@/lib/conversation-focus";
-import CommunityPreview from "./CommunityPreview";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import RoomEnvironment from "./RoomEnvironment";
 import { Companion, Icon } from "./CompanionUI";
@@ -545,11 +543,6 @@ export default function CompanionRoom({
             </article>
           ))}
         </div>
-      </details>
-      <details className="dc-guide-faq">
-        <summary>더 둘러보기 · 친구들 대화 관찰과 라운지 미리보기</summary>
-        <PersonaObserver config={config} characters={characters} />
-        <CommunityPreview />
       </details>
       {cardOpen && (
         <CompanionCard

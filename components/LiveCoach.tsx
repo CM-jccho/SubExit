@@ -17,10 +17,12 @@ type Phase = "idle" | "permission" | "listening" | "transcribing" | "coaching";
 export default function LiveCoach({
   onBack,
   onDemo,
+  onPractice,
   profile,
 }: {
   onBack: () => void;
   onDemo: () => void;
+  onPractice?: () => void;
   profile?: ContextProfile;
 }) {
   const character = useCompanion();
@@ -351,7 +353,7 @@ export default function LiveCoach({
   }
   const status = {
     idle: input
-      ? "음성 인식 완료 · 문장을 확인해 주세요"
+      ? "상대 말을 확인해 주세요 · 마이크 꺼짐"
       : clip
         ? "녹음 완료 · 아래에서 확인해 주세요"
         : "마이크 꺼짐",
@@ -361,7 +363,7 @@ export default function LiveCoach({
     coaching: "다음 한 문장을 준비 중 · 마이크 꺼짐",
   }[phase];
   return (
-    <div className="dd-live dc-live-app">
+    <div className="dd-live dc-live-app" data-coach-phase={phase}>
       <button
         className="dd-back"
         onClick={() => {
@@ -377,9 +379,7 @@ export default function LiveCoach({
           <p className="dc-overline">
             {prepared ? "내 옆의 대화 코치" : "시작하기 전에"}
           </p>
-          <h1>
-            {prepared ? "다음 한마디, 함께 생각해요." : "대화할 준비가 됐나요?"}
-          </h1>
+          <h1>지금 대화 도움받기</h1>
         </div>
         <HelpTip label="코칭은 어떻게 쓰나요?">
           대면 대화나 다른 기기의 스피커폰 옆에서 상대 말이 끝날 때 최대 8초씩
@@ -387,6 +387,34 @@ export default function LiveCoach({
           중에는 듣지 않아요.
         </HelpTip>
       </header>
+      <div className="coach-live-presence" aria-label="코치 상태" role="status">
+        <Companion
+          small
+          mood={
+            phase === "listening"
+              ? "listen"
+              : phase === "coaching" || phase === "transcribing"
+                ? "think"
+                : result
+                  ? "done"
+                  : "rest"
+          }
+        />
+        <div>
+          <strong>
+            {phase === "listening"
+              ? "상대 말을 듣고 있어요"
+              : phase === "coaching"
+                ? "내 목표에 맞는 말을 찾고 있어요"
+                : phase === "transcribing"
+                  ? "들린 말을 확인하고 있어요"
+                  : result
+                    ? "다음 한마디가 도착했어요"
+                    : "필요한 순간, 함께 준비해요"}
+          </strong>
+          <span>{status}</span>
+        </div>
+      </div>
       {!prepared ? (
         <section className="dc-preflight">
           <div className="dc-preflight-intro">
@@ -733,7 +761,12 @@ export default function LiveCoach({
                       <span>내 목표 · {profile.goal}</span>
                     </p>
                   )}
-                  <blockquote>{result.suggestion}</blockquote>
+                  <blockquote
+                    className="coach-reply-arrival"
+                    key={result.suggestion}
+                  >
+                    {result.suggestion}
+                  </blockquote>
                   <div className="dc-answer-actions">
                     <button
                       className="dd-secondary"
@@ -820,6 +853,18 @@ export default function LiveCoach({
             </small>
           </details>
         </>
+      )}
+      {onPractice && (
+        <button
+          className="dd-link"
+          disabled={phase !== "idle"}
+          onClick={() => {
+            cancel();
+            onPractice();
+          }}
+        >
+          이 상황 미리 연습하기 <Icon name="chat" size={18} />
+        </button>
       )}
     </div>
   );

@@ -1,14 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
-import { practiceModes } from "@/lib/practice-modes";
 import { listSessions, type VoiceSession } from "@/lib/voice-notebook";
 import type { WorkspaceView } from "@/lib/workspace-navigation";
-import { Icon } from "./CompanionUI";
+import { Companion, Icon } from "./CompanionUI";
 
 export default function HomeActions({
+  onLive,
   onNavigate,
   onResume,
 }: {
+  onLive: () => void;
   onNavigate: (view: WorkspaceView) => void;
   onResume: (id: string) => void;
 }) {
@@ -21,7 +22,7 @@ export default function HomeActions({
         if (active)
           setRecent(
             rows
-              .filter((r) => !r.isSample)
+              .filter((r) => !r.isSample && !r.promptPractice && !r.daily)
               .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0],
           );
       })
@@ -36,32 +37,58 @@ export default function HomeActions({
     };
   }, []);
   return (
-    <section className="purpose-home" aria-label="연습 시작">
+    <section className="purpose-home" aria-label="대화 도움과 연습">
       <div className="purpose-heading">
-        <p>내 말을 준비하는 시간</p>
-        <h1>어떤 연습을 해볼까요?</h1>
+        <p>대화 중, 내 옆의 AI 도우미</p>
+        <h1>다음에 뭐라고 말할지 막힐 때.</h1>
       </div>
-      <div className="purpose-grid">
-        {practiceModes.map((mode) => (
-          <button
-            key={mode.id}
-            className={`purpose-card tone-${mode.color}`}
-            data-purpose={mode.id}
-            aria-label={mode.label}
-            onClick={() => onNavigate(mode.id)}
-          >
-            <span className="purpose-card-art" aria-hidden="true">
-              <Icon name={mode.icon} size={32} />
-              <span>{mode.hint}</span>
-            </span>
-            <strong>{mode.label}</strong>
-            <span className="purpose-description">{mode.description}</span>
-            <span className="purpose-card-arrow" aria-hidden="true">
-              <Icon name="arrow" size={20} />
-            </span>
-          </button>
-        ))}
+      <div className="coach-presence" aria-label="대화 코치 안내">
+        <div className="coach-presence-character">
+          <Companion small mood="hello" />
+        </div>
+        <div className="coach-presence-copy">
+          <span>대화 중, 옆에서 함께</span>
+          <p>
+            상대가 한 말을 알려주세요.
+            <br />내 목표에 맞는 다음 한마디를 찾아드릴게요.
+          </p>
+        </div>
       </div>
+      <ol className="practice-loop" aria-label="지금 대화 도움받는 과정">
+        <li>
+          <Icon name="cards" size={26} />
+          <strong>내 상황 선택</strong>
+        </li>
+        <li>
+          <Icon name="mic" size={26} />
+          <strong>상대 말 입력</strong>
+        </li>
+        <li>
+          <Icon name="chat" size={26} />
+          <strong>다음 한마디</strong>
+        </li>
+      </ol>
+      <button
+        className="dd-primary purpose-start coach-start"
+        data-purpose="live"
+        onClick={onLive}
+      >
+        지금 대화 도움받기 <Icon name="arrow" size={20} />
+      </button>
+      <p className="purpose-limit">
+        음성은 최대 8초씩 입력해요. 처리하는 동안에는 듣지 않아요.
+      </p>
+      <button
+        className="dd-secondary purpose-start"
+        data-purpose="library"
+        aria-label="미리 연습하기"
+        onClick={() => onNavigate("library")}
+      >
+        미리 연습하기 <Icon name="chat" size={18} />
+      </button>
+      <p className="purpose-limit">
+        AI 상대와 연습 · 내 말로 복기 · 다시 말하기
+      </p>
       {recent && (
         <section className="purpose-recent" aria-label="최근 기록 이어하기">
           <span>이어서 해볼까요?</span>

@@ -1,5 +1,6 @@
 "use client";
 import HomeActions from "./HomeActions";
+import { supportTools, supportLabel } from "@/lib/support-tools";
 import MessengerPractice from "./MessengerPractice";
 import { canLeaveWorkspace } from "@/lib/navigation-guard";
 import ConversationFocusPicker from "./ConversationFocusPicker";
@@ -13,7 +14,6 @@ import {
   type ConversationFocus,
 } from "@/lib/conversation-focus";
 import PracticeNavigation from "./PracticeNavigation";
-import UpcomingFeatures from "./UpcomingFeatures";
 import ConversationTraining from "./ConversationTraining";
 import DailyTalk from "./DailyTalk";
 import PromptPractice from "./PromptPractice";
@@ -22,6 +22,8 @@ import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
 import {
+  workspacePurpose,
+  type WorkspacePurpose,
   workspaceSection,
   workspaceView,
   workspaceUrl,
@@ -202,6 +204,7 @@ function ContextFacts({
 }
 export default function ConversationWorkspace() {
   const [focus, setFocus] = useState<ConversationFocus | null>(null);
+  const [purpose, setPurpose] = useState<WorkspacePurpose>("practice");
   const [focusEditing, setFocusEditing] = useState(false);
   const [browseAll, setBrowseAll] = useState(false);
   const [view, setViewState] = useState<View>("home"),
@@ -267,7 +270,8 @@ export default function ConversationWorkspace() {
             focusInfo(parseFocus(localStorage.getItem(FOCUS_KEY)))?.cardIds
               .length &&
             !localStorage.getItem(TOUR_KEY) &&
-            workspaceView(window.location.search) === "library"
+            workspaceView(window.location.search) === "library" &&
+            workspacePurpose(window.location.search) === "practice"
           ) {
             setView("library");
             setTourStep(0);
@@ -299,9 +303,10 @@ export default function ConversationWorkspace() {
       window.removeEventListener("storage", sync);
     };
   }, []);
-  function setView(next: View) {
+  function setView(next: View, intent: WorkspacePurpose = purpose) {
     setFocusEditing(false);
-    const url = workspaceUrl(window.location.href, next);
+    const url = workspaceUrl(window.location.href, next, intent);
+    setPurpose(intent);
     if (
       url !==
       window.location.pathname + window.location.search + window.location.hash
@@ -327,11 +332,13 @@ export default function ConversationWorkspace() {
       setToast("");
       setError("");
       setTour(false);
+      setPurpose(workspacePurpose(window.location.search));
       setViewState(workspaceView(window.location.search));
       window.scrollTo({ top: 0 });
     };
     lastWorkspaceUrl.current =
       window.location.pathname + window.location.search + window.location.hash;
+    setPurpose(workspacePurpose(window.location.search));
     setViewState(workspaceView(window.location.search));
     const query = new URLSearchParams(window.location.search);
     if (query.get("tour") === "1") {
@@ -499,7 +506,7 @@ export default function ConversationWorkspace() {
     }
     setError("");
     setToast("");
-    setView("live");
+    setView("live", "live");
     window.scrollTo({ top: 0 });
   }
   function duplicate(c: ConversationCard) {
@@ -543,7 +550,7 @@ export default function ConversationWorkspace() {
     if (!canLeaveWorkspace()) return;
     setFocusEditing(false);
     cancelRequest();
-    setView("library");
+    setView("library", "practice");
     setTourStep(0);
     setTour(true);
     setError("");
@@ -603,6 +610,7 @@ export default function ConversationWorkspace() {
       );
       if (
         view === "library" &&
+        purpose === "practice" &&
         next !== "all" &&
         next !== "custom" &&
         !localStorage.getItem(TOUR_KEY)
@@ -650,13 +658,13 @@ export default function ConversationWorkspace() {
           "특별히 없어요",
         ],
       ][step];
-  function navigate(next: View) {
+  function navigate(next: View, intent: WorkspacePurpose = purpose) {
     if (!canLeaveWorkspace()) return;
     setFocusEditing(false);
     cancelRequest();
     setToast("");
     setError("");
-    setView(next);
+    setView(next, intent);
     setRecordId(undefined);
     setCards(readCards());
     window.scrollTo({ top: 0 });
@@ -789,7 +797,11 @@ export default function ConversationWorkspace() {
                 {toast}
               </p>
             )}
-            <PracticeNavigation view={view} onNavigate={navigate} />
+            <PracticeNavigation
+              view={view}
+              purpose={purpose}
+              onNavigate={navigate}
+            />
             {view === "library" && !tour && (
               <div className="purpose-support" aria-label="대화 연습 도구">
                 <button
@@ -806,6 +818,7 @@ export default function ConversationWorkspace() {
             )}
             {view === "library" && !tour && (
               <ConversationFocusPicker
+                purpose={purpose}
                 value={focus}
                 editing={focusEditing}
                 onEditingChange={setFocusEditing}
@@ -845,7 +858,8 @@ export default function ConversationWorkspace() {
               )}
               {view === "home" && (
                 <HomeActions
-                  onNavigate={navigate}
+                  onLive={() => navigate("library", "live")}
+                  onNavigate={(next) => navigate(next, "practice")}
                   onResume={(id) => {
                     navigate("records");
                     setRecordId(id);
@@ -933,41 +947,14 @@ export default function ConversationWorkspace() {
                 <section className="focus-more">
                   <div className="dc-title">
                     <h1>더보기</h1>
-                    <p>용어와 대화 상대, 사용 안내를 모았어요.</p>
+                    <p>대화를 준비할 때 쓰는 보조 도구예요.</p>
                   </div>
                   <div className="focus-tool-grid">
-                    {(
-                      [
-                        {
-                          id: "terms",
-                          icon: "book",
-                          label: "용어 노트",
-                          description: "업종별 표현 · 나만의 뜻과 메모",
-                        },
-                        {
-                          id: "room",
-                          icon: "chat",
-                          label: "AI 대화 상대",
-                          description: "상대 만들기 · 역할 연습 · 자유 대화",
-                        },
-                        {
-                          id: "daily",
-                          icon: "chat",
-                          label: "가볍게 이야기하기",
-                          description: "일상 주제로 짧은 대화",
-                        },
-                        {
-                          id: "guide",
-                          icon: "help",
-                          label: "사용·저장 안내",
-                          description: "첫 사용 가이드 · 백업 · AI 연결 도움말",
-                        },
-                      ] as const
-                    ).map((item) => (
+                    {supportTools.map((item) => (
                       <button
                         key={item.id}
+                        aria-label={item.label}
                         onClick={() => {
-                          if (item.id === "daily") setChatCharacter(undefined);
                           navigate(item.id);
                         }}
                       >
@@ -993,21 +980,17 @@ export default function ConversationWorkspace() {
                 <CompanionRoom
                   key={effectiveFocus || "unset"}
                   focus={effectiveFocus}
-                  onDaily={(c) => {
-                    setChatCharacter(c);
-                    navigate("daily");
-                  }}
                   config={config}
                   onPractice={(card) => {
                     setActive(card);
                     setRecordId(undefined);
                     setChatCharacter(undefined);
-                    setView("voicePractice");
+                    setView("voicePractice", "practice");
                     window.scrollTo({ top: 0 });
                   }}
                   saved={companions}
                   onSaved={setCompanions}
-                  onCards={() => navigate("library")}
+                  onCards={() => navigate("library", "practice")}
                   onChat={(c) => {
                     setChatCharacter(c);
                     setView("friendChat");
@@ -1025,6 +1008,7 @@ export default function ConversationWorkspace() {
                 view === "voicePractice" ||
                 view === "friendChat") && (
                 <VoiceWorkspace
+                  onRecords={() => navigate("records")}
                   onRoom={() => navigate("room")}
                   key={
                     view +
@@ -1050,7 +1034,7 @@ export default function ConversationWorkspace() {
                   }
                   config={config}
                   onChooseCard={() => {
-                    navigate("library");
+                    navigate("library", "practice");
                     setToast("카드를 고른 뒤 ‘상대와 대화 연습’을 눌러주세요.");
                   }}
                 />
@@ -1070,16 +1054,22 @@ export default function ConversationWorkspace() {
                 <>
                   <section className="dc-page-top">
                     <div>
-                      <p className="dc-overline">상황을 고르고 대화 연습</p>
+                      <p className="dc-overline">
+                        {purpose === "live"
+                          ? "지금 대화에 사용할 상황"
+                          : "상황을 고르고 대화 연습"}
+                      </p>
                       <h1>
-                        {effectiveFocus === "all"
-                          ? "모든 연습 상황"
-                          : "대화 연습"}{" "}
+                        {purpose === "live"
+                          ? "대화 상황 선택"
+                          : effectiveFocus === "all"
+                            ? "모든 연습 상황"
+                            : "대화 연습"}{" "}
                         <span className="dc-count">{focusedCards.length}</span>
                       </h1>
                     </div>
                     <button className="dd-primary" onClick={() => start()}>
-                      <Icon name="plus" size={18} />새 대화
+                      <Icon name="plus" size={18} />내 상황 만들기
                     </button>
                   </section>
                   <p className="dc-room-intro">
@@ -1235,7 +1225,7 @@ export default function ConversationWorkspace() {
                     onClick={() => navigate("library")}
                   >
                     <Icon name="back" size={18} />
-                    대화 연습
+                    {purpose === "live" ? "대화 상황 선택" : "대화 연습"}
                   </button>
                   <section className="dc-title">
                     <p className="dc-overline">
@@ -1594,7 +1584,7 @@ export default function ConversationWorkspace() {
                     onClick={() => navigate("library")}
                   >
                     <Icon name="back" size={18} />
-                    대화 연습
+                    {purpose === "live" ? "대화 상황 선택" : "대화 연습"}
                   </button>
                   <section className="dc-title">
                     <p className="dc-overline">
@@ -1607,7 +1597,11 @@ export default function ConversationWorkspace() {
                   <div className="dc-detail-compact">
                     <section className="dc-profile-panel">
                       <div className="dc-panel-heading">
-                        <h2>이번 연습에서 기억할 것</h2>
+                        <h2>
+                          {purpose === "live"
+                            ? "지금 대화에서 지킬 목표"
+                            : "이번 연습에서 기억할 것"}
+                        </h2>
                         <Companion small mood="listen" />
                       </div>
                       <ContextFacts profile={active} compact />
@@ -1615,29 +1609,45 @@ export default function ConversationWorkspace() {
                         className="dd-primary dd-full"
                         data-tour="practice-button"
                         onClick={() => {
-                          setView("voicePractice");
+                          if (purpose === "live") useCard(active);
+                          else setView("voicePractice", "practice");
                           window.scrollTo({ top: 0 });
                         }}
                       >
                         <Icon name="chat" size={20} />
-                        상대와 대화 연습
+                        {purpose === "live"
+                          ? "이 상황으로 도움받기"
+                          : "상대와 대화 연습"}
                       </button>
                       <p className="dc-small-caption">
-                        문자나 목소리로 직접 답하고, 끝나면 내 말을 복기해요.
+                        {purpose === "live"
+                          ? "상대 말을 최대 8초씩 들려주거나 입력해 답변 힌트를 받아요."
+                          : "문자나 목소리로 직접 답하고, 끝나면 내 말을 복기해요."}
                       </p>
                     </section>
                     <details className="dc-detail-alternative">
-                      <summary>실제 대화 중에 도움이 필요하다면</summary>
+                      <summary>
+                        {purpose === "live"
+                          ? "이 상황을 미리 연습하려면"
+                          : "실제 대화 중에 도움이 필요하다면"}
+                      </summary>
                       <p>
-                        대면 대화나 다른 기기의 스피커폰에서 짧게 듣고, 다음에
-                        할 말의 힌트를 받아요.
+                        {purpose === "live"
+                          ? "AI가 상대 역할을 맡아요. 직접 답해보고 내 말을 복기해요."
+                          : "대면 대화나 다른 기기의 스피커폰에서 짧게 듣고, 다음에 할 말의 힌트를 받아요."}
                       </p>
                       <button
                         className="dd-secondary"
-                        onClick={() => useCard(active)}
+                        onClick={() =>
+                          purpose === "live"
+                            ? setView("voicePractice", "practice")
+                            : useCard(active)
+                        }
                       >
                         <Icon name="mic" size={20} />
-                        실제 대화에서 힌트 받기
+                        {purpose === "live"
+                          ? "이 상황 미리 연습하기"
+                          : "실제 대화에서 힌트 받기"}
                       </button>
                     </details>
                   </div>
@@ -1667,6 +1677,7 @@ export default function ConversationWorkspace() {
               )}
               {view === "live" && active && (
                 <LiveCoach
+                  onPractice={() => setView("voicePractice", "practice")}
                   key={active.id}
                   profile={active}
                   onBack={() => {
@@ -1680,9 +1691,10 @@ export default function ConversationWorkspace() {
                 <>
                   <section className="dc-title">
                     <p className="dc-overline">필요할 때, 가볍게</p>
-                    <h1>{currentCharacter.name}와 이렇게 시작해요</h1>
+                    <h1>{supportLabel("guide")}</h1>
                     <p>
-                      홈에서 필요한 연습을 고르고, 저장한 결과는 내 기록에서
+                      대화 중에는 ‘지금 대화 도움받기’, 평소에는 ‘미리
+                      연습하기’를 선택하세요. 저장한 연습과 녹음은 내 기록에서
                       이어보세요.
                     </p>
                   </section>
@@ -1690,7 +1702,9 @@ export default function ConversationWorkspace() {
                     <Companion small />
                     <span>
                       <strong>직접 해보는 30초 가이드</strong>
-                      <small>카드부터 코칭까지, 하나씩 따라 해봐요.</small>
+                      <small>
+                        상황 선택부터 AI 상대와 연습까지 따라 해봐요.
+                      </small>
                     </span>
                     <Icon name="arrow" />
                   </button>
@@ -1707,18 +1721,18 @@ export default function ConversationWorkspace() {
                     {[
                       {
                         icon: "cards",
-                        title: "상대와 대화 연습",
-                        text: "카드를 고르거나 내 상황을 만들어요. AI가 상대 역할을 맡으면 목소리나 문자로 답해보세요.",
+                        title: "내 상황과 목표 준비",
+                        text: "누구와 어떤 말을 나눌지 저장해 두세요. 같은 설정을 실전 도움과 연습에 사용해요.",
                       },
                       {
                         icon: "mic",
-                        title: "실제로 한 말로 복기",
-                        text: "대화 기록에서 내가 한 말과 코칭을 함께 확인해요. 바꾸고 싶은 한 문장을 내 말로 고쳐보세요.",
+                        title: "대화 중 다음 한마디",
+                        text: "상대 말을 최대 8초씩 들려주거나 입력하면 AI가 내 목표에 맞는 답변을 제안해요. 처리 중에는 듣지 않아요.",
                       },
                       {
                         icon: "chat",
-                        title: "같은 장면 다시 연습",
-                        text: "복기에서 다시 연습을 시작하면 목표와 지킬 선이 이어져요. 고친 문장을 다음 대화에서 써보세요.",
+                        title: "평소에는 미리 연습",
+                        text: "AI가 상대 역할을 맡아요. 직접 답하고 내 말의 근거로 복기한 뒤 다시 연습해요.",
                       },
                     ].map((s, i) => (
                       <article key={s.title}>
@@ -1797,10 +1811,6 @@ export default function ConversationWorkspace() {
                   </details>
                   <QuotaHelp error="한도" />
                   <div className="dc-guide-links">
-                    <a href="/practice?demo=1">
-                      문장 연습하기
-                      <Icon name="arrow" size={18} />
-                    </a>
                     <a href="/evidence">
                       서비스·데이터 안내
                       <Icon name="arrow" size={18} />
@@ -1855,7 +1865,6 @@ export default function ConversationWorkspace() {
                   </div>
                 </>
               )}
-              {view === "guide" && <UpcomingFeatures />}
             </div>
           </main>
           <footer className="dc-footer">

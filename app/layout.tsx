@@ -18,9 +18,9 @@ import "./focus-visuals.css";
 import "./input-dialog.css";
 import "./purpose-home.css";
 export const metadata = {
-  title: "든든콜 · 대화 연습과 복기",
+  title: "든든콜 · 대화 중 다음 한마디",
   description:
-    "내 상황으로 대화하고, 실제로 한 말을 근거로 복기한 뒤 같은 장면을 다시 연습하세요.",
+    "대화 중에는 내 상황과 목표에 맞는 다음 한마디를, 평소에는 AI 상대와 같은 상황의 대화 연습을 제공합니다.",
 };
 export default function RootLayout({
   children,
