@@ -483,3 +483,78 @@
 .focus-practice-first .dc-card-grid:has(> .dc-saved-card:only-child) {
   grid-template-columns: 1fr;
 }
+
+/* Keep home focused on choosing one practice scene. */
+.focus-practice-first {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.focus-home-heading {
+  margin: 24px 0 20px;
+}
+.focus-home-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 22px 0 32px;
+}
+.focus-empty {
+  color: #56634f;
+  padding: 24px 0;
+}
+.focus-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.focus-tool-grid > button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px;
+  text-align: left;
+  border: 1px solid #dce3d4;
+  border-radius: 16px;
+  background: #fffef9;
+  color: #35533c;
+  font: inherit;
+  cursor: pointer;
+}
+.focus-tool-grid > button > span {
+  flex: 1;
+}
+.focus-tool-grid strong,
+.focus-tool-grid small {
+  display: block;
+}
+.focus-tool-grid small {
+  margin-top: 5px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #596550;
+}
+.focus-tool-grid > button:hover {
+  border-color: #78926b;
+}
+.focus-tool-grid > button:focus-visible {
+  outline: 3px solid #355e48;
+  outline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .dc-nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+  .focus-tool-grid {
+    grid-template-columns: 1fr;
+  }
+  .focus-home-controls > .dd-primary {
+    width: 100%;
+    justify-content: center;
+  }
+  .focus-home-controls > .dd-link {
+    margin-left: auto;
+  }
+}

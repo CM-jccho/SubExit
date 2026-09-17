@@ -1241,27 +1241,46 @@ export default function VoiceWorkspace({
                 {currentReview ? (
                   <>
                     <article>
-                      <h3>잘한 점</h3>
-                      <blockquote>{currentReview.strength.quote}</blockquote>
-                      <p>{currentReview.strength.note}</p>
-                    </article>
-                    <article>
-                      <h3>다음에는 이렇게</h3>
-                      <blockquote>{currentReview.improvement.quote}</blockquote>
-                      <p>{currentReview.improvement.note}</p>
-                      <strong>다시 말해보기</strong>
+                      <h3>다음에는 이렇게 말해보세요</h3>
                       <p className="dc-review-rewrite">
                         {currentReview.improvement.rewrite}
                       </p>
-                    </article>
-                    <p>
-                      <strong>다음 연습의 목표</strong> · {currentReview.focus}
-                    </p>
-                    <aside className="training-review-entry">
-                      <strong>필요한 기술부터 짧게 연습할까요?</strong>
                       <p>
-                        생각 넓히기·질문 이어가기·핵심 전달을 훈련한 뒤 이
-                        장면으로 돌아올 수 있어요.
+                        <strong>이번 연습의 초점</strong> ·{" "}
+                        {currentReview.focus}
+                      </p>
+                    </article>
+                    <details className="dc-guide-faq" data-review-evidence>
+                      <summary>내 말에서 근거 보기</summary>
+                      <article>
+                        <h3>고쳐볼 표현</h3>
+                        <blockquote>
+                          {currentReview.improvement.quote}
+                        </blockquote>
+                        <p>{currentReview.improvement.note}</p>
+                      </article>
+                      <article>
+                        <h3>잘한 점</h3>
+                        <blockquote>{currentReview.strength.quote}</blockquote>
+                        <p>{currentReview.strength.note}</p>
+                      </article>
+                    </details>
+                    <button
+                      className="dd-primary"
+                      disabled={busy || captureBusy}
+                      onClick={() => void startDrill()}
+                    >
+                      이 장면부터 다시 연습 <Icon name="arrow" size={16} />
+                    </button>
+                    <small>
+                      목표와 지킬 선은 유지돼요. AI 제안이 내 의도와 맞는지
+                      근거를 확인하세요.
+                    </small>
+                    <details className="dc-guide-faq training-review-entry">
+                      <summary>필요한 기술부터 훈련하기</summary>
+                      <p>
+                        질문하기·생각 넓히기·핵심 전달을 훈련한 뒤 이 장면으로
+                        돌아와요.
                       </p>
                       <button
                         className="dd-secondary"
@@ -1281,18 +1300,7 @@ export default function VoiceWorkspace({
                       >
                         이 복기에서 기초 훈련 시작
                       </button>
-                    </aside>
-                    <button
-                      className="dd-primary"
-                      disabled={busy || captureBusy}
-                      onClick={() => void startDrill()}
-                    >
-                      이 장면부터 다시 연습 <Icon name="arrow" size={16} />
-                    </button>
-                    <small>
-                      내 원래 목표와 지킬 선은 유지돼요. 복기는 AI의 제안이므로
-                      실제 의도와 맞는지 확인해 주세요.
-                    </small>
+                    </details>
                   </>
                 ) : (
                   <>

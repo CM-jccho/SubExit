@@ -607,7 +607,7 @@ test("workspace navigation preserves section across remount and browser back, an
     assert.equal(document.querySelector("h1").textContent, "대화 기록");
     assert.equal(
       document.querySelector('[aria-current="page"]').textContent,
-      "대화 기록",
+      "녹음·기록",
     );
   } finally {
     await ui.cleanup();
@@ -629,7 +629,7 @@ test("home practice opens a context card and practice keeps a discoverable recor
   );
   try {
     await settle();
-    await click(button("대화 연습 시작"));
+    await click(button("내 대화"));
     assert.equal(window.location.search, "?view=library");
     const card = [...document.querySelectorAll(".dc-saved-card")].find((b) =>
       b.textContent.includes("동료에게 검토 부탁하기"),
@@ -644,7 +644,7 @@ test("home practice opens a context card and practice keeps a discoverable recor
     assert.equal(window.location.search, "?view=records");
     assert.equal(
       document.querySelector('[aria-current="page"]').textContent,
-      "대화 기록",
+      "녹음·기록",
     );
     assert(
       document
@@ -1358,7 +1358,7 @@ test("daily and prompt deep links round-trip while retaining their parent naviga
       v,
     );
   }
-  assert.equal(nav.workspaceSection("daily"), "home");
+  assert.equal(nav.workspaceSection("daily"), "more");
   assert.equal(nav.workspaceSection("prompts"), "library");
 });
 
@@ -2080,10 +2080,10 @@ test("upcoming features have explicit unavailable labels, no launch actions and 
     await ui.cleanup();
   }
 });
-test("messenger is discoverable from home and restores under the library menu by URL", async () => {
+test("messenger has a dedicated primary menu and restores by URL", async () => {
   const nav = require("../lib/workspace-navigation.ts");
   assert.equal(nav.workspaceView("?view=messenger"), "messenger");
-  assert.equal(nav.workspaceSection("messenger"), "library");
+  assert.equal(nav.workspaceSection("messenger"), "messenger");
   assert.equal(
     nav.workspaceUrl("https://test.local", "messenger"),
     "/?view=messenger",
@@ -2102,13 +2102,13 @@ test("messenger is discoverable from home and restores under the library menu by
     );
   try {
     await settle();
-    await click(button("카톡·메신저 답장 다듬기 →"));
+    await click(button("메시지 답장"));
     await settle();
     assert.equal(document.querySelector("h1").textContent, "메시지 답장");
     assert.equal(window.location.search, "?view=messenger");
     assert.equal(
       document.querySelector('[aria-current="page"]').textContent,
-      "내 대화",
+      "메시지 답장",
     );
   } finally {
     await ui.cleanup();
@@ -2261,7 +2261,7 @@ test("curation hides unrelated samples until selection, keeps personal cards, an
       title: "내가 만든 약속 대화",
     };
     cards.writeCards([...cards.readCards(), personal]);
-    await click(button("대화 연습 시작"));
+    await click(button("내 대화"));
     assert.equal(document.querySelectorAll(".dc-saved-card").length, 2);
     assert(document.body.textContent.includes(personal.title));
     await click(button("모든 분야 예시 7"));
@@ -2311,7 +2311,7 @@ test("curation hides unrelated samples until selection, keeps personal cards, an
         .querySelector(".dc-starter-section")
         .textContent.includes("환불"),
     );
-    await click(button("대화 연습 시작"));
+    await click(button("내 대화"));
     await click(button("학부모 상담 예시 1"));
     await act(async () => ui.root.render(null));
     await act(async () => ui.root.render(React.createElement(C)));
@@ -2358,7 +2358,7 @@ test("editing the interest selection hides practice content and cancel preserves
       false,
     );
     assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
-    await click(button("대화 연습 시작"));
+    await click(button("내 대화"));
     await change(document.querySelector("#card-search"), "상담 시간");
     await click(button("선택 바꾸기"));
     assert.equal(
@@ -2446,6 +2446,82 @@ test("writing a custom situation bypasses fixed categories and never opens an un
       "custom",
     );
     assert(document.querySelector(".dc-question"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("focused home has one scenario browser and supporting tools remain reachable with stable URLs", async () => {
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  const nav = require("../lib/workspace-navigation.ts");
+  const ui = await mount(C, {}, () => {
+    localStorage.setItem("ddeundeun-spotlight-guide-v2", "done");
+    localStorage.setItem(
+      "ddeundeun-conversation-focus-v1",
+      JSON.stringify({ version: 1, focus: "work" }),
+    );
+  });
+  try {
+    await settle();
+    assert.equal(document.querySelectorAll(".dc-nav button").length, 5);
+    assert.equal(
+      [...document.querySelectorAll("button")].filter((b) =>
+        b.textContent.includes("모든 연습 상황 보기"),
+      ).length,
+      1,
+    );
+    assert.equal(
+      document.querySelectorAll(".dc-starter-section .dc-saved-card").length,
+      2,
+    );
+    assert.equal(document.querySelector(".vn-home-actions"), null);
+    assert.equal(document.querySelector(".dc-tour-invite"), null);
+    assert(button("내 상황 만들기"));
+    await click(document.querySelector(".dc-starter-section .dc-saved-card"));
+    assert(button("상대와 대화 연습"));
+    await click(button("더보기"));
+    assert.equal(window.location.search, "?view=more");
+    assert.equal(document.querySelector("h1").textContent, "더보기");
+    assert.equal(
+      document.querySelectorAll(".focus-tool-grid button").length,
+      6,
+    );
+    const terms = [
+      ...document.querySelectorAll(".focus-tool-grid button"),
+    ].find((b) => b.querySelector("strong").textContent === "용어 노트");
+    await click(terms);
+    await settle();
+    assert.equal(window.location.search, "?view=terms");
+    assert.equal(
+      document.querySelector('[aria-current="page"]').textContent,
+      "더보기",
+    );
+    await act(async () => ui.root.render(null));
+    await act(async () => ui.root.render(React.createElement(C)));
+    await settle();
+    assert(document.querySelector("h1").textContent.includes("용어 노트"));
+    await click(button("녹음·기록"));
+    await settle();
+    assert(button("녹음·파일 추가"));
+    await click(button("홈"));
+    await click(button("내 상황 만들기"));
+    assert(document.querySelector("#setup-message"));
+    for (const view of [
+      "more",
+      "room",
+      "terms",
+      "guide",
+      "daily",
+      "training",
+      "prompts",
+      "messenger",
+    ]) {
+      const url = nav.workspaceUrl("https://test.local", view);
+      assert.equal(
+        nav.workspaceView(new URL(url, "https://test.local").search),
+        view,
+      );
+    }
   } finally {
     await ui.cleanup();
   }
