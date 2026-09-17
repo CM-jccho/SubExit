@@ -38,9 +38,15 @@ export default function CompactField({
   const id = useId();
   const [open, setOpen] = useState(false),
     [draft, setDraft] = useState(value);
-  const [listening, setListening] = useState(false),
+  const [phase, setPhase] = useState<"idle" | "connecting" | "listening">(
+      "idle",
+    ),
     [allowed, setAllowed] = useState(false),
+    [consentOpen, setConsentOpen] = useState(false),
     [notice, setNotice] = useState("");
+  const listening = phase !== "idle";
+  const textInput = useRef<HTMLTextAreaElement>(null);
+  const consentPanel = useRef<HTMLDivElement>(null);
   const speech = useRef<SpeechStream>();
   const original = useRef(value),
     change = useRef(onChange);
@@ -52,9 +58,16 @@ export default function CompactField({
   function stop() {
     speech.current?.stop();
     speech.current = undefined;
-    setListening(false);
+    setPhase("idle");
   }
   useEffect(() => () => speech.current?.stop(), []);
+  useEffect(() => {
+    if (consentOpen)
+      consentPanel.current?.scrollIntoView({
+        block: "nearest",
+        behavior: "auto",
+      });
+  }, [consentOpen]);
   useEffect(() => {
     const hide = () => {
       if (document.hidden) stop();
@@ -66,21 +79,28 @@ export default function CompactField({
     if (disabled) stop();
   }, [disabled]);
   function dictate() {
-    if (listening) {
+    if (speech.current) {
       stop();
       return;
     }
     const Engine = speechConstructor();
     if (!Engine) {
       setNotice(
-        "이 브라우저에서는 키보드의 마이크 버튼으로 말해서 입력할 수 있어요.",
+        "이 브라우저에서는 앱 안의 음성 인식을 지원하지 않아요. 키보드의 마이크 버튼이 있다면 말해서 입력할 수 있어요.",
       );
       return;
     }
     if (!allowed) {
-      setNotice("아래 음성 인식 안내를 확인해 주세요.");
+      setConsentOpen(true);
+      setNotice("");
       return;
     }
+    startVoice();
+  }
+  function startVoice() {
+    const Engine = speechConstructor();
+    if (!Engine || disabled) return;
+    setConsentOpen(false);
     const before = draft.trim();
     setNotice("");
     speech.current = new SpeechStream(Engine, {
@@ -91,13 +111,20 @@ export default function CompactField({
             .join(" ")
             .slice(0, maxLength),
         ),
-      state: () => setListening(true),
+      state: setPhase,
       error: (message) => {
         stop();
         setNotice(message);
       },
     });
-    speech.current.start();
+    try {
+      speech.current.start();
+    } catch {
+      stop();
+      setNotice(
+        "음성 인식을 시작하지 못했어요. 키보드로 입력하거나 다시 시도해 주세요.",
+      );
+    }
   }
   return (
     <section className="compact-field">
@@ -112,6 +139,7 @@ export default function CompactField({
             setDraft(value);
             setOpen(true);
             setNotice("");
+            setConsentOpen(false);
           }}
           aria-label={`${label} ${value ? "수정" : "입력"}`}
         >
@@ -141,6 +169,7 @@ export default function CompactField({
           <label className="vn-label" htmlFor={id}>
             {label}
             <textarea
+              ref={textInput}
               id={id}
               aria-label={label}
               rows={3}
@@ -150,6 +179,48 @@ export default function CompactField({
               onChange={(e) => updateDraft(e.target.value)}
             />
           </label>
+          {consentOpen && (
+            <div
+              ref={consentPanel}
+              className="compact-voice-consent"
+              role="group"
+              aria-label="음성 입력 시작 안내"
+            >
+              <strong>말씀하신 내용을 문자로 입력할게요.</strong>
+              <p>
+                음성이 브라우저의 음성 인식 서비스로 전송될 수 있어요. 동의하면
+                마이크 권한을 확인하고 시작해요. Gemini 코칭 동의와는 별개예요.
+              </p>
+              <button
+                type="button"
+                className="dd-primary"
+                disabled={disabled}
+                onClick={() => {
+                  setAllowed(true);
+                  startVoice();
+                }}
+              >
+                동의하고 음성 입력 시작
+              </button>
+              <button
+                type="button"
+                className="dd-link"
+                onClick={() => {
+                  setConsentOpen(false);
+                  textInput.current?.focus();
+                }}
+              >
+                직접 입력할게요
+              </button>
+            </div>
+          )}
+          {phase !== "idle" && (
+            <p role="status">
+              {phase === "connecting"
+                ? "마이크 연결 중이에요. 권한 요청이 보이면 허용해 주세요."
+                : "듣고 있어요. 말씀하시면 입력란에 바로 나타나요."}
+            </p>
+          )}
           <div className="compact-field-actions">
             <button
               type="button"
@@ -157,7 +228,11 @@ export default function CompactField({
               disabled={disabled}
               onClick={dictate}
             >
-              {listening ? "음성 입력 마치기" : "말해서 입력"}
+              {phase === "connecting"
+                ? "연결 취소"
+                : listening
+                  ? "음성 입력 마치기"
+                  : "말해서 입력"}
             </button>
             <button
               type="button"
@@ -183,21 +258,34 @@ export default function CompactField({
               취소
             </button>
           </div>
-          <details>
-            <summary>음성 인식 안내</summary>
-            <label className="dd-check">
-              <input
-                type="checkbox"
-                checked={allowed}
-                onChange={(e) => {
-                  setAllowed(e.target.checked);
-                  if (!e.target.checked) stop();
-                }}
-              />
-              브라우저 음성 인식 서비스로 음성이 전송될 수 있음에 동의해요.
-            </label>
-          </details>
-          {notice && <p role="status">{notice}</p>}
+          {allowed && (
+            <button
+              type="button"
+              className="dd-link"
+              onClick={() => {
+                stop();
+                setAllowed(false);
+                setConsentOpen(false);
+                setNotice(
+                  "음성 입력 동의를 철회했어요. 입력한 문자는 유지돼요.",
+                );
+              }}
+            >
+              음성 입력 동의 철회
+            </button>
+          )}
+          {notice && (
+            <div role="status">
+              <p>{notice}</p>
+              <button
+                type="button"
+                className="dd-link"
+                onClick={() => textInput.current?.focus()}
+              >
+                키보드로 입력하기
+              </button>
+            </div>
+          )}
         </div>
       )}
     </section>

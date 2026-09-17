@@ -3721,6 +3721,53 @@ test("mobile main tabs swipe without hijacking inputs, vertical scrolling or dia
   }
 });
 
+test("compact dictation distinguishes connection, permission error and consent withdrawal", async () => {
+  const Field = require("../components/CompactField.tsx").default;
+  let engine;
+  class Engine {
+    constructor() {
+      engine = this;
+    }
+    start() {}
+    abort() {
+      this.aborted = true;
+    }
+  }
+  const ui = await mount(
+    Field,
+    { label: "상황", value: "기존 내용", maxLength: 100, onChange() {} },
+    () => {
+      window.SpeechRecognition = Engine;
+    },
+  );
+  try {
+    await click(button("상황 수정"));
+    await click(button("말해서 입력"));
+    await click(button("직접 입력할게요"));
+    assert.equal(engine, undefined);
+    assert.equal(document.activeElement.tagName, "TEXTAREA");
+    await click(button("말해서 입력"));
+    await click(button("동의하고 음성 입력 시작"));
+    assert(button("연결 취소"));
+    assert(!document.body.textContent.includes("듣고 있어요"));
+    await act(async () => engine.onerror({ error: "not-allowed" }));
+    assert(engine.aborted);
+    assert(button("키보드로 입력하기"));
+    assert(button("말해서 입력"));
+    await click(button("말해서 입력"));
+    assert(button("연결 취소"));
+    await act(async () => engine.onstart());
+    assert(button("음성 입력 마치기"));
+    await click(button("음성 입력 동의 철회"));
+    assert(engine.aborted);
+    assert.equal(document.querySelector("textarea").value, "기존 내용");
+    await click(button("말해서 입력"));
+    assert(button("동의하고 음성 입력 시작"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
 test("compact dictation requires opt-in, appends recognized words and stops the microphone on completion", async () => {
   const Field = require("../components/CompactField.tsx").default;
   let engine, saved;
@@ -3753,10 +3800,9 @@ test("compact dictation requires opt-in, appends recognized words and stops the 
     await click(button("상황 수정"));
     await click(button("말해서 입력"));
     assert.equal(engine, undefined);
-    await act(async () =>
-      document.querySelector('input[type="checkbox"]').click(),
-    );
-    await click(button("말해서 입력"));
+    assert(document.querySelector('[aria-label="음성 입력 시작 안내"]'));
+    await click(button("동의하고 음성 입력 시작"));
+    assert(document.body.textContent.includes("듣고 있어요"));
     await act(async () =>
       engine.onresult({
         results: [{ isFinal: true, 0: { transcript: "새로 인식한 말" } }],

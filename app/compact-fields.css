@@ -226,3 +226,18 @@
     display: none;
   }
 }
+.compact-voice-consent {
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px solid #ccd9c5;
+  border-radius: 14px;
+  background: #edf3e5;
+}
+.compact-voice-consent p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.compact-voice-consent button {
+  min-height: 44px;
+  margin: 4px 6px 4px 0;
+}
