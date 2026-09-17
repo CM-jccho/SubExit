@@ -28,9 +28,9 @@ for (const ext of [".ts", ".tsx"])
   };
 const { test } = require("node:test"),
   assert = require("node:assert/strict"),
-  { JSDOM } = require("jsdom"),
-  React = require("react"),
-  { createRoot } = require("react-dom/client");
+  { JSDOM, VirtualConsole } = require("jsdom"),
+  React = require("react");
+let createRoot;
 const { act } = React;
 let instances = [];
 class Recorder {
@@ -64,8 +64,13 @@ const LiveCoach = require("../components/LiveCoach.tsx").default,
   Composer = require("../components/VoiceComposer.tsx").default;
 const config = { available: true, voiceAvailable: true, sampleOnly: true };
 async function mount(Component, props = {}) {
+  const browserErrors = [],
+    virtualConsole = new VirtualConsole();
+  virtualConsole.sendTo(console);
+  virtualConsole.on("jsdomError", (error) => browserErrors.push(error));
   const dom = new JSDOM('<div id="test-root"></div>', {
     url: "https://test.local",
+    virtualConsole,
   });
   const originals = {
     window: global.window,
@@ -80,6 +85,7 @@ async function mount(Component, props = {}) {
     value: dom.window.navigator,
     configurable: true,
   });
+  ({ createRoot } = require("react-dom/client"));
   global.MediaRecorder = Recorder;
   global.IS_REACT_ACT_ENVIRONMENT = true;
   instances = [];
@@ -95,6 +101,12 @@ async function mount(Component, props = {}) {
   window.matchMedia = () => ({ matches: false });
   window.scrollTo = () => {};
   window.HTMLElement.prototype.scrollIntoView = () => {};
+  window.HTMLDialogElement.prototype.showModal = function () {
+    this.open = true;
+  };
+  window.HTMLDialogElement.prototype.close = function () {
+    this.open = false;
+  };
   global.fetch = async () => Response.json(config);
   const root = createRoot(document.getElementById("test-root"));
   await act(async () => {
@@ -111,6 +123,11 @@ async function mount(Component, props = {}) {
       Object.defineProperty(global, "navigator", originals.navigator);
       global.MediaRecorder = originals.MediaRecorder;
       global.fetch = originals.fetch;
+      assert.deepEqual(
+        browserErrors,
+        [],
+        "Unhandled DOM errors must fail the test",
+      );
     },
   };
 }
@@ -407,7 +424,7 @@ test("quota fallback preserves labels and candidate provenance after continuing 
     assert.equal(document.querySelectorAll(".garden-practice").length, 1);
     assert(
       document
-        .querySelector(".vn-composer")
+        .querySelector(".input-launcher")
         .compareDocumentPosition(document.querySelector(".garden-practice")) &
         4,
     );

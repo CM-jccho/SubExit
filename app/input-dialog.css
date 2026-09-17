@@ -1,0 +1,88 @@
+html {
+  scrollbar-gutter: stable;
+}
+.input-dialog {
+  position: fixed;
+  inset: var(--input-top, 0px) 0 auto;
+  box-sizing: border-box;
+  margin: 16px auto;
+  width: min(660px, calc(100% - 24px));
+  max-height: calc(var(--input-height, 100dvh) - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #d5ddcf;
+  border-radius: 20px;
+  padding: 20px;
+  background: #fffefa;
+  color: #334b40;
+  box-shadow: 0 16px 60px #18302630;
+}
+.input-dialog::backdrop {
+  background: #13241db3;
+}
+.input-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.input-dialog-head h2 {
+  font-size: 19px;
+  line-height: 1.5;
+  margin: 0;
+}
+.input-dialog-head button {
+  flex: 0 0 auto;
+  min-height: 44px;
+}
+.input-dialog :is(input, textarea, select) {
+  font-size: 16px;
+}
+.input-dialog .vn-composer {
+  border: 0;
+  padding: 12px 0 0;
+  margin: 0;
+}
+.input-dialog .messenger-candidates {
+  grid-template-columns: 1fr;
+}
+.input-dialog .messenger-editor {
+  margin-top: 12px;
+}
+.input-launcher {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+}
+.input-launcher button {
+  min-height: 44px;
+}
+.input-receipt {
+  padding: 16px;
+  margin: 16px 0;
+  background: #f0f4eb;
+  border-radius: 14px;
+}
+.input-receipt p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 8px 0;
+}
+.input-dialog-note {
+  color: #53674f;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.input-dialog-status {
+  min-height: 24px;
+  font-size: 14px;
+  margin: 8px 0;
+}
+@media (max-width: 600px) {
+  .input-dialog {
+    padding: 16px;
+    border-radius: 16px;
+  }
+}

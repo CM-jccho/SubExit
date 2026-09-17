@@ -22,6 +22,7 @@ import { aiFetch, AIServiceError, outageMessage } from "@/lib/ai-client";
 import { AIConsent, type AIConfig } from "./VoiceComposer";
 import { Companion } from "./CompanionUI";
 import { useCompanion } from "./CompanionTheme";
+import InputDialog from "./InputDialog";
 import { WORKSPACE_LEAVE_EVENT } from "@/lib/navigation-guard";
 type ReplyFeedback = {
   kind: "info" | "pending" | "success" | "error";
@@ -55,6 +56,9 @@ export default function MessengerPractice({
     [replyFeedback, setReplyFeedback] = useState<ReplyFeedback | null>(null),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
+  const [inputOpen, setInputOpen] = useState(false),
+    [replyOpen, setReplyOpen] = useState(false);
+  const selectAfterCopy = useRef(false);
   const latest = useRef(initialSession);
   const draftRevision = useRef(0),
     allowNavigation = useRef(false);
@@ -109,6 +113,13 @@ export default function MessengerPractice({
     window.addEventListener(WORKSPACE_LEAVE_EVENT, guard);
     return () => window.removeEventListener(WORKSPACE_LEAVE_EVENT, guard);
   }, [dirty]);
+  useEffect(() => {
+    if (replyOpen && selectAfterCopy.current && editor.current) {
+      editor.current.focus({ preventScroll: true });
+      editor.current.select();
+      selectAfterCopy.current = false;
+    }
+  }, [replyOpen, replyFeedback]);
   function leave(fn: () => void) {
     if (
       !dirty ||
@@ -214,6 +225,7 @@ export default function MessengerPractice({
         setTone(b.selectedTone);
         setDraftSource(b.draftSource);
         setEditing(false);
+        setInputOpen(false);
         setNotice(
           "상대 메시지와 조건을 저장했어요. 답장을 직접 적어도 좋아요.",
         );
@@ -282,6 +294,8 @@ export default function MessengerPractice({
             setTone(undefined);
             setDraftSource("manual");
             setEditing(false);
+            setInputOpen(false);
+            setReplyOpen(true);
             setNotice(
               "사전 작성된 가상 예시를 열었어요. AI를 호출하지 않았어요.",
             );
@@ -307,7 +321,7 @@ export default function MessengerPractice({
       kind: "info",
       text: "후보를 답장 칸에 넣었어요. 수정한 뒤 복사하거나 저장하세요.",
     });
-    editor.current?.focus();
+    editor.current?.focus({ preventScroll: true });
   }
   async function save() {
     if (!record || !draft.trim()) return;
@@ -320,6 +334,7 @@ export default function MessengerPractice({
       });
       if (alive.current) {
         setDraft(draft.trim());
+        setReplyOpen(false);
         setReplyFeedback({
           kind: "success",
           text: "답장을 이 브라우저에 저장했어요. ‘저장한 답장 보기’에서 다시 열 수 있어요.",
@@ -350,7 +365,9 @@ export default function MessengerPractice({
       }
     } catch {
       if (alive.current && revision === draftRevision.current) {
-        editor.current?.focus();
+        selectAfterCopy.current = true;
+        setReplyOpen(true);
+        editor.current?.focus({ preventScroll: true });
         editor.current?.select();
         editor.current?.setSelectionRange(0, draft.length);
         setReplyFeedback({
@@ -388,6 +405,21 @@ export default function MessengerPractice({
       )}
     </details>
   );
+  const sampleChoices = (
+    <div className="daily-topic-grid">
+      {messengerExamples.map((e) => (
+        <button
+          key={e.id}
+          disabled={busy || copying}
+          onClick={() => void example(e.id)}
+        >
+          <small>사전 작성 가상 예시 · AI 호출 없음</small>
+          <strong>{e.title}</strong>
+          <span>{e.input.message}</span>
+        </button>
+      ))}
+    </div>
+  );
   return (
     <section className="messenger-practice" aria-label="메시지 답장">
       <div className="dc-page-top">
@@ -407,116 +439,132 @@ export default function MessengerPractice({
         카톡·문자·메신저의 상대 메시지를 붙여넣고 답장을 준비해요. 완성한 답장은
         복사해서 직접 보내세요.
       </p>
-      {error && (
+      {error && !inputOpen && !replyOpen && (
         <p role="alert" className="dc-error">
           {error}
         </p>
       )}
-      {notice && (
+      {notice && !inputOpen && !replyOpen && (
         <p role="status" className="dc-toast">
           {notice}
         </p>
       )}
-      {editing ? (
+      {!record && (
         <>
-          <div className="daily-topic-grid">
-            {messengerExamples.map((e) => (
-              <button
-                key={e.id}
-                disabled={busy || copying}
-                onClick={() => void example(e.id)}
-              >
-                <small>사전 작성 가상 예시 · AI 호출 없음</small>
-                <strong>{e.title}</strong>
-                <span>{e.input.message}</span>
-              </button>
-            ))}
-          </div>
-          <label className="messenger-field">
-            상대가 보낸 메시지
-            <textarea
-              aria-label="상대가 보낸 메시지"
-              rows={4}
-              maxLength={4000}
-              value={input.message}
-              disabled={busy || copying}
-              onChange={(e) => setInput({ ...input, message: e.target.value })}
-              placeholder="상대 메시지를 붙여넣어 주세요."
-            />
-          </label>
-          <p className="vn-caption">
-            이름·연락처 등 식별 정보는 빼 주세요.
-            {config.sampleOnly
-              ? " 현재 AI는 개인정보·기밀 없는 자작 연습으로 이용해 주세요."
-              : ""}
-          </p>
-          <div className="messenger-settings">
-            <label>
-              상대와의 관계
-              <select
-                aria-label="상대와의 관계"
-                disabled={busy || copying}
-                value={input.relation}
-                onChange={(e) =>
-                  setInput({ ...input, relation: e.target.value })
-                }
-              >
-                {messengerRelations.map((x) => (
-                  <option key={x}>{x}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              이번 답장의 의도
-              <select
-                aria-label="이번 답장의 의도"
-                disabled={busy || copying}
-                value={input.intent}
-                onChange={(e) => setInput({ ...input, intent: e.target.value })}
-              >
-                {messengerIntents.map((x) => (
-                  <option key={x}>{x}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <label className="messenger-field">
-            내가 전하고 싶은 것
-            <textarea
-              aria-label="내가 전하고 싶은 것"
-              rows={2}
-              maxLength={500}
-              value={input.goal}
-              disabled={busy || copying}
-              onChange={(e) => setInput({ ...input, goal: e.target.value })}
-              placeholder="예: 가능한 시간을 먼저 확인하고 싶어요."
-            />
-          </label>
-          <label className="messenger-field">
-            지킬 선 · 선택
-            <textarea
-              aria-label="지킬 선"
-              rows={2}
-              maxLength={500}
-              value={input.boundary}
-              disabled={busy || copying}
-              onChange={(e) => setInput({ ...input, boundary: e.target.value })}
-              placeholder="예: 오늘 마치겠다고 약속하지 않기"
-            />
-          </label>
+          {sampleChoices}
           <button
             className="dd-primary"
-            disabled={busy || copying || !valid}
-            onClick={() => void prepare()}
+            onClick={() => {
+              setEditing(true);
+              setInputOpen(true);
+            }}
           >
-            저장하고 답장 준비
+            {input.message || input.goal
+              ? "메시지 입력 이어쓰기"
+              : "메시지 입력"}
           </button>
-          <p className="vn-caption">
-            상대 메시지와 목표를 입력하면 시작할 수 있어요. 저장 전 입력은
-            화면을 나가면 사라질 수 있어요.
-          </p>
         </>
-      ) : (
+      )}
+      <InputDialog
+        open={inputOpen}
+        title="메시지와 목표 입력"
+        busy={busy || copying}
+        onClose={() => setInputOpen(false)}
+      >
+        {record && (
+          <details className="dc-guide-faq">
+            <summary>가상 예시로 새로 시작</summary>
+            {sampleChoices}
+          </details>
+        )}
+        {error && (
+          <p role="alert" className="dc-error">
+            {error}
+          </p>
+        )}
+        <label className="messenger-field">
+          상대가 보낸 메시지
+          <textarea
+            aria-label="상대가 보낸 메시지"
+            rows={4}
+            maxLength={4000}
+            value={input.message}
+            disabled={busy || copying}
+            onChange={(e) => setInput({ ...input, message: e.target.value })}
+            placeholder="상대 메시지를 붙여넣어 주세요."
+          />
+        </label>
+        <p className="vn-caption">
+          이름·연락처 등 식별 정보는 빼 주세요.
+          {config.sampleOnly
+            ? " 현재 AI는 개인정보·기밀 없는 자작 연습으로 이용해 주세요."
+            : ""}
+        </p>
+        <div className="messenger-settings">
+          <label>
+            상대와의 관계
+            <select
+              aria-label="상대와의 관계"
+              disabled={busy || copying}
+              value={input.relation}
+              onChange={(e) => setInput({ ...input, relation: e.target.value })}
+            >
+              {messengerRelations.map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            이번 답장의 의도
+            <select
+              aria-label="이번 답장의 의도"
+              disabled={busy || copying}
+              value={input.intent}
+              onChange={(e) => setInput({ ...input, intent: e.target.value })}
+            >
+              {messengerIntents.map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <label className="messenger-field">
+          내가 전하고 싶은 것
+          <textarea
+            aria-label="내가 전하고 싶은 것"
+            rows={2}
+            maxLength={500}
+            value={input.goal}
+            disabled={busy || copying}
+            onChange={(e) => setInput({ ...input, goal: e.target.value })}
+            placeholder="예: 가능한 시간을 먼저 확인하고 싶어요."
+          />
+        </label>
+        <label className="messenger-field">
+          지킬 선 · 선택
+          <textarea
+            aria-label="지킬 선"
+            rows={2}
+            maxLength={500}
+            value={input.boundary}
+            disabled={busy || copying}
+            onChange={(e) => setInput({ ...input, boundary: e.target.value })}
+            placeholder="예: 오늘 마치겠다고 약속하지 않기"
+          />
+        </label>
+        <button
+          className="dd-primary"
+          disabled={busy || copying || !valid}
+          onClick={() => void prepare()}
+        >
+          저장하고 답장 준비
+        </button>
+        <p className="vn-caption">
+          상대 메시지와 목표를 입력하면 시작할 수 있어요. 저장 전 입력은 화면을
+          나가면 사라질 수 있어요.
+        </p>
+      </InputDialog>
+      {record && (
         <>
           <details className="dc-guide-faq" open>
             <summary>상대 메시지와 내 의도</summary>
@@ -538,102 +586,47 @@ export default function MessengerPractice({
             <button
               className="dd-link"
               disabled={busy || copying}
-              onClick={() => leave(() => setEditing(true))}
+              onClick={() => {
+                setEditing(true);
+                setInputOpen(true);
+              }}
             >
               메시지·조건 수정
             </button>
           </details>
-          {aiControls}
-          {!!record?.candidates.length && (
-            <>
-              <h2>말투를 골라 내 표현으로 고쳐보세요</h2>
-              <p className="messenger-source">
-                {record.source === "sample"
-                  ? "사전 작성 샘플 · 이 가상 상황을 위한 예시예요."
-                  : "AI가 생성한 제안 · 없는 약속이나 사실이 들어갔는지 확인해 주세요."}
-              </p>
-              <div className="messenger-candidates">
-                {record.candidates.map((c) => (
-                  <article key={c.tone}>
-                    <h3>{c.tone}</h3>
-                    <p>{c.text}</p>
-                    <small>{c.note}</small>
-                    <button
-                      className="dd-secondary"
-                      disabled={busy || copying}
-                      onClick={() => pick(c)}
-                    >
-                      {c.tone} 후보 고르기
-                    </button>
-                  </article>
-                ))}
-              </div>
-            </>
-          )}
-          <div className="messenger-editor">
-            <Companion
-              small
-              mood={busy ? "think" : "hello"}
-              character={session?.companion || friend}
-            />
-            <label className="messenger-field">
-              보낼 답장
-              <textarea
-                ref={editor}
-                aria-label="보낼 답장"
-                rows={5}
-                maxLength={2000}
-                value={draft}
-                disabled={busy}
-                onChange={(e) => {
-                  setDraft(e.target.value);
-                  draftRevision.current++;
-                  setCopiedText("");
-                  setReplyFeedback(null);
-                  if (!tone) setDraftSource("manual");
-                }}
-                placeholder="후보를 고르거나 직접 답장을 써보세요."
-              />
-            </label>
+          <div className="input-launcher">
+            <button
+              className="dd-primary"
+              disabled={busy || copying}
+              onClick={() => setReplyOpen(true)}
+            >
+              {draft.trim() ? "답장 수정" : "답장 쓰기"}
+            </button>
+            {editing && messengerKey(input) !== messengerKey(record.input) && (
+              <button className="dd-link" onClick={() => setInputOpen(true)}>
+                조건 입력 이어쓰기
+              </button>
+            )}
           </div>
-          {tone && (
-            <p className="vn-caption">
-              {tone} 후보에서 시작한 초안 ·{" "}
-              {draftSource === "sample"
-                ? "사전 작성 예시"
-                : draftSource === "ai"
-                  ? "AI 제안"
-                  : "직접 작성"}
-            </p>
-          )}
-          <div className="messenger-reply-actions">
-            <div className="dc-inline-actions">
+          {record.draft && !replyOpen && (
+            <article className="input-receipt" aria-label="저장한 답장">
+              <small>저장한 답장</small>
+              <p>{record.draft}</p>
               <button
-                className="dd-primary"
-                disabled={busy || copying || !draft.trim()}
-                aria-busy={copying}
+                className="dd-secondary"
+                disabled={copying || busy || draftDirty}
                 onClick={() => void copy()}
               >
                 {copying
                   ? "복사 중…"
-                  : copiedText && copiedText === draft.trim()
+                  : copiedText === draft.trim()
                     ? "복사 완료"
                     : "답장 복사"}
               </button>
-              <button
-                className="dd-secondary"
-                disabled={busy || copying || !draft.trim() || savedReply}
-                aria-busy={saving}
-                onClick={() => void save()}
-              >
-                {saving ? "저장 중…" : savedReply ? "저장됨" : "답장 저장"}
-              </button>
-            </div>
-            <div
-              className="messenger-action-feedback"
-              aria-live="polite"
-              aria-atomic="true"
-            >
+            </article>
+          )}
+          {!replyOpen && (
+            <div className="messenger-reply-actions">
               {replyFeedback && (
                 <p
                   role={replyFeedback.kind === "error" ? "alert" : "status"}
@@ -642,46 +635,173 @@ export default function MessengerPractice({
                   {replyFeedback.text}
                 </p>
               )}
-              {!replyFeedback && (
+              {draftDirty && (
                 <p className="vn-caption">
-                  {!draft.trim()
-                    ? "후보를 고르거나 답장을 입력하면 복사·저장할 수 있어요."
-                    : savedReply
-                      ? "이 답장은 이 브라우저에 저장돼 있어요."
-                      : "아직 저장하지 않은 답장이에요."}
+                  수정 중인 답장이 있어요. ‘답장 수정’에서 이어서 저장해 주세요.
                 </p>
               )}
             </div>
-            {savedReply && (
-              <button
-                className="dd-link"
-                disabled={busy || copying}
-                onClick={() => leave(onRecords)}
-              >
-                저장한 답장 보기
-              </button>
+          )}
+          <InputDialog
+            open={replyOpen}
+            title="답장 작성"
+            busy={busy || copying}
+            onClose={() => setReplyOpen(false)}
+            focusTarget={editor}
+          >
+            {error && (
+              <p role="alert" className="dc-error">
+                {error}
+              </p>
             )}
-          </div>
+            {notice && (
+              <p role="status" className="dc-toast">
+                {notice}
+              </p>
+            )}
+            {aiControls}
+            {!!record?.candidates.length && (
+              <>
+                <h2>말투를 골라 내 표현으로 고쳐보세요</h2>
+                <p className="messenger-source">
+                  {record.source === "sample"
+                    ? "사전 작성 샘플 · 이 가상 상황을 위한 예시예요."
+                    : "AI가 생성한 제안 · 없는 약속이나 사실이 들어갔는지 확인해 주세요."}
+                </p>
+                <div className="messenger-candidates">
+                  {record.candidates.map((c) => (
+                    <article key={c.tone}>
+                      <h3>{c.tone}</h3>
+                      <p>{c.text}</p>
+                      <small>{c.note}</small>
+                      <button
+                        className="dd-secondary"
+                        disabled={busy || copying}
+                        onClick={() => pick(c)}
+                      >
+                        {c.tone} 후보 고르기
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
+            <div className="messenger-editor">
+              <Companion
+                small
+                mood={busy ? "think" : "hello"}
+                character={session?.companion || friend}
+              />
+              <label className="messenger-field">
+                보낼 답장
+                <textarea
+                  ref={editor}
+                  aria-label="보낼 답장"
+                  rows={5}
+                  maxLength={2000}
+                  value={draft}
+                  disabled={busy}
+                  onChange={(e) => {
+                    setDraft(e.target.value);
+                    draftRevision.current++;
+                    setCopiedText("");
+                    setReplyFeedback(null);
+                    if (!tone) setDraftSource("manual");
+                  }}
+                  placeholder="후보를 고르거나 직접 답장을 써보세요."
+                />
+              </label>
+            </div>
+            {tone && (
+              <p className="vn-caption">
+                {tone} 후보에서 시작한 초안 ·{" "}
+                {draftSource === "sample"
+                  ? "사전 작성 예시"
+                  : draftSource === "ai"
+                    ? "AI 제안"
+                    : "직접 작성"}
+              </p>
+            )}
+            <div className="messenger-reply-actions">
+              <div className="dc-inline-actions">
+                <button
+                  className="dd-primary"
+                  disabled={busy || copying || !draft.trim()}
+                  aria-busy={copying}
+                  onClick={() => void copy()}
+                >
+                  {copying
+                    ? "복사 중…"
+                    : copiedText && copiedText === draft.trim()
+                      ? "복사 완료"
+                      : "답장 복사"}
+                </button>
+                <button
+                  className="dd-secondary"
+                  disabled={busy || copying || !draft.trim() || savedReply}
+                  aria-busy={saving}
+                  onClick={() => void save()}
+                >
+                  {saving ? "저장 중…" : savedReply ? "저장됨" : "답장 저장"}
+                </button>
+              </div>
+              <div
+                className="messenger-action-feedback"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                {replyFeedback && (
+                  <p
+                    role={replyFeedback.kind === "error" ? "alert" : "status"}
+                    className={"messenger-feedback " + replyFeedback.kind}
+                  >
+                    {replyFeedback.text}
+                  </p>
+                )}
+                {!replyFeedback && (
+                  <p className="vn-caption">
+                    {!draft.trim()
+                      ? "후보를 고르거나 답장을 입력하면 복사·저장할 수 있어요."
+                      : savedReply
+                        ? "이 답장은 이 브라우저에 저장돼 있어요."
+                        : "아직 저장하지 않은 답장이에요."}
+                  </p>
+                )}
+              </div>
+              {savedReply && (
+                <button
+                  className="dd-link"
+                  disabled={busy || copying}
+                  onClick={() => leave(onRecords)}
+                >
+                  저장한 답장 보기
+                </button>
+              )}
+            </div>
+            {error && (
+              <details className="dc-guide-faq">
+                <summary>AI 없이 작성된 답장 예시 보기</summary>
+                <p>
+                  현재 메시지의 분석이 아닌 별도의 가상 예시예요. 내 입력은
+                  바뀌지 않아요.
+                </p>
+                {messengerExamples.map((e) => (
+                  <article key={e.id}>
+                    <h3>{e.title}</h3>
+                    <blockquote>{e.input.message}</blockquote>
+                    <p>{e.candidates[0].text}</p>
+                  </article>
+                ))}
+              </details>
+            )}
+            <p className="input-dialog-note">
+              닫으면 초안을 잠시 보관해요. 저장해야 기록에 남아요.
+            </p>
+          </InputDialog>
           <p className="vn-caption">
             복사와 저장은 별개예요. 자동 전송·카카오톡 연결은 없으며, 저장한
             답장은 ‘대화 기록’에서 다시 열 수 있어요.
           </p>
-          {error && (
-            <details className="dc-guide-faq">
-              <summary>AI 없이 작성된 답장 예시 보기</summary>
-              <p>
-                현재 메시지의 분석이 아닌 별도의 가상 예시예요. 내 입력은 바뀌지
-                않아요.
-              </p>
-              {messengerExamples.map((e) => (
-                <article key={e.id}>
-                  <h3>{e.title}</h3>
-                  <blockquote>{e.input.message}</blockquote>
-                  <p>{e.candidates[0].text}</p>
-                </article>
-              ))}
-            </details>
-          )}
         </>
       )}
       {busy && <p role="status">{friend.name}가 답장 준비를 돕고 있어요…</p>}
@@ -700,6 +820,9 @@ export default function MessengerPractice({
                 setTone(undefined);
                 setDraftSource("manual");
                 setEditing(true);
+                setInputOpen(true);
+                setReplyOpen(false);
+                setReplyFeedback(null);
                 setError("");
                 setNotice("");
               })

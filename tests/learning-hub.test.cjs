@@ -1821,6 +1821,7 @@ const messenger = require("../lib/messenger.ts");
 const Messenger = require("../components/MessengerPractice.tsx").default;
 const msgExample = messenger.messengerExamples[0];
 async function fillMessenger(input = msgExample.input) {
+  await click(button("메시지 입력") || button("메시지 입력 이어쓰기"));
   for (const [label, key] of [
     ["상대가 보낸 메시지", "message"],
     ["내가 전하고 싶은 것", "goal"],
@@ -1929,6 +1930,12 @@ test("messenger authored example never calls AI; candidate edits, clipboard and 
       ),
     );
     await settle();
+    assert(!document.querySelector('[aria-label="보낼 답장"]'));
+    assert.equal(
+      document.querySelector('[aria-label="저장한 답장"] p').textContent,
+      copied,
+    );
+    await click(button("답장 수정"));
     assert.equal(
       document.querySelector('[aria-label="보낼 답장"]').value,
       copied,
@@ -1948,6 +1955,7 @@ test("messenger input remains saved after quota and can finish manually without 
     await fillMessenger();
     await click(button("저장하고 답장 준비"));
     await settle();
+    if (button("답장 쓰기")) await click(button("답장 쓰기"));
     global.fetch = async () =>
       Response.json({ quotaKind: "daily", retryAfter: 60 }, { status: 429 });
     await click(document.querySelector("input[type=checkbox]"));
@@ -1978,6 +1986,7 @@ test("messenger AI updates one record, edited conditions create a separate recor
     await fillMessenger();
     await click(button("저장하고 답장 준비"));
     await settle();
+    if (button("답장 쓰기")) await click(button("답장 쓰기"));
     global.fetch = async () =>
       Response.json({ candidates: msgExample.candidates });
     await click(document.querySelector("input[type=checkbox]"));
@@ -1997,6 +2006,7 @@ test("messenger AI updates one record, edited conditions create a separate recor
     );
     await click(button("저장하고 답장 준비"));
     await settle();
+    if (button("답장 쓰기")) await click(button("답장 쓰기"));
     await click(button("말투별 AI 후보 받기"));
     await settle();
     rows = await store.listSessions();
@@ -2022,6 +2032,7 @@ test("messenger refuses late AI writes after leaving and clipboard failure keeps
     await fillMessenger();
     await click(button("저장하고 답장 준비"));
     await settle();
+    if (button("답장 쓰기")) await click(button("답장 쓰기"));
     await change(
       document.querySelector('[aria-label="보낼 답장"]'),
       "검토 후 답장하겠습니다.",
@@ -2068,6 +2079,7 @@ test("messenger storage failure preserves input and does not start generation", 
     };
     await click(button("저장하고 답장 준비"));
     await settle();
+    if (button("답장 쓰기")) await click(button("답장 쓰기"));
     assert.equal(
       document.querySelector('[aria-label="상대가 보낸 메시지"]').value,
       msgExample.input.message,
@@ -2076,6 +2088,7 @@ test("messenger storage failure preserves input and does not start generation", 
     store.putSession = old;
     await click(button("저장하고 답장 준비"));
     await settle();
+    if (button("답장 쓰기")) await click(button("답장 쓰기"));
     assert.equal((await store.listSessions()).length, 1);
   } finally {
     store.putSession = old;
@@ -2551,6 +2564,7 @@ test("reply copy reports pending once, and late clipboard success never marks an
     await fillMessenger();
     await click(button("저장하고 답장 준비"));
     await settle();
+    if (button("답장 쓰기")) await click(button("답장 쓰기"));
     await change(
       document.querySelector('[aria-label="보낼 답장"]'),
       "복사 요청한 문장",
@@ -2603,6 +2617,7 @@ test("unavailable clipboard keeps the reply selected with a local recovery messa
     await fillMessenger();
     await click(button("저장하고 답장 준비"));
     await settle();
+    if (button("답장 쓰기")) await click(button("답장 쓰기"));
     const editor = document.querySelector('[aria-label="보낼 답장"]');
     await change(editor, "직접 복사할 답장입니다.");
     Object.defineProperty(navigator, "clipboard", {
@@ -2637,6 +2652,7 @@ test("reply save stays pending until storage commits, preserves draft on failure
     await fillMessenger();
     await click(button("저장하고 답장 준비"));
     await settle();
+    if (button("답장 쓰기")) await click(button("답장 쓰기"));
     const id = (await store.listSessions())[0].id;
     await change(
       document.querySelector('[aria-label="보낼 답장"]'),
@@ -2676,12 +2692,15 @@ test("reply save stays pending until storage commits, preserves draft on failure
       (await store.getSession(id)).messenger.draft,
       "오류가 나도 남아야 하는 답장",
     );
-    assert(button("저장됨").disabled);
+    assert(!document.querySelector("dialog[open]"));
+    assert(!document.querySelector('[aria-label="보낼 답장"]'));
     assert(
       document
         .querySelector(".messenger-reply-actions [role=status]")
         .textContent.includes("저장했어요"),
     );
+    await click(button("답장 수정"));
+    assert(button("저장됨").disabled);
     await change(
       document.querySelector('[aria-label="보낼 답장"]'),
       "다시 수정한 답장",
@@ -2709,6 +2728,7 @@ test("workspace messenger protects dirty navigation, saves, searches, reopens, e
     await fillMessenger();
     await click(button("저장하고 답장 준비"));
     await settle();
+    if (button("답장 쓰기")) await click(button("답장 쓰기"));
     await change(
       document.querySelector('[aria-label="보낼 답장"]'),
       "통합검증 전용 답장 0917",
@@ -2718,23 +2738,27 @@ test("workspace messenger protects dirty navigation, saves, searches, reopens, e
       prompts++;
       return false;
     };
+    await click(button("답장 작성 닫기"));
     await click(button("홈"));
     assert.equal(prompts, 1);
     assert.equal(window.location.search, "?view=messenger");
+    await click(button("답장 수정"));
     assert.equal(
       document.querySelector('[aria-label="보낼 답장"]').value,
       "통합검증 전용 답장 0917",
     );
+    await click(button("답장 작성 닫기"));
     await act(async () => {
       window.history.replaceState(null, "", "?view=library");
       window.dispatchEvent(new window.PopStateEvent("popstate"));
     });
     assert.equal(prompts, 2);
     assert.equal(window.location.search, "?view=messenger");
+    await click(button("답장 수정"));
     assert(document.querySelector('[aria-label="보낼 답장"]'));
     await click(button("답장 저장"));
     await settle();
-    assert(button("저장됨"));
+    assert(!document.querySelector("dialog[open]"));
     await click(button("저장한 답장 보기"));
     await settle();
     assert.equal(prompts, 2);
@@ -2744,6 +2768,8 @@ test("workspace messenger protects dirty navigation, saves, searches, reopens, e
     assert.equal(document.querySelectorAll(".vn-session-card").length, 1);
     await click(document.querySelector(".vn-session-card"));
     await settle();
+    assert(!document.querySelector('[aria-label="보낼 답장"]'));
+    await click(button("답장 수정"));
     assert.equal(
       document.querySelector('[aria-label="보낼 답장"]').value,
       "통합검증 전용 답장 0917",
@@ -2770,7 +2796,8 @@ test("workspace messenger protects dirty navigation, saves, searches, reopens, e
       (await store.listSessions()).filter((s) => s.messenger).length,
       0,
     );
-    assert(document.querySelector('[aria-label="상대가 보낸 메시지"]'));
+    assert(!document.querySelector("dialog[open]"));
+    assert(button("메시지 입력"));
   } finally {
     await ui.cleanup();
   }
@@ -2796,9 +2823,11 @@ test("clearing a saved message is still unsaved work, and accepted in-app naviga
       prompts++;
       return false;
     };
+    await click(button("메시지와 목표 입력 닫기"));
     await click(button("홈"));
     assert.equal(prompts, 1);
     assert.equal(window.location.search, "?view=messenger");
+    await click(button("메시지·조건 수정"));
     assert.equal(
       document.querySelector('[aria-label="상대가 보낸 메시지"]').value,
       "",
@@ -2807,6 +2836,7 @@ test("clearing a saved message is still unsaved work, and accepted in-app naviga
       prompts++;
       return true;
     };
+    await click(button("메시지와 목표 입력 닫기"));
     await click(button("저장한 답장 보기"));
     await settle();
     assert.equal(prompts, 2);
@@ -2815,6 +2845,312 @@ test("clearing a saved message is still unsaved work, and accepted in-app naviga
       (await store.listSessions()).filter((s) => s.messenger).length,
       1,
     );
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("input dialog keeps the same focused input across typing and viewport changes, then restores focus and scroll lock", async () => {
+  const Dialog = require("../components/InputDialog.tsx").default;
+  function Harness() {
+    const [open, setOpen] = React.useState(false),
+      [text, setText] = React.useState("");
+    const field = React.useRef(null);
+    return React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(
+        "button",
+        { onClick: () => setOpen(true) },
+        "입력 열기",
+      ),
+      React.createElement(
+        Dialog,
+        {
+          open,
+          title: "안정성 확인",
+          onClose: () => setOpen(false),
+          focusTarget: field,
+        },
+        React.createElement("textarea", {
+          ref: field,
+          value: text,
+          onChange: (e) => setText(e.target.value),
+        }),
+      ),
+    );
+  }
+  const ui = await mount(Harness);
+  try {
+    let opens = 0,
+      closes = 0,
+      scrolls = 0;
+    window.HTMLDialogElement.prototype.showModal = function () {
+      opens++;
+      this.open = true;
+    };
+    window.HTMLDialogElement.prototype.close = function () {
+      closes++;
+      this.open = false;
+    };
+    window.scrollTo = () => scrolls++;
+    const viewport = new window.EventTarget();
+    viewport.height = 700;
+    viewport.offsetTop = 0;
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      value: viewport,
+    });
+    const trigger = button("입력 열기");
+    trigger.focus();
+    await click(trigger);
+    const input = document.querySelector("textarea"),
+      dialog = document.querySelector("dialog");
+    assert.equal(document.activeElement, input);
+    for (const text of ["안", "안녕", "안녕하세요"]) {
+      await change(input, text);
+      assert.equal(document.querySelector("textarea"), input);
+      assert.equal(document.activeElement, input);
+    }
+    viewport.height = 360;
+    viewport.offsetTop = 40;
+    viewport.dispatchEvent(new window.Event("resize"));
+    assert.equal(dialog.style.getPropertyValue("--input-height"), "360px");
+    assert.equal(opens, 1);
+    assert.equal(closes, 0);
+    assert.equal(scrolls, 0);
+    assert.equal(document.body.style.overflow, "hidden");
+    await act(async () =>
+      dialog.dispatchEvent(new window.Event("cancel", { cancelable: true })),
+    );
+    assert(!dialog.open);
+    assert(!document.querySelector("textarea"));
+    assert.equal(document.activeElement, trigger);
+    assert.equal(document.body.style.overflow, "");
+    await click(trigger);
+    assert.equal(document.querySelector("textarea").value, "안녕하세요");
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("voice input dialog preserves a closed draft, blocks duplicate save and escape while pending, and closes only after success", async () => {
+  const Composer = require("../components/VoiceComposer.tsx").default;
+  let resolve,
+    reject,
+    calls = 0;
+  const ui = await mount(Composer, {
+    config,
+    consent: false,
+    textFirst: true,
+    inDialog: true,
+    onUse: () => {
+      calls++;
+      return new Promise((yes, no) => {
+        resolve = yes;
+        reject = no;
+      });
+    },
+  });
+  try {
+    assert(!document.querySelector("textarea"));
+    await click(button("답변 쓰기"));
+    await change(
+      document.querySelector("textarea"),
+      "내일 오전에 답변드릴게요.",
+    );
+    await click(button("답변 작성 닫기"));
+    assert(!document.querySelector("textarea"));
+    assert(button("입력 이어쓰기"));
+    assert.equal((await store.listSessions()).length, 0);
+    await click(button("입력 이어쓰기"));
+    assert.equal(
+      document.querySelector("textarea").value,
+      "내일 오전에 답변드릴게요.",
+    );
+    const save = button("기록 저장");
+    await act(async () => {
+      save.click();
+      save.click();
+    });
+    assert.equal(calls, 1);
+    const dialog = document.querySelector("dialog");
+    await act(async () =>
+      dialog.dispatchEvent(new window.Event("cancel", { cancelable: true })),
+    );
+    assert(dialog.open);
+    await act(async () => reject(Error("저장 공간 부족")));
+    assert(dialog.open);
+    assert(
+      document
+        .querySelector('[role="alert"]')
+        .textContent.includes("저장 공간 부족"),
+    );
+    assert.equal(
+      document.querySelector("textarea").value,
+      "내일 오전에 답변드릴게요.",
+    );
+    await click(button("기록 저장"));
+    await act(async () => resolve());
+    assert.equal(calls, 2);
+    assert(!dialog.open);
+    assert(!document.querySelector("textarea"));
+    assert(
+      document
+        .querySelector(".input-dialog-status")
+        .textContent.includes("기록했어요"),
+    );
+    await click(button("답변 쓰기"));
+    assert.equal(document.querySelector("textarea").value, "");
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("messenger saves to a read-only record, keeps closed edits and reopens selected text when record copy is blocked", async () => {
+  const ui = await mount(Messenger, { config, onRecords() {} });
+  try {
+    assert(!document.querySelector("textarea"));
+    await fillMessenger();
+    await click(button("저장하고 답장 준비"));
+    await settle();
+    assert(!document.querySelector("dialog[open]"));
+    assert(!document.querySelector("textarea"));
+    await click(button("답장 쓰기"));
+    await change(
+      document.querySelector('[aria-label="보낼 답장"]'),
+      "일정부터 확인하겠습니다.",
+    );
+    await click(button("답장 작성 닫기"));
+    assert.equal((await store.listSessions())[0].messenger.draft, "");
+    await click(button("답장 수정"));
+    assert.equal(
+      document.querySelector('[aria-label="보낼 답장"]').value,
+      "일정부터 확인하겠습니다.",
+    );
+    await click(button("답장 저장"));
+    await settle();
+    assert(!document.querySelector("textarea"));
+    assert.equal(
+      document.querySelector('[aria-label="저장한 답장"] p').textContent,
+      "일정부터 확인하겠습니다.",
+    );
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: undefined,
+    });
+    await click(button("답장 복사"));
+    const input = document.querySelector('[aria-label="보낼 답장"]');
+    assert(document.querySelector("dialog[open]"));
+    assert.equal(document.activeElement, input);
+    assert.equal(input.selectionStart, 0);
+    assert.equal(input.selectionEnd, input.value.length);
+    assert(
+      document
+        .querySelector("dialog [role=alert]")
+        .textContent.includes("자동 복사가 차단"),
+    );
+    assert.equal((await store.listSessions()).length, 1);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("conversation keeps its composer mounted and closes input after saving, while the partner is still pending", async () => {
+  const Workspace = require("../components/VoiceWorkspace.tsx").default;
+  const original = structuredClone(
+    require("../lib/starter-data.ts").starterSession,
+  );
+  original.id = "dialog-conversation";
+  original.isSample = false;
+  original.turns = [
+    {
+      id: "dialog-partner",
+      role: "assistant",
+      text: "어떤 일정이 괜찮으세요?",
+      terms: [],
+      createdAt: original.createdAt,
+    },
+  ];
+  const ui = await mount(Workspace, { config, onChooseCard() {} });
+  try {
+    await act(async () => store.putSession(original));
+    await act(async () => ui.root.render(null));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(Workspace, {
+          config,
+          initialSessionId: original.id,
+          onChooseCard() {},
+        }),
+      ),
+    );
+    await settle();
+    let release,
+      calls = 0,
+      scrolls = 0;
+    global.fetch = async () => {
+      calls++;
+      return new Promise((resolve) => {
+        release = resolve;
+      });
+    };
+    window.HTMLElement.prototype.scrollIntoView = () => scrolls++;
+    await click(document.querySelector(".vn-consent input"));
+    await click(button("답변 쓰기"));
+    const dialog = document.querySelector(".input-dialog");
+    await change(
+      document.querySelector('textarea[aria-label="인식한 말 또는 직접 입력"]'),
+      "내일 오전이면 가능합니다.",
+    );
+    await click(button("내 답변 보내기"));
+    await settle();
+    assert.equal(calls, 1);
+    assert(!dialog.open);
+    assert.equal(document.querySelector(".input-dialog"), dialog);
+    assert(
+      !document.querySelector(
+        'textarea[aria-label="인식한 말 또는 직접 입력"]',
+      ),
+    );
+    assert.equal((await store.getSession(original.id)).turns.length, 2);
+    assert(button("답변 쓰기").disabled);
+    assert.equal(scrolls, 0);
+    await act(async () =>
+      release(
+        Response.json({ reply: "그럼 내일 오전에 이야기해요.", terms: [] }),
+      ),
+    );
+    await settle();
+    assert.equal((await store.getSession(original.id)).turns.length, 3);
+    assert.equal(document.querySelector(".input-dialog"), dialog);
+    assert(!dialog.open);
+    assert.equal(scrolls, 0);
+    await click(button("답변 쓰기"));
+    assert.equal(
+      document.querySelector('textarea[aria-label="인식한 말 또는 직접 입력"]')
+        .value,
+      "",
+    );
+    await change(
+      document.querySelector('textarea[aria-label="인식한 말 또는 직접 입력"]'),
+      "아직 저장하지 않은 다음 말",
+    );
+    await click(button("답변 작성 닫기"));
+    window.confirm = () => false;
+    await click(button("대화 기록 목록"));
+    assert(button("입력 이어쓰기"));
+    assert.equal((await store.getSession(original.id)).turns.length, 3);
+    await click(button("입력 이어쓰기"));
+    assert.equal(
+      document.querySelector('textarea[aria-label="인식한 말 또는 직접 입력"]')
+        .value,
+      "아직 저장하지 않은 다음 말",
+    );
+    await click(button("답변 작성 닫기"));
+    window.confirm = () => true;
+    await click(button("대화 기록 목록"));
+    assert(!button("입력 이어쓰기"));
   } finally {
     await ui.cleanup();
   }

@@ -1,4 +1,5 @@
 "use client";
+import { canLeaveWorkspace } from "@/lib/navigation-guard";
 import MessengerPractice from "./MessengerPractice";
 import ConversationTraining from "./ConversationTraining";
 import {
@@ -120,7 +121,6 @@ export default function VoiceWorkspace({
     [suggestion, setSuggestion] = useState<{ text: string; id: number }>();
   const abort = useRef<AbortController | null>(null),
     generation = useRef(0),
-    end = useRef<HTMLDivElement>(null),
     mounted = useRef(true);
   const refresh = () =>
     listSessions()
@@ -156,15 +156,6 @@ export default function VoiceWorkspace({
       window.speechSynthesis?.cancel();
     };
   }, []);
-  useEffect(() => {
-    if (session?.turns.length)
-      end.current?.scrollIntoView({
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "instant"
-          : "smooth",
-        block: "nearest",
-      });
-  }, [session?.turns.length]);
   function stopAudio() {
     window.speechSynthesis?.cancel();
     setSpeaking("");
@@ -227,6 +218,7 @@ export default function VoiceWorkspace({
     }
   }
   function open(s: VoiceSession | null) {
+    if (!canLeaveWorkspace()) return;
     generation.current++;
     abort.current?.abort();
     stopAudio();
@@ -411,7 +403,7 @@ export default function VoiceWorkspace({
     await persist(next);
     setSuggestion(undefined);
     setNotice("음성과 문자를 이 기기에 저장했어요.");
-    if (session.kind !== "recording") await respond(next);
+    if (session.kind !== "recording") void respond(next);
   }
   async function extract(turn: VoiceTurn) {
     if (!session) return;
@@ -1077,7 +1069,6 @@ export default function VoiceWorkspace({
                 </div>
               </article>
             ))}
-            <div ref={end} />
           </div>
           {!session.isSample &&
             session.kind === "recording" &&
@@ -1185,26 +1176,32 @@ export default function VoiceWorkspace({
               </details>
             )}
           {!session.isSample &&
-            (session.kind === "recording" ||
-              (session.turns.length > 0 && !pending && !complete)) && (
-              <VoiceComposer
-                key={session.id}
-                config={session.kind === "recording" ? config : sampleConfig}
-                consent={
-                  sampleMode && session.kind !== "recording" ? false : consent
-                }
-                disabled={busy || (session.kind !== "recording" && !canTalk)}
-                requireText={session.kind !== "recording"}
-                textFirst={session.kind !== "recording"}
-                submitLabel={
-                  session.kind !== "recording"
-                    ? "내 답변 보내기"
-                    : "음성과 문자 기록 저장"
-                }
-                onUse={saveDraft}
-                onActivity={setCaptureBusy}
-                suggestion={suggestion}
-              />
+            (session.kind === "recording" || session.turns.length > 0) && (
+              <div hidden={!!complete}>
+                <VoiceComposer
+                  inDialog
+                  key={session.id}
+                  config={session.kind === "recording" ? config : sampleConfig}
+                  consent={
+                    sampleMode && session.kind !== "recording" ? false : consent
+                  }
+                  disabled={
+                    busy ||
+                    (session.kind !== "recording" &&
+                      (!canTalk || !!pending || !!complete))
+                  }
+                  requireText={session.kind !== "recording"}
+                  textFirst={session.kind !== "recording"}
+                  submitLabel={
+                    session.kind !== "recording"
+                      ? "내 답변 보내기"
+                      : "음성과 문자 기록 저장"
+                  }
+                  onUse={saveDraft}
+                  onActivity={setCaptureBusy}
+                  suggestion={suggestion}
+                />
+              </div>
             )}
           {!session.isSample && session.kind === "practice" && (
             <GardenPractice

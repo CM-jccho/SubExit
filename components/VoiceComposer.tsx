@@ -1,4 +1,6 @@
 "use client";
+import InputDialog from "./InputDialog";
+import { WORKSPACE_LEAVE_EVENT } from "@/lib/navigation-guard";
 import ConsentDisclosure from "./ConsentDisclosure";
 import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
@@ -64,6 +66,7 @@ export default function VoiceComposer({
   onActivity,
   suggestion,
   textFirst = false,
+  inDialog = false,
 }: {
   onUse: (draft: VoiceDraft) => Promise<void> | void;
   submitLabel?: string;
@@ -72,9 +75,13 @@ export default function VoiceComposer({
   disabled?: boolean;
   requireText?: boolean;
   textFirst?: boolean;
+  inDialog?: boolean;
   onActivity?: (active: boolean) => void;
   suggestion?: { text: string; id: number };
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const [receipt, setReceipt] = useState("");
+  const editor = useRef<HTMLTextAreaElement>(null);
   const [clip, setClip] = useState<AudioClip>(),
     [text, setText] = useState(""),
     [phase, setPhase] = useState<
@@ -100,16 +107,36 @@ export default function VoiceComposer({
   activity.current = onActivity;
   useEffect(() => {
     if (suggestion) {
+      if (inDialog) setExpanded(true);
+      setReceipt("");
       setText(suggestion.text);
       setTyping(true);
       setNotice(
         "고른 후보를 넣었어요. 내 말로 고치거나, 마이크로 직접 읽어봐도 좋아요.",
       );
     }
-  }, [suggestion]);
+  }, [suggestion, inDialog]);
   useEffect(() => {
-    onActivity?.(phase !== "idle");
-  }, [phase, onActivity]);
+    activity.current?.(phase !== "idle");
+  }, [phase]);
+  const dirty = !!text.trim() || !!clip || phase !== "idle";
+  useEffect(() => {
+    if (!inDialog || !dirty) return;
+    const guard = (event: Event) => {
+      if (!window.confirm("작성 중인 입력이 있어요. 저장하지 않고 이동할까요?"))
+        event.preventDefault();
+    };
+    const unload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener(WORKSPACE_LEAVE_EVENT, guard);
+    window.addEventListener("beforeunload", unload);
+    return () => {
+      window.removeEventListener(WORKSPACE_LEAVE_EVENT, guard);
+      window.removeEventListener("beforeunload", unload);
+    };
+  }, [inDialog, dirty]);
   function release() {
     if (timer.current) clearInterval(timer.current);
     timer.current = null;
@@ -324,16 +351,22 @@ export default function VoiceComposer({
   }
   async function use() {
     if (
+      busy.current ||
       phase !== "idle" ||
       disabled ||
       (!clip && !text.trim()) ||
       (requireText && !text.trim())
     )
       return;
+    busy.current = true;
+    const id = epoch.current;
     setPhase("saving");
     setError("");
     try {
       await onUse({ clip, text: text.trim() });
+      if (epoch.current !== id) return;
+      setExpanded(false);
+      setReceipt(textFirst ? "답변을 기록했어요." : "기록에 저장했어요.");
       setText("");
       setClip(undefined);
       setTyping(textFirst);
@@ -343,17 +376,19 @@ export default function VoiceComposer({
           : "저장했어요. 이어서 다른 이야기를 남겨도 돼요.",
       );
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : "저장하지 못했어요. 입력은 그대로 남겨뒀어요.",
-      );
+      if (epoch.current === id)
+        setError(
+          e instanceof Error
+            ? e.message
+            : "저장하지 못했어요. 입력은 그대로 남겨뒀어요.",
+        );
     } finally {
-      setPhase("idle");
+      busy.current = false;
+      if (epoch.current === id) setPhase("idle");
     }
   }
   const working = phase !== "idle";
-  return (
+  const composer = (
     <section className="vn-composer" aria-label="음성 또는 문자 입력">
       <div className="vn-capture-row">
         <button
@@ -444,6 +479,7 @@ export default function VoiceComposer({
               ? "내 답장"
               : "직접 입력"}
           <textarea
+            ref={editor}
             aria-label="인식한 말 또는 직접 입력"
             rows={3}
             maxLength={4000}
@@ -478,5 +514,57 @@ export default function VoiceComposer({
         </button>
       )}
     </section>
+  );
+  if (!inDialog) return composer;
+  return (
+    <>
+      <div className="input-launcher" aria-label="대화 입력 열기">
+        <button
+          type="button"
+          className="dd-primary"
+          disabled={disabled || working}
+          onClick={() => {
+            setTyping(true);
+            setExpanded(true);
+            setReceipt("");
+          }}
+        >
+          {text.trim() || clip
+            ? "입력 이어쓰기"
+            : textFirst
+              ? "답변 쓰기"
+              : "기록 남기기"}
+        </button>
+        <button
+          type="button"
+          className="dd-secondary"
+          disabled={disabled || working}
+          onClick={() => {
+            setExpanded(true);
+            setReceipt("");
+          }}
+        >
+          녹음·파일 추가
+        </button>
+      </div>
+      <p className="input-dialog-status" role="status">
+        {receipt ||
+          (dirty && !expanded
+            ? "작성 중인 입력이 있어요. 아직 저장되지 않았어요."
+            : "")}
+      </p>
+      <InputDialog
+        open={expanded}
+        title={textFirst ? "답변 작성" : "기록 작성"}
+        busy={working}
+        onClose={() => setExpanded(false)}
+        focusTarget={editor}
+      >
+        {composer}
+        <p className="input-dialog-note">
+          닫으면 입력을 잠시 보관해요. 저장 전 화면을 나가면 사라질 수 있어요.
+        </p>
+      </InputDialog>
+    </>
   );
 }

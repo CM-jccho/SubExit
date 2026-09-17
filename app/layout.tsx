@@ -15,6 +15,7 @@ import "./daily-talk.css";
 import "./conversation-training.css";
 import "./messenger.css";
 import "./focus-visuals.css";
+import "./input-dialog.css";
 export const metadata = {
   title: "든든콜 · 대화 연습과 복기",
   description:
