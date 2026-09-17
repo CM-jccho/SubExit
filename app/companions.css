@@ -497,16 +497,6 @@
   .dc-room-stage {
     min-height: 355px;
   }
-  .dc-nav {
-    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-  }
-  .dc-nav button {
-    padding-left: 3px;
-    padding-right: 3px;
-  }
-  .dc-nav button span {
-    font-size: 10px;
-  }
   .dc-room-friends .dc-companion.is-small {
     width: 40px;
     margin-left: -15px;

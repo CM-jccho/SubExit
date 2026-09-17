@@ -17,6 +17,7 @@ export type AudioClip = {
   duration: number;
   peaks: number[];
   name: string;
+  transcription?: import("./recording-limits").TranscriptionProgress;
 };
 export type VoiceTurn = {
   unchangedSuggestion?: boolean;

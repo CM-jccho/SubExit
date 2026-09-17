@@ -482,7 +482,6 @@ export function GardenPractice({
   onPractice: (s: VoiceSession) => Promise<void>;
   onRoom?: () => void;
 }) {
-  const { garden, error } = useGarden();
   const answers = freshAnswers(session),
     latest = answers.at(-1);
   const [rewrite, setRewrite] = useState(
@@ -530,34 +529,24 @@ export function GardenPractice({
       setBusy(false);
     }
   }
-  const root =
-    session.gardenRootId || session.practicePlan?.sourceSessionId || session.id;
-  const earned = garden
-    ? Object.entries(garden.events)
-        .filter(([id]) => id.startsWith(root + ":"))
-        .reduce((sum, [, e]) => sum + e.amount, 0)
-    : 0;
   return (
-    <section className="garden-practice" aria-label="연습 퀘스트">
+    <section className="garden-practice" aria-label="내 답변 돌아보기">
       <div className="garden-header">
-        <strong>이번 장면의 연습 기록</strong>
-        <span role="status">이 대화 꾸미기 티켓 +{earned}</span>
-        {onRoom && (
-          <button
-            className="dd-link"
-            onClick={onRoom}
-            disabled={disabled || busy}
-          >
-            AI 대화 상대에서 보기
-          </button>
-        )}
+        <strong>내 답변 돌아보기</strong>
+        <span>
+          내가 보낸 답변 {session.turns.filter((t) => t.role === "user").length}
+          개
+        </span>
       </div>
-      {error && <p role="alert">{error}</p>}
-      {answers.length < 2 ? (
+      <p className="vn-caption">
+        주고받은 대화는 자동 저장돼요. ‘내 기록’에서 다시 열 수 있어요.
+        아래에서는 한 문장을 고쳐 쓰고 같은 장면을 다시 연습할 수 있어요.
+      </p>
+      {answers.length < 1 ? (
         <p>
           {session.practicePlan
             ? "앞의 말풍선은 지난 기록이에요. 마지막 상대 말에 새 답변을 남겨보세요."
-            : `직접 쓰거나 후보를 고쳐서 두 번 답해보세요. ${answers.length}/2 · 티켓 +2`}
+            : "내 말로 답변을 남기면 여기서 한 문장을 골라 고쳐 쓸 수 있어요."}
         </p>
       ) : (
         <details>

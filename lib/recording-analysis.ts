@@ -1,4 +1,5 @@
 import { parseProfile, type ContextProfile } from "./conversation-cards";
+import { RECORDING_MAX_TEXT, RECORDING_MAX_SEGMENTS } from "./recording-limits";
 import {
   reviewKey,
   validateReview,
@@ -32,7 +33,21 @@ export function splitRecordingTranscript(text: string): RecordingSegment[] {
     .split(/\n+/)
     .map((s) => s.trim())
     .filter(Boolean)
-    .map((text, i) => ({ id: `segment-${i}`, text, role: "unknown" }));
+    .map((text, i) => {
+      const label = text.match(
+        /^(나|내 말|상대|상대방|me|other|自分|相手)\s*[:：]\s*/i,
+      );
+      const role: RecordingSegment["role"] = !label
+        ? "unknown"
+        : /^(나|내 말|me|自分)$/i.test(label[1])
+          ? "user"
+          : "assistant";
+      return {
+        id: `segment-${i}`,
+        text: label ? text.slice(label[0].length).trim() : text,
+        role,
+      };
+    });
 }
 export function recordingTurns(segments: RecordingSegment[]): VoiceTurn[] {
   return segments.map((s) => ({
@@ -54,9 +69,9 @@ export function validateRecordingInput(value: unknown) {
     d.confirmed !== true ||
     !Array.isArray(d.segments) ||
     d.segments.length < 2 ||
-    d.segments.length > 40
+    d.segments.length > RECORDING_MAX_SEGMENTS
   )
-    throw new Error("화자 확인을 마친 2~40개 발화가 필요해요.");
+    throw new Error("화자 확인을 마친 2~600개 발화가 필요해요.");
   if (
     new Set(d.segments.map((s) => s?.id)).size !== d.segments.length ||
     d.segments.some(
@@ -69,10 +84,10 @@ export function validateRecordingInput(value: unknown) {
         !s.text.trim() ||
         s.text.length > 4000,
     ) ||
-    d.segments.reduce((sum, s) => sum + s.text.length, 0) > 4000
+    d.segments.reduce((sum, s) => sum + s.text.length, 0) > RECORDING_MAX_TEXT
   )
     throw new Error(
-      "모든 발화의 화자를 지정하고, 전체 문자를 4,000자 이내로 확인해 주세요.",
+      "모든 발화의 화자를 지정하고, 전체 문자는 60,000자, 발화 하나는 4,000자 이내로 확인해 주세요.",
     );
   if (
     !d.segments.some((s) => s.role === "user") ||

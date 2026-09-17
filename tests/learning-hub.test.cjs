@@ -185,7 +185,7 @@ test("recording contract requires confirmed speakers, bounded segments and exact
     { ...d, segments: [d.segments[0], d.segments[0]] },
     {
       ...d,
-      segments: d.segments.map((s) => ({ ...s, text: "a".repeat(2000) })),
+      segments: d.segments.map((s) => ({ ...s, text: "a".repeat(4001) })),
     },
   ])
     assert.throws(() => recording.validateRecordingInput(bad));
@@ -2989,7 +2989,7 @@ test("messenger saves to a read-only record, keeps closed edits and reopens sele
   }
 });
 
-test("conversation keeps its composer mounted and closes input after saving, while the partner is still pending", async () => {
+test("inline chat keeps input mounted, saves before the partner responds, and guards unsent drafts", async () => {
   const Workspace = require("../components/VoiceWorkspace.tsx").default;
   const original = structuredClone(
     require("../lib/starter-data.ts").starterSession,
@@ -3030,8 +3030,9 @@ test("conversation keeps its composer mounted and closes input after saving, whi
     };
     window.HTMLElement.prototype.scrollIntoView = () => scrolls++;
     await click(document.querySelector(".vn-consent input"));
-    await click(button("답변 쓰기"));
-    const dialog = document.querySelector(".input-dialog");
+    const input = document.querySelector(
+      'textarea[aria-label="인식한 말 또는 직접 입력"]',
+    );
     await change(
       document.querySelector('textarea[aria-label="인식한 말 또는 직접 입력"]'),
       "내일 오전이면 가능합니다.",
@@ -3039,15 +3040,11 @@ test("conversation keeps its composer mounted and closes input after saving, whi
     await click(button("내 답변 보내기"));
     await settle();
     assert.equal(calls, 1);
-    assert(!dialog.open);
-    assert.equal(document.querySelector(".input-dialog"), dialog);
-    assert(
-      !document.querySelector(
-        'textarea[aria-label="인식한 말 또는 직접 입력"]',
-      ),
-    );
+    assert.equal(document.querySelector(".vn-chat-composer textarea"), input);
+    assert.equal(input.value, "");
+    assert.equal(document.querySelector(".input-dialog"), null);
     assert.equal((await store.getSession(original.id)).turns.length, 2);
-    assert(button("답변 쓰기").disabled);
+    assert(input.disabled);
     assert.equal(scrolls, 0);
     await act(async () =>
       release(
@@ -3056,10 +3053,9 @@ test("conversation keeps its composer mounted and closes input after saving, whi
     );
     await settle();
     assert.equal((await store.getSession(original.id)).turns.length, 3);
-    assert.equal(document.querySelector(".input-dialog"), dialog);
-    assert(!dialog.open);
+    assert.equal(document.querySelector(".vn-chat-composer textarea"), input);
+    assert(!input.disabled);
     assert.equal(scrolls, 0);
-    await click(button("답변 쓰기"));
     assert.equal(
       document.querySelector('textarea[aria-label="인식한 말 또는 직접 입력"]')
         .value,
@@ -3069,21 +3065,18 @@ test("conversation keeps its composer mounted and closes input after saving, whi
       document.querySelector('textarea[aria-label="인식한 말 또는 직접 입력"]'),
       "아직 저장하지 않은 다음 말",
     );
-    await click(button("답변 작성 닫기"));
     window.confirm = () => false;
     await click(button("내 기록으로"));
-    assert(button("입력 이어쓰기"));
+    assert.equal(document.querySelector(".vn-chat-composer textarea"), input);
     assert.equal((await store.getSession(original.id)).turns.length, 3);
-    await click(button("입력 이어쓰기"));
     assert.equal(
       document.querySelector('textarea[aria-label="인식한 말 또는 직접 입력"]')
         .value,
       "아직 저장하지 않은 다음 말",
     );
-    await click(button("답변 작성 닫기"));
     window.confirm = () => true;
     await click(button("내 기록으로"));
-    assert(!button("입력 이어쓰기"));
+    assert(!document.querySelector(".vn-chat-composer"));
   } finally {
     await ui.cleanup();
   }
@@ -3183,15 +3176,16 @@ test("returning from active practice updates the record list, URL and primary na
     await click(button("상대와 연습 시작"));
     await settle();
     // An unfinished editor must remain accessible if the user cancels leaving.
-    await click(button("답변 쓰기"));
     await change(
       document.querySelector('textarea[aria-label="인식한 말 또는 직접 입력"]'),
       "아직 보내지 않은 말",
     );
-    await click(button("답변 작성 닫기"));
     window.confirm = () => false;
     await click(button("내 기록으로"));
-    assert(button("입력 이어쓰기"));
+    assert.equal(
+      document.querySelector(".vn-chat-composer textarea").value,
+      "아직 보내지 않은 말",
+    );
     assert.equal(
       document.querySelector(".dc-nav [aria-current=page]").textContent,
       "홈",
@@ -3301,3 +3295,116 @@ test("the third core home entry opens recording analysis directly without a situ
     await ui.cleanup();
   }
 });
+
+test("recording accepts 100 labeled utterances beyond the old 40-turn/4000-character cap with grounded review", () => {
+  const text = Array.from(
+    { length: 100 },
+    (_, i) =>
+      (i % 2 ? "나: " : "상대: ") + `발화${i} ` + "대화 내용 ".repeat(15),
+  ).join("\n");
+  const segments = recording.splitRecordingTranscript(text);
+  assert.equal(segments[0].role, "assistant");
+  assert.equal(segments[1].role, "user");
+  const parsed = recording.validateRecordingInput({ ...draft(), segments });
+  assert.equal(parsed.turns.length, 100);
+  const last = segments[99];
+  const review = reviews.validateReview(
+    {
+      strength: {
+        turnId: last.id,
+        quote: last.text.slice(0, 15),
+        note: "확인한 표현",
+      },
+      improvement: {
+        turnId: last.id,
+        quote: last.text.slice(0, 15),
+        note: "다음 행동",
+        rewrite: "범위를 확인해 주세요.",
+      },
+      focus: "확인하기",
+    },
+    example.context,
+    parsed.turns,
+  );
+  assert.equal(review.improvement.turnId, "segment-99");
+  assert.throws(
+    () =>
+      recording.validateRecordingInput({
+        ...draft(),
+        segments: Array.from({ length: 100 }, (_, i) => ({
+          id: `segment-${i}`,
+          role: i % 2 ? "user" : "assistant",
+          text: "가".repeat(610),
+        })),
+      }),
+    /60,000/,
+  );
+});
+
+test("manual expression scrap opens, saves without AI consent, and can be read back from the glossary", async () => {
+  const { TermEditor } = require("../components/TermNotebook.tsx");
+  let saved = 0,
+    closed = 0;
+  const ui = await mount(TermEditor, {
+    seed: {
+      term: "서비스 수준 협약",
+      quote: "이 서비스 수준 협약을 확인해 주세요.",
+      industry: "IT",
+      sessionId: "session-test",
+    },
+    config,
+    onSaved: () => saved++,
+    onClose: () => closed++,
+  });
+  try {
+    let requests = 0;
+    global.fetch = async () => {
+      requests++;
+      throw new Error("must not call AI");
+    };
+    assert(document.querySelector("dialog").open);
+    await click(button("이 표현 바로 저장"));
+    await settle();
+    const rows = await store.listTerms();
+    assert.equal(saved, 1);
+    assert.equal(closed, 1);
+    assert.equal(requests, 0);
+    assert.equal(rows[0].term, "서비스 수준 협약");
+    assert(rows[0].quote.includes("서비스 수준 협약"));
+    assert.equal(rows[0].source, "manual");
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("term extraction includes the end of long transcripts and renders selectable multi-word matches", async () =>
+  ai(async () => {
+    const route = require("../app/api/terms/route.ts");
+    const text =
+      "일반 대화입니다. ".repeat(900) +
+      "Service Level Agreement를 확인해 주세요.";
+    gemini.geminiGenerate = async (system, parts) => {
+      assert(JSON.parse(parts[0].text).text.endsWith("확인해 주세요."));
+      return { terms: ["Service Level Agreement", "없는 용어"] };
+    };
+    const response = await route.POST(
+      req({ action: "extract", text, industry: "IT", ...consent }),
+    );
+    assert.equal(response.status, 200);
+    assert.deepEqual((await response.json()).terms, [
+      "Service Level Agreement",
+    ]);
+    const { TermText } = require("../components/TermNotebook.tsx");
+    let selected;
+    const ui = await mount(TermText, {
+      text: "Service Level Agreement를 확인해 주세요.",
+      candidates: ["service level agreement"],
+      onTerm: (t) => (selected = t),
+    });
+    try {
+      await click(document.querySelector(".is-term"));
+      assert.equal(selected, "Service Level Agreement");
+    } finally {
+      await ui.cleanup();
+    }
+  }));

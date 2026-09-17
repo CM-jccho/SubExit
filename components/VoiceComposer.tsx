@@ -1,9 +1,19 @@
 "use client";
 import InputDialog from "./InputDialog";
+import SampleNotice from "./SampleNotice";
+import type { SampleMeta } from "@/lib/demo-bank";
 import { WORKSPACE_LEAVE_EVENT } from "@/lib/navigation-guard";
 import ConsentDisclosure from "./ConsentDisclosure";
+import { useConsentPrompt } from "./ConsentSession";
 import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
+import { transcribeAudio } from "@/lib/audio-transcription";
+import {
+  RECORDING_MAX_BYTES,
+  RECORDING_MAX_SECONDS,
+  RECORDING_MAX_TEXT,
+  importTranscript,
+} from "@/lib/recording-limits";
 import { useEffect, useRef, useState } from "react";
 import AudioPlayer, { inspectAudio, audioTime } from "./AudioPlayer";
 import { Icon } from "./CompanionUI";
@@ -24,12 +34,16 @@ export function AIConsent({
   checked,
   onChange,
   disabled = false,
+  priority = 1,
 }: {
   config: AIConfig;
   checked: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
+  priority?: number;
 }) {
+  const show = useConsentPrompt(checked, disabled, priority);
+  if (!show) return null;
   return (
     <ConsentDisclosure
       complete={checked}
@@ -45,6 +59,10 @@ export function AIConsent({
         />
         <span>
           만 18세 이상이며 음성·문장의 Gemini 전송에 동의해요.
+          <small>
+            문자 변환·코칭·복기·용어 설명에 필요한 입력을 보내요. 다른 사람의
+            말은 참여자의 동의를 받은 뒤 보내요. 이번 이용 중 한 번만 확인해요.
+          </small>
           {config.sampleOnly && (
             <small>
               개인정보·기밀 없는 자작 연습만 보내요. 무료 API 입력은 Google 제품
@@ -67,6 +85,12 @@ export default function VoiceComposer({
   suggestion,
   textFirst = false,
   inDialog = false,
+  longRecording = false,
+  replyTo,
+  goal,
+  candidates = [],
+  candidatesSample,
+  onRequestCandidates,
 }: {
   onUse: (draft: VoiceDraft) => Promise<void> | void;
   submitLabel?: string;
@@ -76,10 +100,22 @@ export default function VoiceComposer({
   requireText?: boolean;
   textFirst?: boolean;
   inDialog?: boolean;
+  longRecording?: boolean;
+  replyTo?: { id: string; text: string };
+  goal?: string;
+  candidates?: string[];
+  candidatesSample?: SampleMeta;
+  onRequestCandidates?: () => Promise<void>;
   onActivity?: (active: boolean) => void;
   suggestion?: { text: string; id: number };
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showCandidates, setShowCandidates] = useState(false);
+  const [chosen, setChosen] = useState<number>();
+  useEffect(() => {
+    setShowCandidates(false);
+    setChosen(undefined);
+  }, [replyTo?.id]);
   const [receipt, setReceipt] = useState("");
   const editor = useRef<HTMLTextAreaElement>(null);
   const [clip, setClip] = useState<AudioClip>(),
@@ -121,7 +157,7 @@ export default function VoiceComposer({
   }, [phase]);
   const dirty = !!text.trim() || !!clip || phase !== "idle";
   useEffect(() => {
-    if (!inDialog || !dirty) return;
+    if (!dirty) return;
     const guard = (event: Event) => {
       if (!window.confirm("작성 중인 입력이 있어요. 저장하지 않고 이동할까요?"))
         event.preventDefault();
@@ -175,6 +211,49 @@ export default function VoiceComposer({
     setError("");
     const controller = new AbortController();
     abort.current = controller;
+    if (longRecording) {
+      busy.current = true;
+      try {
+        const result = await transcribeAudio(c, {
+          signal: controller.signal,
+          sampleOnly: config.sampleOnly,
+          status: (message) => {
+            if (epoch.current === id) setNotice(message);
+          },
+          progress: (progress, transcript) => {
+            if (epoch.current !== id) return;
+            setText(transcript);
+            setClip({ ...c, transcription: progress });
+          },
+        });
+        if (epoch.current === id) {
+          setText(result.text);
+          setClip({ ...c, transcription: result.progress });
+          setNotice(
+            `전체 ${result.progress.total}구간 문자 변환 완료. 내용을 확인하고 저장해 주세요.`,
+          );
+        }
+      } catch (e) {
+        if (epoch.current === id) {
+          setError(
+            e instanceof Error && e.name === "AbortError"
+              ? "변환을 중단했어요. 완료한 구간부터 이어서 시도할 수 있어요."
+              : e instanceof Error
+                ? e.message
+                : "문자 변환을 완료하지 못했어요.",
+          );
+          setNotice(
+            "원본과 완료한 문자는 남아 있어요. ‘문자 변환 이어서’를 누르거나 현재 기록을 저장해 주세요.",
+          );
+        }
+      } finally {
+        if (epoch.current === id) {
+          busy.current = false;
+          setPhase("idle");
+        }
+      }
+      return;
+    }
     const timeout = setTimeout(() => controller.abort(), 25000);
     try {
       const form = new FormData();
@@ -221,13 +300,21 @@ export default function VoiceComposer({
         throw new Error(
           "녹음이 비어 있거나 너무 짧아요. 한 문장을 말하고 끝내주세요.",
         );
-      if (blob.size > MAX_AUDIO_BYTES)
-        throw new Error("2.4MB 이하의 짧은 음성을 선택해 주세요.");
+      if (blob.size > (longRecording ? RECORDING_MAX_BYTES : MAX_AUDIO_BYTES))
+        throw new Error(
+          longRecording
+            ? "50MB 이하의 음성을 선택해 주세요. 텍스트 파일로도 가져올 수 있어요."
+            : "2.4MB 이하의 짧은 음성을 선택해 주세요.",
+        );
       if (!normalizeAudioMime(blob.type, name))
         throw new Error(
           "MP3, M4A, WAV, WebM, OGG, FLAC, AAC 음성을 선택해 주세요.",
         );
-      const c = await inspectAudio(blob, name);
+      const c = await inspectAudio(
+        blob,
+        name,
+        longRecording ? RECORDING_MAX_SECONDS : 120,
+      );
       if (epoch.current !== id) return;
       setClip(c);
       setText("");
@@ -369,6 +456,8 @@ export default function VoiceComposer({
       setReceipt(textFirst ? "답변을 기록했어요." : "기록에 저장했어요.");
       setText("");
       setClip(undefined);
+      setChosen(undefined);
+      setShowCandidates(false);
       setTyping(textFirst);
       setNotice(
         textFirst
@@ -389,7 +478,89 @@ export default function VoiceComposer({
   }
   const working = phase !== "idle";
   const composer = (
-    <section className="vn-composer" aria-label="음성 또는 문자 입력">
+    <section
+      className={"vn-composer " + (textFirst ? "vn-chat-composer" : "")}
+      aria-label="음성 또는 문자 입력"
+    >
+      {textFirst && (
+        <div className="vn-compose-context">
+          <strong>내 답변</strong>
+          {replyTo && (
+            <p>
+              <span>답장할 말</span> {replyTo.text}
+            </p>
+          )}
+          {goal && <small>내 목표 · {goal}</small>}
+        </div>
+      )}
+      {onRequestCandidates && (
+        <div className="vn-compose-candidates">
+          <button
+            type="button"
+            className="dd-secondary"
+            disabled={disabled || working}
+            aria-expanded={showCandidates}
+            onClick={() => {
+              if (candidates.length) setShowCandidates((v) => !v);
+              else {
+                setShowCandidates(true);
+                void onRequestCandidates();
+              }
+            }}
+          >
+            <Icon name="chat" size={17} />
+            {candidates.length
+              ? showCandidates
+                ? "후보 접기"
+                : "답변 후보 다시 보기"
+              : showCandidates
+                ? disabled
+                  ? "후보 생성 중"
+                  : "답변 후보 다시 요청"
+                : "내 목표에 맞는 답변 후보 3개 보기"}
+          </button>
+          {showCandidates && (
+            <div className="vn-reply-choices">
+              <p className="vn-caption">고르기 → 내 말로 수정 → 보내기</p>
+              {!candidates.length && (
+                <p role="status">
+                  {disabled
+                    ? "내 목표에 맞는 답변을 준비하고 있어요…"
+                    : "후보를 받지 못했어요. 직접 답하거나 다시 요청해 주세요."}
+                </p>
+              )}
+              {candidatesSample && (
+                <SampleNotice sample={candidatesSample} compact badge />
+              )}
+              <div className="vn-choice-list">
+                {candidates.map((candidate, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    disabled={disabled || working}
+                    onClick={() => {
+                      setText(candidate);
+                      setTyping(true);
+                      setChosen(index);
+                      setShowCandidates(false);
+                      setNotice("후보를 넣었어요. 내 말로 고친 뒤 보내세요.");
+                      editor.current?.focus({ preventScroll: true });
+                    }}
+                  >
+                    <span>{index + 1}</span>
+                    {candidate}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {chosen !== undefined && (
+            <span className="vn-selected-candidate">
+              후보 {chosen + 1} 선택 · 아직 보내지 않았어요
+            </span>
+          )}
+        </div>
+      )}
       <div className="vn-capture-row">
         <button
           type="button"
@@ -424,35 +595,84 @@ export default function VoiceComposer({
         <input
           ref={file}
           type="file"
-          accept="audio/*,.m4a,.webm,.mp3,.wav"
+          accept={
+            longRecording
+              ? "audio/*,.m4a,.webm,.mp3,.wav,.txt,.srt,.vtt"
+              : "audio/*,.m4a,.webm,.mp3,.wav"
+          }
           hidden
           onChange={(e) => {
             const f = e.target.files?.[0];
             e.target.value = "";
             if (f) {
+              if (longRecording && /\.(txt|srt|vtt)$/i.test(f.name)) {
+                const id = ++epoch.current;
+                busy.current = true;
+                setPhase("processing");
+                setError("");
+                void (async () => {
+                  try {
+                    if (f.size > 500000)
+                      throw new Error(
+                        "텍스트 파일은 500KB 이하로 선택해 주세요.",
+                      );
+                    const imported = importTranscript(await f.text(), f.name);
+                    if (epoch.current !== id) return;
+                    setText(imported);
+                    setClip(undefined);
+                    setTyping(true);
+                    setNotice(
+                      "텍스트를 가져왔어요. AI 전송 없이 내용을 확인하고 저장할 수 있어요.",
+                    );
+                  } catch (e) {
+                    if (epoch.current === id)
+                      setError(
+                        e instanceof Error
+                          ? e.message
+                          : "텍스트를 읽지 못했어요.",
+                      );
+                  } finally {
+                    if (epoch.current === id) {
+                      busy.current = false;
+                      setPhase("idle");
+                    }
+                  }
+                })();
+                return;
+              }
               busy.current = true;
               void capture(f, f.name, ++epoch.current);
             }
           }}
         />
       </div>
-      <CompanionNudge
-        mood={
-          phase === "recording"
-            ? "listen"
-            : working
-              ? "think"
-              : clip || notice.includes("저장")
-                ? "done"
-                : "hello"
-        }
-        text={
-          notice ||
-          (textFirst
-            ? "내 답장을 적어 보내세요. 마이크로 말해도 좋아요."
-            : "마이크로 한 문장부터. 녹음은 1분, 파일은 2분·2.4MB까지 가능해요.")
-        }
-      />
+      {textFirst ? (
+        notice && (
+          <p className="vn-compose-notice" role="status">
+            {notice}
+          </p>
+        )
+      ) : (
+        <CompanionNudge
+          mood={
+            phase === "recording"
+              ? "listen"
+              : working
+                ? "think"
+                : clip || notice.includes("저장")
+                  ? "done"
+                  : "hello"
+          }
+          text={
+            notice ||
+            (textFirst
+              ? "내 답장을 적어 보내세요. 마이크로 말해도 좋아요."
+              : longRecording
+                ? "음성 파일은 30분·50MB까지. 45초씩 나눠 문자로 바꾸며, TXT·SRT·VTT도 가져올 수 있어요."
+                : "마이크로 한 문장부터. 녹음은 1분, 파일은 2분·2.4MB까지 가능해요.")
+          }
+        />
+      )}
       {working && phase !== "recording" && phase !== "saving" && (
         <button type="button" className="dd-link" onClick={cancel}>
           처리 취소
@@ -467,7 +687,11 @@ export default function VoiceComposer({
             disabled={working || disabled || !consent || !config.voiceAvailable}
             onClick={() => void transcribe(clip)}
           >
-            {text ? "음성 인식 다시 시도" : "문자로 바꾸기"}
+            {clip.transcription && !clip.transcription.complete
+              ? "문자 변환 이어서"
+              : text
+                ? "음성 인식 다시 시도"
+                : "문자로 바꾸기"}
           </button>
         </>
       )}
@@ -482,7 +706,7 @@ export default function VoiceComposer({
             ref={editor}
             aria-label="인식한 말 또는 직접 입력"
             rows={3}
-            maxLength={4000}
+            maxLength={longRecording ? RECORDING_MAX_TEXT : 4000}
             value={text}
             disabled={working || disabled}
             onChange={(e) => setText(e.target.value)}

@@ -1,4 +1,5 @@
 "use client";
+import { useAIConsent } from "./ConsentSession";
 import type { ConversationFocus } from "@/lib/conversation-focus";
 import CommunicationTips from "./CommunicationTips";
 import StickyPageTop from "./StickyPageTop";
@@ -31,37 +32,48 @@ export function TermText({
   candidates?: string[];
   onTerm: (term: string) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? text : text.slice(0, 2400);
   const words = [...candidates]
     .filter(Boolean)
     .sort((a, b) => b.length - a.length)
     .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   const regex = new RegExp(
     `(${words.length ? words.join("|") + "|" : ""}[\\p{L}\\p{N}_+#-]+)`,
-    "gu",
+    "giu",
   );
   return (
-    <p className="vn-transcript-text">
-      {text.split(regex).map((part, i) =>
-        /^[\p{L}\p{N}]/u.test(part) ? (
-          <button
-            type="button"
-            key={i}
-            className={
-              "vn-word " +
-              (candidates.some((t) => t.toLowerCase() === part.toLowerCase())
-                ? "is-term"
-                : "")
-            }
-            onClick={() => onTerm(part)}
-            aria-label={part + " 용어 메모 열기"}
-          >
-            {part}
-          </button>
-        ) : (
-          <span key={i}>{part}</span>
-        ),
+    <>
+      <p className="vn-transcript-text">
+        {shown.split(regex).map((part, i) =>
+          /^[\p{L}\p{N}]/u.test(part) ? (
+            <button
+              type="button"
+              key={i}
+              className={
+                "vn-word " +
+                (candidates.some((t) => t.toLowerCase() === part.toLowerCase())
+                  ? "is-term"
+                  : "")
+              }
+              onClick={() => onTerm(part)}
+              aria-label={part + " 용어 메모 열기"}
+            >
+              {part}
+            </button>
+          ) : (
+            <span key={i}>{part}</span>
+          ),
+        )}
+      </p>
+      {text.length > 2400 && (
+        <button className="dd-link" onClick={() => setExpanded((v) => !v)}>
+          {expanded
+            ? "문자 접기"
+            : `전체 문자 보기 · ${text.length.toLocaleString()}자`}
+        </button>
       )}
-    </p>
+    </>
   );
 }
 export type TermSeed = {
@@ -94,14 +106,17 @@ export function TermEditor({
         usage: "",
         caution: "",
         memo: "",
-        quote: seed.quote.slice(0, 1500),
+        quote: seed.quote.slice(
+          Math.max(0, seed.quote.indexOf(seed.term) - 500),
+          Math.max(0, seed.quote.indexOf(seed.term) - 500) + 1500,
+        ),
         sessionId: seed.sessionId,
         source: "manual",
         reviewed: false,
         updatedAt: new Date().toISOString(),
       },
   );
-  const [consent, setConsent] = useState(false),
+  const [consent, setConsent] = useAIConsent(),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   useEffect(() => {
@@ -210,9 +225,25 @@ export function TermEditor({
           value={note.term}
           disabled={busy}
           maxLength={80}
+          placeholder="저장할 단어나 표현을 입력해 주세요"
           onChange={(e) => edit("term", e.target.value)}
         />
       </label>
+      {!seed.note && (
+        <>
+          <p className="vn-caption">
+            표현만 먼저 저장해도 돼요. 뜻과 예문은 나중에 용어 노트에서 추가할
+            수 있어요.
+          </p>
+          <button
+            className="dd-primary dd-full"
+            disabled={busy || !note.term.trim()}
+            onClick={() => void save()}
+          >
+            이 표현 바로 저장
+          </button>
+        </>
+      )}
       <label className="vn-label">
         분야 · 업종 · 세대
         <input
@@ -236,6 +267,7 @@ export function TermEditor({
         </details>
       )}
       <AIConsent
+        priority={-1}
         config={config}
         checked={consent}
         onChange={setConsent}

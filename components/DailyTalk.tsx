@@ -1,4 +1,5 @@
 "use client";
+import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
 import {
   dailyCategories,
@@ -83,7 +84,7 @@ export default function DailyTalk({
     [busy, setBusy] = useState(false),
     [capture, setCapture] = useState(false),
     [useAI, setUseAI] = useState(false),
-    [consent, setConsent] = useState(false),
+    [consent, setConsent] = useAIConsent(),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [suggestion, setSuggestion] = useState<{ text: string; id: number }>(),

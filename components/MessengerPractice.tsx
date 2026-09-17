@@ -1,4 +1,5 @@
 "use client";
+import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
 import {
   blankMessenger,
@@ -48,7 +49,7 @@ export default function MessengerPractice({
     [draftSource, setDraftSource] = useState<MessengerRecord["draftSource"]>(
       initialSession?.messenger?.draftSource || "manual",
     ),
-    [consent, setConsent] = useState(false),
+    [consent, setConsent] = useAIConsent(),
     [busy, setBusy] = useState(false),
     [saving, setSaving] = useState(false),
     [copying, setCopying] = useState(false),

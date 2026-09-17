@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     let d;
     try {
       d = JSON.parse(
-        new TextDecoder().decode(await readBounded(request, 35000)),
+        new TextDecoder().decode(await readBounded(request, 350000)),
       );
     } catch (e) {
       if (e instanceof Error && e.message === "too_large") throw e;

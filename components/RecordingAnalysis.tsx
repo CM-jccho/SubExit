@@ -1,6 +1,11 @@
 "use client";
+import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
 import { emptyProfile } from "@/lib/conversation-cards";
+import {
+  RECORDING_MAX_TEXT,
+  RECORDING_MAX_SEGMENTS,
+} from "@/lib/recording-limits";
 import {
   aiFetch,
   AIServiceError,
@@ -148,6 +153,7 @@ export default function RecordingAnalysis({
   onBusy: (busy: boolean) => void;
 }) {
   const sources = session.turns.filter((t) => t.role === "recording");
+  const [segmentPage, setSegmentPage] = useState(0);
   const [sourceId, setSourceId] = useState(
     session.recordingAnalysis?.sourceTurnId || sources[0]?.id || "",
   );
@@ -164,7 +170,7 @@ export default function RecordingAnalysis({
           ? 2
           : 1,
     ),
-    [consent, setConsent] = useState(false),
+    [consent, setConsent] = useAIConsent(),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
@@ -190,10 +196,7 @@ export default function RecordingAnalysis({
     draft &&
     draft.inputKey !== recordingInputKey(source)
   );
-  const tooLong = !!(
-    source?.clip &&
-    (source.clip.duration > 120 || source.clip.blob.size > 2400000)
-  );
+  const tooLong = (draft?.transcript.length || 0) > RECORDING_MAX_TEXT;
   function edit(p: Partial<RecordingAnalysisDraft>) {
     setDraft((d) =>
       d ? { ...d, ...p, confirmed: false, review: undefined } : d,
@@ -312,12 +315,19 @@ export default function RecordingAnalysis({
             ? "이 녹음으로 대화 돌아보기"
             : "이 문자로 대화 돌아보기"}
         </h2>
-        <span>2분 · 2.4MB 이내</span>
+        <span>60,000자 · 600개 발화까지</span>
       </div>
       <p>
         문자 변환 후 발화마다 줄을 나누고, 내 말과 상대 말을 직접 확인해 주세요.
         자동 화자 분리와 억양 분석은 제공하지 않아요.
       </p>
+      {source?.clip?.transcription && !source.clip.transcription.complete && (
+        <p className="learn-callout">
+          전체 {source.clip.transcription.total}구간 중{" "}
+          {source.clip.transcription.parts.length}구간만 변환됐어요. 현재 문자만
+          코칭하거나, 위의 ‘문자 변환 이어서’로 나머지를 완료하세요.
+        </p>
+      )}
       {!source || !draft ? (
         <p className="learn-callout">
           먼저 아래에서 파일을 첨부하거나 녹음하고 ‘이 기록에 추가’를
@@ -383,7 +393,8 @@ export default function RecordingAnalysis({
           )}
           {tooLong && (
             <p className="dd-error" role="alert">
-              2분·2.4MB 이내 음성으로 나누어 다시 첨부해 주세요.
+              코칭할 문자를 60,000자 이내로 나눠 주세요. 원본 음성 크기와 별도로
+              문자를 분석할 수 있어요.
             </p>
           )}
           {step === 1 && (
@@ -392,7 +403,7 @@ export default function RecordingAnalysis({
                 코칭할 문자 · 말하는 사람이 바뀔 때 줄바꿈
                 <textarea
                   rows={7}
-                  maxLength={4000}
+                  maxLength={RECORDING_MAX_TEXT}
                   value={draft.transcript}
                   disabled={locked}
                   onChange={(e) =>
@@ -413,12 +424,16 @@ export default function RecordingAnalysis({
                 }
                 onClick={() => {
                   const segments = splitRecordingTranscript(draft.transcript);
-                  if (segments.length < 2 || segments.length > 40) {
+                  if (
+                    segments.length < 2 ||
+                    segments.length > RECORDING_MAX_SEGMENTS
+                  ) {
                     setError(
-                      "화자별로 줄을 나눠 2~40개의 발화로 정리해 주세요.",
+                      "화자별로 줄을 나눠 2~600개의 발화로 정리해 주세요. ‘나:’와 ‘상대:’ 표기가 있으면 화자 선택에 반영돼요.",
                     );
                     return;
                   }
+                  setSegmentPage(0);
                   void save(
                     { ...draft, segments, confirmed: false, review: undefined },
                     2,
@@ -431,36 +446,66 @@ export default function RecordingAnalysis({
           )}
           {step === 2 && (
             <>
+              <p className="vn-caption">
+                총 {draft.segments.length}개 발화 · 화자 미지정{" "}
+                {draft.segments.filter((s) => s.role === "unknown").length}개.
+                ‘나:’, ‘상대:’로 표시한 화자는 반영했으니 확인해 주세요.
+              </p>
+              {draft.segments.length > 20 && (
+                <nav className="vn-toolbar" aria-label="화자 확인 페이지">
+                  <button
+                    className="dd-secondary"
+                    disabled={locked || segmentPage === 0}
+                    onClick={() => setSegmentPage((p) => p - 1)}
+                  >
+                    이전 20개
+                  </button>
+                  <span>
+                    {segmentPage + 1} / {Math.ceil(draft.segments.length / 20)}
+                  </span>
+                  <button
+                    className="dd-secondary"
+                    disabled={
+                      locked || (segmentPage + 1) * 20 >= draft.segments.length
+                    }
+                    onClick={() => setSegmentPage((p) => p + 1)}
+                  >
+                    다음 20개
+                  </button>
+                </nav>
+              )}
               <div className="learn-segments">
-                {draft.segments.map((segment, i) => (
-                  <div key={segment.id}>
-                    <label className="vn-label">
-                      발화 {i + 1}의 화자
-                      <select
-                        disabled={locked}
-                        value={segment.role}
-                        onChange={(e) =>
-                          edit({
-                            segments: draft.segments.map((s) =>
-                              s.id === segment.id
-                                ? {
-                                    ...s,
-                                    role: e.target
-                                      .value as RecordingSegment["role"],
-                                  }
-                                : s,
-                            ),
-                          })
-                        }
-                      >
-                        <option value="unknown">선택해 주세요</option>
-                        <option value="user">내 말</option>
-                        <option value="assistant">상대 말</option>
-                      </select>
-                    </label>
-                    <p>{segment.text}</p>
-                  </div>
-                ))}
+                {draft.segments
+                  .slice(segmentPage * 20, (segmentPage + 1) * 20)
+                  .map((segment, i) => (
+                    <div key={segment.id}>
+                      <label className="vn-label">
+                        발화 {segmentPage * 20 + i + 1}의 화자
+                        <select
+                          disabled={locked}
+                          value={segment.role}
+                          onChange={(e) =>
+                            edit({
+                              segments: draft.segments.map((s) =>
+                                s.id === segment.id
+                                  ? {
+                                      ...s,
+                                      role: e.target
+                                        .value as RecordingSegment["role"],
+                                    }
+                                  : s,
+                              ),
+                            })
+                          }
+                        >
+                          <option value="unknown">선택해 주세요</option>
+                          <option value="user">내 말</option>
+                          <option value="assistant">상대 말</option>
+                        </select>
+                      </label>
+                      <p>{segment.text}</p>
+                    </div>
+                  ))}
               </div>
               <div className="learn-grid">
                 {(

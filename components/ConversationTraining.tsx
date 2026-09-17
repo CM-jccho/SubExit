@@ -1,4 +1,5 @@
 "use client";
+import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
 import {
   trainingSkills,
@@ -56,7 +57,7 @@ export default function ConversationTraining({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
-    [consent, setConsent] = useState(false),
+    [consent, setConsent] = useAIConsent(),
     [recent, setRecent] = useState<VoiceSession[]>([]),
     [editing, setEditing] = useState(false);
   const alive = useRef(true),

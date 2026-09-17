@@ -1,4 +1,5 @@
 "use client";
+import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
 import { aiFetch } from "@/lib/ai-client";
 import type { CompanionCharacter } from "@/lib/companions";
@@ -32,7 +33,7 @@ function ObserverDialog({
     [shown, setShown] = useState(0),
     [playing, setPlaying] = useState(false),
     [source, setSource] = useState<"sample" | "ai">("sample"),
-    [consent, setConsent] = useState(false),
+    [consent, setConsent] = useAIConsent(),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const dialog = useRef<HTMLDialogElement>(null),

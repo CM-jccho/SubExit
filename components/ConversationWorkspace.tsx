@@ -1,4 +1,5 @@
 "use client";
+import { useAIConsent, ConsentSettings } from "./ConsentSession";
 import HomeActions from "./HomeActions";
 import { supportTools, supportLabel } from "@/lib/support-tools";
 import MessengerPractice from "./MessengerPractice";
@@ -17,7 +18,7 @@ import PracticeNavigation from "./PracticeNavigation";
 import ConversationTraining from "./ConversationTraining";
 import DailyTalk from "./DailyTalk";
 import PromptPractice from "./PromptPractice";
-import ConsentDisclosure from "./ConsentDisclosure";
+import { AIConsent } from "./VoiceComposer";
 import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
@@ -224,7 +225,7 @@ export default function ConversationWorkspace() {
       sampleOnly: true,
     }),
     [ai, setAi] = useState(false),
-    [consent, setConsent] = useState(false),
+    [consent, setConsent] = useAIConsent(),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [toast, setToast] = useState("");
@@ -379,7 +380,6 @@ export default function ConversationWorkspace() {
     setEditFields(!!existing);
     setSource(existing?.source || "guided");
     setAi(config.available);
-    setConsent(false);
     setError("");
     setToast("");
     setView("setup");
@@ -750,7 +750,11 @@ export default function ConversationWorkspace() {
       <div className="dd-root dc-root">
         <div className="dc-shell">
           <header className="dc-header">
-            <button className="dc-brand" onClick={home} aria-label="스픽코칭 홈">
+            <button
+              className="dc-brand"
+              onClick={home}
+              aria-label="스픽코칭 홈"
+            >
               <span className="dc-brand-mark">
                 <Icon name="chat" size={22} />
               </span>
@@ -785,6 +789,7 @@ export default function ConversationWorkspace() {
               <Icon name="help" />
             </button>
           </header>
+          <ConsentSettings />
           <main id="main-content" key={view}>
             {storageError && (
               <p className="dd-error" role="alert">
@@ -1438,30 +1443,12 @@ export default function ConversationWorkspace() {
                           </div>
                         </form>
                         {(ai || config.voiceAvailable) && (
-                          <ConsentDisclosure
-                            complete={consent}
+                          <AIConsent
+                            config={config}
+                            checked={consent}
+                            onChange={setConsent}
                             disabled={busy}
-                            onRevoke={() => setConsent(false)}
-                          >
-                            <label className="dd-check">
-                              <input
-                                type="checkbox"
-                                checked={consent}
-                                disabled={busy}
-                                onChange={(e) => setConsent(e.target.checked)}
-                              />
-                              <span>
-                                만 18세 이상이며 Google Gemini 전송에 동의해요.
-                                {config.sampleOnly && (
-                                  <small>
-                                    개인정보·기밀 없는 자작 대화만 사용해요.
-                                    무료 API 입력은 Google 제품 개선에 사용될 수
-                                    있어요.
-                                  </small>
-                                )}
-                              </span>
-                            </label>
-                          </ConsentDisclosure>
+                          />
                         )}
                         {error && (
                           <>

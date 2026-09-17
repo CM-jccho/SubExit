@@ -1,5 +1,8 @@
 "use client";
-import ConsentDisclosure from "./ConsentDisclosure";
+import { AIConsent } from "./VoiceComposer";
+import { useAIConsent } from "./ConsentSession";
+import LiveSpeechPanel from "./LiveSpeechPanel";
+import { speechConstructor } from "@/lib/live-speech";
 import SampleNotice, { SampleSwitch } from "./SampleNotice";
 import { sampledRequest } from "@/lib/resilient-ai";
 import { aiFetch } from "@/lib/ai-client";
@@ -26,6 +29,11 @@ export default function LiveCoach({
   profile?: ContextProfile;
 }) {
   const character = useCompanion();
+  const [supportsLive, setSupportsLive] = useState(false);
+  const [voiceStyle, setVoiceStyle] = useState<"continuous" | "short">(
+    "continuous",
+  );
+  const [liveActive, setLiveActive] = useState(false);
   const [scenario, setScenario] = useState("sales"),
     [tone, setTone] = useState<Tone>(profile?.tone || "firm_polite");
   const [config, setConfig] = useState({
@@ -33,10 +41,10 @@ export default function LiveCoach({
     voiceAvailable: false,
     sampleOnly: true,
   });
-  const [consent, setConsent] = useState(false),
-    [adult, setAdult] = useState(false),
-    [sample, setSample] = useState(false),
-    [automatic, setAutomatic] = useState(false),
+  const [consent, setConsent] = useAIConsent();
+  const adult = consent,
+    sample = consent;
+  const [automatic, setAutomatic] = useState(false),
     [sampleMode, setSampleMode] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle"),
     [seconds, setSeconds] = useState(0),
@@ -58,6 +66,13 @@ export default function LiveCoach({
     request = useRef<AbortController | null>(null),
     panel = useRef<HTMLElement | null>(null);
   const allowed = consent && adult && (!config.sampleOnly || sample);
+  useEffect(() => {
+    if (!consent && prepared) {
+      cancel();
+      setLiveActive(false);
+      setPrepared(false);
+    }
+  }, [consent, prepared]);
   function release() {
     if (timer.current) clearTimeout(timer.current);
     if (ticker.current) clearInterval(ticker.current);
@@ -77,6 +92,7 @@ export default function LiveCoach({
     setPhase("idle");
   }
   useEffect(() => {
+    setSupportsLive(!!speechConstructor());
     const abort = new AbortController();
     fetch("/api/coach", { signal: abort.signal })
       .then((r) => r.json())
@@ -363,7 +379,10 @@ export default function LiveCoach({
     coaching: "다음 한 문장을 준비 중 · 마이크 꺼짐",
   }[phase];
   return (
-    <div className="dd-live dc-live-app" data-coach-phase={phase}>
+    <div
+      className="dd-live dc-live-app"
+      data-coach-phase={liveActive ? "listening" : phase}
+    >
       <button
         className="dd-back"
         onClick={() => {
@@ -382,16 +401,16 @@ export default function LiveCoach({
           <h1>지금 대화 도움받기</h1>
         </div>
         <HelpTip label="코칭은 어떻게 쓰나요?">
-          대면 대화나 다른 기기의 스피커폰 옆에서 상대 말이 끝날 때 최대 8초씩
-          들려주세요. 같은 휴대폰의 통화 음성을 직접 가져올 수 없으며, 처리
-          중에는 듣지 않아요.
+          대면 대화나 다른 기기의 스피커폰 옆에서 사용해요. 지원 브라우저에서는
+          계속 들으며 자막과 코칭을 보여줘요. 같은 휴대폰의 통화 음성을 직접
+          가져오거나 화자를 자동으로 구분하지는 않아요.
         </HelpTip>
       </header>
       <div className="coach-live-presence" aria-label="코치 상태" role="status">
         <Companion
           small
           mood={
-            phase === "listening"
+            liveActive || phase === "listening"
               ? "listen"
               : phase === "coaching" || phase === "transcribing"
                 ? "think"
@@ -402,7 +421,7 @@ export default function LiveCoach({
         />
         <div>
           <strong>
-            {phase === "listening"
+            {liveActive || phase === "listening"
               ? "상대 말을 듣고 있어요"
               : phase === "coaching"
                 ? "내 목표에 맞는 말을 찾고 있어요"
@@ -412,7 +431,9 @@ export default function LiveCoach({
                     ? "다음 한마디가 도착했어요"
                     : "필요한 순간, 함께 준비해요"}
           </strong>
-          <span>{status}</span>
+          <span>
+            {liveActive ? "실시간 자막 · 다음 한마디 자동 갱신" : status}
+          </span>
         </div>
       </div>
       {!prepared ? (
@@ -464,56 +485,17 @@ export default function LiveCoach({
             <Icon name="mic" size={18} />
             <p>
               대면 또는 <strong>다른 기기의 스피커폰 옆</strong>에서 사용해요.
-              최대 8초씩 듣고, 처리 중에는 마이크가 꺼져요.
+              {supportsLive
+                ? " 자막을 보며 계속 듣고, 말이 정리되면 코칭받아요."
+                : " 이 브라우저에서는 최대 8초씩 녹음해요. 이 방식은 처리 중에는 마이크가 꺼져요. 직접 입력도 가능해요."}
             </p>
           </div>
-          <ConsentDisclosure
-            complete={allowed}
-            onRevoke={() => {
-              setConsent(false);
-              setAdult(false);
-              setSample(false);
-            }}
-          >
-            <fieldset className="dc-permissions">
-              <legend>전송 전 확인해 주세요</legend>
-              <p>
-                음성과 문장을 Google Gemini로 전송해요. 앱 서버는 대화 원문을
-                저장하지 않아요.
-              </p>
-              <label className="dd-check">
-                <input
-                  type="checkbox"
-                  checked={consent}
-                  onChange={(e) => setConsent(e.target.checked)}
-                />
-                대화 참여자에게 알리고 전송 동의를 받았어요.
-              </label>
-              <label className="dd-check">
-                <input
-                  type="checkbox"
-                  checked={adult}
-                  onChange={(e) => setAdult(e.target.checked)}
-                />
-                만 18세 이상입니다.
-              </label>
-              {config.sampleOnly && (
-                <label className="dd-check">
-                  <input
-                    type="checkbox"
-                    checked={sample}
-                    onChange={(e) => setSample(e.target.checked)}
-                  />
-                  <span>
-                    개인정보·기밀 없는 자작·샘플 대화예요.
-                    <small>
-                      무료 API 입력은 Google 제품 개선에 사용될 수 있어요.
-                    </small>
-                  </span>
-                </label>
-              )}
-            </fieldset>
-          </ConsentDisclosure>
+          <AIConsent
+            config={config}
+            checked={consent}
+            onChange={setConsent}
+            disabled={phase !== "idle" || liveActive}
+          />
           {!config.available && (
             <p className="dd-notice">
               AI 연결을 확인하고 있어요. 연결이 안 되면{" "}
@@ -541,7 +523,7 @@ export default function LiveCoach({
             </span>
             <button
               className="dd-link"
-              disabled={phase !== "idle"}
+              disabled={phase !== "idle" || liveActive}
               onClick={() => {
                 setPrepared(false);
                 setResult(null);
@@ -552,7 +534,7 @@ export default function LiveCoach({
           </div>
           <SampleSwitch
             checked={sampleMode}
-            disabled={phase !== "idle"}
+            disabled={phase !== "idle" || liveActive}
             onChange={(v) => {
               setSampleMode(v);
               setResult(null);
@@ -563,285 +545,326 @@ export default function LiveCoach({
               }
             }}
           />
-          <div className={"dc-coaching-grid " + (result ? "has-result" : "")}>
-            <section className="dc-listen-panel">
-              <div className="dc-mode-switch" aria-label="입력 방식">
-                <button
-                  className={inputMode === "voice" ? "active" : ""}
-                  aria-pressed={inputMode === "voice"}
-                  disabled={phase !== "idle" || sampleMode}
-                  onClick={() => setInputMode("voice")}
-                >
-                  <Icon name="mic" size={18} />
-                  들려주기
-                </button>
-                <button
-                  className={inputMode === "text" ? "active" : ""}
-                  aria-pressed={inputMode === "text"}
-                  disabled={phase !== "idle"}
-                  onClick={() => setInputMode("text")}
-                >
-                  <Icon name="keyboard" size={18} />
-                  직접 입력
-                </button>
-              </div>
-              {inputMode === "voice" && (
-                <div
-                  className={
-                    "dc-mic-stage " +
-                    (phase === "listening" ? "is-listening" : "")
-                  }
-                >
-                  <Waveform active={phase === "listening"} />
-                  <p role="status">{status}</p>
-                  <button
-                    className="dc-mic-button"
-                    aria-label={
-                      phase === "listening"
-                        ? "여기까지 듣기"
-                        : "상대 말 8초 듣기"
-                    }
-                    disabled={
-                      phase !== "listening" &&
-                      (!allowed || !config.voiceAvailable || phase !== "idle")
-                    }
-                    onClick={phase === "listening" ? finishRecording : listen}
-                  >
-                    <Icon
-                      name={phase === "listening" ? "pause" : "mic"}
-                      size={34}
-                    />
-                  </button>
-                  <strong>
-                    {phase === "listening"
-                      ? "다 들었다면 눌러주세요"
-                      : "눌러서 상대 말 듣기"}
-                  </strong>
-                  <span>
-                    한 번에 최대 8초
-                    <HelpTip label="마이크 사용 안내">
-                      상대 말이 끝나면 버튼을 다시 눌러도 돼요. 인식된 문장을
-                      확인한 뒤 코칭을 요청하세요. 자동 화자 구분은 지원하지
-                      않아요.
-                    </HelpTip>
-                  </span>
-                  {!config.voiceAvailable && (
-                    <p className="dd-small">
-                      현재는 직접 입력으로 코칭받을 수 있어요.
-                    </p>
-                  )}
-                </div>
-              )}
-              {phase !== "idle" && (
-                <button
-                  className="dd-secondary dd-full"
-                  onClick={phase === "listening" ? finishRecording : cancel}
-                >
-                  {phase === "listening"
-                    ? "녹음 끝내고 음성 인식"
-                    : "처리 취소"}
-                </button>
-              )}
-              <CompanionNudge
-                mood={
-                  phase === "listening"
-                    ? "listen"
-                    : phase === "transcribing" || phase === "coaching"
-                      ? "think"
-                      : input
-                        ? "done"
-                        : "hello"
-                }
-                text={
-                  phase === "listening"
-                    ? "다 말했으면 녹음 끝내기를 눌러주세요."
-                    : phase === "coaching"
-                      ? "내 목표와 지킬 선을 보고 답변을 준비하고 있어요."
-                      : notice || "마이크를 누르고 한 문장을 들려주세요."
-                }
-              />
-              {clip && (
-                <div className="vn-live-clip">
-                  <AudioPlayer clip={clip} />
-                  {error && phase === "idle" && (
-                    <button
-                      className="dd-secondary"
-                      disabled={sampleMode}
-                      onClick={() => void transcribeBlob(clip.blob)}
-                    >
-                      음성 인식 다시 시도
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {(inputMode === "text" || !!input) && (
-                <div className="dc-transcript">
-                  <label htmlFor="live-text">
-                    {inputMode === "text"
-                      ? "상대가 어떤 말을 했나요?"
-                      : "들린 말이 맞는지 확인해요"}
-                  </label>
-                  <textarea
-                    id="live-text"
-                    maxLength={1000}
-                    value={input}
-                    disabled={phase !== "idle"}
-                    onChange={(e) => {
-                      setInput(e.target.value);
-                      setResult(null);
-                    }}
-                    placeholder="상대가 방금 한 말을 적어주세요."
-                    rows={3}
-                  />
-                  <button
-                    className="dd-primary dd-full"
-                    disabled={
-                      (!sampleMode && (!allowed || !config.available)) ||
-                      phase !== "idle" ||
-                      input.trim().length < 2
-                    }
-                    onClick={() => void coach(input)}
-                  >
-                    {phase === "coaching"
-                      ? "한마디를 준비하는 중"
-                      : "답변 힌트 받기"}
-                    <Icon name="arrow" size={18} />
-                  </button>
-                </div>
-              )}
-              {inputMode === "voice" && (
-                <details className="dc-auto-option">
-                  <summary>더 빠르게 코칭받고 싶다면</summary>
-                  <label className="dd-check">
-                    <input
-                      type="checkbox"
-                      checked={automatic}
-                      disabled={phase !== "idle"}
-                      onChange={(e) => setAutomatic(e.target.checked)}
-                    />
-                    인식된 말 확인 없이 바로 코칭받기
-                  </label>
-                  <p className="dd-small">
-                    내 목소리도 상대 말로 처리될 수 있어요.
-                  </p>
-                </details>
-              )}
-              {error && (
-                <>
-                  <p className="dd-error" role="alert">
-                    {error}
-                  </p>
-                  <QuotaHelp error={error} />
-                </>
-              )}
-            </section>
-            <aside
-              className={"dc-answer-panel " + (result ? "is-ready" : "")}
-              ref={panel}
-              aria-live="polite"
-              aria-busy={phase === "coaching"}
+          {supportsLive && !sampleMode && (
+            <div
+              className="dc-mode-switch live-style-switch"
+              aria-label="음성 처리 방식"
             >
-              <div className="dc-answer-heading">
-                <Icon name="chat" size={20} />
-                <span>{character.name}의 한마디</span>
-                {result && (
-                  <span className="dc-ai-label">
-                    {result.sample ? "사전 작성 샘플" : "AI 제안"}
-                  </span>
-                )}
-              </div>
-              {result ? (
-                <>
-                  {result.sample && <SampleNotice sample={result.sample} />}
-                  <p className="dc-answer-label">이렇게 말해볼까요?</p>
-                  {profile && (
-                    <p className="dc-answer-goal">
-                      <Icon name="target" size={14} />
-                      <span>내 목표 · {profile.goal}</span>
-                    </p>
-                  )}
-                  <blockquote
-                    className="coach-reply-arrival"
-                    key={result.suggestion}
+              <button
+                aria-pressed={voiceStyle === "continuous"}
+                className={voiceStyle === "continuous" ? "active" : ""}
+                disabled={phase !== "idle" || liveActive}
+                onClick={() => setVoiceStyle("continuous")}
+              >
+                실시간 자막 · 코칭
+              </button>
+              <button
+                aria-pressed={voiceStyle === "short"}
+                className={voiceStyle === "short" ? "active" : ""}
+                disabled={phase !== "idle" || liveActive}
+                onClick={() => setVoiceStyle("short")}
+              >
+                짧게 녹음 · 직접 입력
+              </button>
+            </div>
+          )}
+          {!supportsLive && !sampleMode && (
+            <p className="live-stream-note">
+              이 브라우저는 실시간 자막을 지원하지 않아요. 짧게 녹음하거나 직접
+              입력해 주세요.
+            </p>
+          )}
+          {supportsLive && voiceStyle === "continuous" && !sampleMode ? (
+            <LiveSpeechPanel
+              profile={profile}
+              scenario={scenario}
+              tone={tone}
+              consent={consent}
+              adult={adult}
+              sample={sample}
+              onActiveChange={setLiveActive}
+            />
+          ) : (
+            <div className={"dc-coaching-grid " + (result ? "has-result" : "")}>
+              <section className="dc-listen-panel">
+                <div className="dc-mode-switch" aria-label="입력 방식">
+                  <button
+                    className={inputMode === "voice" ? "active" : ""}
+                    aria-pressed={inputMode === "voice"}
+                    disabled={phase !== "idle" || sampleMode}
+                    onClick={() => setInputMode("voice")}
                   >
-                    {result.suggestion}
-                  </blockquote>
-                  <div className="dc-answer-actions">
+                    <Icon name="mic" size={18} />
+                    들려주기
+                  </button>
+                  <button
+                    className={inputMode === "text" ? "active" : ""}
+                    aria-pressed={inputMode === "text"}
+                    disabled={phase !== "idle"}
+                    onClick={() => setInputMode("text")}
+                  >
+                    <Icon name="keyboard" size={18} />
+                    직접 입력
+                  </button>
+                </div>
+                {inputMode === "voice" && (
+                  <div
+                    className={
+                      "dc-mic-stage " +
+                      (phase === "listening" ? "is-listening" : "")
+                    }
+                  >
+                    <Waveform active={phase === "listening"} />
+                    <p role="status">{status}</p>
                     <button
-                      className="dd-secondary"
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(
-                            result.suggestion,
-                          );
-                          setCopied(true);
-                        } catch {
-                          setError(
-                            "복사하지 못했어요. 문장을 길게 눌러 복사해 주세요.",
-                          );
-                        }
-                      }}
+                      className="dc-mic-button"
+                      aria-label={
+                        phase === "listening"
+                          ? "여기까지 듣기"
+                          : "상대 말 8초 듣기"
+                      }
+                      disabled={
+                        phase !== "listening" &&
+                        (!allowed || !config.voiceAvailable || phase !== "idle")
+                      }
+                      onClick={phase === "listening" ? finishRecording : listen}
                     >
-                      <Icon name={copied ? "check" : "cards"} size={17} />
-                      {copied ? "복사했어요" : "문장 복사"}
+                      <Icon
+                        name={phase === "listening" ? "pause" : "mic"}
+                        size={34}
+                      />
                     </button>
-                    <button
-                      className="dd-link"
+                    <strong>
+                      {phase === "listening"
+                        ? "다 들었다면 눌러주세요"
+                        : "눌러서 상대 말 듣기"}
+                    </strong>
+                    <span>
+                      한 번에 최대 8초
+                      <HelpTip label="마이크 사용 안내">
+                        상대 말이 끝나면 버튼을 다시 눌러도 돼요. 인식된 문장을
+                        확인한 뒤 코칭을 요청하세요. 자동 화자 구분은 지원하지
+                        않아요.
+                      </HelpTip>
+                    </span>
+                    {!config.voiceAvailable && (
+                      <p className="dd-small">
+                        현재는 직접 입력으로 코칭받을 수 있어요.
+                      </p>
+                    )}
+                  </div>
+                )}
+                {phase !== "idle" && (
+                  <button
+                    className="dd-secondary dd-full"
+                    onClick={phase === "listening" ? finishRecording : cancel}
+                  >
+                    {phase === "listening"
+                      ? "녹음 끝내고 음성 인식"
+                      : "처리 취소"}
+                  </button>
+                )}
+                <CompanionNudge
+                  mood={
+                    phase === "listening"
+                      ? "listen"
+                      : phase === "transcribing" || phase === "coaching"
+                        ? "think"
+                        : input
+                          ? "done"
+                          : "hello"
+                  }
+                  text={
+                    phase === "listening"
+                      ? "다 말했으면 녹음 끝내기를 눌러주세요."
+                      : phase === "coaching"
+                        ? "내 목표와 지킬 선을 보고 답변을 준비하고 있어요."
+                        : notice || "마이크를 누르고 한 문장을 들려주세요."
+                  }
+                />
+                {clip && (
+                  <div className="vn-live-clip">
+                    <AudioPlayer clip={clip} />
+                    {error && phase === "idle" && (
+                      <button
+                        className="dd-secondary"
+                        disabled={sampleMode}
+                        onClick={() => void transcribeBlob(clip.blob)}
+                      >
+                        음성 인식 다시 시도
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {(inputMode === "text" || !!input) && (
+                  <div className="dc-transcript">
+                    <label htmlFor="live-text">
+                      {inputMode === "text"
+                        ? "상대가 어떤 말을 했나요?"
+                        : "들린 말이 맞는지 확인해요"}
+                    </label>
+                    <textarea
+                      id="live-text"
+                      maxLength={1000}
+                      value={input}
                       disabled={phase !== "idle"}
-                      onClick={() => {
+                      onChange={(e) => {
+                        setInput(e.target.value);
                         setResult(null);
-                        setInput("");
-                        setCopied(false);
                       }}
+                      placeholder="상대가 방금 한 말을 적어주세요."
+                      rows={3}
+                    />
+                    <button
+                      className="dd-primary dd-full"
+                      disabled={
+                        (!sampleMode && (!allowed || !config.available)) ||
+                        phase !== "idle" ||
+                        input.trim().length < 2
+                      }
+                      onClick={() => void coach(input)}
                     >
-                      다음 말 준비
-                      <Icon name="arrow" size={16} />
+                      {phase === "coaching"
+                        ? "한마디를 준비하는 중"
+                        : "답변 힌트 받기"}
+                      <Icon name="arrow" size={18} />
                     </button>
                   </div>
-                  {!result.sample && (
-                    <details className="dc-evidence">
-                      <summary>왜 이 문장을 제안했나요?</summary>
-                      <p>
-                        <strong>상대 말에서 확인한 표현</strong>
-                      </p>
-                      <q>{result.evidence}</q>
-                      <p>
-                        <strong>AI의 제안 이유</strong> · {result.reason}
-                      </p>
-                      <small>
-                        {result.provider} · {result.model} · 코칭{" "}
-                        {(result.latencyMs / 1000).toFixed(1)}초
-                      </small>
-                    </details>
+                )}
+                {inputMode === "voice" && (
+                  <details className="dc-auto-option">
+                    <summary>더 빠르게 코칭받고 싶다면</summary>
+                    <label className="dd-check">
+                      <input
+                        type="checkbox"
+                        checked={automatic}
+                        disabled={phase !== "idle"}
+                        onChange={(e) => setAutomatic(e.target.checked)}
+                      />
+                      인식된 말 확인 없이 바로 코칭받기
+                    </label>
+                    <p className="dd-small">
+                      내 목소리도 상대 말로 처리될 수 있어요.
+                    </p>
+                  </details>
+                )}
+                {error && (
+                  <>
+                    <p className="dd-error" role="alert">
+                      {error}
+                    </p>
+                    <QuotaHelp error={error} />
+                  </>
+                )}
+              </section>
+              <aside
+                className={"dc-answer-panel " + (result ? "is-ready" : "")}
+                ref={panel}
+                aria-live="polite"
+                aria-busy={phase === "coaching"}
+              >
+                <div className="dc-answer-heading">
+                  <Icon name="chat" size={20} />
+                  <span>{character.name}의 한마디</span>
+                  {result && (
+                    <span className="dc-ai-label">
+                      {result.sample ? "사전 작성 샘플" : "AI 제안"}
+                    </span>
                   )}
-                  <p className="dc-answer-footnote">
-                    상황에 맞는지 확인하고, 내 말로 전하세요.
-                  </p>
-                </>
-              ) : (
-                <div className="dc-answer-wait">
-                  <Companion
-                    mood={
-                      phase === "coaching" || phase === "transcribing"
-                        ? "think"
-                        : "listen"
-                    }
-                  />
-                  <h2>
-                    {phase === "coaching"
-                      ? "내 목표에 맞게 생각 중이에요"
-                      : "듣고 나서, 함께 생각해요"}
-                  </h2>
-                  <p>
-                    {phase === "coaching"
-                      ? "잠시만 기다려 주세요."
-                      : "상대의 말을 전달하면\n이곳에 다음 한마디가 나타나요."}
-                  </p>
                 </div>
-              )}
-            </aside>
-          </div>
+                {result ? (
+                  <>
+                    {result.sample && <SampleNotice sample={result.sample} />}
+                    <p className="dc-answer-label">이렇게 말해볼까요?</p>
+                    {profile && (
+                      <p className="dc-answer-goal">
+                        <Icon name="target" size={14} />
+                        <span>내 목표 · {profile.goal}</span>
+                      </p>
+                    )}
+                    <blockquote
+                      className="coach-reply-arrival"
+                      key={result.suggestion}
+                    >
+                      {result.suggestion}
+                    </blockquote>
+                    <div className="dc-answer-actions">
+                      <button
+                        className="dd-secondary"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(
+                              result.suggestion,
+                            );
+                            setCopied(true);
+                          } catch {
+                            setError(
+                              "복사하지 못했어요. 문장을 길게 눌러 복사해 주세요.",
+                            );
+                          }
+                        }}
+                      >
+                        <Icon name={copied ? "check" : "cards"} size={17} />
+                        {copied ? "복사했어요" : "문장 복사"}
+                      </button>
+                      <button
+                        className="dd-link"
+                        disabled={phase !== "idle"}
+                        onClick={() => {
+                          setResult(null);
+                          setInput("");
+                          setCopied(false);
+                        }}
+                      >
+                        다음 말 준비
+                        <Icon name="arrow" size={16} />
+                      </button>
+                    </div>
+                    {!result.sample && (
+                      <details className="dc-evidence">
+                        <summary>왜 이 문장을 제안했나요?</summary>
+                        <p>
+                          <strong>상대 말에서 확인한 표현</strong>
+                        </p>
+                        <q>{result.evidence}</q>
+                        <p>
+                          <strong>AI의 제안 이유</strong> · {result.reason}
+                        </p>
+                        <small>
+                          {result.provider} · {result.model} · 코칭{" "}
+                          {(result.latencyMs / 1000).toFixed(1)}초
+                        </small>
+                      </details>
+                    )}
+                    <p className="dc-answer-footnote">
+                      상황에 맞는지 확인하고, 내 말로 전하세요.
+                    </p>
+                  </>
+                ) : (
+                  <div className="dc-answer-wait">
+                    <Companion
+                      mood={
+                        phase === "coaching" || phase === "transcribing"
+                          ? "think"
+                          : "listen"
+                      }
+                    />
+                    <h2>
+                      {phase === "coaching"
+                        ? "내 목표에 맞게 생각 중이에요"
+                        : "듣고 나서, 함께 생각해요"}
+                    </h2>
+                    <p>
+                      {phase === "coaching"
+                        ? "잠시만 기다려 주세요."
+                        : "상대의 말을 전달하면\n이곳에 다음 한마디가 나타나요."}
+                    </p>
+                  </div>
+                )}
+              </aside>
+            </div>
+          )}
           <details className="dc-pause-guide">
             <summary>
               <Icon name="pause" size={17} />

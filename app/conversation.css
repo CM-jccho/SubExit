@@ -1427,6 +1427,8 @@
     margin-left: auto;
   }
   .dc-nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     position: fixed;
     bottom: 0;
     left: 0;
@@ -1434,21 +1436,24 @@
     z-index: 15;
     background: #fcfcf5f5;
     border-top: 1px solid #dfe5d5;
-    padding: 8px 15px calc(8px + env(safe-area-inset-bottom));
-    justify-content: space-around;
+    padding: 8px max(12px, env(safe-area-inset-right))
+      calc(8px + env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+    justify-items: stretch;
     backdrop-filter: blur(12px);
-    gap: 20px;
+    gap: 0;
     margin: 0;
   }
   .dc-nav button {
     display: flex;
     flex-direction: column;
     gap: 3px;
-    min-width: 70px;
-    padding: 5px 15px;
-    font-size: 10px;
+    min-width: 0;
+    justify-content: center;
+    padding: 8px 4px;
+    font-size: 12px;
     border-radius: 12px;
-    min-height: 51px;
+    min-height: 56px;
   }
   .dc-nav button.active {
     background: none;
@@ -1467,7 +1472,7 @@
     min-height: calc(100dvh - 218px);
   }
   .dc-footer {
-    padding: 18px 0 107px;
+    padding: 18px 0 calc(107px + env(safe-area-inset-bottom));
     font-size: 10px;
   }
   .dc-welcome {

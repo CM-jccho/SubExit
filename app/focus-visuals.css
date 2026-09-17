@@ -544,9 +544,6 @@
   outline-offset: 3px;
 }
 @media (max-width: 760px) {
-  .dc-nav {
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-  }
   .focus-tool-grid {
     grid-template-columns: 1fr;
   }

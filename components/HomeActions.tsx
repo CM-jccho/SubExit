@@ -56,27 +56,25 @@ export default function HomeActions({
       </div>
       <ol className="practice-loop" aria-label="지금 대화 도움받는 과정">
         <li>
-          <Icon name="cards" size={26} />
-          <strong>내 상황 선택</strong>
+          <span>상황 선택</span>
         </li>
         <li>
-          <Icon name="mic" size={26} />
-          <strong>상대 말 입력</strong>
+          <span>상대 말 듣기</span>
         </li>
         <li>
-          <Icon name="chat" size={26} />
-          <strong>다음 한마디</strong>
+          <span>다음 한마디</span>
         </li>
       </ol>
       <button
         className="dd-primary purpose-start coach-start"
         data-purpose="live"
+        aria-describedby="live-input-limit"
         onClick={onLive}
       >
         지금 대화 도움받기 <Icon name="arrow" size={20} />
       </button>
-      <p className="purpose-limit">
-        음성은 최대 8초씩 입력해요. 처리하는 동안에는 듣지 않아요.
+      <p className="purpose-limit" id="live-input-limit">
+        지원 브라우저에서는 계속 들으며 자막과 다음 한마디를 보여드려요.
       </p>
       <div
         className="home-core-options"

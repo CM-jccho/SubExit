@@ -7,15 +7,16 @@ export const audioTime = (s: number) =>
 export async function inspectAudio(
   blob: Blob,
   name = "녹음",
+  maxSeconds = 120,
 ): Promise<AudioClip> {
   const context = new AudioContext();
   try {
     const buffer = await context.decodeAudioData(await blob.arrayBuffer());
     if (!Number.isFinite(buffer.duration) || buffer.duration <= 0)
       throw new Error("음성이 비어 있어요. 다시 녹음해 주세요.");
-    if (buffer.duration > 120)
+    if (buffer.duration > maxSeconds)
       throw new Error(
-        "지금은 2분 이하의 음성을 기록할 수 있어요. 짧게 나눈 파일을 선택해 주세요.",
+        `${Math.floor(maxSeconds / 60)}분 이하의 음성을 선택해 주세요.`,
       );
     const samples = buffer.getChannelData(0),
       count = 80,

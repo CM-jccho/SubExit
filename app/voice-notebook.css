@@ -699,12 +699,6 @@
 .dc-start-panel .dd-secondary {
   margin-top: 12px;
 }
-.dc-nav {
-  gap: 3px;
-}
-.dc-nav button {
-  padding: 9px 12px;
-}
 .vn-composer button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -869,22 +863,6 @@
   .vn-session-card strong {
     font-size: 17px;
   }
-  .dc-nav {
-    display: grid !important;
-    grid-template-columns: repeat(5, 1fr) !important;
-    gap: 0 !important;
-  }
-  .dc-nav button {
-    padding: 10px 4px !important;
-    min-width: 0 !important;
-    flex-direction: column !important;
-    gap: 3px !important;
-    font-size: 10px !important;
-  }
-  .dc-nav button svg {
-    width: 19px;
-    height: 19px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .vn-nudge,
@@ -1021,4 +999,20 @@
   .vn-communication-tips summary {
     line-height: 1.7;
   }
+}
+.vn-term-results {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.vn-term-results > span {
+  flex-basis: 100%;
+  font-size: 13px;
+  color: #526348;
+}
+.vn-term-results button {
+  overflow-wrap: anywhere;
+  max-width: 100%;
 }

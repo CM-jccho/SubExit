@@ -1,4 +1,5 @@
 "use client";
+import { useAIConsent } from "./ConsentSession";
 import { canLeaveWorkspace } from "@/lib/navigation-guard";
 import MessengerPractice from "./MessengerPractice";
 import ConversationTraining from "./ConversationTraining";
@@ -43,6 +44,7 @@ import VoiceComposer, {
   type VoiceDraft,
 } from "./VoiceComposer";
 import AudioPlayer from "./AudioPlayer";
+import { transcribeAudio } from "@/lib/audio-transcription";
 import { TermEditor, TermText, type TermSeed } from "./TermNotebook";
 import {
   deleteSession,
@@ -100,6 +102,10 @@ export default function VoiceWorkspace({
   onChooseCard: () => void;
 }) {
   const inheritedCompanion = useCompanion();
+  const [termStatus, setTermStatus] = useState<{
+    id: string;
+    text: string;
+  } | null>(null);
   const [session, setSession] = useState<VoiceSession | null>(() =>
       mode === "practice" && initialCard
         ? makeSession("practice", initialCard, inheritedCompanion)
@@ -111,7 +117,7 @@ export default function VoiceWorkspace({
     ),
     [sessions, setSessions] = useState<VoiceSession[]>([]),
     [trainingFrom, setTrainingFrom] = useState<TrainingOrigin>(),
-    [consent, setConsent] = useState(false),
+    [consent, setConsent] = useAIConsent(),
     [sampleMode, setSampleMode] = useState(false),
     [reviewOutage, setReviewOutage] = useState<AIOutage | null>(null),
     [busy, setBusy] = useState(false),
@@ -233,7 +239,6 @@ export default function VoiceWorkspace({
     abort.current?.abort();
     stopAudio();
     setBusy(false);
-    setConsent(false);
     setSuggestion(undefined);
     setError("");
     setNotice("");
@@ -412,11 +417,14 @@ export default function VoiceWorkspace({
     };
     await persist(next);
     setSuggestion(undefined);
-    setNotice("음성과 문자를 이 기기에 저장했어요.");
+    setNotice(
+      session.kind === "recording" ? "음성과 문자를 이 기기에 저장했어요." : "",
+    );
     if (session.kind !== "recording") void respond(next);
   }
   async function extract(turn: VoiceTurn) {
     if (!session) return;
+    setTermStatus({ id: turn.id, text: "중요 용어를 찾고 있어요…" });
     setError("");
     setBusy(true);
     const c = new AbortController(),
@@ -429,7 +437,7 @@ export default function VoiceWorkspace({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "extract",
-          text: turn.text.slice(0, 6000),
+          text: turn.text,
           industry: session.industry,
           consent,
           adultConsent: consent,
@@ -452,6 +460,12 @@ export default function VoiceWorkspace({
           ? "밑줄 친 용어를 눌러 뜻과 메모를 남겨보세요."
           : "추출할 전문 용어를 찾지 못했어요. 원하는 단어를 직접 눌러 추가할 수 있어요.",
       );
+      setTermStatus({
+        id: turn.id,
+        text: d.terms.length
+          ? `${d.terms.length}개를 찾았어요. 아래 용어를 눌러 저장하세요.`
+          : "찾은 용어가 없어요. 표현을 선택하거나 직접 입력해 스크랩할 수 있어요.",
+      });
     } catch (e) {
       if (generation.current === id)
         setError(
@@ -463,7 +477,17 @@ export default function VoiceWorkspace({
         );
     } finally {
       clearTimeout(timeout);
-      if (generation.current === id) setBusy(false);
+      if (generation.current === id) {
+        setBusy(false);
+        setTermStatus((current) =>
+          current?.id === turn.id && current.text === "중요 용어를 찾고 있어요…"
+            ? {
+                id: turn.id,
+                text: "용어 찾기를 완료하지 못했어요. 아래 오류 안내를 확인하거나 직접 스크랩해 주세요.",
+              }
+            : current,
+        );
+      }
     }
   }
   async function suggestReplies() {
@@ -526,45 +550,48 @@ export default function VoiceWorkspace({
     }
   }
   async function transcribeSaved(turn: VoiceTurn) {
-    if (!session || !turn.clip) return;
+    if (!session || !turn.clip || !consent || busy) return;
     setError("");
     setBusy(true);
     const c = new AbortController(),
       id = ++generation.current;
     abort.current = c;
-    const timeout = setTimeout(() => c.abort(), 25000);
+    let latest = session;
     try {
-      const form = new FormData();
-      form.append("audio", turn.clip.blob, turn.clip.name);
-      form.append("consent", String(consent));
-      form.append("adultConsent", String(consent));
-      form.append("sampleConsent", String(consent));
-      const r = await aiFetch("/api/transcribe", {
-        method: "POST",
-        body: form,
+      const result = await transcribeAudio(turn.clip, {
         signal: c.signal,
+        sampleOnly: config.sampleOnly,
+        status: (message) => {
+          if (generation.current === id) setNotice(message);
+        },
+        progress: async (progress, text) => {
+          if (generation.current !== id) return;
+          latest = {
+            ...latest,
+            turns: latest.turns.map((t) =>
+              t.id === turn.id
+                ? {
+                    ...t,
+                    text,
+                    terms: [],
+                    clip: { ...turn.clip!, transcription: progress },
+                  }
+                : t,
+            ),
+            updatedAt: new Date().toISOString(),
+          };
+          await putSession(latest);
+          if (generation.current === id) setSession(latest);
+        },
       });
-      const d = await r.json();
       if (generation.current !== id) return;
-      if (!r.ok) throw new Error(d.error);
-      if (typeof d.text !== "string" || !d.text.trim())
-        throw new Error(
-          "음성에서 말을 찾지 못했어요. 원본을 재생해 확인해 주세요.",
-        );
-      await persist({
-        ...session,
-        turns: session.turns.map((t) =>
-          t.id === turn.id
-            ? { ...t, text: d.text.slice(0, 4000), terms: [] }
-            : t,
-        ),
-        updatedAt: new Date().toISOString(),
-      });
+      await persist(latest);
       setNotice(
-        "문자 변환이 끝나 기록에 추가했어요. 단어를 눌러 용어를 모아보세요.",
+        `전체 ${result.progress.total}구간 문자 변환 완료. 표현을 골라 스크랩할 수 있어요.`,
       );
     } catch (e) {
-      if (generation.current === id)
+      if (generation.current === id) {
+        await persist(latest).catch(() => {});
         setError(
           e instanceof Error && e.name === "AbortError"
             ? "음성 인식이 지연됐어요. 원본은 그대로 남아 있으니 다시 시도해 주세요."
@@ -572,8 +599,8 @@ export default function VoiceWorkspace({
               ? e.message
               : "음성을 인식하지 못했어요.",
         );
+      }
     } finally {
-      clearTimeout(timeout);
       if (generation.current === id) setBusy(false);
     }
   }
@@ -942,6 +969,7 @@ export default function VoiceWorkspace({
           {!session.isSample &&
             (!sampleMode || session.kind === "recording") && (
               <AIConsent
+                priority={0}
                 config={config}
                 checked={consent}
                 onChange={setConsent}
@@ -995,16 +1023,16 @@ export default function VoiceWorkspace({
                     {t.role === "assistant"
                       ? session.kind === "chat"
                         ? sessionCharacter.name
-                        : session.context?.partner || "연습 상대"
+                        : "연습 상대"
                       : t.role === "user"
                         ? "나"
                         : (t.clip ? "녹음 " : "문자 기록 ") + (i + 1)}
-                    {t.role === "assistant" && (
+                    {t.role === "assistant" && !t.sample && (
                       <small>
                         {t.origin === "recording"
                           ? "녹음에서 가져온 말"
                           : t.sample || session.isSample
-                            ? "샘플"
+                            ? "예시"
                             : "AI"}
                       </small>
                     )}
@@ -1019,7 +1047,8 @@ export default function VoiceWorkspace({
                 {t.sample && (
                   <SampleNotice
                     sample={t.sample}
-                    compact={i < session.turns.length - 1}
+                    compact
+                    badge={session.kind !== "recording"}
                   />
                 )}
                 {t.clip && <AudioPlayer clip={t.clip} />}
@@ -1035,51 +1064,112 @@ export default function VoiceWorkspace({
                   </p>
                 )}
                 <div className="vn-turn-actions">
-                  {t.clip && session.kind === "recording" && !t.text && (
+                  {t.clip &&
+                    session.kind === "recording" &&
+                    (!t.text ||
+                      (t.clip.transcription &&
+                        !t.clip.transcription.complete)) && (
+                      <button
+                        className="dd-link"
+                        disabled={
+                          busy ||
+                          captureBusy ||
+                          !consent ||
+                          !config.voiceAvailable
+                        }
+                        onClick={() => void transcribeSaved(t)}
+                      >
+                        {t.clip.transcription && !t.clip.transcription.complete
+                          ? "문자 변환 이어서"
+                          : "저장한 음성 문자로 바꾸기"}
+                      </button>
+                    )}
+                  {t.role === "assistant" && (
                     <button
                       className="dd-link"
-                      disabled={
-                        busy ||
-                        captureBusy ||
-                        !consent ||
-                        !config.voiceAvailable
+                      aria-label={
+                        speaking === t.id ? "읽기 멈추기" : "읽어주기"
                       }
-                      onClick={() => void transcribeSaved(t)}
+                      onClick={() => speak(t)}
                     >
-                      저장한 음성 문자로 바꾸기
-                    </button>
-                  )}
-                  {t.role === "assistant" && (
-                    <button className="dd-link" onClick={() => speak(t)}>
                       <Icon
                         name={speaking === t.id ? "pause" : "volume"}
                         size={16}
                       />
-                      {speaking === t.id ? "읽기 멈추기" : "읽어주기"}
+                      {speaking === t.id ? "멈춤" : "듣기"}
                     </button>
                   )}
                   {t.text && (
                     <>
                       {!session.isSample && (
-                        <button
-                          className="dd-link"
-                          disabled={
-                            busy || captureBusy || !canTalk || sampleMode
-                          }
-                          onClick={() => void extract(t)}
-                        >
-                          중요 용어 찾기
-                        </button>
+                        <>
+                          <button
+                            className="dd-link"
+                            aria-label="중요 용어 찾기"
+                            disabled={busy || captureBusy}
+                            onClick={() => {
+                              if (!consent || !config.available || sampleMode) {
+                                setError(
+                                  !consent
+                                    ? "중요 용어 찾기는 AI 전송 동의가 필요해요. 위의 전송 안내에서 동의해 주세요. 표현 직접 스크랩은 동의 없이 저장할 수 있어요."
+                                    : sampleMode
+                                      ? "샘플 모드에서는 AI 용어 추출을 사용하지 않아요. 표현 직접 스크랩을 이용해 주세요."
+                                      : "AI 연결을 확인해 주세요. 표현 직접 스크랩은 바로 사용할 수 있어요.",
+                                );
+                                return;
+                              }
+                              void extract(t);
+                            }}
+                          >
+                            용어 찾기
+                          </button>
+                          {!consent && !sampleMode && (
+                            <span className="vn-action-hint">AI 동의 필요</span>
+                          )}
+                        </>
                       )}
                       <button
                         className="dd-link"
-                        onClick={() => void term("", t.text)}
+                        aria-label="표현 직접 스크랩"
+                        onClick={() => {
+                          const selected =
+                            window.getSelection()?.toString().trim() || "";
+                          void term(
+                            selected && t.text.includes(selected)
+                              ? selected
+                              : "",
+                            t.text,
+                          );
+                        }}
                       >
-                        표현 직접 스크랩
+                        스크랩
                       </button>
                     </>
                   )}
                 </div>
+                {termStatus?.id === t.id && (
+                  <p className="vn-caption" role="status">
+                    {termStatus.text}
+                  </p>
+                )}
+                {!!t.terms.length && (
+                  <div
+                    className="vn-term-results"
+                    role="group"
+                    aria-label="추출한 중요 용어"
+                  >
+                    <span>찾은 용어 {t.terms.length}개 · 눌러서 저장</span>
+                    {t.terms.map((word) => (
+                      <button
+                        className="dd-secondary"
+                        key={word}
+                        onClick={() => void term(word, t.text)}
+                      >
+                        {word}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </article>
             ))}
           </div>
@@ -1136,63 +1226,30 @@ export default function VoiceWorkspace({
             />
           )}
           {!session.isSample &&
-            session.kind === "practice" &&
-            !!session.turns.length &&
-            !pending &&
-            !complete &&
-            !session.turns.at(-1)?.suggestions?.length && (
-              <button
-                className="vn-get-choices dd-secondary dd-full"
-                disabled={busy || captureBusy || !canTalk}
-                onClick={() => void suggestReplies()}
-              >
-                <Icon name="chat" size={18} />내 목표에 맞는 답변 후보 3개 보기
-              </button>
-            )}
-          {!session.isSample &&
-            session.kind === "practice" &&
-            !pending &&
-            !complete &&
-            !!session.turns.at(-1)?.suggestions?.length && (
-              <details className="vn-reply-choices" open>
-                <summary>
-                  <Icon name="chat" size={17} />
-                  어떻게 답할까요? 후보 3개 보기
-                </summary>
-                <p className="vn-caption">
-                  하나를 골라 내 말로 바꿔보세요. 고르는 것만으로 전송되지는
-                  않아요.
-                </p>
-                {session.turns.at(-1)?.suggestionsSample && (
-                  <SampleNotice
-                    sample={session.turns.at(-1)!.suggestionsSample!}
-                  />
-                )}
-                <div className="vn-choice-list">
-                  {session.turns.at(-1)!.suggestions!.map((s, i) => (
-                    <button
-                      key={i}
-                      disabled={busy || captureBusy}
-                      onClick={() => {
-                        setSuggestion({ text: s, id: Date.now() });
-                        setNotice(
-                          "답변 후보를 입력칸에 넣었어요. 수정하거나 직접 읽어볼 수 있어요.",
-                        );
-                      }}
-                    >
-                      <span>0{i + 1}</span>
-                      {s}
-                      <Icon name="arrow" size={16} />
-                    </button>
-                  ))}
-                </div>
-              </details>
-            )}
-          {!session.isSample &&
             (session.kind === "recording" || session.turns.length > 0) && (
               <div hidden={!!complete}>
                 <VoiceComposer
-                  inDialog
+                  inDialog={session.kind === "recording"}
+                  replyTo={
+                    session.kind !== "recording" && !pending
+                      ? session.turns.at(-1)
+                      : undefined
+                  }
+                  goal={session.context?.goal}
+                  candidates={
+                    !pending ? session.turns.at(-1)?.suggestions : undefined
+                  }
+                  candidatesSample={
+                    !pending
+                      ? session.turns.at(-1)?.suggestionsSample
+                      : undefined
+                  }
+                  onRequestCandidates={
+                    session.kind === "practice" && !pending && !complete
+                      ? suggestReplies
+                      : undefined
+                  }
+                  longRecording={session.kind === "recording"}
                   key={session.id}
                   config={session.kind === "recording" ? config : sampleConfig}
                   consent={

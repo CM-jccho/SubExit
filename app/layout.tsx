@@ -1,3 +1,4 @@
+import { ConsentSessionProvider } from "@/components/ConsentSession";
 import "./globals.css";
 import "./coach.css";
 import "./conversation.css";
@@ -17,10 +18,17 @@ import "./messenger.css";
 import "./focus-visuals.css";
 import "./input-dialog.css";
 import "./purpose-home.css";
+import "./live-speech.css";
+import "./chat-flow.css";
 export const metadata = {
   title: "스픽코칭 · 대화 중 다음 한마디",
   description:
     "대화 중에는 내 상황과 목표에 맞는 다음 한마디를, 평소에는 AI 상대와 같은 상황의 대화 연습을 제공합니다.",
+};
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 export default function RootLayout({
   children,
@@ -29,7 +37,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>
+        <ConsentSessionProvider>{children}</ConsentSessionProvider>
+      </body>
     </html>
   );
 }

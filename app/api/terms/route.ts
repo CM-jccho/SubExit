@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     let d;
     try {
       d = JSON.parse(
-        new TextDecoder().decode(await readBounded(request, 30000)),
+        new TextDecoder().decode(await readBounded(request, 260000)),
       );
     } catch (e) {
       if (e instanceof Error && e.message === "too_large") throw e;
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       !d ||
       !["extract", "explain"].includes(d.action) ||
       typeof d.text !== "string" ||
-      d.text.length > 6000 ||
+      d.text.length > 60000 ||
       typeof d.industry !== "string" ||
       d.industry.length > 120 ||
       (d.action === "explain" &&

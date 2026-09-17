@@ -6,7 +6,7 @@
 .purpose-heading {
   margin-bottom: 28px;
 }
-.purpose-heading p {
+.purpose-home .purpose-heading p {
   color: #5b6b5e;
   font-size: 14px;
   margin: 0 0 8px;
@@ -133,11 +133,6 @@
   min-height: 44px;
 }
 @media (max-width: 760px) {
-  .dc-nav {
-    display: grid;
-    gap: 8px;
-    grid-template-columns: repeat(3, 1fr);
-  }
   .purpose-home {
     margin-top: 14px;
   }
@@ -171,11 +166,11 @@
   }
 }
 
-.purpose-limit {
+.purpose-home .purpose-limit {
   font-size: 12px;
   color: #536053;
   line-height: 1.7;
-  margin: 8px 0 22px;
+  margin: 20px 0 22px;
 }
 
 /* Motion belongs to the coach and the real processing state, not every control. */
@@ -215,7 +210,7 @@
   font-size: 12px;
   font-weight: 700;
 }
-.coach-presence-copy p {
+.purpose-home .coach-presence-copy p {
   margin: 5px 0 0;
   color: #294132;
   font-size: 16px;
@@ -223,26 +218,31 @@
   word-break: keep-all;
 }
 .purpose-home .practice-loop {
-  margin: 20px 0;
-  gap: 8px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 18px 0;
+  gap: 4px 10px;
 }
 .purpose-home .practice-loop li {
-  padding: 8px 0;
+  display: flex;
+  padding: 0;
   flex-direction: row;
   justify-content: center;
   align-items: center;
   border: 0;
   background: transparent;
-  gap: 7px;
+  gap: 10px;
+  border-radius: 0;
 }
-.purpose-home .practice-loop li svg {
-  width: 18px;
-  height: 18px;
-  padding: 6px;
-  border-radius: 9px;
+.purpose-home .practice-loop li:not(:last-child)::after {
+  content: "→";
+  color: #71816f;
 }
-.purpose-home .practice-loop li strong {
+.purpose-home .practice-loop li span {
   font-size: 13px;
+  color: #536053;
+  white-space: nowrap;
 }
 .purpose-home .coach-start {
   min-height: 64px;
@@ -362,11 +362,8 @@
     width: 72px;
     height: 70px;
   }
-  .coach-presence-copy p {
+  .purpose-home .coach-presence-copy p {
     font-size: 14px;
-  }
-  .purpose-home .practice-loop li {
-    flex-direction: column;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -398,6 +395,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
+  justify-content: flex-start;
   padding: 18px 16px;
   border-radius: 16px;
   text-align: left;

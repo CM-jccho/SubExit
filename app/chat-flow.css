@@ -1,0 +1,185 @@
+.consent-settings {
+  display: flex;
+  margin: 6px 0 0 auto;
+  min-height: 32px;
+  align-items: center;
+  font-size: 12px !important;
+  color: #536b56;
+}
+.consent-settings-content {
+  padding: 0 22px 24px;
+  line-height: 1.75;
+}
+.vn-chat-thread {
+  padding: 22px 20px;
+  gap: 20px;
+  background: #eaf0ec;
+  border: 1px solid #dce5de;
+}
+.vn-chat-thread .vn-turn {
+  position: relative;
+  align-self: flex-start;
+  max-width: 82%;
+  border-radius: 4px 18px 18px 18px;
+  border: 1px solid #cad7cd;
+  background: #fffefa;
+  box-shadow: 0 2px 0 #dbe4dd;
+  padding: 12px 16px 8px;
+}
+.vn-chat-thread .vn-turn::before {
+  content: "";
+  position: absolute;
+  top: 15px;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  background: #fffefa;
+  border-left: 1px solid #cad7cd;
+  border-bottom: 1px solid #cad7cd;
+  transform: rotate(45deg);
+}
+.vn-chat-thread .vn-turn.user {
+  align-self: flex-end;
+  background: #dbe9c9;
+  border-color: #bed1aa;
+  border-radius: 18px 4px 18px 18px;
+}
+.vn-chat-thread .vn-turn.user::before {
+  left: auto;
+  right: -7px;
+  background: #dbe9c9;
+  border-color: #bed1aa;
+  transform: rotate(225deg);
+}
+.vn-chat-thread .vn-turn-meta {
+  margin-bottom: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 12px;
+  gap: 4px 12px;
+}
+.vn-chat-thread .vn-turn-meta > span {
+  flex-wrap: wrap;
+}
+.vn-chat-thread .vn-transcript-text {
+  line-height: 1.7 !important;
+  margin: 8px 0 !important;
+}
+.vn-chat-thread .vn-turn-actions {
+  gap: 4px 12px;
+  padding-top: 4px;
+  margin-top: 8px;
+}
+.vn-chat-thread .vn-turn-actions button {
+  min-height: 36px;
+  font-size: 12px !important;
+  padding: 4px 2px;
+}
+.vn-action-hint,
+.vn-selected-candidate {
+  font-size: 12px;
+  color: #526549;
+}
+.dc-sample-notice.is-badge {
+  display: table;
+  max-width: 100%;
+  border-radius: 8px;
+  padding: 0;
+  margin: 4px 0;
+  font-size: 12px;
+  background: #f6f0df;
+}
+.dc-sample-notice.is-badge summary {
+  padding: 5px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.dc-sample-notice.is-badge[open] {
+  padding: 0 10px 8px;
+}
+.dc-sample-notice.is-badge p {
+  font-size: 12px;
+  margin: 6px 0;
+}
+.vn-chat-composer {
+  margin: 16px 0 24px;
+  padding: 18px;
+  border: 1px solid #bdcdbd;
+  border-radius: 18px;
+  background: #fffefa;
+}
+.vn-compose-context > strong {
+  font-size: 16px;
+}
+.vn-compose-context p {
+  margin: 6px 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-left: 3px solid #9bb49b;
+  padding-left: 9px;
+}
+.vn-compose-context p > span {
+  color: #60735f;
+}
+.vn-compose-context small {
+  display: block;
+  color: #596c54;
+  line-height: 1.6;
+}
+.vn-compose-candidates {
+  margin: 12px 0;
+}
+.vn-compose-candidates > button {
+  min-height: 44px;
+  font-size: 13px;
+}
+.vn-compose-candidates .vn-reply-choices {
+  margin-top: 8px;
+  padding: 12px;
+}
+.vn-selected-candidate {
+  display: block;
+  margin-top: 6px;
+}
+.vn-chat-composer .vn-capture-row {
+  margin-top: 12px;
+}
+.vn-chat-composer .vn-record {
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.vn-compose-notice {
+  margin: 8px 0;
+  font-size: 12px;
+  color: #53694b;
+}
+.vn-chat-composer textarea {
+  min-height: 90px;
+  font-size: 16px;
+}
+@media (max-width: 600px) {
+  .vn-chat-thread {
+    padding: 16px 14px;
+    gap: 16px;
+  }
+  .vn-chat-thread .vn-turn {
+    max-width: 89%;
+    padding: 10px 12px 6px;
+  }
+  .vn-chat-composer {
+    padding: 14px;
+  }
+  .vn-compose-candidates > button {
+    width: 100%;
+    white-space: normal;
+  }
+  .vn-chat-composer .vn-capture-row {
+    gap: 8px;
+  }
+  .vn-chat-composer .vn-capture-row > button {
+    font-size: 12px;
+  }
+}

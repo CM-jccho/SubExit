@@ -63,7 +63,7 @@ player.inspectAudio = async (blob) => ({
 const LiveCoach = require("../components/LiveCoach.tsx").default,
   Composer = require("../components/VoiceComposer.tsx").default;
 const config = { available: true, voiceAvailable: true, sampleOnly: true };
-async function mount(Component, props = {}) {
+async function mount(Component, props = {}, setup = () => {}) {
   const browserErrors = [],
     virtualConsole = new VirtualConsole();
   virtualConsole.sendTo(console);
@@ -108,6 +108,7 @@ async function mount(Component, props = {}) {
     this.open = false;
   };
   global.fetch = async () => Response.json(config);
+  setup();
   const root = createRoot(document.getElementById("test-root"));
   await act(async () => {
     root.render(React.createElement(Component, props));
@@ -377,6 +378,133 @@ const settleNotebook = async () => {
   for (let i = 0; i < 4; i++)
     await act(async () => new Promise((r) => setTimeout(r, 10)));
 };
+test("one consent covers mounted tools and page changes, revokes everywhere, and is never persisted", async () => {
+  const {
+    ConsentSessionProvider,
+    useAIConsent,
+    ConsentSettings,
+  } = require("../components/ConsentSession.tsx");
+  const Consent = require("../components/VoiceComposer.tsx").AIConsent;
+  function Tool({ label, priority }) {
+    const [checked, setChecked] = useAIConsent();
+    return React.createElement(
+      "section",
+      null,
+      React.createElement(
+        "span",
+        { "data-permission": label },
+        String(checked),
+      ),
+      React.createElement(Consent, {
+        config,
+        checked,
+        onChange: setChecked,
+        priority,
+      }),
+    );
+  }
+  function Page() {
+    const [next, setNext] = React.useState(false);
+    return React.createElement(
+      ConsentSessionProvider,
+      null,
+      React.createElement(ConsentSettings),
+      React.createElement(
+        "button",
+        { onClick: () => setNext(!next) },
+        "다른 기능으로",
+      ),
+      React.createElement(Tool, {
+        key: String(next),
+        label: next ? "review" : "recording",
+        priority: 0,
+      }),
+      React.createElement(Tool, { label: "terms", priority: 1 }),
+    );
+  }
+  let ui = await mount(Page);
+  try {
+    assert.equal(document.querySelectorAll(".vn-consent input").length, 1);
+    await click(document.querySelector(".vn-consent input"));
+    assert.equal(document.querySelectorAll(".vn-consent input").length, 0);
+    assert(
+      [...document.querySelectorAll("[data-permission]")].every(
+        (el) => el.textContent === "true",
+      ),
+    );
+    await click(button("다른 기능으로"));
+    assert.equal(
+      document.querySelector("[data-permission=review]").textContent,
+      "true",
+    );
+    assert.equal(document.querySelectorAll(".vn-consent input").length, 0);
+    assert.equal(window.localStorage.length, 0);
+    assert.equal(window.sessionStorage.length, 0);
+    await click(button("AI 전송 동의 설정"));
+    await click(button("동의 철회"));
+    assert(
+      [...document.querySelectorAll("[data-permission]")].every(
+        (el) => el.textContent === "false",
+      ),
+    );
+    assert.equal(document.querySelectorAll(".vn-consent input").length, 1);
+  } finally {
+    await ui.cleanup();
+  }
+  ui = await mount(Page);
+  try {
+    assert.equal(
+      document.querySelector("[data-permission=recording]").textContent,
+      "false",
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("reply candidates stay beside editable input without a dialog or automatic send", async () => {
+  let sent;
+  const ui = await mount(Composer, {
+    config,
+    consent: true,
+    textFirst: true,
+    replyTo: { id: "partner-1", text: "마감을 언제로 조정할까요?" },
+    goal: "다음 주까지 일정 조율",
+    candidates: [
+      "다음 주까지 가능할까요?",
+      "범위를 먼저 정해볼까요?",
+      "우선순위를 확인하고 싶어요.",
+    ],
+    onRequestCandidates: async () => {},
+    onUse: async (draft) => {
+      sent = draft;
+    },
+    submitLabel: "내 답변 보내기",
+  });
+  try {
+    await click(button("답변 후보 다시 보기"));
+    await click(document.querySelector(".vn-choice-list button"));
+    const input = document.querySelector("textarea");
+    assert.equal(input.value, "다음 주까지 가능할까요?");
+    assert.equal(sent, undefined);
+    assert.equal(document.querySelector("dialog"), null);
+    assert.equal(document.querySelector(".vn-choice-list"), null);
+    assert(document.body.textContent.includes("아직 보내지 않았어요"));
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement.prototype,
+        "value",
+      ).set.call(input, "자료 확인 후 다음 주까지 가능할까요?");
+      input.dispatchEvent(new window.Event("input", { bubbles: true }));
+    });
+    await click(button("내 답변 보내기"));
+    assert.equal(sent.text, "자료 확인 후 다음 주까지 가능할까요?");
+    assert.equal(input.value, "");
+  } finally {
+    await ui.cleanup();
+  }
+});
+
 test("quota fallback preserves labels and candidate provenance after continuing and reopening a conversation", async () => {
   global.indexedDB = new (require("fake-indexeddb").IDBFactory)();
   const store = require("../lib/voice-notebook.ts");
@@ -401,9 +529,7 @@ test("quota fallback preserves labels and candidate provenance after continuing 
     };
     await click(button("상대와 연습 시작"));
     await settleNotebook();
-    assert(
-      document.body.textContent.includes("사전 작성 샘플 · 일일 한도 초과"),
-    );
+    assert(document.body.textContent.includes("샘플 · 일일 한도 초과"));
     assert(document.body.textContent.includes("초기화 예정"));
     let saved = (await store.listSessions())[0];
     savedId = saved.id;
@@ -424,7 +550,7 @@ test("quota fallback preserves labels and candidate provenance after continuing 
     assert.equal(document.querySelectorAll(".garden-practice").length, 1);
     assert(
       document
-        .querySelector(".input-launcher")
+        .querySelector(".vn-chat-composer")
         .compareDocumentPosition(document.querySelector(".garden-practice")) &
         4,
     );
@@ -516,7 +642,9 @@ test("live hint sample mode uses the existing transcript without another AI call
   const ui = await mount(LiveCoach, { onBack: () => {}, onDemo: () => {} });
   let calls = 0;
   try {
-    for (const c of document.querySelectorAll(".dc-permissions input"))
+    for (const c of document.querySelectorAll(
+      ".vn-consent input, .dc-permissions input",
+    ))
       await click(c);
     await click(button("이 설정으로 시작"));
     global.fetch = async () => {
@@ -532,6 +660,190 @@ test("live hint sample mode uses the existing transcript without another AI call
     assert(document.querySelector(".dc-answer-panel .dc-sample-notice"));
     assert.equal(document.querySelector(".dc-evidence"), null);
     assert(document.body.textContent.includes("샘플 모드"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+class StreamingRecognizer {
+  static instances = [];
+  constructor() {
+    this.aborted = false;
+    StreamingRecognizer.instances.push(this);
+  }
+  start() {
+    this.onstart?.();
+  }
+  abort() {
+    this.aborted = true;
+    this.onend?.();
+  }
+  result(final, interim = "") {
+    this.onresult?.({
+      results: [
+        ...(final ? [{ isFinal: true, 0: { transcript: final } }] : []),
+        ...(interim ? [{ isFinal: false, 0: { transcript: interim } }] : []),
+      ],
+    });
+  }
+}
+const setupSpeech = () => {
+  StreamingRecognizer.instances = [];
+  window.webkitSpeechRecognition = StreamingRecognizer;
+};
+const StreamPanel = require("../components/LiveSpeechPanel.tsx").default;
+const liveProps = {
+  scenario: "sales",
+  tone: "firm_polite",
+  consent: true,
+  adult: true,
+  sample: true,
+  onActiveChange: () => {},
+};
+
+test("continuous speech requires its own consent, renders interim words immediately and keeps listening during AI requests", async () => {
+  const ui = await mount(StreamPanel, liveProps, setupSpeech);
+  try {
+    assert(button("실시간 듣기 시작").disabled);
+    await click(document.querySelector(".live-speech-consent input"));
+    let resolveCoach,
+      calls = 0;
+    global.fetch = async (url, init) => {
+      assert.equal(url, "/api/coach");
+      assert.equal(JSON.parse(init.body).opponent, "마감은 금요일입니다.");
+      calls++;
+      return new Promise((r) => {
+        resolveCoach = r;
+      });
+    };
+    await click(button("실시간 듣기 시작"));
+    const engine = StreamingRecognizer.instances[0];
+    assert.equal(engine.continuous, true);
+    assert.equal(engine.interimResults, true);
+    await act(async () => engine.result("", "마감은 금"));
+    assert.equal(
+      document.querySelector(".live-caption-interim").textContent,
+      " 마감은 금",
+    );
+    assert.equal(calls, 0, "partial words must not trigger AI requests");
+    await act(async () => engine.result("마감은 금요일입니다."));
+    await act(async () => new Promise((r) => setTimeout(r, 720)));
+    assert.equal(calls, 1);
+    assert.equal(
+      engine.aborted,
+      false,
+      "AI generation must not stop the microphone",
+    );
+    await act(async () =>
+      engine.result("마감은 금요일입니다.", "다음 문장도 듣고 있어요"),
+    );
+    assert(
+      document
+        .querySelector(".live-caption")
+        .textContent.includes("다음 문장도 듣고 있어요"),
+    );
+    await act(async () =>
+      resolveCoach(
+        Response.json({
+          source: "ai",
+          suggestion: "다음 주로 조정 가능할까요?",
+          evidence: "마감은 금요일입니다.",
+          reason: "일정 조율",
+        }),
+      ),
+    );
+    assert(
+      document
+        .querySelector(".live-stream-reply")
+        .textContent.includes("다음 주로 조정"),
+    );
+    await click(button("듣기 멈춤"));
+    assert.equal(engine.aborted, true);
+    assert(
+      document
+        .querySelector(".live-caption")
+        .textContent.includes("마감은 금요일"),
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("stopping streaming aborts pending coaching and ignores delayed results", async () => {
+  const ui = await mount(StreamPanel, liveProps, setupSpeech);
+  try {
+    await click(document.querySelector(".live-speech-consent input"));
+    let resolveCoach, signal;
+    global.fetch = async (url, init) => {
+      signal = init.signal;
+      return new Promise((r) => {
+        resolveCoach = r;
+      });
+    };
+    await click(button("실시간 듣기 시작"));
+    await act(async () =>
+      StreamingRecognizer.instances[0].result("테스트 일정 조율 문장"),
+    );
+    await act(async () => new Promise((r) => setTimeout(r, 720)));
+    await click(button("듣기 멈춤"));
+    assert(signal.aborted);
+    await act(async () =>
+      resolveCoach(
+        Response.json({ source: "ai", suggestion: "늦게 도착한 제안" }),
+      ),
+    );
+    assert(!document.body.textContent.includes("늦게 도착한 제안"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("live speech denial and backgrounding stop recognition with recovery guidance", async () => {
+  const ui = await mount(StreamPanel, liveProps, setupSpeech);
+  try {
+    await click(document.querySelector(".live-speech-consent input"));
+    await click(button("실시간 듣기 시작"));
+    const first = StreamingRecognizer.instances[0];
+    await act(async () => first.onerror({ error: "not-allowed" }));
+    assert(first.aborted);
+    assert(document.body.textContent.includes("권한이 필요"));
+    await click(button("실시간 듣기 시작"));
+    const second = StreamingRecognizer.instances[1];
+    Object.defineProperty(document, "hidden", {
+      value: true,
+      configurable: true,
+    });
+    await act(async () =>
+      document.dispatchEvent(new window.Event("visibilitychange")),
+    );
+    assert(second.aborted);
+    assert(document.body.textContent.includes("화면을 벗어나 듣기를 멈췄어요"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("supported browser defaults to streaming while retaining short-recording and text fallback", async () => {
+  const ui = await mount(
+    LiveCoach,
+    { onBack: () => {}, onDemo: () => {} },
+    setupSpeech,
+  );
+  try {
+    for (const c of document.querySelectorAll(
+      ".vn-consent input, .dc-permissions input",
+    ))
+      await click(c);
+    await click(button("이 설정으로 시작"));
+    assert(button("실시간 듣기 시작"));
+    await click(button("짧게 녹음 · 직접 입력"));
+    assert(button("상대 말 8초 듣기"));
+    await click(
+      [
+        ...document.querySelectorAll(".dc-listen-panel .dc-mode-switch button"),
+      ].find((b) => b.textContent.trim() === "직접 입력"),
+    );
+    assert(document.querySelector("#live-text"));
   } finally {
     await ui.cleanup();
   }
