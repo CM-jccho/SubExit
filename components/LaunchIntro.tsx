@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import InputDialog from "./InputDialog";
-import { Companion } from "./CompanionUI";
+import BrandMark from "./BrandMark";
 import useHorizontalSwipe from "./useHorizontalSwipe";
 const KEY = "speakcoaching-intro-v1";
 const scenes = [
@@ -72,9 +72,7 @@ export default function LaunchIntro() {
       className="launch-intro"
     >
       <div className="launch-mascot" aria-hidden="true">
-        <Companion
-          mood={step === 0 ? "hello" : step === 1 ? "listen" : "done"}
-        />
+        <BrandMark size={112} />
       </div>
       <div
         {...swipe}

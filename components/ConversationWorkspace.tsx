@@ -1,4 +1,5 @@
 "use client";
+import BrandMark from "./BrandMark";
 import CompactField, { fieldExamples } from "./CompactField";
 import { useAIConsent, ConsentSettings } from "./ConsentSession";
 import HomeActions from "./HomeActions";
@@ -748,7 +749,7 @@ export default function ConversationWorkspace() {
               aria-label="스픽코칭 홈"
             >
               <span className="dc-brand-mark">
-                <Icon name="chat" size={22} />
+                <BrandMark />
               </span>
               스픽코칭<span className="dc-beta">BETA</span>
             </button>

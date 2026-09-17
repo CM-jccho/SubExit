@@ -2281,21 +2281,24 @@ test("communication tips are private editable drafts and reopening a tip preserv
     await click(button("소통 팁"));
     await click(button("내 노트에 담기"));
     assert.equal((await store.listTerms()).length, 0);
-    const fields = document.querySelectorAll(".vn-dialog textarea");
+    await click(document.querySelector(".term-personal-memo summary"));
+    await click(document.querySelector('[aria-label="내 메모 입력"]'));
     await change(
-      fields[fields.length - 1],
+      document.querySelector('textarea[aria-label="내 메모"]'),
       "우리 팀은 마감 전에 먼저 일정을 확인한다.",
     );
-    await click(button("용어 노트에 저장"));
+    await click(button("내 노트에 추가"));
     await settle();
     assert.equal((await store.listTerms()).length, 1);
     await click(button("내 노트에 담기"));
-    const reopened = document.querySelectorAll(".vn-dialog textarea");
+    assert(document.querySelector(".term-personal-memo summary").textContent.includes("작성됨"));
+    await click(document.querySelector(".term-personal-memo summary"));
+    await click(document.querySelector('[aria-label="내 메모 수정"]'));
     assert.equal(
-      reopened[reopened.length - 1].value,
+      document.querySelector('textarea[aria-label="내 메모"]').value,
       "우리 팀은 마감 전에 먼저 일정을 확인한다.",
     );
-    await click(button("용어 노트에 저장"));
+    await click(button("변경 내용 저장"));
     await settle();
     assert.equal((await store.listTerms()).length, 1);
   } finally {
@@ -4146,4 +4149,53 @@ test("compact dictation requires opt-in, appends recognized words and stops the 
   } finally {
     await ui.cleanup();
   }
+});
+
+
+test("catalogue save confirms the named expression in the current tab and links to its persisted note", async () => {
+  const C = require("../components/TermNotebook.tsx").default;
+  const ui = await mount(C, { config });
+  try {
+    await settle();
+    await click(button("분야별 표현 찾기 · 17개 분야"));
+    await click([...document.querySelectorAll(".learn-term")].find(el => el.querySelector("strong").textContent === "핫픽스"));
+    assert.equal(document.querySelectorAll(".term-editor textarea").length, 0);
+    assert.equal(document.querySelector(".term-personal-memo").open, false);
+    await click(button("내 노트에 추가"));
+    await settle();
+    assert.equal(document.querySelector(".term-editor"), null);
+    assert.equal(button("분야별 표현 찾기 · 17개 분야").getAttribute("aria-pressed"), "true");
+    assert.match(document.querySelector(".vn-save-receipt").textContent, /핫픽스.*저장했어요/);
+    assert.equal(document.activeElement, document.querySelector(".vn-save-receipt"));
+    assert.equal((await store.listTerms()).length, 1);
+    await click(button("내 노트에서 보기"));
+    assert.equal(button("내 노트").getAttribute("aria-pressed"), "true");
+    assert.match(document.querySelector(".vn-term-card").textContent, /핫픽스/);
+    await click(document.querySelector(".vn-term-open"));
+    assert(button("변경 내용 저장"));
+  } finally { await ui.cleanup(); }
+});
+
+test("term save blocks double clicks and keeps the draft open on storage failure", async () => {
+  const C = require("../components/TermNotebook.tsx").TermEditor;
+  const original = store.putTerm;
+  let saves = 0, saved = 0, closed = 0;
+  const ui = await mount(C, { config, seed: { term: "테스트 표현", industry: "", quote: "", sessionId: "" }, onSaved: () => saved++, onClose: () => closed++ });
+  try {
+    store.putTerm = async () => { saves++; throw new Error("저장 공간을 확인해 주세요."); };
+    const save = button("이 표현 바로 저장");
+    await act(async () => { save.click(); save.click(); });
+    await settle();
+    assert.equal(saves, 1);
+    assert.equal(saved, 0);
+    assert.equal(closed, 0);
+    assert.match(document.querySelector('[role="alert"]').textContent, /저장 공간/);
+    assert.equal(document.querySelector('.term-editor input').value, "테스트 표현");
+    store.putTerm = original;
+    await click(button("이 표현 바로 저장"));
+    await settle();
+    assert.equal(saved, 1);
+    assert.equal(closed, 1);
+    assert.equal((await store.listTerms()).length, 1);
+  } finally { store.putTerm = original; await ui.cleanup(); }
 });
