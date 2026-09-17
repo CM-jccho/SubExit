@@ -9,13 +9,13 @@ import {
 export default function ConversationFocusPicker({
   value,
   onChange,
-  browsing = false,
   onBrowse,
+  sampleCount = 0,
   onCreate,
 }: {
   value: ConversationFocus | null;
-  browsing?: boolean;
   onBrowse?: () => void;
+  sampleCount?: number;
   onCreate?: () => void;
   onChange: (focus: ConversationFocus) => void;
 }) {
@@ -28,20 +28,15 @@ export default function ConversationFocusPicker({
     return (
       <aside className="focus-current" aria-label="선택한 대화 맥락">
         <span>
-          <small>
-            {browsing ? "전체를 보는 중 · 내 선택" : "지금 준비할 대화"}
-          </small>
-          <strong>{focusInfo(value)?.label || "전체 둘러보기"}</strong>
+          <small>내 관심 상황</small>
+          <strong>{focusInfo(value)?.label || "아직 정하지 않음"}</strong>
         </span>
         <button className="dd-link" onClick={() => setEditing(true)}>
           선택 바꾸기
         </button>
-        {value !== "all" && (
-          <button
-            className="dd-link"
-            onClick={onBrowse || (() => choose("all"))}
-          >
-            {browsing ? "내 선택만 보기" : "전체 둘러보기"}
+        {onBrowse && (
+          <button className="dd-link" onClick={onBrowse}>
+            모든 연습 상황 보기 ({sampleCount}) <Icon name="arrow" size={16} />
           </button>
         )}
       </aside>
@@ -52,13 +47,8 @@ export default function ConversationFocusPicker({
         <div className="focus-intro-copy">
           <p className="dc-overline">나에게 필요한 대화부터</p>
           <h1>지금 어떤 대화를 준비하세요?</h1>
-          <p>
-            연습하고 싶은 장면을 골라보세요.
-            <br />
-            나에게 맞는 상황과 표현부터 함께 준비해요.
-          </p>
+          <p>장면을 고르면 나에게 맞는 연습을 먼저 보여드려요.</p>
         </div>
-        <FocusScene />
       </div>
       <div className="focus-options">
         {focusOptions
@@ -97,9 +87,7 @@ export default function ConversationFocusPicker({
           </button>
         )}
       </div>
-      <small>
-        선택은 이 브라우저에 저장해요. 직업을 추정하거나 AI로 분석하지 않아요.
-      </small>
+      <small>선택은 이 브라우저에 저장돼요. 언제든 바꿀 수 있어요.</small>
     </section>
   );
 }

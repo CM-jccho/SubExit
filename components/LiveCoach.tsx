@@ -769,8 +769,13 @@ export default function LiveCoach({
                   {!result.sample && (
                     <details className="dc-evidence">
                       <summary>왜 이 문장을 제안했나요?</summary>
-                      <p>{result.reason}</p>
+                      <p>
+                        <strong>상대 말에서 확인한 표현</strong>
+                      </p>
                       <q>{result.evidence}</q>
+                      <p>
+                        <strong>AI의 제안 이유</strong> · {result.reason}
+                      </p>
                       <small>
                         {result.provider} · {result.model} · 코칭{" "}
                         {(result.latencyMs / 1000).toFixed(1)}초
