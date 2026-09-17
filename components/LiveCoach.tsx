@@ -248,8 +248,8 @@ export default function LiveCoach({
       }
       stream.current = media;
       const mime = [
-        "audio/webm;codecs=opus",
         "audio/mp4",
+        "audio/webm;codecs=opus",
         "audio/ogg;codecs=opus",
       ].find((m) => MediaRecorder.isTypeSupported(m));
       const rec = new MediaRecorder(
@@ -293,7 +293,7 @@ export default function LiveCoach({
           .catch(() => {});
         await transcribeBlob(blob, id);
       };
-      rec.start(250);
+      rec.start();
       setPhase("listening");
       const started = Date.now();
       ticker.current = setInterval(

@@ -91,11 +91,19 @@ export default function VoiceComposer({
   candidates = [],
   candidatesSample,
   onRequestCandidates,
+  sampleMode = false,
+  onEnableAI,
+  onConsentChange,
+  submitDisabled = false,
 }: {
   onUse: (draft: VoiceDraft) => Promise<void> | void;
   submitLabel?: string;
   config: AIConfig;
   consent: boolean;
+  sampleMode?: boolean;
+  onEnableAI?: () => void;
+  onConsentChange?: (value: boolean) => void;
+  submitDisabled?: boolean;
   disabled?: boolean;
   requireText?: boolean;
   textFirst?: boolean;
@@ -199,11 +207,16 @@ export default function VoiceComposer({
       document.removeEventListener("visibilitychange", hide);
     };
   }, []);
+  const transcriptionBlock = sampleMode
+    ? "샘플 모드에서는 AI 문자 변환을 사용하지 않아요. 녹음은 그대로 두고 아래에서 AI 모드로 전환할 수 있어요."
+    : !consent
+      ? "녹음은 남아 있어요. 아래에서 AI 전송에 동의한 뒤 ‘문자로 바꾸기’를 눌러주세요."
+      : !config.voiceAvailable
+        ? "현재 AI 음성 변환에 연결할 수 없어요. 녹음을 내려받거나 직접 입력해 주세요."
+        : "";
   async function transcribe(c: AudioClip, id = epoch.current) {
-    if (!consent || !config.voiceAvailable) {
-      setNotice(
-        "녹음 완료. 재생해서 확인하거나 기록으로 저장해 주세요. 문자 변환에는 AI 전송 동의가 필요해요.",
-      );
+    if (transcriptionBlock) {
+      setNotice(transcriptionBlock);
       return;
     }
     setPhase("transcribing");
@@ -361,8 +374,8 @@ export default function VoiceComposer({
       }
       stream.current = media;
       const mime = [
-        "audio/webm;codecs=opus",
         "audio/mp4",
+        "audio/webm;codecs=opus",
         "audio/ogg;codecs=opus",
       ].find((m) => MediaRecorder.isTypeSupported(m));
       const rec = new MediaRecorder(
@@ -390,7 +403,7 @@ export default function VoiceComposer({
           id,
         );
       };
-      rec.start(250);
+      rec.start();
       setPhase("recording");
       setNotice("말을 마치면 ‘녹음 끝내기’를 눌러주세요.");
       const started = Date.now();
@@ -441,6 +454,7 @@ export default function VoiceComposer({
       busy.current ||
       phase !== "idle" ||
       disabled ||
+      submitDisabled ||
       (!clip && !text.trim()) ||
       (requireText && !text.trim())
     )
@@ -681,10 +695,39 @@ export default function VoiceComposer({
       {clip && (
         <>
           <AudioPlayer clip={clip} />
+          {transcriptionBlock && (
+            <div className="vn-transcription-help" role="status">
+              <p>{transcriptionBlock}</p>
+              {sampleMode && onEnableAI && (
+                <button
+                  type="button"
+                  className="dd-secondary"
+                  disabled={working}
+                  onClick={() => {
+                    onEnableAI();
+                    setNotice(
+                      "녹음은 그대로 남아 있어요. 전송 동의를 확인하고 문자로 바꿔주세요.",
+                    );
+                  }}
+                >
+                  AI 모드로 전환
+                </button>
+              )}
+              {!sampleMode && !consent && onConsentChange && (
+                <AIConsent
+                  config={config}
+                  checked={consent}
+                  onChange={onConsentChange}
+                  priority={-2}
+                  disabled={working}
+                />
+              )}
+            </div>
+          )}
           <button
             type="button"
             className="dd-link"
-            disabled={working || disabled || !consent || !config.voiceAvailable}
+            disabled={working || disabled}
             onClick={() => void transcribe(clip)}
           >
             {clip.transcription && !clip.transcription.complete
@@ -730,7 +773,12 @@ export default function VoiceComposer({
         <button
           type="button"
           className="dd-primary dd-full"
-          disabled={working || disabled || (requireText && !text.trim())}
+          disabled={
+            working ||
+            disabled ||
+            submitDisabled ||
+            (requireText && !text.trim())
+          }
           onClick={() => void use()}
         >
           {phase === "saving" ? "저장 중" : submitLabel}

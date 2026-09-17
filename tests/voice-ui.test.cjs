@@ -848,3 +848,101 @@ test("supported browser defaults to streaming while retaining short-recording an
     await ui.cleanup();
   }
 });
+
+test("recording in sample mode can switch to AI and consent inline without losing the clip", async () => {
+  let calls = 0;
+  function Example() {
+    const [sample, setSample] = React.useState(true);
+    const [consent, setConsent] = React.useState(false);
+    return React.createElement(Composer, {
+      config,
+      consent,
+      sampleMode: sample,
+      onEnableAI: () => setSample(false),
+      onConsentChange: setConsent,
+      submitDisabled: !sample && !consent,
+      textFirst: true,
+      onUse() {},
+    });
+  }
+  const ui = await mount(Example);
+  try {
+    global.fetch = async () => {
+      calls++;
+      return Response.json({ text: "검토 가능한 시간을 알려주세요." });
+    };
+    await click(button("눌러서 말하기"));
+    await click(button("녹음 끝내기"));
+    assert.equal(calls, 0);
+    const audio = document.querySelector("audio"),
+      source = audio.src;
+    assert.equal(button("문자로 바꾸기").disabled, false);
+    await click(button("문자로 바꾸기"));
+    assert(document.body.textContent.includes("샘플 모드에서는"));
+    await click(button("AI 모드로 전환"));
+    assert.equal(document.querySelector("audio").src, source);
+    assert.equal(calls, 0);
+    await click(
+      document.querySelector(".vn-transcription-help .vn-consent input"),
+    );
+    await click(button("문자로 바꾸기"));
+    assert.equal(calls, 1);
+    assert.equal(
+      document.querySelector("textarea").value,
+      "검토 가능한 시간을 알려주세요.",
+    );
+    assert.equal(document.querySelector("audio").src, source);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("audio replay explicitly rewinds ended media and retains the source across metadata updates", async () => {
+  const clip = {
+    blob: new Blob(["fake-audio"], { type: "audio/mp4" }),
+    duration: 4,
+    peaks: [0.5],
+    name: "recording",
+  };
+  const ui = await mount(player.default, { clip });
+  try {
+    const audio = document.querySelector("audio"),
+      source = audio.src;
+    let starts = [];
+    Object.defineProperty(audio, "paused", {
+      configurable: true,
+      value: false,
+    });
+    Object.defineProperty(audio, "ended", { configurable: true, value: true });
+    audio.currentTime = 4;
+    audio.play = async () => {
+      starts.push(audio.currentTime);
+    };
+    await click(button("음성 재생"));
+    assert.deepEqual(starts, [0]);
+    audio.currentTime = 4;
+    await act(async () => audio.dispatchEvent(new window.Event("ended")));
+    assert.equal(audio.currentTime, 0);
+    assert(document.querySelector(".vn-time").textContent.startsWith("0:00"));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(player.default, {
+          clip: {
+            ...clip,
+            transcription: {
+              version: 1,
+              parts: ["말"],
+              total: 1,
+              complete: true,
+            },
+          },
+        }),
+      ),
+    );
+    assert.equal(document.querySelector("audio").src, source);
+    await click(button("기본 재생기 열기"));
+    assert.equal(audio.controls, true);
+  } finally {
+    await ui.cleanup();
+  }
+});

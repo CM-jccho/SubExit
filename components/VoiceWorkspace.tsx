@@ -1251,14 +1251,15 @@ export default function VoiceWorkspace({
                   }
                   longRecording={session.kind === "recording"}
                   key={session.id}
-                  config={session.kind === "recording" ? config : sampleConfig}
-                  consent={
-                    sampleMode && session.kind !== "recording" ? false : consent
-                  }
+                  config={config}
+                  consent={consent}
+                  sampleMode={sampleMode && session.kind !== "recording"}
+                  onEnableAI={() => setSampleMode(false)}
+                  onConsentChange={setConsent}
+                  submitDisabled={session.kind !== "recording" && !canTalk}
                   disabled={
                     busy ||
-                    (session.kind !== "recording" &&
-                      (!canTalk || !!pending || !!complete))
+                    (session.kind !== "recording" && (!!pending || !!complete))
                   }
                   requireText={session.kind !== "recording"}
                   textFirst={session.kind !== "recording"}
