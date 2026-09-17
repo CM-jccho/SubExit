@@ -1,5 +1,6 @@
 "use client";
 import MessengerPractice from "./MessengerPractice";
+import { canLeaveWorkspace } from "@/lib/navigation-guard";
 import ConversationFocusPicker from "./ConversationFocusPicker";
 import FocusScene from "./FocusScene";
 import {
@@ -236,6 +237,7 @@ export default function ConversationWorkspace() {
     [editFields, setEditFields] = useState(false);
   const controller = useRef<AbortController | null>(null),
     generation = useRef(0);
+  const lastWorkspaceUrl = useRef("");
   useEffect(() => {
     let mounted = true;
     try {
@@ -305,10 +307,19 @@ export default function ConversationWorkspace() {
     )
       window.history.pushState(null, "", url);
     setViewState(next);
+    lastWorkspaceUrl.current = url;
     window.scrollTo({ top: 0 });
   }
   useEffect(() => {
     const restore = () => {
+      if (!canLeaveWorkspace()) {
+        window.history.pushState(null, "", lastWorkspaceUrl.current);
+        return;
+      }
+      lastWorkspaceUrl.current =
+        window.location.pathname +
+        window.location.search +
+        window.location.hash;
       setFocusEditing(false);
       cancelRequest();
       setRecordId(undefined);
@@ -318,6 +329,8 @@ export default function ConversationWorkspace() {
       setViewState(workspaceView(window.location.search));
       window.scrollTo({ top: 0 });
     };
+    lastWorkspaceUrl.current =
+      window.location.pathname + window.location.search + window.location.hash;
     setViewState(workspaceView(window.location.search));
     const query = new URLSearchParams(window.location.search);
     if (query.get("tour") === "1") {
@@ -338,6 +351,7 @@ export default function ConversationWorkspace() {
     setBusy(false);
   }
   function home() {
+    if (!canLeaveWorkspace()) return;
     cancelRequest();
     setError("");
     setView("home");
@@ -525,6 +539,7 @@ export default function ConversationWorkspace() {
     downloadBlob(blob, "ddeundeun-my-conversations.json");
   }
   function beginTour() {
+    if (!canLeaveWorkspace()) return;
     setFocusEditing(false);
     cancelRequest();
     setView("home");
@@ -635,6 +650,7 @@ export default function ConversationWorkspace() {
         ],
       ][step];
   function navigate(next: View) {
+    if (!canLeaveWorkspace()) return;
     setFocusEditing(false);
     cancelRequest();
     setToast("");

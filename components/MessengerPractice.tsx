@@ -22,6 +22,11 @@ import { aiFetch, AIServiceError, outageMessage } from "@/lib/ai-client";
 import { AIConsent, type AIConfig } from "./VoiceComposer";
 import { Companion } from "./CompanionUI";
 import { useCompanion } from "./CompanionTheme";
+import { WORKSPACE_LEAVE_EVENT } from "@/lib/navigation-guard";
+type ReplyFeedback = {
+  kind: "info" | "pending" | "success" | "error";
+  text: string;
+};
 export default function MessengerPractice({
   config,
   initialSession,
@@ -44,9 +49,15 @@ export default function MessengerPractice({
     ),
     [consent, setConsent] = useState(false),
     [busy, setBusy] = useState(false),
+    [saving, setSaving] = useState(false),
+    [copying, setCopying] = useState(false),
+    [copiedText, setCopiedText] = useState(""),
+    [replyFeedback, setReplyFeedback] = useState<ReplyFeedback | null>(null),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
   const latest = useRef(initialSession);
+  const draftRevision = useRef(0),
+    allowNavigation = useRef(false);
   const alive = useRef(true),
     lock = useRef(false),
     abort = useRef<AbortController | null>(null),
@@ -57,10 +68,18 @@ export default function MessengerPractice({
     parseMessengerInput(input);
     valid = true;
   } catch {}
-  const dirty = editing
-    ? !!input.message.trim() &&
-      (!record || messengerKey(input) !== messengerKey(record.input))
-    : !!record && draft !== record.draft;
+  const draftDirty =
+    !!record &&
+    (draft.trim() !== record.draft ||
+      tone !== record.selectedTone ||
+      draftSource !== (record.draftSource || "manual"));
+  const savedReply = !!record?.draft && !draftDirty;
+  const dirty =
+    draftDirty ||
+    (editing &&
+      (record
+        ? messengerKey(input) !== messengerKey(record.input)
+        : messengerKey(input) !== messengerKey(blankMessenger)));
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -76,25 +95,56 @@ export default function MessengerPractice({
     if (dirty) window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
+  useEffect(() => {
+    const guard = (event: Event) => {
+      if (
+        !allowNavigation.current &&
+        dirty &&
+        !window.confirm(
+          "아직 저장하지 않은 입력이 있어요. 저장하지 않고 이동할까요?",
+        )
+      )
+        event.preventDefault();
+    };
+    window.addEventListener(WORKSPACE_LEAVE_EVENT, guard);
+    return () => window.removeEventListener(WORKSPACE_LEAVE_EVENT, guard);
+  }, [dirty]);
   function leave(fn: () => void) {
     if (
       !dirty ||
       window.confirm(
         "아직 저장하지 않은 입력이 있어요. 저장하지 않고 이동할까요?",
       )
-    )
-      fn();
+    ) {
+      allowNavigation.current = true;
+      try {
+        fn();
+      } finally {
+        allowNavigation.current = false;
+      }
+    }
   }
-  async function action(fn: () => Promise<void>) {
+  async function action(fn: () => Promise<void>, saveReply = false) {
     if (lock.current) return;
     lock.current = true;
     setBusy(true);
+    setSaving(saveReply);
+    setReplyFeedback(
+      saveReply ? { kind: "pending", text: "답장을 저장하고 있어요…" } : null,
+    );
     setError("");
     setNotice("");
     try {
       await fn();
     } catch (e) {
-      if (alive.current)
+      if (alive.current && saveReply) {
+        setReplyFeedback({
+          kind: "error",
+          text:
+            "답장을 저장하지 못했어요. 입력은 그대로 남아 있어요. " +
+            (e instanceof Error ? e.message : "다시 저장해 주세요."),
+        });
+      } else if (alive.current)
         setError(
           e instanceof AIServiceError
             ? outageMessage(e.outage) +
@@ -108,7 +158,10 @@ export default function MessengerPractice({
     } finally {
       lock.current = false;
       abort.current = null;
-      if (alive.current) setBusy(false);
+      if (alive.current) {
+        setBusy(false);
+        setSaving(false);
+      }
     }
   }
   async function persist(next: MessengerRecord, forceNew = false) {
@@ -246,9 +299,14 @@ export default function MessengerPractice({
     setDraft(c.text);
     setTone(c.tone);
     setDraftSource(record?.source || "manual");
-    setNotice(
-      "입력칸에 넣었어요. 수정한 뒤 복사하거나 저장하세요. 자동 전송되지 않아요.",
-    );
+    draftRevision.current++;
+    setCopiedText("");
+    setNotice("");
+    setError("");
+    setReplyFeedback({
+      kind: "info",
+      text: "후보를 답장 칸에 넣었어요. 수정한 뒤 복사하거나 저장하세요.",
+    });
     editor.current?.focus();
   }
   async function save() {
@@ -262,26 +320,47 @@ export default function MessengerPractice({
       });
       if (alive.current) {
         setDraft(draft.trim());
-        setNotice(
-          "답장 초안을 이 브라우저에 저장했어요. 상대에게 전송된 것은 아니에요.",
-        );
+        setReplyFeedback({
+          kind: "success",
+          text: "답장을 이 브라우저에 저장했어요. ‘저장한 답장 보기’에서 다시 열 수 있어요.",
+        });
       }
-    });
+    }, true);
   }
   async function copy() {
-    if (!draft.trim()) return;
+    if (!draft.trim() || lock.current) return;
+    const text = draft.trim(),
+      revision = draftRevision.current;
+    lock.current = true;
+    setCopying(true);
+    setCopiedText("");
+    setError("");
+    setNotice("");
+    setReplyFeedback({ kind: "pending", text: "답장을 복사하고 있어요…" });
     try {
-      await navigator.clipboard.writeText(draft.trim());
-      setNotice(
-        "답장을 복사했어요. 메신저에 직접 붙여넣어 확인한 뒤 보내세요.",
-      );
-      setError("");
+      if (!navigator.clipboard?.writeText)
+        throw new Error("clipboard_unavailable");
+      await navigator.clipboard.writeText(text);
+      if (alive.current && revision === draftRevision.current) {
+        setCopiedText(text);
+        setReplyFeedback({
+          kind: "success",
+          text: "답장을 복사했어요. 메신저에 붙여넣어 확인한 뒤 보내세요. 복사는 저장과 별개예요.",
+        });
+      }
     } catch {
-      editor.current?.focus();
-      editor.current?.select();
-      setError(
-        "자동 복사가 차단됐어요. 선택된 답장을 길게 누르거나 Ctrl/Cmd+C로 복사해 주세요.",
-      );
+      if (alive.current && revision === draftRevision.current) {
+        editor.current?.focus();
+        editor.current?.select();
+        editor.current?.setSelectionRange(0, draft.length);
+        setReplyFeedback({
+          kind: "error",
+          text: "자동 복사가 차단됐어요. 선택된 답장을 길게 누르거나 Ctrl/Cmd+C로 복사해 주세요.",
+        });
+      }
+    } finally {
+      lock.current = false;
+      if (alive.current) setCopying(false);
     }
   }
   const aiControls = (
@@ -295,11 +374,11 @@ export default function MessengerPractice({
         config={config}
         checked={consent}
         onChange={setConsent}
-        disabled={busy}
+        disabled={busy || copying}
       />
       <button
         className="dd-secondary"
-        disabled={busy || !valid || !consent || !config.available}
+        disabled={busy || copying || !valid || !consent || !config.available}
         onClick={() => void generate()}
       >
         말투별 AI 후보 받기
@@ -318,7 +397,7 @@ export default function MessengerPractice({
         </div>
         <button
           className="dd-link"
-          disabled={busy}
+          disabled={busy || copying}
           onClick={() => leave(onRecords)}
         >
           저장한 답장 보기
@@ -344,7 +423,7 @@ export default function MessengerPractice({
             {messengerExamples.map((e) => (
               <button
                 key={e.id}
-                disabled={busy}
+                disabled={busy || copying}
                 onClick={() => void example(e.id)}
               >
                 <small>사전 작성 가상 예시 · AI 호출 없음</small>
@@ -360,7 +439,7 @@ export default function MessengerPractice({
               rows={4}
               maxLength={4000}
               value={input.message}
-              disabled={busy}
+              disabled={busy || copying}
               onChange={(e) => setInput({ ...input, message: e.target.value })}
               placeholder="상대 메시지를 붙여넣어 주세요."
             />
@@ -376,7 +455,7 @@ export default function MessengerPractice({
               상대와의 관계
               <select
                 aria-label="상대와의 관계"
-                disabled={busy}
+                disabled={busy || copying}
                 value={input.relation}
                 onChange={(e) =>
                   setInput({ ...input, relation: e.target.value })
@@ -391,7 +470,7 @@ export default function MessengerPractice({
               이번 답장의 의도
               <select
                 aria-label="이번 답장의 의도"
-                disabled={busy}
+                disabled={busy || copying}
                 value={input.intent}
                 onChange={(e) => setInput({ ...input, intent: e.target.value })}
               >
@@ -408,7 +487,7 @@ export default function MessengerPractice({
               rows={2}
               maxLength={500}
               value={input.goal}
-              disabled={busy}
+              disabled={busy || copying}
               onChange={(e) => setInput({ ...input, goal: e.target.value })}
               placeholder="예: 가능한 시간을 먼저 확인하고 싶어요."
             />
@@ -420,14 +499,14 @@ export default function MessengerPractice({
               rows={2}
               maxLength={500}
               value={input.boundary}
-              disabled={busy}
+              disabled={busy || copying}
               onChange={(e) => setInput({ ...input, boundary: e.target.value })}
               placeholder="예: 오늘 마치겠다고 약속하지 않기"
             />
           </label>
           <button
             className="dd-primary"
-            disabled={busy || !valid}
+            disabled={busy || copying || !valid}
             onClick={() => void prepare()}
           >
             저장하고 답장 준비
@@ -458,7 +537,7 @@ export default function MessengerPractice({
             )}
             <button
               className="dd-link"
-              disabled={busy}
+              disabled={busy || copying}
               onClick={() => leave(() => setEditing(true))}
             >
               메시지·조건 수정
@@ -481,7 +560,7 @@ export default function MessengerPractice({
                     <small>{c.note}</small>
                     <button
                       className="dd-secondary"
-                      disabled={busy}
+                      disabled={busy || copying}
                       onClick={() => pick(c)}
                     >
                       {c.tone} 후보 고르기
@@ -508,6 +587,9 @@ export default function MessengerPractice({
                 disabled={busy}
                 onChange={(e) => {
                   setDraft(e.target.value);
+                  draftRevision.current++;
+                  setCopiedText("");
+                  setReplyFeedback(null);
                   if (!tone) setDraftSource("manual");
                 }}
                 placeholder="후보를 고르거나 직접 답장을 써보세요."
@@ -524,21 +606,61 @@ export default function MessengerPractice({
                   : "직접 작성"}
             </p>
           )}
-          <div className="dc-inline-actions">
-            <button
-              className="dd-primary"
-              disabled={busy || !draft.trim()}
-              onClick={() => void copy()}
+          <div className="messenger-reply-actions">
+            <div className="dc-inline-actions">
+              <button
+                className="dd-primary"
+                disabled={busy || copying || !draft.trim()}
+                aria-busy={copying}
+                onClick={() => void copy()}
+              >
+                {copying
+                  ? "복사 중…"
+                  : copiedText && copiedText === draft.trim()
+                    ? "복사 완료"
+                    : "답장 복사"}
+              </button>
+              <button
+                className="dd-secondary"
+                disabled={busy || copying || !draft.trim() || savedReply}
+                aria-busy={saving}
+                onClick={() => void save()}
+              >
+                {saving ? "저장 중…" : savedReply ? "저장됨" : "답장 저장"}
+              </button>
+            </div>
+            <div
+              className="messenger-action-feedback"
+              aria-live="polite"
+              aria-atomic="true"
             >
-              답장 복사
-            </button>
-            <button
-              className="dd-secondary"
-              disabled={busy || !draft.trim()}
-              onClick={() => void save()}
-            >
-              답장 저장
-            </button>
+              {replyFeedback && (
+                <p
+                  role={replyFeedback.kind === "error" ? "alert" : "status"}
+                  className={"messenger-feedback " + replyFeedback.kind}
+                >
+                  {replyFeedback.text}
+                </p>
+              )}
+              {!replyFeedback && (
+                <p className="vn-caption">
+                  {!draft.trim()
+                    ? "후보를 고르거나 답장을 입력하면 복사·저장할 수 있어요."
+                    : savedReply
+                      ? "이 답장은 이 브라우저에 저장돼 있어요."
+                      : "아직 저장하지 않은 답장이에요."}
+                </p>
+              )}
+            </div>
+            {savedReply && (
+              <button
+                className="dd-link"
+                disabled={busy || copying}
+                onClick={() => leave(onRecords)}
+              >
+                저장한 답장 보기
+              </button>
+            )}
           </div>
           <p className="vn-caption">
             복사와 저장은 별개예요. 자동 전송·카카오톡 연결은 없으며, 저장한
@@ -568,7 +690,7 @@ export default function MessengerPractice({
           <summary>기록 관리</summary>
           <button
             className="dd-link"
-            disabled={busy}
+            disabled={busy || copying}
             onClick={() =>
               leave(() => {
                 latest.current = undefined;
@@ -587,7 +709,7 @@ export default function MessengerPractice({
           </button>
           <button
             className="dd-link"
-            disabled={busy}
+            disabled={busy || copying}
             onClick={() => {
               if (
                 window.confirm("상대 메시지와 저장한 답장 초안을 삭제할까요?")
@@ -600,6 +722,7 @@ export default function MessengerPractice({
                     setInput({ ...blankMessenger });
                     setDraft("");
                     setTone(undefined);
+                    setDraftSource("manual");
                     setEditing(true);
                     setNotice("기록을 삭제했어요.");
                   }

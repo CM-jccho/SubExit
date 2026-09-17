@@ -2526,3 +2526,281 @@ test("focused home has one scenario browser and supporting tools remain reachabl
     await ui.cleanup();
   }
 });
+
+test("reply copy reports pending once, and late clipboard success never marks an edited reply copied", async () => {
+  const ui = await mount(Messenger, { config, onRecords() {} });
+  let resolveCopy,
+    copied,
+    calls = 0;
+  try {
+    await fillMessenger();
+    await click(button("저장하고 답장 준비"));
+    await settle();
+    await change(
+      document.querySelector('[aria-label="보낼 답장"]'),
+      "복사 요청한 문장",
+    );
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText(text) {
+          copied = text;
+          calls++;
+          return new Promise((resolve) => {
+            resolveCopy = resolve;
+          });
+        },
+      },
+    });
+    const copy = button("답장 복사");
+    await act(async () => {
+      copy.click();
+      copy.click();
+    });
+    assert.equal(calls, 1);
+    assert(button("복사 중…").disabled);
+    assert(
+      document
+        .querySelector(".messenger-reply-actions [role=status]")
+        .textContent.includes("복사하고"),
+    );
+    await change(
+      document.querySelector('[aria-label="보낼 답장"]'),
+      "복사 요청 뒤 새로 고친 문장",
+    );
+    await act(async () => resolveCopy());
+    assert.equal(copied, "복사 요청한 문장");
+    assert(button("답장 복사"));
+    assert(!button("복사 완료"));
+    assert.equal((await store.listSessions())[0].messenger.draft, "");
+    assert.equal(
+      document.querySelector('[aria-label="보낼 답장"]').value,
+      "복사 요청 뒤 새로 고친 문장",
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("unavailable clipboard keeps the reply selected with a local recovery message and does not claim success", async () => {
+  const ui = await mount(Messenger, { config, onRecords() {} });
+  try {
+    await fillMessenger();
+    await click(button("저장하고 답장 준비"));
+    await settle();
+    const editor = document.querySelector('[aria-label="보낼 답장"]');
+    await change(editor, "직접 복사할 답장입니다.");
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: undefined,
+    });
+    await click(button("답장 복사"));
+    assert.equal(document.activeElement, editor);
+    assert.equal(editor.selectionStart, 0);
+    assert.equal(editor.selectionEnd, editor.value.length);
+    assert(
+      document
+        .querySelector(".messenger-reply-actions [role=alert]")
+        .textContent.includes("Ctrl/Cmd+C"),
+    );
+    assert(!button("복사 완료"));
+    assert(
+      !document.body.textContent.includes("AI 없이 작성된 답장 예시 보기"),
+    );
+    assert.equal((await store.listSessions())[0].messenger.draft, "");
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("reply save stays pending until storage commits, preserves draft on failure, and retries once without duplicate records", async () => {
+  const ui = await mount(Messenger, { config, onRecords() {} });
+  const original = store.putSession;
+  let failSave,
+    writes = 0;
+  try {
+    await fillMessenger();
+    await click(button("저장하고 답장 준비"));
+    await settle();
+    const id = (await store.listSessions())[0].id;
+    await change(
+      document.querySelector('[aria-label="보낼 답장"]'),
+      "오류가 나도 남아야 하는 답장",
+    );
+    store.putSession = () => {
+      writes++;
+      return new Promise((_, reject) => {
+        failSave = reject;
+      });
+    };
+    const save = button("답장 저장");
+    await act(async () => {
+      save.click();
+      save.click();
+    });
+    assert.equal(writes, 1);
+    assert(button("저장 중…").disabled);
+    assert(!button("저장됨"));
+    assert.equal((await store.getSession(id)).messenger.draft, "");
+    await act(async () => failSave(Error("저장 공간 부족")));
+    assert(
+      document
+        .querySelector(".messenger-reply-actions [role=alert]")
+        .textContent.includes("저장 공간 부족"),
+    );
+    assert.equal(
+      document.querySelector('[aria-label="보낼 답장"]').value,
+      "오류가 나도 남아야 하는 답장",
+    );
+    assert(!button("답장 저장").disabled);
+    store.putSession = original;
+    await click(button("답장 저장"));
+    await settle();
+    assert.equal((await store.listSessions()).length, 1);
+    assert.equal(
+      (await store.getSession(id)).messenger.draft,
+      "오류가 나도 남아야 하는 답장",
+    );
+    assert(button("저장됨").disabled);
+    assert(
+      document
+        .querySelector(".messenger-reply-actions [role=status]")
+        .textContent.includes("저장했어요"),
+    );
+    await change(
+      document.querySelector('[aria-label="보낼 답장"]'),
+      "다시 수정한 답장",
+    );
+    assert(!button("답장 저장").disabled);
+    assert(
+      !document
+        .querySelector(".messenger-reply-actions")
+        .textContent.includes("저장했어요"),
+    );
+  } finally {
+    store.putSession = original;
+    await ui.cleanup();
+  }
+});
+
+test("workspace messenger protects dirty navigation, saves, searches, reopens, edits and deletes the same reply", async () => {
+  const Workspace = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(Workspace, {}, () => {
+    window.history.replaceState(null, "", "?view=messenger");
+    localStorage.setItem("ddeundeun-spotlight-guide-v2", "done");
+  });
+  try {
+    await settle();
+    await fillMessenger();
+    await click(button("저장하고 답장 준비"));
+    await settle();
+    await change(
+      document.querySelector('[aria-label="보낼 답장"]'),
+      "통합검증 전용 답장 0917",
+    );
+    let prompts = 0;
+    window.confirm = () => {
+      prompts++;
+      return false;
+    };
+    await click(button("홈"));
+    assert.equal(prompts, 1);
+    assert.equal(window.location.search, "?view=messenger");
+    assert.equal(
+      document.querySelector('[aria-label="보낼 답장"]').value,
+      "통합검증 전용 답장 0917",
+    );
+    await act(async () => {
+      window.history.replaceState(null, "", "?view=library");
+      window.dispatchEvent(new window.PopStateEvent("popstate"));
+    });
+    assert.equal(prompts, 2);
+    assert.equal(window.location.search, "?view=messenger");
+    assert(document.querySelector('[aria-label="보낼 답장"]'));
+    await click(button("답장 저장"));
+    await settle();
+    assert(button("저장됨"));
+    await click(button("저장한 답장 보기"));
+    await settle();
+    assert.equal(prompts, 2);
+    assert.equal(document.querySelector("h1").textContent, "대화 기록");
+    const search = document.querySelector("input[type=search]");
+    await change(search, "통합검증 전용 답장 0917");
+    assert.equal(document.querySelectorAll(".vn-session-card").length, 1);
+    await click(document.querySelector(".vn-session-card"));
+    await settle();
+    assert.equal(
+      document.querySelector('[aria-label="보낼 답장"]').value,
+      "통합검증 전용 답장 0917",
+    );
+    assert(button("저장됨").disabled);
+    await change(
+      document.querySelector('[aria-label="보낼 답장"]'),
+      "재진입 후 수정 답장 0917",
+    );
+    await click(button("답장 저장"));
+    await settle();
+    let records = (await store.listSessions()).filter((s) => s.messenger);
+    assert.equal(records.length, 1);
+    assert.equal(records[0].messenger.draft, "재진입 후 수정 답장 0917");
+    await click(button("이 답장 기록 삭제"));
+    assert.equal(
+      (await store.listSessions()).filter((s) => s.messenger).length,
+      1,
+    );
+    window.confirm = () => true;
+    await click(button("이 답장 기록 삭제"));
+    await settle();
+    assert.equal(
+      (await store.listSessions()).filter((s) => s.messenger).length,
+      0,
+    );
+    assert(document.querySelector('[aria-label="상대가 보낸 메시지"]'));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("clearing a saved message is still unsaved work, and accepted in-app navigation asks only once", async () => {
+  const Workspace = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(Workspace, {}, () =>
+    window.history.replaceState(null, "", "?view=messenger"),
+  );
+  try {
+    await settle();
+    await fillMessenger();
+    await click(button("저장하고 답장 준비"));
+    await settle();
+    await click(button("메시지·조건 수정"));
+    await change(
+      document.querySelector('[aria-label="상대가 보낸 메시지"]'),
+      "",
+    );
+    let prompts = 0;
+    window.confirm = () => {
+      prompts++;
+      return false;
+    };
+    await click(button("홈"));
+    assert.equal(prompts, 1);
+    assert.equal(window.location.search, "?view=messenger");
+    assert.equal(
+      document.querySelector('[aria-label="상대가 보낸 메시지"]').value,
+      "",
+    );
+    window.confirm = () => {
+      prompts++;
+      return true;
+    };
+    await click(button("저장한 답장 보기"));
+    await settle();
+    assert.equal(prompts, 2);
+    assert.equal(document.querySelector("h1").textContent, "대화 기록");
+    assert.equal(
+      (await store.listSessions()).filter((s) => s.messenger).length,
+      1,
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
