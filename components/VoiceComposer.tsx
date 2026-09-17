@@ -449,22 +449,34 @@ export default function VoiceComposer({
     setPhase("idle");
     setNotice("처리를 취소했어요. 기존 입력은 그대로 남아 있어요.");
   }
-  async function use() {
+  async function use(candidate?: string) {
+    const outgoingText = candidate ?? text.trim();
+    const outgoingClip = candidate === undefined ? clip : undefined;
     if (
       busy.current ||
       phase !== "idle" ||
       disabled ||
       submitDisabled ||
-      (!clip && !text.trim()) ||
-      (requireText && !text.trim())
+      (!outgoingClip && !outgoingText) ||
+      (requireText && !outgoingText)
     )
       return;
+    if (candidate !== undefined) {
+      if (
+        (text.trim() || clip) &&
+        !window.confirm("작성 중인 내용 대신 이 후보를 바로 보낼까요?")
+      )
+        return;
+      setText(candidate);
+      setClip(undefined);
+    }
     busy.current = true;
+    editor.current?.blur();
     const id = epoch.current;
     setPhase("saving");
     setError("");
     try {
-      await onUse({ clip, text: text.trim() });
+      await onUse({ clip: outgoingClip, text: outgoingText });
       if (epoch.current !== id) return;
       setExpanded(false);
       setReceipt(textFirst ? "답변을 기록했어요." : "기록에 저장했어요.");
@@ -535,7 +547,9 @@ export default function VoiceComposer({
           </button>
           {showCandidates && (
             <div className="vn-reply-choices">
-              <p className="vn-caption">고르기 → 내 말로 수정 → 보내기</p>
+              <p className="vn-caption">
+                문장을 누르면 바로 보내요. 바꾸고 싶다면 ‘고쳐 쓰기’를 누르세요.
+              </p>
               {!candidates.length && (
                 <p role="status">
                   {disabled
@@ -548,22 +562,43 @@ export default function VoiceComposer({
               )}
               <div className="vn-choice-list">
                 {candidates.map((candidate, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    disabled={disabled || working}
-                    onClick={() => {
-                      setText(candidate);
-                      setTyping(true);
-                      setChosen(index);
-                      setShowCandidates(false);
-                      setNotice("후보를 넣었어요. 내 말로 고친 뒤 보내세요.");
-                      editor.current?.focus({ preventScroll: true });
-                    }}
-                  >
-                    <span>{index + 1}</span>
-                    {candidate}
-                  </button>
+                  <div className="vn-choice" key={index}>
+                    <button
+                      type="button"
+                      className="vn-choice-send"
+                      disabled={disabled || working || submitDisabled}
+                      aria-label={`후보 ${index + 1} 바로 보내기: ${candidate}`}
+                      onClick={() => void use(candidate)}
+                    >
+                      <span>{index + 1}</span>
+                      {candidate}
+                      <Icon name="send" size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className="vn-choice-edit"
+                      disabled={disabled || working}
+                      aria-label={`후보 ${index + 1} 고쳐 쓰기`}
+                      onClick={() => {
+                        if (
+                          (text.trim() || clip) &&
+                          !window.confirm(
+                            "작성 중인 내용 대신 이 후보를 고쳐 쓸까요?",
+                          )
+                        )
+                          return;
+                        setClip(undefined);
+                        setText(candidate);
+                        setTyping(true);
+                        setChosen(index);
+                        setShowCandidates(false);
+                        setNotice("후보를 넣었어요. 내 말로 고친 뒤 보내세요.");
+                        editor.current?.focus({ preventScroll: true });
+                      }}
+                    >
+                      고쳐 쓰기
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -724,18 +759,20 @@ export default function VoiceComposer({
               )}
             </div>
           )}
-          <button
-            type="button"
-            className="dd-link"
-            disabled={working || disabled}
-            onClick={() => void transcribe(clip)}
-          >
-            {clip.transcription && !clip.transcription.complete
-              ? "문자 변환 이어서"
-              : text
-                ? "음성 인식 다시 시도"
-                : "문자로 바꾸기"}
-          </button>
+          {!transcriptionBlock && (
+            <button
+              type="button"
+              className="dd-link"
+              disabled={working || disabled}
+              onClick={() => void transcribe(clip)}
+            >
+              {clip.transcription && !clip.transcription.complete
+                ? "문자 변환 이어서"
+                : text
+                  ? "다시 문자로 바꾸기"
+                  : "문자로 바꾸기"}
+            </button>
+          )}
         </>
       )}
       {(typing || text || clip) && (

@@ -28,6 +28,9 @@ for (const ext of [".ts", ".tsx"])
   };
 const { test } = require("node:test"),
   assert = require("node:assert/strict");
+const chatTiming = require("../lib/chat-timing.ts");
+const actualPartnerBeat = chatTiming.waitForPartnerBeat;
+chatTiming.waitForPartnerBeat = async () => {};
 const { JSDOM, VirtualConsole } = require("jsdom"),
   React = require("react"),
   { act } = React,
@@ -3035,6 +3038,7 @@ test("messenger saves to a read-only record, keeps closed edits and reopens sele
 });
 
 test("inline chat keeps input mounted, saves before the partner responds, and guards unsent drafts", async () => {
+  chatTiming.waitForPartnerBeat = actualPartnerBeat;
   const Workspace = require("../components/VoiceWorkspace.tsx").default;
   const original = structuredClone(
     require("../lib/starter-data.ts").starterSession,
@@ -3090,17 +3094,34 @@ test("inline chat keeps input mounted, saves before the partner responds, and gu
     assert.equal(document.querySelector(".input-dialog"), null);
     assert.equal((await store.getSession(original.id)).turns.length, 2);
     assert(input.disabled);
-    assert.equal(scrolls, 0);
+    assert.equal(scrolls, 1);
+    assert(document.querySelector(".vn-partner-typing"));
+    assert(document.querySelector(".vn-conversation").contains(input));
+    assert.equal(
+      document.activeElement.getAttribute("aria-label"),
+      "내가 보낸 답변",
+    );
     await act(async () =>
       release(
         Response.json({ reply: "그럼 내일 오전에 이야기해요.", terms: [] }),
       ),
     );
+    assert.equal(
+      (await store.getSession(original.id)).turns.length,
+      2,
+      "instant response waits for the sent bubble to register",
+    );
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 600)));
     await settle();
     assert.equal((await store.getSession(original.id)).turns.length, 3);
     assert.equal(document.querySelector(".vn-chat-composer textarea"), input);
     assert(!input.disabled);
-    assert.equal(scrolls, 0);
+    assert.equal(scrolls, 2);
+    assert.equal(document.querySelector(".vn-partner-typing"), null);
+    assert.equal(
+      document.activeElement.getAttribute("aria-label"),
+      "상대의 답변",
+    );
     assert.equal(
       document.querySelector('textarea[aria-label="인식한 말 또는 직접 입력"]')
         .value,
@@ -3123,6 +3144,7 @@ test("inline chat keeps input mounted, saves before the partner responds, and gu
     await click(button("내 기록으로"));
     assert(!document.querySelector(".vn-chat-composer"));
   } finally {
+    chatTiming.waitForPartnerBeat = async () => {};
     await ui.cleanup();
   }
 });
@@ -3248,9 +3270,59 @@ test("returning from active practice updates the record list, URL and primary na
       (await store.listSessions()).filter((s) => !s.isSample).length,
       1,
     );
+    // Reopen from the records list: the parent view is already "records".
+    // Going back must clear the inner selection, not navigate to the same view.
+    await click(document.querySelector(".vn-session-list button"));
+    await settle();
+    assert(button("내 기록으로"));
+    await click(button("내 기록으로"));
+    await settle();
+    assert.equal(document.querySelector("h1").textContent, "내 기록");
     await click(button("연습할 상황 고르기"));
     assert(document.querySelector(".dc-saved-card"));
     assert.equal(window.location.search, "?view=library");
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("speaker confirmation offers an inline solo correction before allowing coaching", async () => {
+  const RecordingAnalysis =
+    require("../components/RecordingAnalysis.tsx").default;
+  const record = session();
+  record.recordingAnalysis.segments = record.recordingAnalysis.segments.map(
+    (s) => ({ ...s, role: "assistant" }),
+  );
+  let saved;
+  const ui = await mount(RecordingAnalysis, {
+    session: record,
+    config,
+    disabled: false,
+    onSave: async (d) => {
+      saved = d;
+    },
+    onBusy() {},
+    onPractice() {},
+  });
+  try {
+    assert(button("확인한 대화 코칭받기").disabled);
+    assert(document.querySelector(".learn-speaker-help"));
+    await click(button("혼자 녹음했어요 · 전부 내 말로"));
+    assert.equal(document.querySelector(".learn-speaker-help"), null);
+    assert(
+      [...document.querySelectorAll(".learn-segments select")].every(
+        (s) => s.value === "user",
+      ),
+    );
+    assert.equal(document.querySelector(".dd-check input").checked, false);
+    await click(document.querySelector(".dd-check input"));
+    await click(button("말한 사람·목표 저장"));
+    assert(saved.confirmed);
+    assert(
+      recording
+        .validateRecordingInput(saved)
+        .turns.every((t) => t.role === "user"),
+    );
   } finally {
     await ui.cleanup();
   }
@@ -3690,36 +3762,43 @@ test("onboarding distinguishes next from start and supports safe bidirectional s
   }
 });
 
-test("mobile main tabs swipe without hijacking inputs, vertical scrolling or dialogs", async () => {
-  const Workspace = require("../components/ConversationWorkspace.tsx").default;
-  const ui = await mount(Workspace, {}, () => {
-    window.innerWidth = 390;
-    localStorage.setItem("ddeundeun-spotlight-guide-v2", "done");
+for (const width of [320, 375, 390, 430, 768])
+  test(`main screens never swipe between tabs at simulated ${width}px; explicit navigation remains usable`, async () => {
+    const Workspace =
+      require("../components/ConversationWorkspace.tsx").default;
+    const ui = await mount(Workspace, {}, () => {
+      window.innerWidth = width;
+      localStorage.setItem("ddeundeun-spotlight-guide-v2", "done");
+    });
+    try {
+      await settle();
+      const homeUrl = window.location.href;
+      await swipeOn(document.querySelector("main"), [280, 200], [100, 200]);
+      assert.equal(window.location.href, homeUrl);
+      await click(button("내 기록"));
+      assert(window.location.search.includes("records"));
+      const input = document.querySelector('input[type="search"]');
+      assert(input);
+      await swipeOn(input, [280, 200], [100, 200]);
+      assert(window.location.search.includes("records"));
+      await swipeOn(document.querySelector("main"), [280, 200], [100, 450]);
+      assert(window.location.search.includes("records"));
+      await swipeOn(document.querySelector("main"), [280, 200], [100, 200]);
+      assert(window.location.search.includes("records"));
+      await click(button("더보기"));
+      await swipeOn(document.querySelector("main"), [100, 200], [280, 200]);
+      assert(window.location.search.includes("more"));
+      await click(button("내 기록"));
+      const dialog = document.createElement("dialog");
+      dialog.open = true;
+      document.body.appendChild(dialog);
+      await swipeOn(document.querySelector("main"), [280, 200], [100, 200]);
+      assert(window.location.search.includes("records"));
+      dialog.remove();
+    } finally {
+      await ui.cleanup();
+    }
   });
-  try {
-    await settle();
-    await swipeOn(document.querySelector("main"), [280, 200], [100, 200]);
-    assert(window.location.search.includes("records"));
-    const input = document.querySelector('input[type="search"]');
-    assert(input);
-    await swipeOn(input, [280, 200], [100, 200]);
-    assert(window.location.search.includes("records"));
-    await swipeOn(document.querySelector("main"), [280, 200], [100, 450]);
-    assert(window.location.search.includes("records"));
-    await swipeOn(document.querySelector("main"), [280, 200], [100, 200]);
-    assert(window.location.search.includes("more"));
-    await swipeOn(document.querySelector("main"), [100, 200], [280, 200]);
-    assert(window.location.search.includes("records"));
-    const dialog = document.createElement("dialog");
-    dialog.open = true;
-    document.body.appendChild(dialog);
-    await swipeOn(document.querySelector("main"), [280, 200], [100, 200]);
-    assert(window.location.search.includes("records"));
-    dialog.remove();
-  } finally {
-    await ui.cleanup();
-  }
-});
 
 test("swipe cards follow the finger, snap back and navigate only after the exit animation", async () => {
   const Intro = require("../components/LaunchIntro.tsx").default;

@@ -1,6 +1,5 @@
 "use client";
 import CompactField, { fieldExamples } from "./CompactField";
-import useHorizontalSwipe from "./useHorizontalSwipe";
 import { useAIConsent, ConsentSettings } from "./ConsentSession";
 import HomeActions from "./HomeActions";
 import { supportTools, supportLabel } from "@/lib/support-tools";
@@ -719,22 +718,6 @@ export default function ConversationWorkspace() {
       ))}
     </div>
   );
-  const swipeEnabled =
-    !tour && ["home", "records", "more"].includes(view) && !recordId;
-  const pageSwipe = useHorizontalSwipe({
-    enabled: swipeEnabled,
-    pageKey: view,
-    canNext: view !== "more",
-    canPrevious: view !== "home",
-    onNext: () => {
-      if (view === "home") navigate("records");
-      else if (view === "records") navigate("more");
-    },
-    onPrevious: () => {
-      if (view === "more") navigate("records");
-      else if (view === "records") navigate("home");
-    },
-  });
   const choosingFocus = !tour && view === "library" && (!focus || focusEditing);
   const currentCharacter =
     view === "setup"
@@ -799,17 +782,7 @@ export default function ConversationWorkspace() {
             </button>
           </header>
           <ConsentSettings />
-          <main
-            id="main-content"
-            key={view}
-            {...pageSwipe}
-            className={swipeEnabled ? "swipe-page" : undefined}
-          >
-            {swipeEnabled && (
-              <p className="gesture-hint page-gesture-hint">
-                좌우로 밀어 홈 · 내 기록 · 더보기 이동
-              </p>
-            )}
+          <main id="main-content" key={view}>
             {storageError && (
               <p className="dd-error" role="alert">
                 {storageError}
@@ -827,18 +800,21 @@ export default function ConversationWorkspace() {
               onNavigate={navigate}
             />
             {view === "library" && !tour && (
-              <div className="purpose-support" aria-label="대화 연습 도구">
-                <button
-                  className="dd-link"
-                  onClick={() => navigate("recording")}
-                >
-                  <Icon name="mic" size={18} />내 녹음으로 복기
-                </button>
-                <button className="dd-link" onClick={() => navigate("room")}>
-                  <Icon name="chat" size={18} />
-                  연습 상대 선택
-                </button>
-              </div>
+              <details className="purpose-alternatives">
+                <summary>다른 연습 방법</summary>
+                <div className="purpose-support" aria-label="대화 연습 도구">
+                  <button
+                    className="dd-link"
+                    onClick={() => navigate("recording")}
+                  >
+                    <Icon name="mic" size={18} />내 녹음으로 복기
+                  </button>
+                  <button className="dd-link" onClick={() => navigate("room")}>
+                    <Icon name="chat" size={18} />
+                    연습 상대 선택
+                  </button>
+                </div>
+              </details>
             )}
             {view === "library" && !tour && (
               <ConversationFocusPicker
@@ -1068,7 +1044,6 @@ export default function ConversationWorkspace() {
                   config={config}
                   onChooseCard={() => {
                     navigate("library", "practice");
-                    setToast("카드를 고른 뒤 ‘상대와 대화 연습’을 눌러주세요.");
                   }}
                 />
               )}

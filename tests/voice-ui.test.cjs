@@ -63,6 +63,8 @@ player.inspectAudio = async (blob) => ({
 const LiveCoach = require("../components/LiveCoach.tsx").default,
   Composer = require("../components/VoiceComposer.tsx").default;
 const config = { available: true, voiceAvailable: true, sampleOnly: true };
+// Timing is exercised with the real delay in learning-hub's conversation test.
+require("../lib/chat-timing.ts").waitForPartnerBeat = async () => {};
 async function mount(Component, props = {}, setup = () => {}) {
   const browserErrors = [],
     virtualConsole = new VirtualConsole();
@@ -462,7 +464,7 @@ test("one consent covers mounted tools and page changes, revokes everywhere, and
   }
 });
 
-test("reply candidates stay beside editable input without a dialog or automatic send", async () => {
+test("candidate edit remains optional and never sends until the edited draft is submitted", async () => {
   let sent;
   const ui = await mount(Composer, {
     config,
@@ -483,7 +485,7 @@ test("reply candidates stay beside editable input without a dialog or automatic 
   });
   try {
     await click(button("답변 후보 다시 보기"));
-    await click(document.querySelector(".vn-choice-list button"));
+    await click(button("후보 1 고쳐 쓰기"));
     const input = document.querySelector("textarea");
     assert.equal(input.value, "다음 주까지 가능할까요?");
     assert.equal(sent, undefined);
@@ -500,6 +502,52 @@ test("reply candidates stay beside editable input without a dialog or automatic 
     await click(button("내 답변 보내기"));
     assert.equal(sent.text, "자료 확인 후 다음 주까지 가능할까요?");
     assert.equal(input.value, "");
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("candidate tap sends once, keeps a failed draft, and respects unsent-text cancellation", async () => {
+  let calls = 0,
+    rejectSave;
+  const ui = await mount(Composer, {
+    config,
+    consent: true,
+    textFirst: true,
+    candidates: ["일정을 확인해도 될까요?"],
+    onRequestCandidates: async () => {},
+    onUse: () => {
+      calls++;
+      return new Promise((_, reject) => {
+        rejectSave = reject;
+      });
+    },
+    submitLabel: "내 답변 보내기",
+  });
+  try {
+    await click(button("답변 후보 다시 보기"));
+    const send = document.querySelector(".vn-choice-send");
+    await click(send);
+    await click(send);
+    assert.equal(calls, 1);
+    assert(send.disabled);
+    await act(async () => rejectSave(new Error("저장 공간을 확인해 주세요.")));
+    assert.equal(
+      document.querySelector("textarea").value,
+      "일정을 확인해도 될까요?",
+    );
+    assert(document.body.textContent.includes("저장 공간을 확인"));
+    window.confirm = () => false;
+    await click(document.querySelector(".vn-choice-send"));
+    assert.equal(
+      calls,
+      1,
+      "cancelled replacement must not send or discard the draft",
+    );
+    assert.equal(
+      document.querySelector("textarea").value,
+      "일정을 확인해도 될까요?",
+    );
   } finally {
     await ui.cleanup();
   }
@@ -536,10 +584,8 @@ test("quota fallback preserves labels and candidate provenance after continuing 
     assert.equal(saved.turns[0].sample.outage.reason, "daily");
     await click(button("내 목표에 맞는 답변 후보 3개 보기"));
     await settleNotebook();
-    assert.equal(document.querySelectorAll(".vn-choice-list button").length, 3);
+    assert.equal(document.querySelectorAll(".vn-choice-send").length, 3);
     await click(document.querySelector(".vn-choice-list button"));
-    assert(document.querySelector("textarea").value.trim());
-    await click(button("내 답변 보내기"));
     await settleNotebook();
     saved = await store.getSession(savedId);
     assert.equal(saved.turns.length, 3);
@@ -876,10 +922,14 @@ test("recording in sample mode can switch to AI and consent inline without losin
     assert.equal(calls, 0);
     const audio = document.querySelector("audio"),
       source = audio.src;
-    assert.equal(button("문자로 바꾸기").disabled, false);
-    await click(button("문자로 바꾸기"));
+    assert.equal(button("문자로 바꾸기"), undefined);
     assert(document.body.textContent.includes("샘플 모드에서는"));
     await click(button("AI 모드로 전환"));
+    assert.equal(
+      button("문자로 바꾸기"),
+      undefined,
+      "consent instruction replaces an ineffective retry button",
+    );
     assert.equal(document.querySelector("audio").src, source);
     assert.equal(calls, 0);
     await click(

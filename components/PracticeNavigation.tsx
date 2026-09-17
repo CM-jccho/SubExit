@@ -20,7 +20,7 @@ export default function PracticeNavigation({
       aria-label={support ? "현재 도구 위치" : "현재 연습 위치"}
     >
       <button
-        className="dd-link"
+        className="dd-back"
         onClick={() => onNavigate(support ? "more" : "home")}
       >
         <Icon name="back" size={16} />

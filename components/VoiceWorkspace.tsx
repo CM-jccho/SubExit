@@ -1,4 +1,5 @@
 "use client";
+import { waitForPartnerBeat } from "@/lib/chat-timing";
 import { useAIConsent } from "./ConsentSession";
 import { canLeaveWorkspace } from "@/lib/navigation-guard";
 import MessengerPractice from "./MessengerPractice";
@@ -121,6 +122,7 @@ export default function VoiceWorkspace({
     [sampleMode, setSampleMode] = useState(false),
     [reviewOutage, setReviewOutage] = useState<AIOutage | null>(null),
     [busy, setBusy] = useState(false),
+    [responding, setResponding] = useState(false),
     [captureBusy, setCaptureBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
@@ -132,6 +134,21 @@ export default function VoiceWorkspace({
   const abort = useRef<AbortController | null>(null),
     generation = useRef(0),
     mounted = useRef(true);
+  const thread = useRef<HTMLDivElement>(null);
+  const followConversation = useRef(false);
+  const latestTurnId = session?.turns.at(-1)?.id;
+  useEffect(() => {
+    if (!followConversation.current) return;
+    const latest =
+      thread.current?.querySelector<HTMLElement>("[data-latest-turn]");
+    latest?.scrollIntoView({
+      block: "start",
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
+    latest?.focus({ preventScroll: true });
+  }, [latestTurnId]);
   const refresh = () =>
     listSessions()
       .then((r) =>
@@ -230,7 +247,9 @@ export default function VoiceWorkspace({
   function open(s: VoiceSession | null) {
     // Let the parent change the primary destination as well as the content.
     // Its navigation handler owns the unsaved-input guard.
-    if (!s && onRecords) {
+    // Inside records the parent destination is already unchanged. Clear the
+    // selected session locally; navigating to the same view would be a no-op.
+    if (!s && onRecords && mode !== "records") {
       onRecords();
       return;
     }
@@ -239,6 +258,8 @@ export default function VoiceWorkspace({
     abort.current?.abort();
     stopAudio();
     setBusy(false);
+    setResponding(false);
+    followConversation.current = false;
     setSuggestion(undefined);
     setError("");
     setNotice("");
@@ -263,6 +284,8 @@ export default function VoiceWorkspace({
       c = new AbortController();
     abort.current = c;
     setBusy(true);
+    setResponding(true);
+    const startedAt = Date.now();
     setError("");
     setNotice("");
     const timeout = setTimeout(() => c.abort(), 25000);
@@ -300,7 +323,9 @@ export default function VoiceWorkspace({
           }),
         },
       });
-      if (generation.current !== id) return;
+      if (current.turns.at(-1)?.role === "user")
+        await waitForPartnerBeat(startedAt, c.signal);
+      if (generation.current !== id || c.signal.aborted) return;
       const turn: VoiceTurn = {
         id: "turn-" + crypto.randomUUID(),
         role: "assistant",
@@ -327,7 +352,10 @@ export default function VoiceWorkspace({
         );
     } finally {
       clearTimeout(timeout);
-      if (generation.current === id) setBusy(false);
+      if (generation.current === id) {
+        setBusy(false);
+        setResponding(false);
+      }
     }
   }
   async function reviewPractice() {
@@ -415,6 +443,7 @@ export default function VoiceWorkspace({
       updatedAt: new Date().toISOString(),
       turns: [...session.turns, turn],
     };
+    followConversation.current = session.kind !== "recording";
     await persist(next);
     setSuggestion(undefined);
     setNotice(
@@ -1009,271 +1038,310 @@ export default function VoiceWorkspace({
           )}
           <div
             className={
-              "vn-turns " +
-              (session.kind !== "recording" ? "vn-chat-thread" : "")
-            }
-            aria-label={
-              session.kind !== "recording" ? "AI와 주고받는 대화" : "녹음 기록"
+              session.kind !== "recording" ? "vn-conversation" : undefined
             }
           >
-            {session.turns.map((t, i) => (
-              <article key={t.id} className={"vn-turn " + t.role}>
-                <div className="vn-turn-meta">
-                  <span>
-                    {t.role === "assistant"
-                      ? session.kind === "chat"
-                        ? sessionCharacter.name
-                        : "연습 상대"
-                      : t.role === "user"
-                        ? "나"
-                        : (t.clip ? "녹음 " : "문자 기록 ") + (i + 1)}
-                    {t.role === "assistant" && !t.sample && (
-                      <small>
-                        {t.origin === "recording"
-                          ? "녹음에서 가져온 말"
-                          : t.sample || session.isSample
-                            ? "예시"
-                            : "AI"}
-                      </small>
-                    )}
-                  </span>
-                  <time>
-                    {new Date(t.createdAt).toLocaleTimeString("ko-KR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </time>
-                </div>
-                {t.sample && (
-                  <SampleNotice
-                    sample={t.sample}
-                    compact
-                    badge={session.kind !== "recording"}
-                  />
-                )}
-                {t.clip && <AudioPlayer clip={t.clip} />}
-                {t.text ? (
-                  <TermText
-                    text={t.text}
-                    candidates={t.terms}
-                    onTerm={(w) => void term(w, t.text)}
-                  />
-                ) : (
-                  <p className="vn-caption">
-                    음성 원본을 저장했어요. 문자 변환을 하지 않은 기록이에요.
-                  </p>
-                )}
-                <div className="vn-turn-actions">
-                  {t.clip &&
-                    session.kind === "recording" &&
-                    (!t.text ||
-                      (t.clip.transcription &&
-                        !t.clip.transcription.complete)) && (
-                      <button
-                        className="dd-link"
-                        disabled={
-                          busy ||
-                          captureBusy ||
-                          !consent ||
-                          !config.voiceAvailable
-                        }
-                        onClick={() => void transcribeSaved(t)}
-                      >
-                        {t.clip.transcription && !t.clip.transcription.complete
-                          ? "문자 변환 이어서"
-                          : "저장한 음성 문자로 바꾸기"}
-                      </button>
-                    )}
-                  {t.role === "assistant" && (
-                    <button
-                      className="dd-link"
-                      aria-label={
-                        speaking === t.id ? "읽기 멈추기" : "읽어주기"
-                      }
-                      onClick={() => speak(t)}
-                    >
-                      <Icon
-                        name={speaking === t.id ? "pause" : "volume"}
-                        size={16}
-                      />
-                      {speaking === t.id ? "멈춤" : "듣기"}
-                    </button>
-                  )}
-                  {t.text && (
-                    <>
-                      {!session.isSample && (
-                        <>
-                          <button
-                            className="dd-link"
-                            aria-label="중요 용어 찾기"
-                            disabled={busy || captureBusy}
-                            onClick={() => {
-                              if (!consent || !config.available || sampleMode) {
-                                setError(
-                                  !consent
-                                    ? "중요 용어 찾기는 AI 전송 동의가 필요해요. 위의 전송 안내에서 동의해 주세요. 표현 직접 스크랩은 동의 없이 저장할 수 있어요."
-                                    : sampleMode
-                                      ? "샘플 모드에서는 AI 용어 추출을 사용하지 않아요. 표현 직접 스크랩을 이용해 주세요."
-                                      : "AI 연결을 확인해 주세요. 표현 직접 스크랩은 바로 사용할 수 있어요.",
-                                );
-                                return;
-                              }
-                              void extract(t);
-                            }}
-                          >
-                            용어 찾기
-                          </button>
-                          {!consent && !sampleMode && (
-                            <span className="vn-action-hint">AI 동의 필요</span>
-                          )}
-                        </>
-                      )}
-                      <button
-                        className="dd-link"
-                        aria-label="표현 직접 스크랩"
-                        onClick={() => {
-                          const selected =
-                            window.getSelection()?.toString().trim() || "";
-                          void term(
-                            selected && t.text.includes(selected)
-                              ? selected
-                              : "",
-                            t.text,
-                          );
-                        }}
-                      >
-                        스크랩
-                      </button>
-                    </>
-                  )}
-                </div>
-                {termStatus?.id === t.id && (
-                  <p className="vn-caption" role="status">
-                    {termStatus.text}
-                  </p>
-                )}
-                {!!t.terms.length && (
-                  <div
-                    className="vn-term-results"
-                    role="group"
-                    aria-label="추출한 중요 용어"
-                  >
-                    <span>찾은 용어 {t.terms.length}개 · 눌러서 저장</span>
-                    {t.terms.map((word) => (
-                      <button
-                        className="dd-secondary"
-                        key={word}
-                        onClick={() => void term(word, t.text)}
-                      >
-                        {word}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-          {!session.isSample &&
-            session.kind === "recording" &&
-            session.turns.length > 0 && (
-              <>
-                <RecordingAnalysis
-                  key={session.id}
-                  session={session}
-                  config={config}
-                  disabled={captureBusy || busy}
-                  onBusy={setBusy}
-                  onSave={async (draft) => {
-                    await persist({
-                      ...session,
-                      recordingAnalysis: draft,
-                      updatedAt: new Date().toISOString(),
-                    });
-                  }}
-                  onPractice={async (next) => {
-                    await putSession(next);
-                    open(next);
-                    await refresh();
-                  }}
-                />
-              </>
-            )}
-          {speaking && (
-            <CompanionNudge
-              mood="speak"
-              text="상대의 말을 읽고 있어요. 다 듣고 나서 편하게 답해보세요."
-            />
-          )}
-          {busy && (
-            <CompanionNudge
-              mood="think"
-              text="대화의 맥락을 살펴보고 있어요. 잠시 기다려 주세요."
-            />
-          )}
-          {!session.isSample && pending && !busy && !complete && (
-            <button
-              className="dd-secondary dd-full"
-              disabled={!canTalk}
-              onClick={() => void respond(session)}
+            <div
+              ref={thread}
+              className={
+                "vn-turns " +
+                (session.kind !== "recording" ? "vn-chat-thread" : "")
+              }
+              aria-label={
+                session.kind !== "recording"
+                  ? "AI와 주고받는 대화"
+                  : "녹음 기록"
+              }
             >
-              상대 답변 다시 받기
-            </button>
-          )}
-          {complete && (
-            <CompanionNudge
-              mood="done"
-              text="이번 연습을 마쳤어요. 남겨둔 말을 읽어보고 필요한 표현을 모아보세요."
-            />
-          )}
-          {!session.isSample &&
-            (session.kind === "recording" || session.turns.length > 0) && (
-              <div hidden={!!complete}>
-                <VoiceComposer
-                  inDialog={session.kind === "recording"}
-                  replyTo={
-                    session.kind !== "recording" && !pending
-                      ? session.turns.at(-1)
-                      : undefined
+              {session.turns.map((t, i) => (
+                <article
+                  key={t.id}
+                  className={"vn-turn " + t.role}
+                  tabIndex={-1}
+                  data-latest-turn={
+                    i === session.turns.length - 1 ? "" : undefined
                   }
-                  goal={session.context?.goal}
-                  candidates={
-                    !pending ? session.turns.at(-1)?.suggestions : undefined
+                  aria-label={
+                    t.role === "user"
+                      ? "내가 보낸 답변"
+                      : t.role === "assistant"
+                        ? "상대의 답변"
+                        : "내 기록"
                   }
-                  candidatesSample={
-                    !pending
-                      ? session.turns.at(-1)?.suggestionsSample
-                      : undefined
-                  }
-                  onRequestCandidates={
-                    session.kind === "practice" && !pending && !complete
-                      ? suggestReplies
-                      : undefined
-                  }
-                  longRecording={session.kind === "recording"}
-                  key={session.id}
-                  config={config}
-                  consent={consent}
-                  sampleMode={sampleMode && session.kind !== "recording"}
-                  onEnableAI={() => setSampleMode(false)}
-                  onConsentChange={setConsent}
-                  submitDisabled={session.kind !== "recording" && !canTalk}
-                  disabled={
-                    busy ||
-                    (session.kind !== "recording" && (!!pending || !!complete))
-                  }
-                  requireText={session.kind !== "recording"}
-                  textFirst={session.kind !== "recording"}
-                  submitLabel={
-                    session.kind !== "recording"
-                      ? "내 답변 보내기"
-                      : "음성과 문자 기록 저장"
-                  }
-                  onUse={saveDraft}
-                  onActivity={setCaptureBusy}
-                  suggestion={suggestion}
-                />
-              </div>
+                >
+                  <div className="vn-turn-meta">
+                    <span>
+                      {t.role === "assistant"
+                        ? session.kind === "chat"
+                          ? sessionCharacter.name
+                          : "연습 상대"
+                        : t.role === "user"
+                          ? "나"
+                          : (t.clip ? "녹음 " : "문자 기록 ") + (i + 1)}
+                      {t.role === "assistant" && !t.sample && (
+                        <small>
+                          {t.origin === "recording"
+                            ? "녹음에서 가져온 말"
+                            : t.sample || session.isSample
+                              ? "예시"
+                              : "AI"}
+                        </small>
+                      )}
+                    </span>
+                    <time>
+                      {new Date(t.createdAt).toLocaleTimeString("ko-KR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </time>
+                  </div>
+                  {t.sample && (
+                    <SampleNotice
+                      sample={t.sample}
+                      compact
+                      badge={session.kind !== "recording"}
+                    />
+                  )}
+                  {t.clip && <AudioPlayer clip={t.clip} />}
+                  {t.text ? (
+                    <TermText
+                      text={t.text}
+                      candidates={t.terms}
+                      onTerm={(w) => void term(w, t.text)}
+                    />
+                  ) : (
+                    <p className="vn-caption">
+                      음성 원본을 저장했어요. 문자 변환을 하지 않은 기록이에요.
+                    </p>
+                  )}
+                  <div className="vn-turn-actions">
+                    {t.clip &&
+                      session.kind === "recording" &&
+                      (!t.text ||
+                        (t.clip.transcription &&
+                          !t.clip.transcription.complete)) && (
+                        <button
+                          className="dd-link"
+                          disabled={
+                            busy ||
+                            captureBusy ||
+                            !consent ||
+                            !config.voiceAvailable
+                          }
+                          onClick={() => void transcribeSaved(t)}
+                        >
+                          {t.clip.transcription &&
+                          !t.clip.transcription.complete
+                            ? "문자 변환 이어서"
+                            : "저장한 음성 문자로 바꾸기"}
+                        </button>
+                      )}
+                    {t.role === "assistant" && (
+                      <button
+                        className="dd-link"
+                        aria-label={
+                          speaking === t.id ? "읽기 멈추기" : "읽어주기"
+                        }
+                        onClick={() => speak(t)}
+                      >
+                        <Icon
+                          name={speaking === t.id ? "pause" : "volume"}
+                          size={16}
+                        />
+                        {speaking === t.id ? "멈춤" : "듣기"}
+                      </button>
+                    )}
+                    {t.text && (
+                      <>
+                        {!session.isSample && (
+                          <>
+                            <button
+                              className="dd-link"
+                              aria-label="중요 용어 찾기"
+                              disabled={busy || captureBusy}
+                              onClick={() => {
+                                if (
+                                  !consent ||
+                                  !config.available ||
+                                  sampleMode
+                                ) {
+                                  setError(
+                                    !consent
+                                      ? "중요 용어 찾기는 AI 전송 동의가 필요해요. 위의 전송 안내에서 동의해 주세요. 표현 직접 스크랩은 동의 없이 저장할 수 있어요."
+                                      : sampleMode
+                                        ? "샘플 모드에서는 AI 용어 추출을 사용하지 않아요. 표현 직접 스크랩을 이용해 주세요."
+                                        : "AI 연결을 확인해 주세요. 표현 직접 스크랩은 바로 사용할 수 있어요.",
+                                  );
+                                  return;
+                                }
+                                void extract(t);
+                              }}
+                            >
+                              용어 찾기
+                            </button>
+                            {!consent && !sampleMode && (
+                              <span className="vn-action-hint">
+                                AI 동의 필요
+                              </span>
+                            )}
+                          </>
+                        )}
+                        <button
+                          className="dd-link"
+                          aria-label="표현 직접 스크랩"
+                          onClick={() => {
+                            const selected =
+                              window.getSelection()?.toString().trim() || "";
+                            void term(
+                              selected && t.text.includes(selected)
+                                ? selected
+                                : "",
+                              t.text,
+                            );
+                          }}
+                        >
+                          스크랩
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {termStatus?.id === t.id && (
+                    <p className="vn-caption" role="status">
+                      {termStatus.text}
+                    </p>
+                  )}
+                  {!!t.terms.length && (
+                    <div
+                      className="vn-term-results"
+                      role="group"
+                      aria-label="추출한 중요 용어"
+                    >
+                      <span>찾은 용어 {t.terms.length}개 · 눌러서 저장</span>
+                      {t.terms.map((word) => (
+                        <button
+                          className="dd-secondary"
+                          key={word}
+                          onClick={() => void term(word, t.text)}
+                        >
+                          {word}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </article>
+              ))}
+              {responding && (
+                <p className="vn-partner-typing" role="status">
+                  <span aria-hidden="true">•••</span>{" "}
+                  {sampleMode
+                    ? "연습 상대의 다음 말을 준비하고 있어요"
+                    : "상대가 답변을 준비하고 있어요"}
+                </p>
+              )}
+            </div>
+            {!session.isSample &&
+              session.kind === "recording" &&
+              session.turns.length > 0 && (
+                <>
+                  <RecordingAnalysis
+                    key={session.id}
+                    session={session}
+                    config={config}
+                    disabled={captureBusy || busy}
+                    onBusy={setBusy}
+                    onSave={async (draft) => {
+                      await persist({
+                        ...session,
+                        recordingAnalysis: draft,
+                        updatedAt: new Date().toISOString(),
+                      });
+                    }}
+                    onPractice={async (next) => {
+                      await putSession(next);
+                      open(next);
+                      await refresh();
+                    }}
+                  />
+                </>
+              )}
+            {speaking && (
+              <CompanionNudge
+                mood="speak"
+                text="상대의 말을 읽고 있어요. 다 듣고 나서 편하게 답해보세요."
+              />
             )}
+            {busy && !responding && (
+              <CompanionNudge
+                mood="think"
+                text="대화의 맥락을 살펴보고 있어요. 잠시 기다려 주세요."
+              />
+            )}
+            {!session.isSample && pending && !busy && !complete && (
+              <button
+                className="dd-secondary dd-full"
+                disabled={!canTalk}
+                onClick={() => void respond(session)}
+              >
+                상대 답변 다시 받기
+              </button>
+            )}
+            {complete && (
+              <CompanionNudge
+                mood="done"
+                text="이번 연습을 마쳤어요. 남겨둔 말을 읽어보고 필요한 표현을 모아보세요."
+              />
+            )}
+            {!session.isSample &&
+              (session.kind === "recording" || session.turns.length > 0) && (
+                <div hidden={!!complete}>
+                  <VoiceComposer
+                    inDialog={session.kind === "recording"}
+                    replyTo={
+                      session.kind !== "recording" && !pending
+                        ? session.turns.at(-1)
+                        : undefined
+                    }
+                    goal={session.context?.goal}
+                    candidates={
+                      !pending ? session.turns.at(-1)?.suggestions : undefined
+                    }
+                    candidatesSample={
+                      !pending
+                        ? session.turns.at(-1)?.suggestionsSample
+                        : undefined
+                    }
+                    onRequestCandidates={
+                      session.kind === "practice" && !pending && !complete
+                        ? suggestReplies
+                        : undefined
+                    }
+                    longRecording={session.kind === "recording"}
+                    key={session.id}
+                    config={config}
+                    consent={consent}
+                    sampleMode={sampleMode && session.kind !== "recording"}
+                    onEnableAI={() => setSampleMode(false)}
+                    onConsentChange={setConsent}
+                    submitDisabled={session.kind !== "recording" && !canTalk}
+                    disabled={
+                      busy ||
+                      (session.kind !== "recording" &&
+                        (!!pending || !!complete))
+                    }
+                    requireText={session.kind !== "recording"}
+                    textFirst={session.kind !== "recording"}
+                    submitLabel={
+                      session.kind !== "recording"
+                        ? "내 답변 보내기"
+                        : "음성과 문자 기록 저장"
+                    }
+                    onUse={saveDraft}
+                    onActivity={setCaptureBusy}
+                    suggestion={suggestion}
+                  />
+                </div>
+              )}
+          </div>
           {!session.isSample && session.kind === "practice" && (
             <GardenPractice
               key={"garden-" + session.id}
