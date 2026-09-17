@@ -107,3 +107,12 @@ html {
     border-radius: 16px;
   }
 }
+
+/* Keep a visible focus cue inside the field, clear of its label and scroll edge. */
+:root body :is(input, textarea, select):focus-visible {
+  outline: 2px solid #557b59;
+  outline-offset: -2px;
+}
+.input-dialog .vn-label {
+  gap: 10px;
+}

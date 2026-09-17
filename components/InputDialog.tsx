@@ -52,8 +52,10 @@ export default function InputDialog({
       ) {
         const bounds = pane.getBoundingClientRect();
         const field = active.getBoundingClientRect();
-        if (field.top < bounds.top || field.bottom > bounds.bottom) {
-          pane.scrollTop += field.top - bounds.top - 8;
+        const label = active.closest("label")?.getBoundingClientRect();
+        const top = Math.min(field.top, label?.top ?? field.top);
+        if (top < bounds.top + 8 || field.bottom > bounds.bottom - 8) {
+          pane.scrollTop += top - bounds.top - 8;
         }
       }
     };

@@ -2805,11 +2805,16 @@ test("input dialog keeps the same focused input across typing and viewport chang
           onClose: () => setOpen(false),
           focusTarget: field,
         },
-        React.createElement("textarea", {
-          ref: field,
-          value: text,
-          onChange: (e) => setText(e.target.value),
-        }),
+        React.createElement(
+          "label",
+          null,
+          "입력 라벨",
+          React.createElement("textarea", {
+            ref: field,
+            value: text,
+            onChange: (e) => setText(e.target.value),
+          }),
+        ),
       ),
     );
   }
@@ -2849,12 +2854,20 @@ test("input dialog keeps the same focused input across typing and viewport chang
     assert(!pane.contains(dialog.querySelector(".input-dialog-head")));
     pane.getBoundingClientRect = () => ({ top: 100, bottom: 320 });
     input.getBoundingClientRect = () => ({ top: 420, bottom: 600 });
+    input.closest("label").getBoundingClientRect = () => ({
+      top: 388,
+      bottom: 600,
+    });
     viewport.height = 360;
     viewport.offsetTop = 40;
     viewport.dispatchEvent(new window.Event("resize"));
     assert.equal(dialog.style.getPropertyValue("--input-height"), "360px");
     assert.equal(dialog.style.getPropertyValue("--input-top"), "40px");
-    assert.equal(pane.scrollTop, 312);
+    assert.equal(
+      pane.scrollTop,
+      280,
+      "the label stays above the focused field",
+    );
     assert.equal(document.activeElement, input);
     assert.equal(opens, 1);
     assert.equal(closes, 0);

@@ -35,10 +35,12 @@ export default function MobileKeyboardViewport() {
       // InputDialog owns its scroll pane. Page forms use the document scroll.
       if (open && editing && !active.closest("dialog")) {
         const bounds = active.getBoundingClientRect();
+        const label = active.closest("label")?.getBoundingClientRect();
+        const fieldTop = Math.min(bounds.top, label?.top ?? bounds.top);
         const available = height - 24;
         const delta =
-          bounds.height > available || bounds.top < top + 12
-            ? bounds.top - top - 12
+          bounds.bottom - fieldTop > available || fieldTop < top + 12
+            ? fieldTop - top - 12
             : bounds.bottom > top + height - 12
               ? bounds.bottom - top - height + 12
               : 0;
