@@ -253,6 +253,14 @@ export default function RoomEnvironment({ children }: { children: ReactNode }) {
         <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
           날씨 · Open-Meteo
         </a>
+        {" · "}
+        <a
+          href="https://creativecommons.org/licenses/by/4.0/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          CC BY 4.0
+        </a>
         {current
           ? ` · ${roomClock(new Date(current.time)).text} 기준 모델 날씨`
           : " · 날씨가 없을 때는 시간만 반영해요"}

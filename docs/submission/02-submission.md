@@ -1,3 +1,5 @@
+> 이전 버전 기록입니다. 현재 제출 문안과 상태는 [08-final-submission.md](08-final-submission.md)를 우선 확인하세요.
+
 # 제출 문안 · v0.3
 
 ## 프로젝트명과 한 줄 소개

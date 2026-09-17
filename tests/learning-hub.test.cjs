@@ -470,7 +470,7 @@ test("glossary catalogue filters by school and teen context and opens an explici
   try {
     await change(document.querySelector("select"), "teen");
     assert.equal(document.querySelectorAll(".learn-term").length, 4);
-    await click(button("중학생 AI 역할에게 물어보기"));
+    await click(button("세대 표현을 AI 역할에게 물어보기"));
     assert.equal(asked.id, schoolCompanion.id);
     await click(document.querySelector(".learn-term"));
     assert.equal(selected.term, "ㅇㅈ");

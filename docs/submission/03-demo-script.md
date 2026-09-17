@@ -1,3 +1,5 @@
+> 이전 버전 기록입니다. 현재 제출 문안과 상태는 [08-final-submission.md](08-final-submission.md)를 우선 확인하세요.
+
 # 60초 시연 대본 · v0.3
 
 ## 핵심

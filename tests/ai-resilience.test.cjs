@@ -122,3 +122,16 @@ test("daily cooldown blocks duplicate calls, survives reload storage, expires an
     dom.window.close();
   }
 });
+
+test("request practice fallbacks use the saved goal instead of treating a review request as feedback", () => {
+  const { requestCards } = require("../lib/starter-data.ts");
+  assert.equal(
+    bank.chooseDemoCase(bank.practiceSampleContext(requestCards[0])).id,
+    "request",
+  );
+  assert.equal(bank.practiceSampleContext(undefined), "");
+  assert.equal(
+    bank.chooseDemoCase("환불을 부탁하는 고객의 추가 보상 요구").id,
+    "refund-pressure",
+  );
+});
