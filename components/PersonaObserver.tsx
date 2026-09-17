@@ -1,4 +1,5 @@
 "use client";
+import InputDialog from "./InputDialog";
 import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
 import { aiFetch } from "@/lib/ai-client";
@@ -36,8 +37,7 @@ function ObserverDialog({
     [consent, setConsent] = useAIConsent(),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const dialog = useRef<HTMLDialogElement>(null),
-    abort = useRef<AbortController | null>(null),
+  const abort = useRef<AbortController | null>(null),
     last = useRef<HTMLLIElement>(null);
   const scene = practicalScenes.find((s) => s.id === sceneId)!;
   const selected = pair.map((id) => options.find((c) => c.id === id)!) as [
@@ -45,11 +45,8 @@ function ObserverDialog({
     CompanionCharacter,
   ];
   useEffect(() => {
-    const d = dialog.current;
-    d?.showModal();
     return () => {
       abort.current?.abort();
-      if (d?.open) d.close();
     };
   }, []);
   useEffect(() => {
@@ -125,28 +122,13 @@ function ObserverDialog({
     }
   }
   return (
-    <dialog
-      ref={dialog}
+    <InputDialog
+      open
+      title={"두 친구의 대화 지켜보기"}
       className="vn-dialog dc-observer-dialog"
-      aria-labelledby="observer-title"
-      onCancel={(e) => {
-        e.preventDefault();
-        onClose();
-      }}
+      closeLabel="대화 관찰 닫기"
+      onClose={onClose}
     >
-      <div className="vn-dialog-head">
-        <div>
-          <p className="dc-overline">친구들의 작은 대화극장 · 베타</p>
-          <h2 id="observer-title">두 친구의 대화 지켜보기</h2>
-        </div>
-        <button
-          className="vn-icon"
-          aria-label="대화 관찰 닫기"
-          onClick={onClose}
-        >
-          <Icon name="close" />
-        </button>
-      </div>
       <p>
         역할과 주제를 고르면 여섯 차례의 대화를 보여드려요. AI는 한 번에 대본을
         만들고, 화면에서 한 차례씩 재생해요.
@@ -318,7 +300,7 @@ function ObserverDialog({
           {source === "sample" && <p className="learn-callout">{scene.tip}</p>}
         </section>
       )}
-    </dialog>
+    </InputDialog>
   );
 }
 export default function PersonaObserver(props: {

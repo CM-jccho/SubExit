@@ -3422,3 +3422,75 @@ test("term extraction includes the end of long transcripts and renders selectabl
       await ui.cleanup();
     }
   }));
+
+test("mobile keyboard guard reveals page editors, restores navigation on close and ignores hardware keyboards and pinch zoom", async () => {
+  const Guard = require("../components/MobileKeyboardViewport.tsx").default;
+  let viewport,
+    pending,
+    scrolls = [];
+  function Harness() {
+    return React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(Guard),
+      React.createElement("textarea", { "aria-label": "페이지 입력" }),
+      React.createElement("button", null, "완료"),
+    );
+  }
+  const ui = await mount(Harness, {}, () => {
+    window.matchMedia = () => ({ matches: true });
+    window.innerHeight = 800;
+    window.requestAnimationFrame = (fn) => {
+      pending = fn;
+      return 1;
+    };
+    window.cancelAnimationFrame = () => {};
+    window.scrollBy = (options) => scrolls.push(options.top);
+    viewport = new window.EventTarget();
+    Object.assign(viewport, { height: 800, offsetTop: 0, scale: 1 });
+    Object.defineProperty(window, "visualViewport", { value: viewport });
+  });
+  try {
+    const root = document.documentElement,
+      input = document.querySelector("textarea");
+    input.getBoundingClientRect = () => ({ top: 600, bottom: 680, height: 80 });
+    input.focus();
+    pending();
+    assert(
+      !root.hasAttribute("data-keyboard-open"),
+      "hardware focus keeps navigation",
+    );
+    viewport.height = 350;
+    viewport.dispatchEvent(new window.Event("resize"));
+    pending();
+    assert(root.hasAttribute("data-keyboard-open"));
+    assert.equal(scrolls.pop(), 342);
+    assert.equal(root.style.getPropertyValue("--visible-height"), "350px");
+    input.value = "작성 내용은 유지";
+    document.querySelector("button").focus();
+    pending();
+    assert(
+      root.hasAttribute("data-keyboard-open"),
+      "wait for keyboard closing animation",
+    );
+    viewport.height = 800;
+    viewport.dispatchEvent(new window.Event("resize"));
+    pending();
+    assert(!root.hasAttribute("data-keyboard-open"));
+    assert.equal(input.value, "작성 내용은 유지");
+    input.focus();
+    viewport.height = 350;
+    viewport.scale = 2;
+    viewport.dispatchEvent(new window.Event("resize"));
+    pending();
+    assert(
+      !root.hasAttribute("data-keyboard-open"),
+      "pinch zoom is not a keyboard",
+    );
+    await act(async () => ui.root.render(null));
+    assert.equal(root.style.getPropertyValue("--visible-height"), "");
+    assert(!root.hasAttribute("data-keyboard-open"));
+  } finally {
+    await ui.cleanup();
+  }
+});

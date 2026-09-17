@@ -1,4 +1,5 @@
 "use client";
+import InputDialog from "./InputDialog";
 import { useAIConsent } from "./ConsentSession";
 import type { ConversationFocus } from "@/lib/conversation-focus";
 import CommunicationTips from "./CommunicationTips";
@@ -94,8 +95,7 @@ export function TermEditor({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null),
-    abort = useRef<AbortController | null>(null);
+  const abort = useRef<AbortController | null>(null);
   const [note, setNote] = useState<TermNote>(
     () =>
       seed.note || {
@@ -120,11 +120,8 @@ export function TermEditor({
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   useEffect(() => {
-    const d = dialog.current;
-    d?.showModal();
     return () => {
       abort.current?.abort();
-      d?.close();
     };
   }, []);
   async function explain() {
@@ -196,32 +193,16 @@ export function TermEditor({
   const edit = (field: keyof TermNote, value: string) =>
     setNote((n) => ({ ...n, [field]: value, reviewed: false }));
   return (
-    <dialog
-      ref={dialog}
+    <InputDialog
+      open
+      title={"용어 메모"}
       className="vn-dialog"
-      aria-labelledby="term-title"
-      onCancel={(e) => {
-        e.preventDefault();
-        onClose();
-      }}
+      closeLabel="용어 메모 닫기"
+      onClose={onClose}
     >
-      <div className="vn-dialog-head">
-        <div>
-          <p className="dc-overline">내가 만난 말</p>
-          <h2 id="term-title">용어 메모</h2>
-        </div>
-        <button
-          className="vn-icon"
-          onClick={onClose}
-          aria-label="용어 메모 닫기"
-        >
-          <Icon name="close" />
-        </button>
-      </div>
       <label className="vn-label">
         용어·표현
         <input
-          autoFocus
           value={note.term}
           disabled={busy}
           maxLength={80}
@@ -361,7 +342,7 @@ export function TermEditor({
         용어 노트에 저장
         <Icon name="check" size={18} />
       </button>
-    </dialog>
+    </InputDialog>
   );
 }
 export default function TermNotebook({

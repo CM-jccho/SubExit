@@ -1,4 +1,5 @@
 "use client";
+import InputDialog from "./InputDialog";
 import StickyPageTop from "./StickyPageTop";
 import { DailyInvite } from "./DailyTalk";
 import PracticeGarden from "./PracticeGarden";
@@ -7,7 +8,13 @@ import { responseFriends } from "@/lib/practical-scenes";
 import type { ConversationCard } from "@/lib/conversation-cards";
 import type { AIConfig } from "./VoiceComposer";
 import { focusInfo, type ConversationFocus } from "@/lib/conversation-focus";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import RoomEnvironment from "./RoomEnvironment";
 import { Companion, Icon } from "./CompanionUI";
 import {
@@ -28,36 +35,16 @@ function CharacterEditor({
   onClose: () => void;
   onSaved: (rows: CompanionCharacter[], id: CompanionCharacter["id"]) => void;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null),
-    [draft, setDraft] = useState(initial),
+  const [draft, setDraft] = useState(initial),
     [error, setError] = useState("");
-  useEffect(() => {
-    const el = dialog.current;
-    el?.showModal();
-    return () => el?.close();
-  }, []);
   return (
-    <dialog
-      ref={dialog}
+    <InputDialog
+      open
+      title={initial.name ? "친구 모습과 역할 바꾸기" : "내 친구 만들기"}
       className="vn-term-dialog dc-character-editor"
-      aria-labelledby="character-editor-title"
-      onCancel={(e) => {
-        e.preventDefault();
-        onClose();
-      }}
+      closeLabel="캐릭터 설정 닫기"
+      onClose={onClose}
     >
-      <div className="vn-dialog-top">
-        <h2 id="character-editor-title">
-          {initial.name ? "친구 모습과 역할 바꾸기" : "내 친구 만들기"}
-        </h2>
-        <button
-          className="vn-icon"
-          onClick={onClose}
-          aria-label="캐릭터 설정 닫기"
-        >
-          <Icon name="close" />
-        </button>
-      </div>
       <div className="dc-character-preview">
         <Companion character={draft} />
         <strong>{draft.name || "어떤 이름으로 부를까요?"}</strong>
@@ -160,7 +147,7 @@ function CharacterEditor({
       >
         AI 대화 상대에 저장 <Icon name="check" size={18} />
       </button>
-    </dialog>
+    </InputDialog>
   );
 }
 function CompanionCard({
@@ -193,7 +180,7 @@ function CompanionCard({
     heading = useRef<HTMLHeadingElement>(null);
   const restoreFocus = useRef(onReturnFocus);
   restoreFocus.current = onReturnFocus;
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = dialog.current;
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";

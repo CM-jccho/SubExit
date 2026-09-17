@@ -13,6 +13,8 @@ export default function InputDialog({
   busy = false,
   onClose,
   focusTarget,
+  className = "",
+  closeLabel,
   children,
 }: {
   open: boolean;
@@ -20,6 +22,8 @@ export default function InputDialog({
   busy?: boolean;
   onClose: () => void;
   focusTarget?: RefObject<HTMLElement>;
+  className?: string;
+  closeLabel?: string;
   children: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null),
@@ -41,7 +45,11 @@ export default function InputDialog({
       // Scroll only the content pane; never pan the page or hide the header.
       const pane = body.current;
       const active = document.activeElement;
-      if (pane && active instanceof window.HTMLElement && pane.contains(active)) {
+      if (
+        pane &&
+        active instanceof window.HTMLElement &&
+        pane.contains(active)
+      ) {
         const bounds = pane.getBoundingClientRect();
         const field = active.getBoundingClientRect();
         if (field.top < bounds.top || field.bottom > bounds.bottom) {
@@ -54,9 +62,9 @@ export default function InputDialog({
     element.showModal();
     // Opening a mobile dialog should not summon the keyboard before the user
     // chooses typing, recording, or a file. Desktop keeps its typing shortcut.
-    const mobile = window.matchMedia(
+    const mobile = window.matchMedia?.(
       "(max-width: 600px), (pointer: coarse)",
-    ).matches;
+    )?.matches;
     (mobile ? heading.current : focusTarget?.current || heading.current)?.focus(
       {
         preventScroll: true,
@@ -79,7 +87,7 @@ export default function InputDialog({
   return (
     <dialog
       ref={dialog}
-      className="input-dialog"
+      className={`input-dialog ${className}`}
       aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault();
@@ -97,7 +105,7 @@ export default function InputDialog({
               className="dd-link"
               disabled={busy}
               onClick={onClose}
-              aria-label={`${title} 닫기`}
+              aria-label={closeLabel || `${title} 닫기`}
             >
               닫기
             </button>

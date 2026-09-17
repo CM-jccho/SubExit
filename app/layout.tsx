@@ -1,3 +1,4 @@
+import MobileKeyboardViewport from "@/components/MobileKeyboardViewport";
 import { ConsentSessionProvider } from "@/components/ConsentSession";
 import "./globals.css";
 import "./coach.css";
@@ -20,6 +21,7 @@ import "./input-dialog.css";
 import "./purpose-home.css";
 import "./live-speech.css";
 import "./chat-flow.css";
+import "./mobile-keyboard.css";
 export const metadata = {
   title: "스픽코칭 · 대화 중 다음 한마디",
   description:
@@ -38,6 +40,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
+        <MobileKeyboardViewport />
         <ConsentSessionProvider>{children}</ConsentSessionProvider>
       </body>
     </html>
