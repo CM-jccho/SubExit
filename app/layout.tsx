@@ -18,7 +18,7 @@ import "./focus-visuals.css";
 import "./input-dialog.css";
 import "./purpose-home.css";
 export const metadata = {
-  title: "든든콜 · 대화 중 다음 한마디",
+  title: "스픽코칭 · 대화 중 다음 한마디",
   description:
     "대화 중에는 내 상황과 목표에 맞는 다음 한마디를, 평소에는 AI 상대와 같은 상황의 대화 연습을 제공합니다.",
 };

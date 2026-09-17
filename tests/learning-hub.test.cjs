@@ -606,7 +606,7 @@ test("workspace navigation preserves section across remount and browser back, an
   try {
     await settle();
     assert.equal(document.querySelector("h1").textContent, "내 기록");
-    await click(button("든든콜 홈"));
+    await click(button("스픽코칭 홈"));
     assert.equal(window.location.search, "");
     assert(scrolls > 0);
     await act(async () => ui.root.render(null));

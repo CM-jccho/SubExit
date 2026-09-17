@@ -750,11 +750,11 @@ export default function ConversationWorkspace() {
       <div className="dd-root dc-root">
         <div className="dc-shell">
           <header className="dc-header">
-            <button className="dc-brand" onClick={home} aria-label="든든콜 홈">
+            <button className="dc-brand" onClick={home} aria-label="스픽코칭 홈">
               <span className="dc-brand-mark">
                 <Icon name="chat" size={22} />
               </span>
-              든든콜<span className="dc-beta">BETA</span>
+              스픽코칭<span className="dc-beta">BETA</span>
             </button>
             <nav className="dc-nav" aria-label="주 메뉴">
               {(
@@ -1868,7 +1868,7 @@ export default function ConversationWorkspace() {
             </div>
           </main>
           <footer className="dc-footer">
-            <span>대화 연습과 복기, 든든콜</span>
+            <span>대화 중 다음 한마디, 스픽코칭</span>
             <a href="/evidence">서비스·데이터 안내</a>
           </footer>
         </div>
