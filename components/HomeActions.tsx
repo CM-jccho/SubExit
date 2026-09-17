@@ -78,17 +78,32 @@ export default function HomeActions({
       <p className="purpose-limit">
         음성은 최대 8초씩 입력해요. 처리하는 동안에는 듣지 않아요.
       </p>
-      <button
-        className="dd-secondary purpose-start"
-        data-purpose="library"
-        aria-label="미리 연습하기"
-        onClick={() => onNavigate("library")}
+      <div
+        className="home-core-options"
+        role="group"
+        aria-label="대화 전후의 핵심 기능"
       >
-        미리 연습하기 <Icon name="chat" size={18} />
-      </button>
-      <p className="purpose-limit">
-        AI 상대와 연습 · 내 말로 복기 · 다시 말하기
-      </p>
+        <button
+          className="dd-secondary"
+          data-purpose="library"
+          aria-label="미리 연습하기"
+          onClick={() => onNavigate("library")}
+        >
+          <Icon name="chat" size={22} />
+          <strong>미리 연습하기</strong>
+          <span>AI 상대와 대화 · 복기 · 재연습</span>
+        </button>
+        <button
+          className="dd-secondary"
+          data-purpose="recording"
+          aria-label="녹음 분석·코칭"
+          onClick={() => onNavigate("recording")}
+        >
+          <Icon name="mic" size={22} />
+          <strong>녹음 분석·코칭</strong>
+          <span>내 녹음 첨부 · 분석 · 코칭</span>
+        </button>
+      </div>
       {recent && (
         <section className="purpose-recent" aria-label="최근 기록 이어하기">
           <span>이어서 해볼까요?</span>

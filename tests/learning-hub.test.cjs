@@ -2348,7 +2348,7 @@ test("editing practice interest hides only its list and preserves search when ca
     );
     assert.equal(document.querySelector("#card-search").value, "");
     await click(button("홈"));
-    assert.equal(document.querySelectorAll("[data-purpose]").length, 2);
+    assert.equal(document.querySelectorAll("[data-purpose]").length, 3);
     assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
   } finally {
     await ui.cleanup();
@@ -2434,7 +2434,7 @@ test("home prioritizes live assistance, offers rehearsal second and separates su
       ),
       ["홈", "내 기록", "더보기"],
     );
-    assert.equal(document.querySelectorAll("[data-purpose]").length, 2);
+    assert.equal(document.querySelectorAll("[data-purpose]").length, 3);
     assert.equal(document.querySelectorAll(".practice-loop li").length, 3);
     assert(!button("AI 요청 연습"));
     assert(!button("대화 기초 훈련"));
@@ -3266,6 +3266,35 @@ test("live assistance retains its purpose through reload, skips the rehearsal to
     );
     assert.equal(
       (await store.listSessions()).filter((s) => !s.isSample).length,
+      0,
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("the third core home entry opens recording analysis directly without a situation or an empty saved record", async () => {
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(C);
+  try {
+    await settle();
+    assert.deepEqual(
+      [...document.querySelectorAll("[data-purpose]")].map(
+        (b) => b.dataset.purpose,
+      ),
+      ["live", "library", "recording"],
+    );
+    await click(button("녹음 분석·코칭"));
+    await settle();
+    assert.equal(
+      document.querySelector(".dc-nav [aria-current=page]").textContent,
+      "내 기록",
+    );
+    assert(document.querySelector(".input-launcher"));
+    assert(document.body.textContent.includes("녹음 분석·코칭"));
+    assert(!document.querySelector('[aria-label="대화 맥락 선택"]'));
+    assert.equal(
+      (await store.listSessions()).filter((r) => !r.isSample).length,
       0,
     );
   } finally {

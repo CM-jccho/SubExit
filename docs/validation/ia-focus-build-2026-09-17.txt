@@ -18,7 +18,7 @@ npm warn Unknown env config "http-proxy". This will stop working in the next maj
    Collecting build traces ...
 
 Route (app)                                 Size  First Load JS
-┌ ○ /                                    83.4 kB         217 kB
+┌ ○ /                                    83.5 kB         217 kB
 ├ ○ /_not-found                            993 B         104 kB
 ├ ƒ /api/analyze                           166 B         103 kB
 ├ ƒ /api/analyze-call                      166 B         103 kB

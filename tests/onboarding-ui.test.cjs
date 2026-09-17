@@ -133,7 +133,7 @@ test("first-run spotlight navigates actual screens, finishes without AI calls, a
   assert.equal(window.location.search, "?view=records");
   assert.equal(document.querySelector("h1").textContent, "내 기록");
   await click('button[aria-label="든든콜 홈"]');
-  assert.equal(document.querySelectorAll("[data-purpose]").length, 2);
+  assert.equal(document.querySelectorAll("[data-purpose]").length, 3);
   assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
   await click('button[aria-label="첫 사용 가이드 다시 보기"]');
   assert(document.querySelector("dialog[open]"));

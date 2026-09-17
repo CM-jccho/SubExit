@@ -385,3 +385,47 @@
     transform: none;
   }
 }
+
+.home-core-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 22px 0;
+}
+.home-core-options .dd-secondary {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 18px 16px;
+  border-radius: 16px;
+  text-align: left;
+  background: #fffefa;
+}
+.home-core-options strong {
+  font-size: 16px;
+  line-height: 1.5;
+}
+.home-core-options span {
+  color: #596851;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+.home-core-options button:focus-visible {
+  outline: 3px solid #355e48;
+  outline-offset: 3px;
+}
+@media (max-width: 380px) {
+  .home-core-options {
+    gap: 8px;
+  }
+  .home-core-options .dd-secondary {
+    padding: 14px 10px;
+  }
+  .home-core-options strong {
+    font-size: 14px;
+  }
+}
