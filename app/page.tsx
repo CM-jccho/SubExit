@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <Suspense
       fallback={
-        <main style={{ padding: 40 }}>곁말을 준비하고 있어요.</main>
+        <main style={{ padding: 40 }}>스픽코칭을 준비하고 있어요.</main>
       }
     >
       <ConversationWorkspace />

@@ -36,7 +36,10 @@ export default function LaunchIntro() {
   const scene = scenes[step];
   const swipe = useHorizontalSwipe({
     enabled: open,
+    pageKey: step,
     inDialog: true,
+    canNext: step < 2,
+    canPrevious: step > 0,
     onNext: () => setStep((value) => Math.min(2, value + 1)),
     onPrevious: () => setStep((value) => Math.max(0, value - 1)),
   });
@@ -63,7 +66,7 @@ export default function LaunchIntro() {
   return (
     <InputDialog
       open={open}
-      title="곁말"
+      title="스픽코칭"
       closeLabel="인트로 건너뛰기"
       onClose={close}
       className="launch-intro"

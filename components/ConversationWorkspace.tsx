@@ -723,6 +723,9 @@ export default function ConversationWorkspace() {
     !tour && ["home", "records", "more"].includes(view) && !recordId;
   const pageSwipe = useHorizontalSwipe({
     enabled: swipeEnabled,
+    pageKey: view,
+    canNext: view !== "more",
+    canPrevious: view !== "home",
     onNext: () => {
       if (view === "home") navigate("records");
       else if (view === "records") navigate("more");
@@ -756,11 +759,15 @@ export default function ConversationWorkspace() {
       <div className="dd-root dc-root">
         <div className="dc-shell">
           <header className="dc-header">
-            <button className="dc-brand" onClick={home} aria-label="곁말 홈">
+            <button
+              className="dc-brand"
+              onClick={home}
+              aria-label="스픽코칭 홈"
+            >
               <span className="dc-brand-mark">
                 <Icon name="chat" size={22} />
               </span>
-              곁말<span className="dc-beta">BETA</span>
+              스픽코칭<span className="dc-beta">BETA</span>
             </button>
             <nav className="dc-nav" aria-label="주 메뉴">
               {(
@@ -972,7 +979,7 @@ export default function ConversationWorkspace() {
                         window.dispatchEvent(new Event("gyeotmal-show-intro"))
                       }
                     >
-                      곁말 소개 다시 보기
+                      스픽코칭 소개 다시 보기
                     </button>
                   </div>
                   <div className="focus-tool-grid">
@@ -1876,7 +1883,7 @@ export default function ConversationWorkspace() {
             </div>
           </main>
           <footer className="dc-footer">
-            <span>곁말 · 당신의 말 곁에</span>
+            <span>스픽코칭 · 당신의 말 곁에</span>
             <a href="/evidence">서비스·데이터 안내</a>
           </footer>
         </div>

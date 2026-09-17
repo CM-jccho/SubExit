@@ -241,3 +241,40 @@
   min-height: 44px;
   margin: 4px 6px 4px 0;
 }
+.swipe-page[data-swiping],
+.launch-swipe[data-swiping] {
+  border-radius: 22px;
+  background: #fffef9;
+  box-shadow: 0 12px 32px #263c2926;
+  will-change: transform;
+}
+.launch-swipe {
+  border-radius: 22px;
+}
+@media (max-width: 900px) {
+  .dc-shell {
+    overflow-x: clip;
+  }
+  .swipe-page {
+    animation: swipe-card-arrive 240ms ease-out;
+  }
+  .launch-scene {
+    animation: swipe-card-arrive 240ms ease-out;
+  }
+}
+@keyframes swipe-card-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.975) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .swipe-page,
+  .launch-scene {
+    animation: none !important;
+  }
+}

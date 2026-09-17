@@ -24,7 +24,7 @@ import "./chat-flow.css";
 import "./mobile-keyboard.css";
 import "./compact-fields.css";
 export const metadata = {
-  title: "곁말 · 당신의 말 곁에",
+  title: "스픽코칭 · 당신의 말 곁에",
   description:
     "대화 중에는 내 상황과 목표에 맞는 다음 한마디를, 평소에는 AI 상대와 같은 상황의 대화 연습을 제공합니다.",
 };

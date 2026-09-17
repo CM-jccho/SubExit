@@ -618,7 +618,7 @@ test("workspace navigation preserves section across remount and browser back, an
   try {
     await settle();
     assert.equal(document.querySelector("h1").textContent, "내 기록");
-    await click(button("곁말 홈"));
+    await click(button("스픽코칭 홈"));
     assert.equal(window.location.search, "");
     assert(scrolls > 0);
     await act(async () => ui.root.render(null));
@@ -3716,6 +3716,46 @@ test("mobile main tabs swipe without hijacking inputs, vertical scrolling or dia
     await swipeOn(document.querySelector("main"), [280, 200], [100, 200]);
     assert(window.location.search.includes("records"));
     dialog.remove();
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("swipe cards follow the finger, snap back and navigate only after the exit animation", async () => {
+  const Intro = require("../components/LaunchIntro.tsx").default;
+  let animation, frames;
+  const ui = await mount(Intro, {}, () => {
+    window.innerWidth = 390;
+    window.HTMLElement.prototype.animate = function (keyframes) {
+      frames = keyframes;
+      animation = { cancel() {}, onfinish: null };
+      return animation;
+    };
+  });
+  try {
+    const panel = document.querySelector(".launch-swipe");
+    await act(async () => {
+      Simulate.touchStart(panel, { touches: [{ clientX: 250, clientY: 150 }] });
+      Simulate.touchMove(panel, { touches: [{ clientX: 210, clientY: 150 }] });
+    });
+    assert(panel.style.transform.includes("-28px"));
+    assert.equal(panel.dataset.swiping, "true");
+    await act(async () =>
+      Simulate.touchEnd(panel, {
+        touches: [],
+        changedTouches: [{ clientX: 210, clientY: 150 }],
+      }),
+    );
+    assert.equal(frames[1].transform, "translateX(0) rotate(0deg)");
+    await act(async () => animation.onfinish());
+    assert.equal(panel.style.transform, "");
+    assert(document.body.textContent.includes("하고 싶은 말을 삼킨 당신에게"));
+    await swipeOn(panel, [250, 150], [80, 150]);
+    assert(frames[1].transform.includes("-110%"));
+    assert(document.body.textContent.includes("하고 싶은 말을 삼킨 당신에게"));
+    await act(async () => animation.onfinish());
+    assert(document.body.textContent.includes("정답 대신, 나다운 한마디"));
+    assert.equal(panel.style.transform, "");
   } finally {
     await ui.cleanup();
   }
