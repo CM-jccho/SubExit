@@ -711,6 +711,44 @@ test("live hint sample mode uses the existing transcript without another AI call
   }
 });
 
+test("live sample hint uses the selected friend's relationship even when the situation only says schedule", async () => {
+  const friend = require("../lib/starter-data.ts").requestCards[1];
+  const ui = await mount(LiveCoach, {
+    onBack: () => {},
+    onDemo: () => {},
+    profile: friend,
+  });
+  try {
+    for (const c of document.querySelectorAll(
+      ".vn-consent input, .dc-permissions input",
+    ))
+      await click(c);
+    await click(button("이 설정으로 시작"));
+    let calls = 0;
+    global.fetch = async () => {
+      calls++;
+      throw new Error("Sample mode must not call AI");
+    };
+    await click(document.querySelector(".dc-sample-switch input"));
+    const input = document.querySelector("#live-text");
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement.prototype,
+        "value",
+      ).set.call(input, "왜 약속을 변경하자는건데? 왜 이제 말하는건데?");
+      input.dispatchEvent(new window.Event("input", { bubbles: true }));
+    });
+    await click(button("답변 힌트 받기"));
+    const answer = document.querySelector(".dc-answer-panel").textContent;
+    assert.match(answer, /친구와 약속 조정/);
+    assert.match(answer, /미안해/);
+    assert.doesNotMatch(answer, /여쭤|확정하기 전에|업무/);
+    assert.equal(calls, 0);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
 class StreamingRecognizer {
   static instances = [];
   constructor() {

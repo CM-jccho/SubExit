@@ -5,6 +5,7 @@ import LiveSpeechPanel from "./LiveSpeechPanel";
 import { speechConstructor } from "@/lib/live-speech";
 import SampleNotice, { SampleSwitch } from "./SampleNotice";
 import { sampledRequest } from "@/lib/resilient-ai";
+import { practiceSampleContext } from "@/lib/demo-bank";
 import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
@@ -166,7 +167,7 @@ export default function LiveCoach({
         data = await sampledRequest({
           operation: "coach",
           context:
-            profile?.situation ||
+            practiceSampleContext(profile) ||
             scenarios.find((s) => s.id === scenario)?.title ||
             text,
           previous: sampleHistory.current,
