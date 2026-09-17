@@ -111,7 +111,7 @@ test("first-run spotlight navigates actual screens, finishes without AI calls, a
   assert(document.querySelector("dialog[open]"));
   assert.equal(
     document.querySelectorAll(".dc-starter-section .dc-saved-card").length,
-    2,
+    1,
   );
   await click(".dc-spotlight-hit");
   assert(document.querySelector('[data-tour="conversation-goal"]'));
@@ -134,7 +134,7 @@ test("first-run spotlight navigates actual screens, finishes without AI calls, a
   await click('button[aria-label="든든콜 홈"]');
   assert.equal(
     document.querySelectorAll(".dc-starter-section .dc-saved-card").length,
-    2,
+    1,
   );
   await click('button[aria-label="첫 사용 가이드 다시 보기"]');
   assert(document.querySelector("dialog[open]"));

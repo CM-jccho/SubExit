@@ -135,34 +135,67 @@ function ProfileEditor({
     </div>
   );
 }
-function ContextFacts({ profile }: { profile: ContextProfile }) {
+function ContextFacts({
+  profile,
+  compact = false,
+}: {
+  profile: ContextProfile;
+  compact?: boolean;
+}) {
   return (
-    <dl className="dc-facts">
-      <div>
-        <dt>상대</dt>
-        <dd>{profile.partner || "아직 정리 전이에요"}</dd>
-      </div>
-      <div>
-        <dt>내 역할</dt>
-        <dd>{profile.myRole || "필요하면 추가해요"}</dd>
-      </div>
-      <div>
-        <dt>상황</dt>
-        <dd>{profile.situation || "어떤 대화인지 알려주세요"}</dd>
-      </div>
-      <div className="dc-goal" data-tour="conversation-goal">
-        <dt>원하는 결과</dt>
-        <dd>{profile.goal || "이번 대화의 목표를 정해요"}</dd>
-      </div>
-      <div>
-        <dt>지킬 선</dt>
-        <dd>{profile.boundaries || "필요하면 추가해요"}</dd>
-      </div>
-      <div>
-        <dt>말투</dt>
-        <dd>{tones.find((t) => t.id === profile.tone)?.label}</dd>
-      </div>
-    </dl>
+    <>
+      <dl className="dc-facts">
+        <div>
+          <dt>상대</dt>
+          <dd>{profile.partner || "아직 정리 전이에요"}</dd>
+        </div>
+        {!compact && (
+          <div>
+            <dt>내 역할</dt>
+            <dd>{profile.myRole || "필요하면 추가해요"}</dd>
+          </div>
+        )}
+        {!compact && (
+          <div>
+            <dt>상황</dt>
+            <dd>{profile.situation || "어떤 대화인지 알려주세요"}</dd>
+          </div>
+        )}
+        <div className="dc-goal" data-tour="conversation-goal">
+          <dt>원하는 결과</dt>
+          <dd>{profile.goal || "이번 대화의 목표를 정해요"}</dd>
+        </div>
+        <div>
+          <dt>지킬 선</dt>
+          <dd>{profile.boundaries || "필요하면 추가해요"}</dd>
+        </div>
+        {!compact && (
+          <div>
+            <dt>말투</dt>
+            <dd>{tones.find((t) => t.id === profile.tone)?.label}</dd>
+          </div>
+        )}
+      </dl>
+      {compact && (
+        <details className="dc-detail-extra">
+          <summary>자세한 상황·말투</summary>
+          <dl className="dc-facts">
+            <div>
+              <dt>내 역할</dt>
+              <dd>{profile.myRole || "대화 참여자"}</dd>
+            </div>
+            <div>
+              <dt>상황</dt>
+              <dd>{profile.situation}</dd>
+            </div>
+            <div>
+              <dt>말투</dt>
+              <dd>{tones.find((t) => t.id === profile.tone)?.label}</dd>
+            </div>
+          </dl>
+        </details>
+      )}
+    </>
   );
 }
 export default function ConversationWorkspace() {
@@ -811,14 +844,14 @@ export default function ConversationWorkspace() {
                       {cardList(
                         sampleCards.length
                           ? tour
-                            ? sampleCards.slice(0, 2)
+                            ? sampleCards.slice(0, 1)
                             : [...sampleCards]
                                 .sort(
                                   (a, b) =>
                                     Number(b.id.includes("request")) -
                                     Number(a.id.includes("request")),
                                 )
-                                .slice(0, 2)
+                                .slice(0, 1)
                           : [tourCard],
                         true,
                       )}
@@ -830,7 +863,12 @@ export default function ConversationWorkspace() {
                     </p>
                   )}
                   <div className="focus-home-controls">
-                    <button className="dd-primary" onClick={() => start()}>
+                    <button
+                      className={
+                        sampleCards.length ? "dd-secondary" : "dd-primary"
+                      }
+                      onClick={() => start()}
+                    >
                       <Icon name="plus" size={18} /> 내 상황 만들기
                     </button>
                     <button
@@ -1543,31 +1581,13 @@ export default function ConversationWorkspace() {
                     </p>
                     <h1>{active.title}</h1>
                   </section>
-                  <div className="dc-detail-grid">
+                  <div className="dc-detail-compact">
                     <section className="dc-profile-panel">
                       <div className="dc-panel-heading">
-                        <h2>내가 기억할 것</h2>
-                        <button
-                          className="dd-link"
-                          onClick={() => start(active)}
-                        >
-                          <Icon name="edit" size={16} />
-                          수정
-                        </button>
+                        <h2>이번 연습에서 기억할 것</h2>
+                        <Companion small mood="listen" />
                       </div>
-                      <ContextFacts profile={active} />
-                    </section>
-                    <aside className="dc-start-panel">
-                      <Companion mood="listen" />
-                      <h2>{currentCharacter.name}와 먼저 준비해 볼까요?</h2>
-                      <span className="dc-small-caption">
-                        함께할 도우미 · {currentCharacter.name}
-                      </span>
-                      <p>
-                        직접 답해 보고, 내가 한 말을 근거로 복기한 뒤
-                        <br />
-                        같은 장면을 다시 연습해요.
-                      </p>
+                      <ContextFacts profile={active} compact />
                       <button
                         className="dd-primary dd-full"
                         data-tour="practice-button"
@@ -1579,28 +1599,39 @@ export default function ConversationWorkspace() {
                         <Icon name="chat" size={20} />
                         상대와 대화 연습
                       </button>
+                      <p className="dc-small-caption">
+                        문자나 목소리로 직접 답하고, 끝나면 내 말을 복기해요.
+                      </p>
+                    </section>
+                    <details className="dc-detail-alternative">
+                      <summary>실제 대화 중에 도움이 필요하다면</summary>
+                      <p>
+                        대면 대화나 다른 기기의 스피커폰에서 짧게 듣고, 다음에
+                        할 말의 힌트를 받아요.
+                      </p>
                       <button
-                        className="dd-secondary dd-full"
+                        className="dd-secondary"
                         onClick={() => useCard(active)}
                       >
                         <Icon name="mic" size={20} />
                         실제 대화에서 힌트 받기
                       </button>
-                      <span className="dc-small-caption">
-                        대면 대화 · 다른 기기의 스피커폰
+                    </details>
+                  </div>
+                  <details className="dc-detail-extra dc-detail-tools">
+                    <summary>상황 수정·복사·삭제</summary>
+                    <div className="dc-card-tools">
+                      <span>
+                        최근 수정{" "}
+                        {new Date(active.updatedAt).toLocaleDateString("ko-KR")}
                       </span>
-                    </aside>
-                  </div>
-                  <div className="dc-card-tools">
-                    <span>
-                      최근 수정{" "}
-                      {new Date(active.updatedAt).toLocaleDateString("ko-KR")}
-                    </span>
-                    <button onClick={() => duplicate(active)}>
-                      복사해서 만들기
-                    </button>
-                    <button onClick={() => remove(active)}>삭제</button>
-                  </div>
+                      <button onClick={() => start(active)}>수정</button>
+                      <button onClick={() => duplicate(active)}>
+                        복사해서 만들기
+                      </button>
+                      <button onClick={() => remove(active)}>삭제</button>
+                    </div>
+                  </details>
                   {error && (
                     <>
                       <p className="dd-error" role="alert">
