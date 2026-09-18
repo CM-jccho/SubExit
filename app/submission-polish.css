@@ -797,3 +797,62 @@ html {
     margin-bottom: 0 !important;
   }
 }
+
+/* Read-only examples are documents; only the footer offers the next action. */
+.recording-example-preview .recording-example-title {
+  font-size: 22px;
+  line-height: 1.45;
+  margin: 12px 0;
+}
+.recording-example-intro {
+  margin: 12px 0 24px;
+  line-height: 1.65;
+}
+.recording-example-preview .input-dialog-body > section + section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-subtle);
+}
+.recording-example-preview .learn-example-transcript {
+  gap: 0;
+  margin: 12px 0;
+}
+.recording-example-preview .learn-example-transcript li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 12px 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+}
+.recording-example-preview .learn-example-transcript strong {
+  font-size: 14px;
+}
+.recording-example-preview .learn-example-transcript p {
+  margin: 0;
+}
+.recording-example-goal {
+  padding: 14px;
+  background: var(--surface-soft, #eef3e6);
+  border-radius: 12px;
+}
+.recording-example-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.recording-example-actions > button {
+  flex: 1 1 200px;
+  min-height: 44px;
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .recording-example-preview .recording-example-title {
+    font-size: 20px;
+  }
+  .recording-example-actions > button {
+    flex-basis: 100%;
+  }
+}

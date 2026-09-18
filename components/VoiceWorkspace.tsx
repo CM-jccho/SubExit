@@ -1018,11 +1018,15 @@ export default function VoiceWorkspace({
           {recordFilter !== "mine" && !search && (
             <section
               className="record-examples"
-              aria-label="AI 없이 체험하는 녹음 분석 예시"
+              aria-label="녹음 코칭 결과 미리보기"
             >
-              <h2>예시로 먼저 돌아보기</h2>
-              <p>가상의 녹음 문자예요. AI 없이 분석 흐름을 체험할 수 있어요.</p>
-              <RecordingExamples />
+              <h2>어떤 코칭을 받을 수 있나요?</h2>
+              <p>가상 대화의 잘한 점과 개선할 표현을 미리 살펴보세요.</p>
+              <RecordingExamples
+                onStart={() =>
+                  open(makeSession("recording", undefined, inheritedCompanion))
+                }
+              />
             </section>
           )}
           <p className="vn-caption" role="status">

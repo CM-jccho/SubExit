@@ -700,7 +700,7 @@ test("home practice opens a context card and practice keeps a discoverable recor
     assert(
       document
         .querySelector(".record-examples h2")
-        .textContent.includes("예시로 먼저"),
+        .textContent.includes("어떤 코칭을 받을 수 있나요?"),
     );
     assert(button("녹음·파일 추가"));
   } finally {
@@ -4472,6 +4472,51 @@ test("QA E11 help dialog cycles Tab and Shift+Tab within its single action and r
     assert.equal(document.activeElement, action);
     await click(action);
     assert.equal(document.activeElement, trigger);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("recording preview is read-only, restores its opener and starts an empty recording", async () => {
+  const Workspace = require("../components/VoiceWorkspace.tsx").default;
+  const ui = await mount(Workspace, { config, onChooseCard() {} });
+  try {
+    await settle();
+    let requests = 0;
+    global.fetch = async () => {
+      requests++;
+      throw new Error("No AI in preview");
+    };
+    const opener = document.querySelector(".learn-example-grid button");
+    opener.focus();
+    await click(opener);
+    const modal = document.querySelector("dialog[open]");
+    assert(modal);
+    assert(modal.textContent.includes("읽어보는 예시"));
+    assert.equal(
+      modal.querySelectorAll(".learn-example-transcript li").length,
+      example.segments.length,
+    );
+    assert.equal(modal.querySelectorAll("input, textarea, select").length, 0);
+    assert.equal(
+      modal.querySelectorAll(".learn-example-transcript button").length,
+      0,
+    );
+    const footer = modal.querySelector(".input-dialog-footer");
+    assert(footer.contains(button("내 대화로 시작하기")));
+    await click(button("목록으로 돌아가기"));
+    assert.equal(document.querySelector("dialog[open]"), null);
+    assert.equal(document.activeElement, opener);
+    assert.equal((await store.listSessions()).length, 0);
+    await click(opener);
+    await click(button("내 대화로 시작하기"));
+    assert.equal(document.querySelector("dialog[open]"), null);
+    assert.equal(document.querySelector("h1").textContent, "새 음성 기록");
+    assert(button("문자로 기록하기"));
+    assert(button("녹음·파일 추가"));
+    assert.equal(document.querySelectorAll(".vn-turn").length, 0);
+    assert(!document.body.textContent.includes(example.segments[0].text));
+    assert.equal(requests, 0);
   } finally {
     await ui.cleanup();
   }

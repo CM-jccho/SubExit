@@ -1,4 +1,5 @@
 "use client";
+import InputDialog from "./InputDialog";
 import CompactField, { fieldExamples } from "./CompactField";
 import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
@@ -53,19 +54,14 @@ function ReviewContent({ review }: { review: PracticeReview }) {
     </div>
   );
 }
-export function RecordingExamples() {
+export function RecordingExamples({ onStart }: { onStart: () => void }) {
   const [example, setExample] = useState<
-      (typeof recordingExamples)[number] | null
-    >(null),
-    dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    if (example) dialog.current?.showModal();
-    else if (dialog.current?.open) dialog.current.close();
-  }, [example]);
+    (typeof recordingExamples)[number] | null
+  >(null);
   return (
     <section className="learn-recording-examples">
       <div className="vn-toolbar">
-        <h2>녹음 코칭, 먼저 체험해보세요</h2>
+        <h2>코칭 결과 미리보기</h2>
         <span className="dc-sample-badge">AI 호출 없는 예시</span>
       </div>
       <div className="learn-example-grid">
@@ -75,53 +71,73 @@ export function RecordingExamples() {
             key={e.id}
             onClick={() => setExample(e)}
           >
-            <small>가상 녹음의 문자 · 사전 작성 코칭</small>
+            <small>가상 대화 · 코칭 결과 예시</small>
             <strong>{e.title}</strong>
-            <span>문자 확인 → 말한 사람 확인 → 코칭 결과</span>
-            <em>예시 열기 →</em>
+            <span>잘한 점과 다음에 바꿔 말할 표현을 살펴보세요.</span>
+            <em>대화와 코칭 결과 보기 →</em>
           </button>
         ))}
       </div>
-      <dialog
-        ref={dialog}
-        className="vn-dialog"
-        aria-labelledby="recording-example-title"
-        onCancel={() => setExample(null)}
+      <InputDialog
+        open={!!example}
+        title="코칭 결과 미리보기"
+        className="recording-example-preview"
+        closeLabel="녹음 예시 닫기"
+        onClose={() => setExample(null)}
+        footer={
+          <div className="recording-example-actions">
+            <button className="dd-secondary" onClick={() => setExample(null)}>
+              목록으로 돌아가기
+            </button>
+            <button
+              className="dd-primary"
+              onClick={() => {
+                setExample(null);
+                onStart();
+              }}
+            >
+              내 대화로 시작하기 <Icon name="arrow" size={18} />
+            </button>
+          </div>
+        }
       >
         {example && (
           <>
-            <div className="vn-dialog-head">
-              <div>
-                <span className="dc-sample-badge">사전 작성 샘플</span>
-                <h2 id="recording-example-title">{example.title}</h2>
-              </div>
-              <button
-                className="vn-icon"
-                aria-label="녹음 예시 닫기"
-                onClick={() => setExample(null)}
-              >
-                <Icon name="close" />
-              </button>
-            </div>
-            <p>
-              사용법을 보여주는 가상 대화와 코칭이에요. 실제 녹음 파일·실제
-              사용자 기록·현재 AI 분석은 포함하지 않아요.
+            <span className="dc-sample-badge">
+              읽어보는 예시 · AI 호출 없음
+            </span>
+            <h3 className="recording-example-title">{example.title}</h3>
+            <p className="recording-example-intro">
+              아래로 내려 대화와 코칭 결과를 읽어보세요. 내 대화를 돌아보려면
+              ‘내 대화로 시작하기’를 누르세요.
             </p>
-            <ol className="learn-example-transcript">
-              {example.segments.map((s) => (
-                <li key={s.id}>
-                  <strong>{s.role === "user" ? "내 말" : "상대 말"}</strong>
-                  <p>{s.text}</p>
-                </li>
-              ))}
-            </ol>
-            <p>
-              <strong>내 목표</strong> · {example.context.goal}
-            </p>
-            <ReviewContent review={example.review} />
+            <section aria-labelledby="recording-example-conversation">
+              <h3 id="recording-example-conversation">대화 예시</h3>
+              <p className="vn-caption">
+                말한 사람이 미리 표시된 가상 대화예요.
+              </p>
+              <ol className="learn-example-transcript">
+                {example.segments.map((s) => (
+                  <li key={s.id}>
+                    <strong>{s.role === "user" ? "내 말" : "상대 말"}</strong>
+                    <p>{s.text}</p>
+                  </li>
+                ))}
+              </ol>
+              <p className="recording-example-goal">
+                <strong>이 대화의 목표</strong> · {example.context.goal}
+              </p>
+            </section>
+            <section aria-labelledby="recording-example-result">
+              <h3 id="recording-example-result">코칭 결과 예시</h3>
+              <p className="vn-caption">
+                이 대화를 바탕으로 미리 작성한 코칭이에요.
+              </p>
+              <ReviewContent review={example.review} />
+            </section>
           </>
         )}
-      </dialog>
+      </InputDialog>
     </section>
   );
 }
