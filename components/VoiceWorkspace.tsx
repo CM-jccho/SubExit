@@ -967,48 +967,54 @@ export default function VoiceWorkspace({
             </span>
             <Icon name="arrow" />
           </button>
-          <div className="record-list-controls">
-            <div className="purpose-switch" role="group" aria-label="기록 종류">
-              {(
-                [
-                  ["all", "전체"],
-                  ["mine", "내 기록"],
-                  ["sample", "샘플"],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  aria-pressed={recordFilter === value}
-                  onClick={() => setRecordFilter(value)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <label>
-              정렬{" "}
-              <select
-                aria-label="기록 정렬"
-                value={recordSort}
-                onChange={(e) =>
-                  setRecordSort(e.target.value as "recent" | "name")
-                }
+          <div className="record-list-toolbar">
+            <div className="record-list-controls">
+              <div
+                className="purpose-switch"
+                role="group"
+                aria-label="기록 종류"
               >
-                <option value="recent">최근순</option>
-                <option value="name">이름순</option>
-              </select>
+                {(
+                  [
+                    ["all", "전체"],
+                    ["mine", "내 기록"],
+                    ["sample", "샘플"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    aria-pressed={recordFilter === value}
+                    onClick={() => setRecordFilter(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <label>
+                정렬{" "}
+                <select
+                  aria-label="기록 정렬"
+                  value={recordSort}
+                  onChange={(e) =>
+                    setRecordSort(e.target.value as "recent" | "name")
+                  }
+                >
+                  <option value="recent">최근순</option>
+                  <option value="name">이름순</option>
+                </select>
+              </label>
+            </div>
+            <label className="dc-search">
+              <Icon name="search" size={18} />
+              <input
+                aria-label="대화 기록 검색"
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="제목, 상대, 대화 내용으로 찾기"
+              />
             </label>
           </div>
-          <label className="dc-search">
-            <Icon name="search" size={18} />
-            <input
-              aria-label="대화 기록 검색"
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="제목, 상대, 대화 내용으로 찾기"
-            />
-          </label>
           {recordFilter !== "mine" && !search && (
             <section
               className="record-examples"

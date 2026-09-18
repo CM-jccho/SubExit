@@ -763,3 +763,37 @@ html {
     gap: clamp(24px, 4vw, 56px);
   }
 }
+
+/* A desktop toolbar groups record filters and sorting beside the search field.
+   Mobile retains the original stacked controls and search. */
+@media (min-width: 900px) {
+  .record-list-toolbar {
+    display: grid;
+    grid-template-columns: minmax(420px, 1fr) minmax(260px, 1fr);
+    align-items: center;
+    gap: var(--s6);
+    margin: var(--s6) 0;
+  }
+  .record-list-toolbar .record-list-controls {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    min-width: 0;
+    margin: 0;
+  }
+  .record-list-toolbar .purpose-switch {
+    flex: 1 1 auto;
+  }
+  .record-list-toolbar .purpose-switch button {
+    min-width: 76px;
+    white-space: nowrap;
+  }
+  .record-list-toolbar .record-list-controls > label {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .record-list-toolbar > .dc-search {
+    min-width: 0;
+    margin: 0;
+    margin-bottom: 0 !important;
+  }
+}
