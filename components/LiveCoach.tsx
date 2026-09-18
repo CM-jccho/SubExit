@@ -2,6 +2,7 @@
 import { AIConsent } from "./VoiceComposer";
 import { useAIConsent } from "./ConsentSession";
 import LiveSpeechPanel from "./LiveSpeechPanel";
+import CoachingInputTabs from "./CoachingInputTabs";
 import { speechConstructor } from "@/lib/live-speech";
 import { requestMicrophone } from "@/lib/microphone";
 import SampleNotice, { SampleSwitch } from "./SampleNotice";
@@ -486,6 +487,160 @@ export default function LiveCoach({
     transcribing: "들린 말을 글로 바꾸는 중 · 마이크 꺼짐",
     coaching: "다음 한 문장을 준비 중 · 마이크 꺼짐",
   }[phase];
+  const contextControl = directEntry ? (
+    <details className="quick-context">
+      <summary>
+        상대·목표 조정 <span>{profile?.goal}</span>
+      </summary>
+      <fieldset disabled={phase !== "idle" || liveActive}>
+        {savedProfiles.length > 0 && (
+          <label>
+            저장한 상황 불러오기
+            <select
+              value=""
+              onChange={(e) => {
+                const card = savedProfiles.find((c) => c.id === e.target.value);
+                if (card) updateContext(card);
+              }}
+            >
+              <option value="">상황 선택 · 입력한 말은 유지돼요</option>
+              {[...savedProfiles]
+                .sort((a, b) =>
+                  (b.lastUsedAt || b.updatedAt).localeCompare(
+                    a.lastUsedAt || a.updatedAt,
+                  ),
+                )
+                .map((card) => (
+                  <option key={card.id} value={card.id}>
+                    {card.title}
+                  </option>
+                ))}
+            </select>
+          </label>
+        )}
+        <label>
+          상대 · 선택
+          <input
+            maxLength={160}
+            id="quick-partner"
+            name="partner"
+            value={quickContext.partner}
+            placeholder="예: 친구, 직장 동료, 고객"
+            onChange={(e) =>
+              updateContext({
+                ...quickContext,
+                title: "",
+                partner: e.target.value,
+              })
+            }
+          />
+        </label>
+        <label>
+          원하는 결과
+          <input
+            maxLength={400}
+            id="quick-goal"
+            name="goal"
+            value={quickContext.goal}
+            placeholder="상대의 뜻을 확인하고 내 입장을 차분히 전달하기"
+            onChange={(e) =>
+              updateContext({
+                ...quickContext,
+                goal: e.target.value,
+              })
+            }
+          />
+        </label>
+        <div className="quick-goals" role="group" aria-label="원하는 결과 예시">
+          {[
+            "뜻을 확인하고 싶어요",
+            "정중하게 거절하고 싶어요",
+            "시간을 조율하고 싶어요",
+          ].map((goal) => (
+            <button
+              key={goal}
+              type="button"
+              aria-pressed={quickContext.goal === goal}
+              onClick={() => updateContext({ ...quickContext, goal })}
+            >
+              {goal}
+            </button>
+          ))}
+        </div>
+        <label>
+          상황 설명 · 선택
+          <input
+            maxLength={800}
+            id="quick-situation"
+            name="situation"
+            value={quickContext.situation}
+            placeholder="필요한 배경만 짧게 적어주세요"
+            onChange={(e) =>
+              updateContext({
+                ...quickContext,
+                situation: e.target.value,
+              })
+            }
+          />
+        </label>
+        <label>
+          지킬 선 · 선택
+          <input
+            maxLength={400}
+            id="quick-boundaries"
+            name="boundaries"
+            value={quickContext.boundaries}
+            placeholder="예: 확정되지 않은 시간은 약속하지 않기"
+            onChange={(e) =>
+              updateContext({
+                ...quickContext,
+                boundaries: e.target.value,
+              })
+            }
+          />
+        </label>
+        <label>
+          내 말투
+          <select
+            value={tone}
+            onChange={(e) =>
+              updateContext({
+                ...quickContext,
+                tone: e.target.value as Tone,
+              })
+            }
+          >
+            {tones.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {quickContext.title && <p>불러온 상황: {quickContext.title}</p>}
+        <button
+          type="button"
+          className="dd-link"
+          onClick={() => updateContext(emptyProfile())}
+        >
+          기본 목표로 되돌리기
+        </button>
+      </fieldset>
+    </details>
+  ) : undefined;
+  const inputTabs = (
+    <CoachingInputTabs
+      value={
+        supportsLive && voiceStyle === "continuous" ? "continuous" : inputMode
+      }
+      supportsLive={supportsLive}
+      busy={phase !== "idle" || liveActive}
+      onChange={(mode) => {
+        setVoiceStyle(mode === "continuous" ? "continuous" : "short");
+        if (mode !== "continuous") setInputMode(mode);
+      }}
+    />
+  );
   return (
     <div
       className={"dd-live dc-live-app" + (directEntry ? " dc-quick-help" : "")}
@@ -690,38 +845,11 @@ export default function LiveCoach({
               onChange={setSamplePreviewOpen}
             />
           )}
-          {supportsLive && (!directEntry || voiceStyle === "continuous") && (
-            <div
-              className="dc-mode-switch live-style-switch"
-              aria-label="음성 처리 방식"
-            >
-              <button
-                aria-pressed={voiceStyle === "continuous"}
-                className={voiceStyle === "continuous" ? "active" : ""}
-                disabled={phase !== "idle" || liveActive}
-                onClick={() => setVoiceStyle("continuous")}
-              >
-                실시간 자막 · 코칭
-              </button>
-              <button
-                aria-pressed={voiceStyle === "short"}
-                className={voiceStyle === "short" ? "active" : ""}
-                disabled={phase !== "idle" || liveActive}
-                onClick={() => setVoiceStyle("short")}
-              >
-                짧게 녹음 · 직접 입력
-              </button>
-            </div>
-          )}
-          {!supportsLive && (!directEntry || inputMode === "voice") && (
-            <p className="live-stream-note">
-              이 브라우저는 실시간 자막을 지원하지 않아요. 짧게 녹음하거나 직접
-              입력해 주세요.
-            </p>
-          )}
           {supportsLive && voiceStyle === "continuous" ? (
             <>
               <LiveSpeechPanel
+                inputTabs={inputTabs}
+                contextControl={contextControl}
                 available={config.available}
                 onUseText={(text) => {
                   if (text.trim())
@@ -760,34 +888,7 @@ export default function LiveCoach({
           ) : (
             <div className={"dc-coaching-grid " + (result ? "has-result" : "")}>
               <section className="dc-listen-panel">
-                <div className="dc-mode-switch" aria-label="입력 방식">
-                  <button
-                    className={inputMode === "voice" ? "active" : ""}
-                    aria-pressed={inputMode === "voice"}
-                    disabled={phase !== "idle"}
-                    onClick={() => setInputMode("voice")}
-                  >
-                    <Icon name="mic" size={18} />
-                    들려주기
-                  </button>
-                  <button
-                    className={inputMode === "text" ? "active" : ""}
-                    aria-pressed={inputMode === "text"}
-                    disabled={phase !== "idle"}
-                    onClick={() => setInputMode("text")}
-                  >
-                    <Icon name="keyboard" size={18} />
-                    직접 입력
-                  </button>
-                  {directEntry && supportsLive && (
-                    <button
-                      disabled={phase !== "idle" || liveActive}
-                      onClick={() => setVoiceStyle("continuous")}
-                    >
-                      실시간 자막
-                    </button>
-                  )}
-                </div>
+                {inputTabs}
                 {inputMode === "voice" && (
                   <div
                     className={
@@ -918,159 +1019,7 @@ export default function LiveCoach({
                     />
                     {directEntry && (
                       <>
-                        <details className="quick-context">
-                          <summary>
-                            상대·목표 조정 <span>{profile?.goal}</span>
-                          </summary>
-                          <fieldset disabled={phase !== "idle"}>
-                            {savedProfiles.length > 0 && (
-                              <label>
-                                저장한 상황 불러오기
-                                <select
-                                  value=""
-                                  onChange={(e) => {
-                                    const card = savedProfiles.find(
-                                      (c) => c.id === e.target.value,
-                                    );
-                                    if (card) updateContext(card);
-                                  }}
-                                >
-                                  <option value="">
-                                    상황 선택 · 입력한 말은 유지돼요
-                                  </option>
-                                  {[...savedProfiles]
-                                    .sort((a, b) =>
-                                      (
-                                        b.lastUsedAt || b.updatedAt
-                                      ).localeCompare(
-                                        a.lastUsedAt || a.updatedAt,
-                                      ),
-                                    )
-                                    .map((card) => (
-                                      <option key={card.id} value={card.id}>
-                                        {card.title}
-                                      </option>
-                                    ))}
-                                </select>
-                              </label>
-                            )}
-                            <label>
-                              상대 · 선택
-                              <input
-                                maxLength={160}
-                                id="quick-partner"
-                                name="partner"
-                                value={quickContext.partner}
-                                placeholder="예: 친구, 직장 동료, 고객"
-                                onChange={(e) =>
-                                  updateContext({
-                                    ...quickContext,
-                                    title: "",
-                                    partner: e.target.value,
-                                  })
-                                }
-                              />
-                            </label>
-                            <label>
-                              원하는 결과
-                              <input
-                                maxLength={400}
-                                id="quick-goal"
-                                name="goal"
-                                value={quickContext.goal}
-                                placeholder="상대의 뜻을 확인하고 내 입장을 차분히 전달하기"
-                                onChange={(e) =>
-                                  updateContext({
-                                    ...quickContext,
-                                    goal: e.target.value,
-                                  })
-                                }
-                              />
-                            </label>
-                            <div
-                              className="quick-goals"
-                              role="group"
-                              aria-label="원하는 결과 예시"
-                            >
-                              {[
-                                "뜻을 확인하고 싶어요",
-                                "정중하게 거절하고 싶어요",
-                                "시간을 조율하고 싶어요",
-                              ].map((goal) => (
-                                <button
-                                  key={goal}
-                                  type="button"
-                                  aria-pressed={quickContext.goal === goal}
-                                  onClick={() =>
-                                    updateContext({ ...quickContext, goal })
-                                  }
-                                >
-                                  {goal}
-                                </button>
-                              ))}
-                            </div>
-                            <label>
-                              상황 설명 · 선택
-                              <input
-                                maxLength={800}
-                                id="quick-situation"
-                                name="situation"
-                                value={quickContext.situation}
-                                placeholder="필요한 배경만 짧게 적어주세요"
-                                onChange={(e) =>
-                                  updateContext({
-                                    ...quickContext,
-                                    situation: e.target.value,
-                                  })
-                                }
-                              />
-                            </label>
-                            <label>
-                              지킬 선 · 선택
-                              <input
-                                maxLength={400}
-                                id="quick-boundaries"
-                                name="boundaries"
-                                value={quickContext.boundaries}
-                                placeholder="예: 확정되지 않은 시간은 약속하지 않기"
-                                onChange={(e) =>
-                                  updateContext({
-                                    ...quickContext,
-                                    boundaries: e.target.value,
-                                  })
-                                }
-                              />
-                            </label>
-                            <label>
-                              내 말투
-                              <select
-                                value={tone}
-                                onChange={(e) =>
-                                  updateContext({
-                                    ...quickContext,
-                                    tone: e.target.value as Tone,
-                                  })
-                                }
-                              >
-                                {tones.map((t) => (
-                                  <option key={t.id} value={t.id}>
-                                    {t.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            {quickContext.title && (
-                              <p>불러온 상황: {quickContext.title}</p>
-                            )}
-                            <button
-                              type="button"
-                              className="dd-link"
-                              onClick={() => updateContext(emptyProfile())}
-                            >
-                              기본 목표로 되돌리기
-                            </button>
-                          </fieldset>
-                        </details>
+                        {contextControl}
                         <AIConsent
                           config={config}
                           checked={consent}
@@ -1178,7 +1127,7 @@ export default function LiveCoach({
               >
                 <div className="dc-answer-heading">
                   <Icon name="chat" size={20} />
-                  <span>{character.name}의 한마디</span>
+                  <span>{character.name}의 답변 코칭</span>
                   {result?.sample ? (
                     <SampleNotice sample={result.sample} compact badge />
                   ) : result ? (

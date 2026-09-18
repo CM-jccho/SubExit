@@ -954,7 +954,7 @@ test("supported browser defaults to streaming while retaining short-recording an
       await click(c);
     await click(button("이 설정으로 시작"));
     assert(button("실시간 듣기 시작"));
-    await click(button("짧게 녹음 · 직접 입력"));
+    await click(button("들려주기"));
     assert(button("상대 말 4초 듣기"));
     await click(
       [
@@ -1497,7 +1497,7 @@ test("direct entry opens live captions before consent but does not start the mic
     assert(document.querySelector(".live-stream-settings .vn-consent"));
     assert(button("실시간 듣기 시작").disabled);
     assert.equal(StreamingRecognizer.instances.length, 0);
-    await click(button("짧게 녹음 · 직접 입력"));
+    await click(button("직접 입력"));
     assert(document.querySelector("#live-text"));
   } finally {
     await ui.cleanup();
@@ -1553,6 +1553,135 @@ test("live captions can stop and transfer into typing without losing existing te
     );
     assert(engine.aborted);
     assert.equal(posts, 0);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("all input modes retain tab order, panel hierarchy and the user's typed text and goal", async () => {
+  const ui = await mount(
+    LiveCoach,
+    { directEntry: true, onBack() {}, onDemo() {} },
+    setupSpeech,
+  );
+  try {
+    const type = async (selector, value) => {
+      const field = document.querySelector(selector);
+      await act(async () => {
+        const proto =
+          field.tagName === "TEXTAREA"
+            ? window.HTMLTextAreaElement.prototype
+            : window.HTMLInputElement.prototype;
+        Object.getOwnPropertyDescriptor(proto, "value").set.call(field, value);
+        field.dispatchEvent(new window.Event("input", { bubbles: true }));
+      });
+    };
+    await type("#live-text", "돈을 빌려줄 수 있어?");
+    await type("#quick-goal", "정중하게 거절하기");
+    for (const mode of [
+      "실시간 자막",
+      "들려주기",
+      "직접 입력",
+      "실시간 자막",
+      "직접 입력",
+    ]) {
+      const tabs = () => [
+        ...document.querySelectorAll(".coaching-input-navigation button"),
+      ];
+      await click(tabs().find((b) => b.textContent.trim() === mode));
+      assert.deepEqual(
+        tabs().map((b) => b.textContent.trim()),
+        ["들려주기", "직접 입력", "실시간 자막"],
+      );
+      assert.deepEqual(
+        tabs()
+          .filter((b) => b.getAttribute("aria-pressed") === "true")
+          .map((b) => b.textContent.trim()),
+        [mode],
+      );
+      assert(
+        document.querySelector(
+          ".dc-coaching-grid > .dc-listen-panel .coaching-input-navigation",
+        ),
+      );
+      assert(document.querySelector(".dc-coaching-grid > .dc-answer-panel"));
+      assert.equal(
+        document.querySelector("#quick-goal").value,
+        "정중하게 거절하기",
+      );
+      if (mode === "직접 입력")
+        assert.equal(
+          document.querySelector("#live-text").value,
+          "돈을 빌려줄 수 있어?",
+        );
+    }
+    assert.equal(StreamingRecognizer.instances.length, 0);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("unsupported live captions retain the third tab and explain its disabled state", async () => {
+  const ui = await mount(LiveCoach, {
+    directEntry: true,
+    onBack() {},
+    onDemo() {},
+  });
+  try {
+    const tabs = [
+      ...document.querySelectorAll(".coaching-input-navigation button"),
+    ];
+    assert.deepEqual(
+      tabs.map((b) => b.textContent.trim()),
+      ["들려주기", "직접 입력", "실시간 자막"],
+    );
+    assert.equal(tabs[2].disabled, true);
+    assert.match(
+      document.querySelector("#live-support-hint").textContent,
+      /지원하지 않아요/,
+    );
+    assert.equal(tabs[1].disabled, false);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("changing the live goal discards a previous suggestion while preserving the transcript", async () => {
+  const profile = require("../lib/starter-data.ts").requestCards[1];
+  const ui = await mount(StreamPanel, { ...liveProps, profile }, setupSpeech);
+  try {
+    global.fetch = async () =>
+      Response.json({
+        source: "ai",
+        suggestion: "다른 시간을 정해볼까요?",
+        evidence: "약속 시간을 바꿀 수 있어?",
+        reason: "일정 조율",
+      });
+    await click(document.querySelector(".live-speech-consent input"));
+    await click(button("실시간 듣기 시작"));
+    await act(async () =>
+      StreamingRecognizer.instances[0].result("약속 시간을 바꿀 수 있어?"),
+    );
+    await act(async () => new Promise((r) => setTimeout(r, 720)));
+    assert(document.querySelector(".live-stream-reply blockquote"));
+    await click(button("듣기 멈춤"));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(StreamPanel, {
+          ...liveProps,
+          profile: { ...profile, goal: "정중하게 거절하기" },
+        }),
+      ),
+    );
+    assert.equal(document.querySelector(".live-stream-reply blockquote"), null);
+    assert.match(
+      document.querySelector(".live-caption").textContent,
+      /약속 시간을 바꿀 수 있어/,
+    );
+    assert.match(
+      document.querySelector(".live-goal-brief").textContent,
+      /정중하게 거절하기/,
+    );
   } finally {
     await ui.cleanup();
   }
