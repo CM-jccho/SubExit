@@ -25,3 +25,16 @@
 코드의 자동 샘플 대체는 제거했습니다. 그러나 결제 브라우저 연결 시간 초과로 실제 유료 전환, $5 충전, 자동 충전 해제, Google 지출 제한 설정은 실행하지 못했습니다. Vercel에 키가 있다는 사실은 유료 등급·잔액·금액 제한 설정의 증거가 아닙니다. 사용자에게 청구 금액이 제한되었다고 안내하지 않습니다.
 
 근거: [Gemini 결제·선불·지출 제한](https://ai.google.dev/gemini-api/docs/billing), [Cloud 예산 알림](https://docs.cloud.google.com/billing/docs/how-to/budgets). 2026-09-18 확인.
+
+## 직접 따라 하는 결제 화면 안내
+
+1. [API 키 목록](https://aistudio.google.com/api-keys)을 열고 **현재 Vercel 키가 속한 프로젝트**를 확인합니다. Google 로그인은 그 프로젝트에 접근 가능한 계정이어야 하며, Vercel 로그인 이메일과 같을 필요는 없습니다.
+2. [프로젝트 목록](https://aistudio.google.com/projects)에서 해당 프로젝트의 **Set up billing / 결제 설정**을 누릅니다. 국가·연락처·결제수단을 입력하거나 기존 결제 계정을 선택합니다.
+3. 선불 **Prepay** 선택지가 있으면 선택하고 **$5**부터 충전합니다. 이미 후불이면 [Billing](https://aistudio.google.com/billing)의 **Switch to Prepay** 제공 여부를 확인합니다. 회사의 다른 서비스와 공유하는 결제 계정은 전환 영향을 먼저 확인하세요.
+4. Billing의 **Available credits**에서 잔액을 확인하고 **Auto-reload**는 꺼 둡니다. 후불만 표시되면 ‘충전액까지만 사용한다’고 생각하면 안 됩니다.
+5. [Spend](https://aistudio.google.com/spend)에서 프로젝트를 선택하고 **Monthly spend cap → Edit spend cap**을 엽니다. 달러 계정은 시작 한도를 **$5**로 설정하는 안을 권장합니다. 충전과 사용 상한은 별도 설정입니다. 한도 메뉴가 없으면 해당 프로젝트의 소유자·편집자·관리자 권한과 기능 제공 여부를 확인합니다.
+6. 프로젝트의 **Paid / Tier 1**, 선불 잔액, 자동 충전 꺼짐, 월 한도를 확인합니다. 전환 반영에는 시간이 걸릴 수 있습니다.
+7. 유료 상태가 확인되면 Vercel **speakcoaching → Settings → Environment Variables**에서 Production의 `GEMINI_DATA_MODE`를 `paid`로 설정하고 재배포합니다. 같은 Google 프로젝트의 기존 API 키라면 유료 전환 때문에 재발급할 필요는 없습니다. 프로젝트를 바꿨다면 해당 프로젝트 키로 `GEMINI_API_KEY`도 갱신합니다.
+8. 운영 사이트에서 가상의 말 한 건으로 답변 코칭을 요청하고, AI 응답과 Google 사용량을 확인합니다.
+
+**총 15,000원은 원화 결제 누계 목표입니다.** $5 추가 충전 전에는 세금·환율·기존 결제액을 확인하세요. 월 한도는 다음 달 갱신되며, 선불 및 한도 차단에도 지연이 있어 절대 금액 보장은 아닙니다. 이 안내 제공만으로 결제 설정이 변경되지는 않습니다.

@@ -32,12 +32,14 @@ export class SpeechStream {
   private restart?: ReturnType<typeof setTimeout>;
   private startup?: ReturnType<typeof setTimeout>;
   private restarts = 0;
+  private silence?: ReturnType<typeof setTimeout>;
   constructor(
     private Engine: SpeechConstructor,
     private handlers: {
       caption: (final: string, interim: string) => void;
       state: (state: "connecting" | "listening") => void;
       error: (message: string) => void;
+      notice?: (message: string) => void;
     },
     private language = "ko-KR",
   ) {}
@@ -51,7 +53,15 @@ export class SpeechStream {
   }
   private connect() {
     if (!this.active) return;
-    const engine = new this.Engine();
+    let engine: SpeechEngine;
+    try {
+      engine = new this.Engine();
+    } catch {
+      this.fail(
+        "이 브라우저에서 음성 인식을 열지 못했어요. 짧게 녹음하거나 직접 입력해 주세요.",
+      );
+      return;
+    }
     this.engine = engine;
     this.currentFinal = "";
     engine.continuous = true;
@@ -69,9 +79,17 @@ export class SpeechStream {
       if (!this.active) return;
       clearTimeout(this.startup);
       this.handlers.state("listening");
+      this.silence = setTimeout(() => {
+        if (this.active)
+          this.handlers.notice?.(
+            "아직 인식된 말이 없어요. 마이크 입력과 사이트 권한을 확인해 주세요. 계속 안 되면 짧게 녹음하거나 직접 입력할 수 있어요.",
+          );
+      }, 15000);
     };
     engine.onresult = (event) => {
       if (!this.active) return;
+      clearTimeout(this.silence);
+      this.handlers.notice?.("");
       this.restarts = 0;
       let final = "",
         interim = "";
@@ -87,17 +105,28 @@ export class SpeechStream {
       );
     };
     engine.onerror = ({ error }) => {
-      if (!this.active || error === "no-speech") return;
+      if (!this.active) return;
+      if (error === "no-speech") {
+        this.handlers.notice?.(
+          "말소리를 인식하지 못했어요. 마이크 가까이에서 말하거나 짧게 녹음·직접 입력으로 이어가세요.",
+        );
+        return;
+      }
       this.fail(
-        error === "not-allowed" || error === "service-not-allowed"
-          ? "실시간 음성 인식 권한이 필요해요. 브라우저 권한을 확인하거나 짧게 녹음을 사용해 주세요."
-          : error === "network"
-            ? "음성 인식 연결이 끊겼어요. 인식된 말은 남아 있어요. 연결을 확인하고 다시 시작해 주세요."
-            : "이 브라우저에서 실시간 음성 인식을 시작하지 못했어요. 짧게 녹음이나 직접 입력을 사용해 주세요.",
+        error === "audio-capture"
+          ? "마이크 소리를 받지 못했어요. 연결된 마이크와 브라우저의 입력 장치를 확인해 주세요."
+          : error === "language-not-supported"
+            ? "이 브라우저의 음성 인식에서 한국어를 사용할 수 없어요. 짧게 녹음하거나 직접 입력해 주세요."
+            : error === "not-allowed" || error === "service-not-allowed"
+              ? "실시간 음성 인식 권한이 필요해요. 브라우저 권한을 확인하거나 짧게 녹음을 사용해 주세요."
+              : error === "network"
+                ? "음성 인식 연결이 끊겼어요. 인식된 말은 남아 있어요. 연결을 확인하고 다시 시작해 주세요."
+                : "이 브라우저에서 실시간 음성 인식을 시작하지 못했어요. 짧게 녹음이나 직접 입력을 사용해 주세요.",
       );
     };
     engine.onend = () => {
       clearTimeout(this.startup);
+      clearTimeout(this.silence);
       if (!this.active) return;
       this.committed = tailTranscript(this.committed + " " + this.currentFinal);
       if (++this.restarts > 3) {
@@ -119,6 +148,7 @@ export class SpeechStream {
   }
   stop() {
     this.active = false;
+    clearTimeout(this.silence);
     clearTimeout(this.restart);
     clearTimeout(this.startup);
     if (this.engine) {

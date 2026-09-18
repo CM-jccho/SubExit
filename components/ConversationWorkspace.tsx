@@ -288,6 +288,7 @@ export default function ConversationWorkspace() {
     useState<CompanionChoice>("auto");
   const [chatCharacter, setChatCharacter] = useState<CompanionCharacter>();
   const [recordId, setRecordId] = useState<string>();
+  const [recordingOrigin, setRecordingOrigin] = useState<View>("home");
   const [choices, setChoices] = useState<string[]>([]);
   const [ready, setReady] = useState(false),
     [storageError, setStorageError] = useState("");
@@ -382,6 +383,7 @@ export default function ConversationWorkspace() {
   }, []);
   function setView(next: View, intent: WorkspacePurpose = purpose) {
     setFocusEditing(false);
+    if (next === "recording" && view !== "recording") setRecordingOrigin(view);
     const url = workspaceUrl(window.location.href, next, intent);
     setPurpose(intent);
     if (
@@ -892,11 +894,11 @@ export default function ConversationWorkspace() {
               onNavigate={navigate}
             />
             {view === "library" && !tour && (
-              <section
-                className="purpose-alternatives"
+              <details
+                className="purpose-alternatives dc-guide-faq"
                 aria-label="대화 도움 방식"
               >
-                <p className="dc-small-caption">다른 기능으로 이동</p>
+                <summary>다른 기능으로 이동</summary>
                 <div className="purpose-support" aria-label="대화 연습 도구">
                   <button
                     className="dd-link"
@@ -915,7 +917,7 @@ export default function ConversationWorkspace() {
                     연습 상대 선택
                   </button>
                 </div>
-              </section>
+              </details>
             )}
             {view === "library" && !tour && (
               <ConversationFocusPicker
@@ -1121,6 +1123,28 @@ export default function ConversationWorkspace() {
                 view === "voicePractice" ||
                 view === "friendChat") && (
                 <VoiceWorkspace
+                  returnTo={
+                    view === "recording"
+                      ? {
+                          label:
+                            recordingOrigin === "home"
+                              ? "홈으로"
+                              : recordingOrigin === "library"
+                                ? "연습 상황 목록으로"
+                                : recordingOrigin === "more"
+                                  ? "더보기로"
+                                  : "내 기록으로",
+                          onClick: () =>
+                            navigate(
+                              ["home", "library", "more"].includes(
+                                recordingOrigin,
+                              )
+                                ? recordingOrigin
+                                : "records",
+                            ),
+                        }
+                      : undefined
+                  }
                   onRecords={() => navigate("records")}
                   onBackToPreparation={
                     view === "voicePractice" && active

@@ -4552,3 +4552,62 @@ test("recording preview is read-only, restores its opener and starts an empty re
     await ui.cleanup();
   }
 });
+
+test("recording returns to its entry screen and other functions expands into working destinations", async () => {
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(C, {}, () =>
+    window.localStorage.setItem(
+      "ddeundeun-conversation-focus-v1",
+      JSON.stringify({ version: 1, focus: "all" }),
+    ),
+  );
+  const view = () => document.querySelector(".dc-root").dataset.view;
+  try {
+    await settle();
+    await click(document.querySelector('[data-purpose="recording"]'));
+    await settle();
+    assert.equal(view(), "recording");
+    const back = document.querySelector('[aria-label="현재 기록 위치"] button');
+    assert.equal(back.textContent.trim(), "홈으로");
+    await click(back);
+    assert.equal(view(), "home");
+    await click(document.querySelector('[data-purpose="library"]'));
+    await settle();
+    const menu = document.querySelector("details.purpose-alternatives");
+    assert.equal(menu.open, false);
+    await click(menu.querySelector("summary"));
+    assert.equal(menu.open, true);
+    await click(
+      [...menu.querySelectorAll("button")].find((b) =>
+        b.textContent.includes("내 대화 돌아보기"),
+      ),
+    );
+    await settle();
+    assert.equal(view(), "recording");
+    await click(button("연습 상황 목록으로"));
+    assert.equal(view(), "library");
+    await click(document.querySelector(".purpose-alternatives summary"));
+    await click(button("답변 추천받기"));
+    assert.equal(view(), "quick");
+    await click(button("홈으로"));
+    await click(
+      document.querySelector('.dc-nav button[aria-label="내 기록"]') ||
+        button("내 기록"),
+    );
+    await settle();
+    const add = button("녹음·파일 추가");
+    await click(add);
+    await settle();
+    assert.equal(
+      document
+        .querySelector('[aria-label="현재 기록 위치"] button')
+        .textContent.trim(),
+      "내 기록으로",
+    );
+    await click(button("내 기록으로"));
+    assert.equal(view(), "records");
+    assert.equal(document.querySelector('[aria-label="현재 기록 위치"]'), null);
+  } finally {
+    await ui.cleanup();
+  }
+});

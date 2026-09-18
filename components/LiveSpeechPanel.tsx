@@ -21,7 +21,11 @@ export default function LiveSpeechPanel({
   sample,
   onActiveChange,
   consentControl,
+  available = true,
+  onUseText,
 }: {
+  onUseText?: (text: string) => void;
+  available?: boolean;
   consentControl?: ReactNode;
   profile?: ContextProfile;
   scenario: string;
@@ -76,8 +80,8 @@ export default function LiveSpeechPanel({
     };
   }, []);
   useEffect(() => {
-    if (!consent || !adult) stop();
-  }, [consent, adult]);
+    if (!available || !consent || !adult) stop();
+  }, [available, consent, adult]);
   function makeQueue(id: number) {
     queue.current?.cancel();
     queue.current = new LatestCoachQueue<CoachResponse>({
@@ -126,7 +130,7 @@ export default function LiveSpeechPanel({
   }
   function start() {
     const Engine = speechConstructor();
-    if (!Engine || !speechConsent || !consent || !adult) return;
+    if (!Engine || !available || !speechConsent || !consent || !adult) return;
     stop();
     const id = ++generation.current;
     setError("");
@@ -146,6 +150,9 @@ export default function LiveSpeechPanel({
         finalText.current = final;
         setCaption({ final, interim });
         queue.current?.update(final);
+      },
+      notice: (message) => {
+        if (id === generation.current) setNotice(message);
       },
       error: (message) => {
         if (id !== generation.current) return;
@@ -219,9 +226,11 @@ export default function LiveSpeechPanel({
             <span>
               {active
                 ? "자막과 답변 코칭을 자동으로 갱신해요"
-                : !consent || !adult || !speechConsent
-                  ? "전송 동의를 확인하면 시작할 수 있어요"
-                  : "준비됐어요. 듣기를 시작해 주세요"}
+                : !available
+                  ? "AI 연결을 확인해 주세요"
+                  : !consent || !adult || !speechConsent
+                    ? "전송 동의를 확인하면 시작할 수 있어요"
+                    : "준비됐어요. 듣기를 시작해 주세요"}
             </span>
           </div>
           <button
@@ -236,7 +245,9 @@ export default function LiveSpeechPanel({
                   }
                 : start
             }
-            disabled={!active && (!speechConsent || !consent || !adult)}
+            disabled={
+              !active && (!available || !speechConsent || !consent || !adult)
+            }
           >
             <Icon name={active ? "pause" : "mic"} size={20} />
             {active ? "듣기 멈춤" : "실시간 듣기 시작"}
@@ -304,6 +315,12 @@ export default function LiveSpeechPanel({
           )}
         </aside>
       </div>
+      {!available && (
+        <p role="status" className="live-stream-note">
+          AI 연결을 확인하지 못해 듣기를 시작할 수 없어요. 잠시 후 다시 열어
+          주세요.
+        </p>
+      )}
       {error && (
         <div>
           <p className="dd-error" role="alert">
@@ -328,6 +345,19 @@ export default function LiveSpeechPanel({
         <p role="status" className="live-stream-note">
           {notice}
         </p>
+      )}
+      {onUseText && (
+        <button
+          className="dd-secondary"
+          onClick={() => {
+            stop();
+            onUseText(
+              [caption.final, caption.interim].filter(Boolean).join(" "),
+            );
+          }}
+        >
+          자막을 직접 입력으로 이어가기
+        </button>
       )}
       <p className="live-stream-note">
         자막은 인식되는 대로 보여주고, 답변 코칭은 확정된 말을 바탕으로

@@ -1483,3 +1483,77 @@ test("live settings cannot start with speech consent alone; the selected context
     await ui.cleanup();
   }
 });
+
+test("direct entry opens live captions before consent but does not start the microphone", async () => {
+  const ui = await mount(
+    LiveCoach,
+    { directEntry: true, onBack() {}, onDemo() {} },
+    setupSpeech,
+  );
+  try {
+    const tab = button("실시간 자막");
+    assert(tab && !tab.disabled);
+    await click(tab);
+    assert(document.querySelector(".live-stream-settings .vn-consent"));
+    assert(button("실시간 듣기 시작").disabled);
+    assert.equal(StreamingRecognizer.instances.length, 0);
+    await click(button("짧게 녹음 · 직접 입력"));
+    assert(document.querySelector("#live-text"));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("live captions explain unavailable AI and keep microphone stopped despite consent", async () => {
+  const ui = await mount(
+    StreamPanel,
+    { ...liveProps, available: false },
+    setupSpeech,
+  );
+  try {
+    await click(document.querySelector(".live-speech-consent input"));
+    assert(button("실시간 듣기 시작").disabled);
+    assert.match(document.body.textContent, /AI 연결을 확인하지 못해/);
+    assert.equal(StreamingRecognizer.instances.length, 0);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("live captions can stop and transfer into typing without losing existing text or making an AI request", async () => {
+  let posts = 0;
+  const ui = await mount(
+    LiveCoach,
+    { directEntry: true, onBack() {}, onDemo() {} },
+    () => {
+      setupSpeech();
+      global.fetch = async (url, init) => {
+        if (init?.method === "POST") posts++;
+        return Response.json(config);
+      };
+    },
+  );
+  try {
+    const { Simulate } = require("react-dom/test-utils");
+    await act(async () =>
+      Simulate.change(document.querySelector("#live-text"), {
+        target: { value: "먼저 적은 말" },
+      }),
+    );
+    await click(button("실시간 자막"));
+    await click(document.querySelector(".vn-consent input"));
+    await click(document.querySelector(".live-speech-consent input"));
+    await click(button("실시간 듣기 시작"));
+    const engine = StreamingRecognizer.instances.at(-1);
+    await act(async () => engine.result("새로 들은 말", "확인 중"));
+    await click(button("자막을 직접 입력으로 이어가기"));
+    assert.equal(
+      document.querySelector("#live-text").value,
+      "먼저 적은 말\n새로 들은 말 확인 중",
+    );
+    assert(engine.aborted);
+    assert.equal(posts, 0);
+  } finally {
+    await ui.cleanup();
+  }
+});

@@ -698,11 +698,7 @@ export default function LiveCoach({
               <button
                 aria-pressed={voiceStyle === "continuous"}
                 className={voiceStyle === "continuous" ? "active" : ""}
-                disabled={
-                  phase !== "idle" ||
-                  liveActive ||
-                  (directEntry && (!allowed || !config.voiceAvailable))
-                }
+                disabled={phase !== "idle" || liveActive}
                 onClick={() => setVoiceStyle("continuous")}
               >
                 실시간 자막 · 코칭
@@ -726,6 +722,22 @@ export default function LiveCoach({
           {supportsLive && voiceStyle === "continuous" ? (
             <>
               <LiveSpeechPanel
+                available={config.available}
+                onUseText={(text) => {
+                  if (text.trim())
+                    setInput((previous) =>
+                      previous.trim() && previous.trim() !== text.trim()
+                        ? previous.trim() + "\n" + text.trim()
+                        : text.trim(),
+                    );
+                  setVoiceStyle("short");
+                  setInputMode("text");
+                  setNotice(
+                    text.trim()
+                      ? "인식된 자막을 가져왔어요. 내용을 확인한 뒤 답변 코칭을 요청해 주세요."
+                      : "직접 입력으로 바꿨어요. 상대가 한 말을 적어 주세요.",
+                  );
+                }}
                 consentControl={
                   directEntry ? (
                     <AIConsent
@@ -769,9 +781,7 @@ export default function LiveCoach({
                   </button>
                   {directEntry && supportsLive && (
                     <button
-                      disabled={
-                        phase !== "idle" || !allowed || !config.voiceAvailable
-                      }
+                      disabled={phase !== "idle" || liveActive}
                       onClick={() => setVoiceStyle("continuous")}
                     >
                       실시간 자막

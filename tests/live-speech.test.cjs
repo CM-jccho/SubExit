@@ -147,3 +147,52 @@ test("repeated recognition disconnects stop instead of creating an endless resta
   assert.equal(errors.length, 1);
   speech.stop();
 });
+
+test("silent recognition provides recovery guidance and clears it on actual speech", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let engine;
+  const notices = [];
+  class Engine {
+    constructor() {
+      engine = this;
+    }
+    start() {
+      this.onstart();
+    }
+    abort() {}
+  }
+  const speech = new SpeechStream(Engine, {
+    caption() {},
+    state() {},
+    error: assert.fail,
+    notice: (n) => notices.push(n),
+  });
+  speech.start();
+  await tick(t, 15000);
+  assert.match(notices.at(-1), /아직 인식된 말이 없어요/);
+  engine.onerror({ error: "no-speech" });
+  assert.match(notices.at(-1), /말소리를 인식하지 못했어요/);
+  engine.onresult({
+    results: [{ isFinal: true, 0: { transcript: "내일 만날까" } }],
+  });
+  assert.equal(notices.at(-1), "");
+  speech.stop();
+  await tick(t, 30000);
+  assert.equal(notices.at(-1), "");
+});
+
+test("unusable recognizer construction reports an error instead of leaving the screen stuck", () => {
+  const errors = [];
+  class Engine {
+    constructor() {
+      throw new Error("unavailable");
+    }
+  }
+  new SpeechStream(Engine, {
+    caption() {},
+    state() {},
+    error: (e) => errors.push(e),
+  }).start();
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /음성 인식을 열지 못했어요/);
+});

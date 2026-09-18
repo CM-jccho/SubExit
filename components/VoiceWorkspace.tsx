@@ -94,7 +94,9 @@ export default function VoiceWorkspace({
   onRoom,
   onRecords,
   onBackToPreparation,
+  returnTo,
 }: {
+  returnTo?: { label: string; onClick: () => void };
   onBackToPreparation?: () => void;
   onRoom?: () => void;
   onRecords?: () => void;
@@ -1101,11 +1103,17 @@ export default function VoiceWorkspace({
               className="dd-back"
               disabled={captureBusy}
               onClick={() =>
-                onBackToPreparation ? onBackToPreparation() : open(null)
+                onBackToPreparation
+                  ? onBackToPreparation()
+                  : returnTo
+                    ? returnTo.onClick()
+                    : open(null)
               }
             >
               <Icon name="back" size={18} />
-              {onBackToPreparation ? "연습 준비로" : "내 기록으로"}
+              {onBackToPreparation
+                ? "연습 준비로"
+                : returnTo?.label || "내 기록으로"}
             </button>
             <span className="breadcrumb-separator" aria-hidden="true">
               /
