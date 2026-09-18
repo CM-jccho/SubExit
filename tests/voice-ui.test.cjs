@@ -1686,3 +1686,59 @@ test("changing the live goal discards a previous suggestion while preserving the
     await ui.cleanup();
   }
 });
+
+test("quota recovery clears only a previous local wait and the next explicit request still respects the provider limit", async () => {
+  const QuotaHelp = require("../components/QuotaHelp.tsx").default;
+  const client = require("../lib/ai-client.ts");
+  function Example() {
+    const [draft, setDraft] = React.useState("돈을 빌려줄 수 있어?");
+    return React.createElement(
+      "div",
+      null,
+      React.createElement("textarea", {
+        value: draft,
+        onChange: (e) => setDraft(e.target.value),
+      }),
+      React.createElement(QuotaHelp, {
+        error: "오늘 제공되는 베타테스트 AI 이용량을 모두 사용했어요.",
+      }),
+    );
+  }
+  const ui = await mount(Example);
+  try {
+    let calls = 0;
+    global.fetch = async () => {
+      calls++;
+      return Response.json(
+        { code: "provider_rate_limit", quotaKind: "daily" },
+        { status: 429 },
+      );
+    };
+    await assert.rejects(() =>
+      client.aiFetch("/api/coach", { method: "POST" }),
+    );
+    assert(client.readAIHold());
+    await assert.rejects(() =>
+      client.aiFetch("/api/coach", { method: "POST" }),
+    );
+    assert.equal(calls, 1);
+    await click(button("이용 재개 후 다시 시도"));
+    assert.equal(client.readAIHold(), null);
+    assert.equal(calls, 1, "recovery alone must not send the user's input");
+    assert.equal(
+      document.querySelector("textarea").value,
+      "돈을 빌려줄 수 있어?",
+    );
+    assert.match(
+      document.querySelector('[role="status"]').textContent,
+      /원래 요청/,
+    );
+    await assert.rejects(() =>
+      client.aiFetch("/api/coach", { method: "POST" }),
+    );
+    assert.equal(calls, 2);
+    assert.equal(client.readAIHold().reason, "daily");
+  } finally {
+    await ui.cleanup();
+  }
+});
