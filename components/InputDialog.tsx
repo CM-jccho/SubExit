@@ -15,6 +15,7 @@ export default function InputDialog({
   focusTarget,
   className = "",
   closeLabel,
+  showCloseButton = true,
   children,
 }: {
   open: boolean;
@@ -24,6 +25,7 @@ export default function InputDialog({
   focusTarget?: RefObject<HTMLElement>;
   className?: string;
   closeLabel?: string;
+  showCloseButton?: boolean;
   children: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null),
@@ -102,15 +104,17 @@ export default function InputDialog({
             <h2 id={titleId} ref={heading} tabIndex={-1}>
               {title}
             </h2>
-            <button
-              type="button"
-              className="dd-link"
-              disabled={busy}
-              onClick={onClose}
-              aria-label={closeLabel || `${title} 닫기`}
-            >
-              닫기
-            </button>
+            {showCloseButton && (
+              <button
+                type="button"
+                className="dd-link"
+                disabled={busy}
+                onClick={onClose}
+                aria-label={closeLabel || `${title} 닫기`}
+              >
+                닫기
+              </button>
+            )}
           </header>
           <div ref={body} className="input-dialog-body">
             {children}

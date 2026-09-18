@@ -120,7 +120,7 @@
   background: #e9eddf;
 }
 .dc-help-button {
-  display: none;
+  display: flex;
 }
 .dc-shell main {
   padding: 35px 0 38px;

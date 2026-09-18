@@ -37,7 +37,8 @@ import VoiceWorkspace from "./VoiceWorkspace";
 import VoiceComposer from "./VoiceComposer";
 import TermNotebook from "./TermNotebook";
 import { Companion, HelpTip, Icon } from "./CompanionUI";
-import FirstConversation, { TOUR_KEY } from "./FirstConversation";
+import FirstConversation from "./FirstConversation";
+import ScreenHelp from "./ScreenHelp";
 import CompanionPicker from "./CompanionPicker";
 import CompanionRoom from "./CompanionRoom";
 import { CompanionProvider } from "./CompanionTheme";
@@ -230,6 +231,7 @@ export default function ConversationWorkspace() {
   const [choices, setChoices] = useState<string[]>([]);
   const [ready, setReady] = useState(false),
     [storageError, setStorageError] = useState("");
+  const [helpOpen, setHelpOpen] = useState(false);
   const [tourStep, setTourStep] = useState(0);
   const [tour, setTour] = useState(false),
     [editFields, setEditFields] = useState(false);
@@ -259,19 +261,6 @@ export default function ConversationWorkspace() {
         if (!mounted) return;
         setCards(readCards());
         setReady(true);
-        try {
-          if (
-            focusInfo(parseFocus(localStorage.getItem(FOCUS_KEY)))?.cardIds
-              .length &&
-            !localStorage.getItem(TOUR_KEY) &&
-            workspaceView(window.location.search) === "library" &&
-            workspacePurpose(window.location.search) === "practice"
-          ) {
-            setView("library");
-            setTourStep(0);
-            setTour(true);
-          }
-        } catch {}
       });
     const abort = new AbortController();
     fetch("/api/coach", { signal: abort.signal })
@@ -326,6 +315,7 @@ export default function ConversationWorkspace() {
       setToast("");
       setError("");
       setTour(false);
+      setHelpOpen(false);
       setPurpose(workspacePurpose(window.location.search));
       setViewState(workspaceView(window.location.search));
       window.scrollTo({ top: 0 });
@@ -541,6 +531,7 @@ export default function ConversationWorkspace() {
   }
   function beginTour() {
     if (!canLeaveWorkspace()) return;
+    setHelpOpen(false);
     setFocusEditing(false);
     cancelRequest();
     setView("library", "practice");
@@ -601,16 +592,6 @@ export default function ConversationWorkspace() {
         FOCUS_KEY,
         JSON.stringify({ version: 1, focus: next }),
       );
-      if (
-        view === "library" &&
-        purpose === "practice" &&
-        next !== "all" &&
-        next !== "custom" &&
-        !localStorage.getItem(TOUR_KEY)
-      ) {
-        setTourStep(0);
-        setTour(true);
-      }
     } catch {
       setToast(
         "선택은 이번 화면에 적용했어요. 브라우저 저장이 제한되어 재방문하면 다시 선택해야 해요.",
@@ -776,8 +757,8 @@ export default function ConversationWorkspace() {
             </nav>
             <button
               className="dc-help-button dc-icon-button"
-              aria-label="첫 사용 가이드 다시 보기"
-              onClick={beginTour}
+              aria-label="이 화면 사용법"
+              onClick={() => setHelpOpen(true)}
             >
               <Icon name="help" />
             </button>
@@ -1865,9 +1846,20 @@ export default function ConversationWorkspace() {
             <a href="/evidence">서비스·데이터 안내</a>
           </footer>
         </div>
+        {helpOpen && (
+          <ScreenHelp
+            view={view}
+            purpose={purpose}
+            choosingFocus={choosingFocus}
+            onClose={() => setHelpOpen(false)}
+          />
+        )}
         {tour && (
           <FirstConversation
             step={tourStep}
+            scene={
+              tourStep === 0 ? sampleCards[0] || tourCard : active || tourCard
+            }
             onStep={changeTourStep}
             onClose={() => setTour(false)}
           />
