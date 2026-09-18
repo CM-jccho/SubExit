@@ -11,9 +11,9 @@ html {
   overflow: hidden;
   overscroll-behavior: contain;
   border: 1px solid #d5ddcf;
-  border-radius: 20px;
+  border-radius: var(--r-lg);
   padding: 20px;
-  background: #fffefa;
+  background: var(--surface-card);
   color: #334b40;
   box-shadow: 0 16px 60px #18302630;
 }
@@ -57,7 +57,7 @@ html {
   min-height: 44px;
 }
 .input-dialog :is(input, textarea, select) {
-  font-size: 16px;
+  font-size: var(--t-lead);
 }
 .input-dialog .vn-composer {
   border: 0;
@@ -93,12 +93,12 @@ html {
 }
 .input-dialog-note {
   color: #53674f;
-  font-size: 13px;
+  font-size: var(--t-body);
   line-height: 1.6;
 }
 .input-dialog-status {
   min-height: 24px;
-  font-size: 14px;
+  font-size: var(--t-body);
   margin: 8px 0;
 }
 @media (max-width: 600px) {

@@ -5,9 +5,9 @@
 .compact-field-title {
   display: block;
   margin-bottom: 7px;
-  font-size: 14px;
+  font-size: var(--t-body);
   font-weight: 700;
-  color: #405346;
+  color: var(--ink-500);
 }
 .compact-field-summary {
   display: flex;
@@ -18,8 +18,8 @@
   padding: 15px;
   border: 1px solid #d9e1d2;
   border-radius: 14px;
-  background: #fffefb;
-  color: #405346;
+  background: var(--surface-card);
+  color: var(--ink-500);
   text-align: left;
 }
 .compact-field-summary span {
@@ -29,12 +29,12 @@
   overflow: hidden;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-size: 14px;
+  font-size: var(--t-body);
   line-height: 1.6;
 }
 .compact-field-summary b {
   flex: none;
-  font-size: 12px;
+  font-size: var(--t-cap);
   color: #345c41;
 }
 .compact-field-editor {
@@ -51,24 +51,28 @@
 }
 .compact-field-examples button {
   border: 1px solid #cad8c1;
-  border-radius: 20px;
+  border-radius: var(--r-lg);
   padding: 8px 12px;
-  font-size: 13px;
+  font-size: var(--t-body);
   background: #fff;
-  color: #405346;
+  color: var(--ink-500);
   text-align: left;
 }
 .compact-field-examples small {
   width: 100%;
-  font-size: 12px;
+  font-size: var(--t-cap);
 }
 .compact-field-editor details {
   margin-top: 12px;
-  font-size: 12px;
+  font-size: var(--t-cap);
 }
 .launch-intro {
   text-align: center;
-  background: radial-gradient(ellipse at 50% 20%, #e7f0d4, #fffefa 75%);
+  background: radial-gradient(
+    ellipse at 50% 20%,
+    #e7f0d4,
+    var(--surface-card) 75%
+  );
 }
 .launch-intro .input-dialog-head {
   text-align: left;
@@ -107,7 +111,7 @@
 }
 .launch-progress [aria-current] span {
   width: 24px;
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   background: #365e49;
 }
 .launch-intro .dd-full + .dd-full {
@@ -118,7 +122,7 @@
   color: #35674a;
 }
 .launch-intro p {
-  font-size: 14px;
+  font-size: var(--t-body);
   line-height: 1.7;
 }
 .launch-orbit {
@@ -142,7 +146,7 @@
   padding: 13px 17px;
   margin: 12px 0;
   max-width: 88%;
-  font-size: 14px;
+  font-size: var(--t-body);
   line-height: 1.5;
   text-align: left;
   animation: intro-arrive 0.8s both;
@@ -209,7 +213,7 @@
 }
 .gesture-hint {
   color: #647362;
-  font-size: 12px;
+  font-size: var(--t-cap);
   text-align: center;
   margin: 10px 0;
 }
@@ -226,7 +230,7 @@
   background: #edf3e5;
 }
 .compact-voice-consent p {
-  font-size: 14px;
+  font-size: var(--t-body);
   line-height: 1.6;
 }
 .compact-voice-consent button {
@@ -234,13 +238,13 @@
   margin: 4px 6px 4px 0;
 }
 .launch-swipe[data-swiping] {
-  border-radius: 22px;
-  background: #fffef9;
+  border-radius: var(--r-lg);
+  background: var(--surface-card);
   box-shadow: 0 12px 32px #263c2926;
   will-change: transform;
 }
 .launch-swipe {
-  border-radius: 22px;
+  border-radius: var(--r-lg);
 }
 @media (max-width: 900px) {
   .launch-scene {

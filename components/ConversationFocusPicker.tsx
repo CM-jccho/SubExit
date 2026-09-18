@@ -80,7 +80,7 @@ export default function ConversationFocusPicker({
             내 상황 직접 설명하기
           </button>
         )}
-        <button className="dd-link" onClick={() => choose("all")}>
+        <button className="dd-secondary" onClick={() => choose("all")}>
           아직 정하지 않았어요 · 전체 둘러보기
         </button>
         {value && (

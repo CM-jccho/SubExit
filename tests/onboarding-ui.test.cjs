@@ -117,6 +117,8 @@ test("help preserves the current screen; the walkthrough runs only when requeste
     null,
     "choosing a focus must not force a walkthrough",
   );
+  assert.equal(document.querySelector('[aria-label="대화 검색"]'), null);
+  await click('.focus-list-filters button[aria-pressed="false"]');
   const libraryUrl = window.location.href;
   const search = document.querySelector('[aria-label="대화 검색"]');
   const { Simulate } = require("react-dom/test-utils");

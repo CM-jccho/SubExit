@@ -59,18 +59,25 @@ export function AIConsent({
         />
         <span>
           만 18세 이상이며 음성·문장의 Gemini 전송에 동의해요.
-          <small>
-            문자 변환·코칭·복기·용어 설명에 필요한 입력을 보내요. 다른 사람의
-            말은 참여자의 동의를 받은 뒤 보내요. 이번 이용 중 한 번만 확인해요.
-          </small>
           {config.sampleOnly && (
             <small>
-              개인정보·기밀 없는 자작 연습만 보내요. 무료 API 입력은 Google 제품
+              개인정보 없는 자작 연습만 보내주세요. 무료 API 입력은 Google 제품
               개선에 사용될 수 있어요.
             </small>
           )}
         </span>
       </label>
+      <details className="consent-details">
+        <summary>전송 항목과 동의 안내</summary>
+        <p>
+          문자 변환·코칭·복기·용어 설명에 필요한 음성이나 문장을 보내요. 다른
+          사람의 말은 참여자의 동의를 받은 뒤 보내주세요.
+        </p>
+        <p>
+          이번 이용 중 한 번만 확인해요. 상단 동의 설정에서 철회할 수 있고
+          새로고침하면 초기화돼요.
+        </p>
+      </details>
     </ConsentDisclosure>
   );
 }
@@ -503,6 +510,23 @@ export default function VoiceComposer({
     }
   }
   const working = phase !== "idle";
+  const submitAction = (
+    <button
+      type="button"
+      className="dd-primary dd-full"
+      disabled={
+        (!text.trim() && !clip) ||
+        working ||
+        disabled ||
+        submitDisabled ||
+        (requireText && !text.trim())
+      }
+      onClick={() => void use()}
+    >
+      {phase === "saving" ? "저장 중" : submitLabel}
+      <Icon name="send" size={17} />
+    </button>
+  );
   const composer = (
     <section
       className={"vn-composer " + (textFirst ? "vn-chat-composer" : "")}
@@ -806,22 +830,7 @@ export default function VoiceComposer({
           <QuotaHelp error={error} />
         </>
       )}
-      {(clip || text) && (
-        <button
-          type="button"
-          className="dd-primary dd-full"
-          disabled={
-            working ||
-            disabled ||
-            submitDisabled ||
-            (requireText && !text.trim())
-          }
-          onClick={() => void use()}
-        >
-          {phase === "saving" ? "저장 중" : submitLabel}
-          <Icon name="send" size={17} />
-        </button>
-      )}
+      {!inDialog && submitAction}
     </section>
   );
   if (!inDialog) return composer;
@@ -879,6 +888,7 @@ export default function VoiceComposer({
         busy={working}
         onClose={() => setExpanded(false)}
         focusTarget={editor}
+        footer={submitAction}
       >
         {composer}
         <p className="input-dialog-note">

@@ -409,11 +409,6 @@ export default function LiveCoach({
           </p>
           <h1>지금 대화 도움받기</h1>
         </div>
-        <HelpTip label="코칭은 어떻게 쓰나요?">
-          대면 대화나 다른 기기의 스피커폰 옆에서 사용해요. 지원 브라우저에서는
-          계속 들으며 자막과 코칭을 보여줘요. 같은 휴대폰의 통화 음성을 직접
-          가져오거나 화자를 자동으로 구분하지는 않아요.
-        </HelpTip>
       </header>
       <div className="coach-live-presence" aria-label="코치 상태" role="status">
         <Companion
@@ -440,8 +435,14 @@ export default function LiveCoach({
                     ? "다음 한마디가 도착했어요"
                     : "필요한 순간, 함께 준비해요"}
           </strong>
-          <span>
-            {liveActive ? "실시간 자막 · 다음 한마디 자동 갱신" : status}
+          <span
+            className={
+              "mic-status " +
+              (liveActive || phase === "listening" ? "is-listening" : "")
+            }
+          >
+            <i aria-hidden="true" />
+            {liveActive ? "듣는 중 · 실시간 자막과 다음 한마디" : status}
           </span>
         </div>
       </div>
@@ -627,6 +628,9 @@ export default function LiveCoach({
                     className={inputMode === "voice" ? "active" : ""}
                     aria-pressed={inputMode === "voice"}
                     disabled={phase !== "idle" || sampleMode}
+                    aria-describedby={
+                      sampleMode ? "sample-voice-reason" : undefined
+                    }
                     onClick={() => setInputMode("voice")}
                   >
                     <Icon name="mic" size={18} />
@@ -642,6 +646,12 @@ export default function LiveCoach({
                     직접 입력
                   </button>
                 </div>
+                {sampleMode && (
+                  <p className="action-reason" id="sample-voice-reason">
+                    샘플에서는 직접 입력으로 체험해요. 음성은 AI 모드에서 사용할
+                    수 있어요.
+                  </p>
+                )}
                 {inputMode === "voice" && (
                   <div
                     className={
@@ -757,7 +767,9 @@ export default function LiveCoach({
                       rows={3}
                     />
                     <button
-                      className="dd-primary dd-full"
+                      className={
+                        (result ? "dd-secondary" : "dd-primary") + " dd-full"
+                      }
                       disabled={
                         (!sampleMode && (!allowed || !config.available)) ||
                         phase !== "idle" ||
@@ -812,17 +824,14 @@ export default function LiveCoach({
                 <div className="dc-answer-heading">
                   <Icon name="chat" size={20} />
                   <span>{character.name}의 한마디</span>
-                  {result && (
-                    <span className="dc-ai-label">
-                      {result.sample ? "사전 작성 샘플" : "AI 제안"}
-                    </span>
-                  )}
+                  {result?.sample ? (
+                    <SampleNotice sample={result.sample} compact badge />
+                  ) : result ? (
+                    <span className="dc-ai-label">AI 제안</span>
+                  ) : null}
                 </div>
                 {result ? (
                   <>
-                    {result.sample && (
-                      <SampleNotice sample={result.sample} compact />
-                    )}
                     <p className="dc-answer-label">이렇게 말해볼까요?</p>
                     {profile && (
                       <p className="dc-answer-goal">
@@ -838,7 +847,7 @@ export default function LiveCoach({
                     </blockquote>
                     <div className="dc-answer-actions">
                       <button
-                        className="dd-secondary"
+                        className="dd-primary"
                         onClick={async () => {
                           try {
                             await navigator.clipboard.writeText(
@@ -856,7 +865,7 @@ export default function LiveCoach({
                         {copied ? "복사했어요" : "문장 복사"}
                       </button>
                       <button
-                        className="dd-link"
+                        className="dd-secondary"
                         disabled={phase !== "idle"}
                         onClick={() => {
                           setResult(null);
@@ -890,7 +899,23 @@ export default function LiveCoach({
                   </>
                 ) : (
                   <div className="dc-answer-wait">
+                    {profile && (
+                      <div className="live-goal-brief">
+                        <h2>이번 대화에서 기억할 것</h2>
+                        <p>
+                          <strong>원하는 결과</strong>
+                          {profile.goal}
+                        </p>
+                        {profile.boundaries && (
+                          <p className="live-boundary">
+                            <strong>지킬 선</strong>
+                            {profile.boundaries}
+                          </p>
+                        )}
+                      </div>
+                    )}
                     <Companion
+                      small
                       mood={
                         phase === "coaching" || phase === "transcribing"
                           ? "think"

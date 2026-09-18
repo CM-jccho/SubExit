@@ -696,12 +696,11 @@ test("home practice opens a context card and practice keeps a discoverable recor
         .querySelector("h1")
         .textContent.includes("동료에게 검토 부탁하기"),
     );
-    await click(button("내 기록으로"));
+    await click(button("연습 준비로"));
+    assert.equal(document.querySelector(".dc-root").dataset.view, "detail");
+    await click(button("내 기록"));
     assert.equal(document.querySelector("h1").textContent, "내 기록");
-    const examples = [...document.querySelectorAll("details")].find((d) =>
-      d.querySelector("summary")?.textContent.includes("녹음 분석 예시"),
-    );
-    assert(examples && !examples.open);
+    assert(document.querySelector('.record-examples h2').textContent.includes("예시로 먼저"));
     assert(button("녹음·파일 추가"));
   } finally {
     await ui.cleanup();
@@ -2395,6 +2394,8 @@ test("editing practice interest hides only its list and preserves search when ca
       null,
     );
     await click(button("미리 연습하기"));
+    assert.equal(document.querySelector("#card-search"), null, "Small curated lists do not need search");
+    await click([...document.querySelectorAll(".focus-list-filters button")].find(b => b.textContent.includes("모든 분야 예시")));
     await change(document.querySelector("#card-search"), "상담 시간");
     await click(button("선택 바꾸기"));
     assert(document.querySelector('[aria-label="대화 맥락 선택"]'));
@@ -2410,7 +2411,7 @@ test("editing practice interest hides only its list and preserves search when ca
       document.querySelector(".focus-workspace-content").hidden,
       false,
     );
-    assert.equal(document.querySelector("#card-search").value, "");
+    assert.equal(document.querySelector("#card-search"), null);
     await click(button("홈"));
     assert.equal(document.querySelectorAll("[data-purpose]").length, 3);
     assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
@@ -2979,6 +2980,9 @@ test("voice input dialog preserves a closed draft, blocks duplicate save and esc
   try {
     assert(!document.querySelector("textarea"));
     await click(button("답변 쓰기"));
+    assert(button("기록 저장").disabled, "Empty input retains a disabled save action");
+    assert(button("기록 저장").closest(".input-dialog-footer"));
+    assert.equal(button("기록 저장").closest(".input-dialog-body"), null);
     await change(
       document.querySelector("textarea"),
       "내일 오전에 답변드릴게요.",
@@ -3108,6 +3112,8 @@ test("explicit sample practice preference survives leaving and reopening without
       ),
     );
     await settle();
+    assert.equal(document.querySelector(".dc-sample-switch input"), null);
+    await click(button("설정·대화 목표"));
     assert.equal(
       document.querySelector(".dc-sample-switch input").checked,
       true,
@@ -3336,7 +3342,7 @@ test("returning from active practice updates the record list, URL and primary na
       "아직 보내지 않은 말",
     );
     window.confirm = () => false;
-    await click(button("내 기록으로"));
+    await click(button("내 기록"));
     assert.equal(
       document.querySelector(".vn-chat-composer textarea").value,
       "아직 보내지 않은 말",
@@ -3346,7 +3352,7 @@ test("returning from active practice updates the record list, URL and primary na
       null,
     );
     window.confirm = () => true;
-    await click(button("내 기록으로"));
+    await click(button("내 기록"));
     await settle();
     assert.equal(document.querySelector("h1").textContent, "내 기록");
     assert.equal(window.location.search, "?view=records");
@@ -4277,4 +4283,50 @@ test("ordinary transcript prose has no word buttons and retains its exact text",
     assert.equal(document.querySelector(".vn-transcript-text").textContent, text);
     assert.equal(document.querySelectorAll(".vn-transcript-text button").length, 0);
   } finally { await ui.cleanup(); }
+});
+
+test("records combine source filters, name sorting and search without mutating saved rows", async () => {
+  const Workspace = require("../components/VoiceWorkspace.tsx").default;
+  const ui = await mount(Workspace, { config, onChooseCard() {} });
+  try {
+    await settle();
+    await act(async () => {
+      for (const [id,title,isSample,updatedAt] of [
+        ["filter-z","하루 기록",false,"2026-09-18T01:00:00.000Z"],
+        ["filter-a","가족 기록",false,"2026-09-17T01:00:00.000Z"],
+        ["filter-s","샘플 기록",true,"2026-09-16T01:00:00.000Z"],
+      ]) await store.putSession({...session(),id,title,isSample,updatedAt});
+      ui.root.render(null);
+    });
+    await act(async () => ui.root.render(React.createElement(Workspace, {config,onChooseCard(){}})));
+    await settle();
+    const titles=()=>[...document.querySelectorAll('.vn-session-card strong')].map(x=>x.textContent);
+    await click(button("내 기록"));
+    assert.deepEqual(titles(),["하루 기록","가족 기록"]);
+    assert.equal(document.querySelector('.record-examples'),null);
+    await change(document.querySelector('[aria-label="기록 정렬"]'),"name");
+    assert.deepEqual(titles(),["가족 기록","하루 기록"]);
+    await change(document.querySelector('[aria-label="대화 기록 검색"]'),"가족");
+    assert.deepEqual(titles(),["가족 기록"]);
+    await click(button("샘플"));
+    assert.deepEqual(titles(),[]);
+    await change(document.querySelector('[aria-label="대화 기록 검색"]'),"");
+    assert.deepEqual(titles(),["샘플 기록"]);
+    assert(document.querySelector('.record-examples'));
+    assert.equal((await store.getSession("filter-z")).title,"하루 기록");
+  } finally {await ui.cleanup();}
+});
+
+test("home distinguishes detected speech capability from permissions and offers a text fallback", async () => {
+  const Home = require("../components/HomeActions.tsx").default;
+  for (const supported of [false,true]) {
+    const ui = await mount(Home,{onLive(){},onNavigate(){},onResume(){}},()=>{
+      if(supported) window.SpeechRecognition=class {};
+    });
+    try {
+      const message=document.querySelector('#live-input-limit').textContent;
+      assert(message.includes(supported?"권한과 연결 상태":"직접 입력하거나 짧게 녹음"));
+      assert.equal(document.querySelectorAll('[data-purpose]').length,3);
+    } finally {await ui.cleanup();}
+  }
 });

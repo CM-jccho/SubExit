@@ -158,7 +158,12 @@ export default function LiveSpeechPanel({
     <section className="live-stream" aria-label="실시간 자막과 코칭">
       <div className="live-stream-toolbar">
         <div role="status">
-          <strong>
+          <strong
+            className={
+              "mic-status " + (state === "listening" ? "is-listening" : "")
+            }
+          >
+            <i aria-hidden="true" />
             {state === "listening"
               ? "계속 듣고 있어요"
               : state === "connecting"
@@ -189,6 +194,11 @@ export default function LiveSpeechPanel({
           {active ? "듣기 멈춤" : "실시간 듣기 시작"}
         </button>
       </div>
+      {!speechConsent && (
+        <p className="action-reason">
+          아래 음성 인식 전송에 동의하면 듣기를 시작할 수 있어요.
+        </p>
+      )}
       {!speechConsent && (
         <label className="dd-check live-speech-consent">
           <input

@@ -26,6 +26,9 @@ export default function PracticeNavigation({
         <Icon name="back" size={16} />
         {support ? "더보기로" : "홈으로"}
       </button>
+      <span className="breadcrumb-separator" aria-hidden="true">
+        /
+      </span>
       <span aria-current="location">
         {view === "library" && purpose === "live"
           ? "지금 대화 도움받기"

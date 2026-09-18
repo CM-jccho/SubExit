@@ -1,4 +1,5 @@
 "use client";
+import InputDialog from "./InputDialog";
 import { waitForPartnerBeat } from "@/lib/chat-timing";
 import { useAIConsent } from "./ConsentSession";
 import { canLeaveWorkspace } from "@/lib/navigation-guard";
@@ -92,7 +93,9 @@ export default function VoiceWorkspace({
   initialSessionId,
   onRoom,
   onRecords,
+  onBackToPreparation,
 }: {
+  onBackToPreparation?: () => void;
   onRoom?: () => void;
   onRecords?: () => void;
   initialCard?: ConversationCard;
@@ -129,6 +132,11 @@ export default function VoiceWorkspace({
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [search, setSearch] = useState(""),
+    [recordFilter, setRecordFilter] = useState<"all" | "mine" | "sample">(
+      "all",
+    ),
+    [recordSort, setRecordSort] = useState<"recent" | "name">("recent"),
+    [settingsOpen, setSettingsOpen] = useState(false),
     [seed, setSeed] = useState<TermSeed | null>(null),
     [autoplay, setAutoplay] = useState(false),
     [speaking, setSpeaking] = useState(""),
@@ -302,6 +310,7 @@ export default function VoiceWorkspace({
     setTermStatus(null);
     setTermRequestId(null);
     setSession(s);
+    setSettingsOpen(false);
     restoreSampleMode(s);
     setReviewOutage(null);
     window.scrollTo({ top: 0 });
@@ -714,12 +723,21 @@ export default function VoiceWorkspace({
     session.kind !== "recording" &&
     (session.turns.filter((t) => t.role === "user").length || 0) >= 12 &&
     session.turns.at(-1)?.role === "assistant";
-  const matching = sessions.filter((s) =>
-    [s.title, s.industry, s.context?.partner, ...s.turns.map((t) => t.text)]
-      .join(" ")
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
+  const matching = sessions
+    .filter(
+      (s) =>
+        (recordFilter === "all" ||
+          (recordFilter === "sample" ? s.isSample : !s.isSample)) &&
+        [s.title, s.industry, s.context?.partner, ...s.turns.map((t) => t.text)]
+          .join(" ")
+          .toLowerCase()
+          .includes(search.toLowerCase()),
+    )
+    .sort((a, b) =>
+      recordSort === "name"
+        ? a.title.localeCompare(b.title, "ko")
+        : b.updatedAt.localeCompare(a.updatedAt),
+    );
   const currentReview =
     session?.context &&
     session.review?.sourceKey === reviewKey(session.context, session.turns)
@@ -789,6 +807,131 @@ export default function VoiceWorkspace({
         }}
       />
     );
+  const inConversation =
+    !!session && session.kind !== "recording" && session.turns.length > 0;
+  const preparationControls = session && (
+    <>
+      {(session.kind !== "recording" || !session.turns.length) && (
+        <details className="vn-start-options">
+          <summary>
+            {session.kind === "recording"
+              ? "기록 이름·업종 설정"
+              : "언어·자동 읽기·기록 설정"}
+          </summary>
+          {!session.turns.length && (
+            <div className="vn-session-settings">
+              <label className="vn-label">
+                기록 이름
+                <input
+                  value={session.title}
+                  maxLength={80}
+                  disabled={busy || captureBusy}
+                  onChange={(e) =>
+                    setSession({ ...session, title: e.target.value })
+                  }
+                />
+              </label>
+              <label className="vn-label">
+                업종·하는 일
+                <input
+                  value={session.industry}
+                  maxLength={120}
+                  disabled={busy || captureBusy}
+                  onChange={(e) =>
+                    setSession({ ...session, industry: e.target.value })
+                  }
+                  placeholder="예: IT 서비스 기획 · 파트너 영업"
+                />
+              </label>
+            </div>
+          )}
+          {!session.isSample &&
+            session.kind !== "recording" &&
+            !session.turns.length && (
+              <LanguagePicker
+                value={session.languages || defaultLanguages}
+                disabled={busy || captureBusy}
+                onChange={(languages) => setSession({ ...session, languages })}
+              />
+            )}
+          {session.kind !== "recording" && (
+            <label className="dd-check vn-autoplay">
+              <input
+                type="checkbox"
+                checked={autoplay}
+                onChange={(e) => {
+                  setAutoplay(e.target.checked);
+                  if (!e.target.checked) stopAudio();
+                }}
+              />
+              상대 답변 자동 읽기 <span>기기 음성 사용</span>
+            </label>
+          )}
+        </details>
+      )}
+      {session.languages &&
+        session.turns.length > 0 &&
+        session.kind !== "recording" && (
+          <p className="vn-caption">
+            상대 · {conversationLanguages[session.languages.partner].label} / 내
+            답변 후보 · {conversationLanguages[session.languages.mine].label}
+          </p>
+        )}
+      {session.kind === "chat" && (
+        <div className="vn-persona">
+          <Companion small />
+          <div>
+            <strong>
+              {sessionCharacter.name}
+              <span>AI 대화 친구</span>
+            </strong>
+            <p>{sessionCharacter.specialty}</p>
+            <small>이 대화에서 나눈 내용을 바탕으로 답해요.</small>
+          </div>
+        </div>
+      )}
+      {session.context && (
+        <div className="vn-persona">
+          <span className="vn-session-icon practice">
+            <Icon name="chat" />
+          </span>
+          <div>
+            <strong>
+              {session.context.partner}
+              <span>AI 연습 상대</span>
+            </strong>
+            <p>내 역할 · {session.context.myRole || "대화 참여자"}</p>
+            <p>목표 · {session.context.goal}</p>
+            <details>
+              <summary>상황과 지킬 선</summary>
+              <p>{session.context.situation}</p>
+              <p>{session.context.boundaries}</p>
+            </details>
+          </div>
+        </div>
+      )}
+      <details className="vn-data-note">
+        <summary>음성과 문자는 어디에 남나요?</summary>
+        <p>
+          이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으며 브라우저 데이터를
+          지우면 사라질 수 있어요. 음성 원본과 대화 문자를 내려받을 수 있어요.
+          AI 문자 변환·연습·친구 대화·복기·용어 설명을 요청하면 해당 입력을
+          Google Gemini에 전송해요.
+        </p>
+      </details>
+      {!session.isSample && session.kind !== "recording" && (
+        <SampleSwitch
+          checked={sampleMode}
+          disabled={busy || captureBusy}
+          onChange={(v) => {
+            setSampleMode(v);
+            setReviewOutage(null);
+            setError("");
+          }}
+        />
+      )}
+    </>
+  );
   return (
     <CompanionProvider value={sessionCharacter}>
       {!session ? (
@@ -824,6 +967,38 @@ export default function VoiceWorkspace({
             </span>
             <Icon name="arrow" />
           </button>
+          <div className="record-list-controls">
+            <div className="purpose-switch" role="group" aria-label="기록 종류">
+              {(
+                [
+                  ["all", "전체"],
+                  ["mine", "내 기록"],
+                  ["sample", "샘플"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  aria-pressed={recordFilter === value}
+                  onClick={() => setRecordFilter(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <label>
+              정렬{" "}
+              <select
+                aria-label="기록 정렬"
+                value={recordSort}
+                onChange={(e) =>
+                  setRecordSort(e.target.value as "recent" | "name")
+                }
+              >
+                <option value="recent">최근순</option>
+                <option value="name">이름순</option>
+              </select>
+            </label>
+          </div>
           <label className="dc-search">
             <Icon name="search" size={18} />
             <input
@@ -834,10 +1009,24 @@ export default function VoiceWorkspace({
               placeholder="제목, 상대, 대화 내용으로 찾기"
             />
           </label>
-          <details className="dc-guide-faq">
-            <summary>녹음 분석 예시 3개 · AI 없이 체험</summary>
-            <RecordingExamples />
-          </details>
+          {recordFilter !== "mine" && !search && (
+            <section
+              className="record-examples"
+              aria-label="AI 없이 체험하는 녹음 분석 예시"
+            >
+              <h2>예시로 먼저 돌아보기</h2>
+              <p>가상의 녹음 문자예요. AI 없이 분석 흐름을 체험할 수 있어요.</p>
+              <RecordingExamples />
+            </section>
+          )}
+          <p className="vn-caption" role="status">
+            {recordFilter === "mine"
+              ? "내가 남긴 기록"
+              : recordFilter === "sample"
+                ? "샘플 기록"
+                : "전체 기록"}{" "}
+            {matching.length}개
+          </p>
           <div className="vn-session-list">
             {matching.map((s) => (
               <button
@@ -882,7 +1071,11 @@ export default function VoiceWorkspace({
             <div className="dc-empty-state">
               <Icon name="mic" size={32} />
               <h2>
-                {search ? "찾는 기록이 없어요" : "첫 목소리를 남겨볼까요?"}
+                {search
+                  ? "찾는 기록이 없어요"
+                  : recordFilter === "sample"
+                    ? "저장된 샘플 기록이 없어요"
+                    : "첫 기록을 남겨볼까요?"}
               </h2>
               <p>녹음·파일 추가를 누르거나 대화 카드를 골라 연습해 보세요.</p>
             </div>
@@ -893,9 +1086,12 @@ export default function VoiceWorkspace({
           <button
             className="dd-back"
             disabled={captureBusy}
-            onClick={() => open(null)}
+            onClick={() =>
+              onBackToPreparation ? onBackToPreparation() : open(null)
+            }
           >
-            <Icon name="back" size={18} />내 기록으로
+            <Icon name="back" size={18} />
+            {onBackToPreparation ? "연습 준비로" : "내 기록으로"}
           </button>
           <section className="vn-session-heading">
             <div>
@@ -921,127 +1117,36 @@ export default function VoiceWorkspace({
               </span>
             )}
           </section>
-          {(session.kind !== "recording" || !session.turns.length) && (
-            <details className="vn-start-options">
-              <summary>
-                {session.kind === "recording"
-                  ? "기록 이름·업종 설정"
-                  : "언어·자동 읽기·기록 설정"}
-              </summary>
-              {!session.turns.length && (
-                <div className="vn-session-settings">
-                  <label className="vn-label">
-                    기록 이름
-                    <input
-                      value={session.title}
-                      maxLength={80}
-                      disabled={busy || captureBusy}
-                      onChange={(e) =>
-                        setSession({ ...session, title: e.target.value })
-                      }
-                    />
-                  </label>
-                  <label className="vn-label">
-                    업종·하는 일
-                    <input
-                      value={session.industry}
-                      maxLength={120}
-                      disabled={busy || captureBusy}
-                      onChange={(e) =>
-                        setSession({ ...session, industry: e.target.value })
-                      }
-                      placeholder="예: IT 서비스 기획 · 파트너 영업"
-                    />
-                  </label>
-                </div>
-              )}
-              {!session.isSample &&
-                session.kind !== "recording" &&
-                !session.turns.length && (
-                  <LanguagePicker
-                    value={session.languages || defaultLanguages}
-                    disabled={busy || captureBusy}
-                    onChange={(languages) =>
-                      setSession({ ...session, languages })
-                    }
-                  />
-                )}
-              {session.kind !== "recording" && (
-                <label className="dd-check vn-autoplay">
-                  <input
-                    type="checkbox"
-                    checked={autoplay}
-                    onChange={(e) => {
-                      setAutoplay(e.target.checked);
-                      if (!e.target.checked) stopAudio();
-                    }}
-                  />
-                  상대 답변 자동 읽기 <span>기기 음성 사용</span>
-                </label>
-              )}
-            </details>
-          )}
-          {session.languages &&
-            session.turns.length > 0 &&
-            session.kind !== "recording" && (
-              <p className="vn-caption">
-                상대 · {conversationLanguages[session.languages.partner].label}{" "}
-                / 내 답변 후보 ·{" "}
-                {conversationLanguages[session.languages.mine].label}
-              </p>
-            )}
-          {session.kind === "chat" && (
-            <div className="vn-persona">
-              <Companion small />
-              <div>
-                <strong>
-                  {sessionCharacter.name}
-                  <span>AI 대화 친구</span>
-                </strong>
-                <p>{sessionCharacter.specialty}</p>
-                <small>이 대화에서 나눈 내용을 바탕으로 답해요.</small>
+          {inConversation ? (
+            <>
+              <div className="practice-settings-bar">
+                <span>
+                  {session.languages
+                    ? conversationLanguages[session.languages.partner].label
+                    : "한국어"}{" "}
+                  · 자동 읽기 {autoplay ? "켬" : "끔"} ·{" "}
+                  {sampleMode || session.isSample ? "샘플" : "AI 연습"}
+                </span>
+                <button
+                  className="dd-secondary"
+                  onClick={() => setSettingsOpen(true)}
+                >
+                  설정·대화 목표
+                </button>
               </div>
-            </div>
-          )}
-          {session.context && (
-            <div className="vn-persona">
-              <span className="vn-session-icon practice">
-                <Icon name="chat" />
-              </span>
-              <div>
-                <strong>
-                  {session.context.partner}
-                  <span>AI 연습 상대</span>
-                </strong>
-                <p>내 역할 · {session.context.myRole || "대화 참여자"}</p>
-                <p>목표 · {session.context.goal}</p>
-                <details>
-                  <summary>상황과 지킬 선</summary>
-                  <p>{session.context.situation}</p>
-                  <p>{session.context.boundaries}</p>
-                </details>
-              </div>
-            </div>
-          )}
-          <details className="vn-data-note">
-            <summary>음성과 문자는 어디에 남나요?</summary>
-            <p>
-              이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으며 브라우저
-              데이터를 지우면 사라질 수 있어요. 음성 원본과 대화 문자를 내려받을
-              수 있어요. AI 문자 변환·연습·친구 대화·복기·용어 설명을 요청하면
-              해당 입력을 Google Gemini에 전송해요.
-            </p>
-          </details>
-          {!session.isSample && session.kind !== "recording" && (
-            <SampleSwitch
-              checked={sampleMode}
-              disabled={busy || captureBusy}
-              onChange={(v) => {
-                setSampleMode(v);
-                setReviewOutage(null);
-                setError("");
-              }}
-            />
+              {settingsOpen && (
+                <InputDialog
+                  open={settingsOpen}
+                  title="연습 설정과 대화 목표"
+                  onClose={() => setSettingsOpen(false)}
+                  busy={captureBusy}
+                >
+                  {preparationControls}
+                </InputDialog>
+              )}
+            </>
+          ) : (
+            preparationControls
           )}
           {!session.isSample &&
             (!sampleMode || session.kind === "recording") && (
@@ -1622,7 +1727,7 @@ export default function VoiceWorkspace({
                 </button>
               )}
               <button
-                className="dd-link"
+                className="dd-link dd-danger"
                 disabled={busy || captureBusy}
                 onClick={async () => {
                   if (

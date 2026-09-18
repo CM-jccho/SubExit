@@ -17,7 +17,7 @@
   display: block;
 }
 .live-stream-toolbar span {
-  font-size: 13px;
+  font-size: var(--t-body);
   color: #596851;
   margin-top: 4px;
 }
@@ -25,24 +25,24 @@
   flex-shrink: 0;
 }
 .live-speech-consent {
-  font-size: 14px;
+  font-size: var(--t-body);
   padding: 14px;
   background: #edf2e7;
-  border-radius: 12px;
+  border-radius: var(--r-md);
 }
 .live-caption {
   padding: 20px;
   border: 1px solid #d6dfce;
   border-radius: 16px;
-  background: #fffefa;
+  background: var(--surface-card);
   min-width: 0;
 }
 .live-stream-label {
-  font-size: 13px;
+  font-size: var(--t-body);
   color: #536053;
 }
 .live-caption p {
-  font-size: 20px;
+  font-size: var(--t-h2);
   line-height: 1.8;
   min-height: 3.6em;
   max-height: 11em;
@@ -56,12 +56,12 @@
   color: #73816e;
 }
 .live-caption small {
-  font-size: 12px;
+  font-size: var(--t-cap);
   color: #68745f;
 }
 .live-stream-reply {
   padding: 22px;
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: #e7efdf;
   border: 1px solid #cbdabf;
   overflow-wrap: anywhere;
@@ -74,7 +74,7 @@
   flex-wrap: wrap;
 }
 .live-stream-reply-heading span {
-  font-size: 12px;
+  font-size: var(--t-cap);
   color: #526348;
 }
 .live-stream-reply blockquote {
@@ -85,7 +85,7 @@
 }
 .live-stream-reply > p,
 .live-stream-reply details {
-  font-size: 14px;
+  font-size: var(--t-body);
   line-height: 1.8;
   margin-top: 12px;
 }
@@ -100,7 +100,7 @@
   margin-bottom: 8px;
 }
 .dc-root .live-stream-note {
-  font-size: 13px;
+  font-size: var(--t-body);
   line-height: 1.7;
   color: #586550;
   margin: 0;
@@ -118,7 +118,7 @@
     padding: 16px;
   }
   .live-caption p {
-    font-size: 18px;
+    font-size: var(--t-lead);
   }
   .live-stream-reply blockquote {
     font-size: 21px;
@@ -126,7 +126,7 @@
   .live-style-switch button {
     min-width: 0;
     flex: 1;
-    font-size: 13px;
+    font-size: var(--t-body);
     padding: 10px 6px;
   }
 }

@@ -28,11 +28,11 @@
   display: block;
 }
 .vn-home-actions strong {
-  font-size: 16px;
+  font-size: var(--t-lead);
 }
 .vn-home-actions small,
 .vn-practice-invite small {
-  font-size: 12px;
+  font-size: var(--t-cap);
   color: #667268;
   margin-top: 4px;
 }
@@ -77,15 +77,15 @@
 }
 .vn-nudge > span {
   display: block;
-  font-size: 13px;
+  font-size: var(--t-body);
   line-height: 1.65;
   flex: 1;
 }
 .vn-nudge small {
   display: block;
-  font-size: 10px;
+  font-size: var(--t-cap);
   letter-spacing: 0.08em;
-  color: #6c7865;
+  color: var(--ink-500);
 }
 .vn-nudge.state-think {
   background: #f3eddd;
@@ -102,7 +102,7 @@
   gap: 10px;
   background: #f1ece1;
   border: 1px solid #e3dace;
-  border-radius: 13px;
+  border-radius: var(--r-md);
   padding: 12px;
   flex-wrap: wrap;
 }
@@ -118,7 +118,7 @@
   flex-basis: 100%;
   text-align: left;
   min-height: 32px;
-  font-size: 12px !important;
+  font-size: var(--t-cap) !important;
 }
 .vn-transcription-help {
   padding: 12px;
@@ -126,7 +126,7 @@
   border: 1px solid #c9d7c5;
   border-radius: 10px;
   line-height: 1.7;
-  font-size: 13px;
+  font-size: var(--t-body);
 }
 .vn-transcription-help p {
   margin: 0 0 8px;
@@ -188,13 +188,13 @@
   border-radius: 4px;
 }
 .vn-time {
-  font-size: 10px;
+  font-size: var(--t-cap);
   font-variant-numeric: tabular-nums;
   color: #6e624f;
   white-space: nowrap;
 }
 .vn-no-peaks {
-  font-size: 12px;
+  font-size: var(--t-cap);
   color: #72634e;
 }
 .vn-player > .dd-error {
@@ -203,7 +203,7 @@
 .vn-composer {
   background: #fffdf7;
   border: 1px solid #d9dfd0;
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   padding: 22px;
   margin: 22px 0;
 }
@@ -222,7 +222,7 @@
   border: 0;
   min-height: 52px;
   flex: 1;
-  border-radius: 12px;
+  border-radius: var(--r-md);
   font-size: 15px;
   font-weight: 700;
 }
@@ -233,8 +233,8 @@
   animation: vn-record-pulse 1.2s ease-in-out infinite;
 }
 .vn-caption {
-  font-size: 12px;
-  color: #626e61;
+  font-size: var(--t-cap);
+  color: var(--ink-500);
   margin: 10px 0;
   line-height: 1.75;
 }
@@ -242,19 +242,19 @@
   display: flex;
   flex-direction: column;
   gap: 7px;
-  font-size: 13px;
+  font-size: var(--t-body);
   font-weight: 600;
-  color: #405346;
+  color: var(--ink-500);
   margin: 14px 0;
 }
 .vn-label input,
 .vn-label textarea {
   display: block;
-  background: #fffefb;
+  background: var(--surface-card);
   border: 1px solid #d7dccc;
   padding: 12px 13px;
-  border-radius: 9px;
-  color: #293d35;
+  border-radius: var(--r-sm);
+  color: var(--ink-700);
   width: 100%;
   min-width: 0;
   font-family: inherit;
@@ -267,14 +267,14 @@
 }
 .vn-consent {
   padding: 12px 0;
-  font-size: 12px !important;
+  font-size: var(--t-cap) !important;
   align-items: flex-start !important;
   line-height: 1.7;
 }
 .vn-consent small {
   display: block;
   color: #716953;
-  font-size: 11px;
+  font-size: var(--t-cap);
   line-height: 1.6;
 }
 .vn-consent input,
@@ -282,7 +282,7 @@
   width: 17px;
   height: 17px;
   flex-shrink: 0;
-  accent-color: #315d46;
+  accent-color: var(--primary);
   margin-top: 3px;
 }
 .vn-toolbar {
@@ -303,8 +303,8 @@
   gap: 17px;
   width: 100%;
   text-align: left;
-  color: #293d35;
-  background: #fffef9;
+  color: var(--ink-700);
+  background: var(--surface-card);
   border: 1px solid #dfe4d6;
   border-radius: 16px;
   padding: 21px;
@@ -315,14 +315,14 @@
 }
 .vn-session-card strong {
   display: block;
-  font-size: 18px;
+  font-size: var(--t-lead);
   font-weight: 700;
   margin: 5px 0;
   overflow-wrap: anywhere;
 }
 .vn-session-card small,
 .vn-session-card > span > span {
-  font-size: 12px;
+  font-size: var(--t-cap);
   display: block;
   color: #6c7566;
 }
@@ -335,10 +335,10 @@
   flex-shrink: 0;
   background: #f2e4d6;
   color: #9c5a38;
-  border-radius: 15px;
+  border-radius: var(--r-md);
 }
 .vn-session-icon.practice {
-  background: #e4edda;
+  background: var(--primary-tint);
   color: #4b6640;
 }
 .vn-session-heading {
@@ -359,7 +359,7 @@
   align-items: center;
   gap: 4px;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: #5d7254;
 }
 .vn-session-settings {
@@ -371,7 +371,7 @@
   display: flex;
   gap: 16px;
   background: #eaf0e1;
-  border-radius: 17px;
+  border-radius: var(--r-lg);
   padding: 20px;
   align-items: flex-start;
   margin: 15px 0;
@@ -380,32 +380,32 @@
   min-width: 0;
 }
 .vn-persona strong {
-  font-size: 17px;
+  font-size: var(--t-lead);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 9px;
 }
 .vn-persona strong span {
-  font-size: 10px;
+  font-size: var(--t-cap);
   font-weight: 500;
   border: 1px solid #c3d0b2;
   padding: 2px 7px;
-  border-radius: 20px;
+  border-radius: var(--r-lg);
 }
 .vn-persona p {
-  font-size: 13px;
+  font-size: var(--t-body);
   line-height: 1.75;
   margin: 5px 0;
   overflow-wrap: anywhere;
 }
 .vn-persona summary {
-  font-size: 12px;
+  font-size: var(--t-cap);
   cursor: pointer;
 }
 .vn-data-note {
-  font-size: 12px;
-  color: #626e61;
+  font-size: var(--t-cap);
+  color: var(--ink-500);
   margin: 16px 0;
 }
 .vn-data-note summary {
@@ -417,11 +417,11 @@
   line-height: 1.8;
 }
 .vn-autoplay {
-  font-size: 12px !important;
+  font-size: var(--t-cap) !important;
   gap: 6px !important;
 }
 .vn-autoplay span {
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: #7c7968;
 }
 .vn-start-practice {
@@ -438,7 +438,7 @@
   padding: 20px 23px;
   border-radius: 6px 20px 20px 20px;
   max-width: 85%;
-  background: #fffef9;
+  background: var(--surface-card);
   border: 1px solid #dfe3d5;
   min-width: 0;
 }
@@ -457,8 +457,8 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font-size: 12px;
-  color: #5a6c53;
+  font-size: var(--t-cap);
+  color: var(--ink-500);
   margin-bottom: 11px;
 }
 .vn-turn-meta > span {
@@ -468,19 +468,19 @@
   font-weight: 650;
 }
 .vn-turn-meta small {
-  font-size: 9px;
+  font-size: var(--t-cap);
   padding: 1px 5px;
   border: 1px solid #d5dccb;
-  border-radius: 5px;
+  border-radius: var(--r-sm);
 }
 .vn-turn-meta time {
-  font-size: 10px;
+  font-size: var(--t-cap);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-  color: #7a8173;
+  color: var(--ink-500);
 }
 .vn-transcript-text {
-  font-size: 17px;
+  font-size: var(--t-lead);
   line-height: 1.95 !important;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -518,7 +518,7 @@
   margin-top: 14px;
 }
 .vn-turn-actions button {
-  font-size: 11px !important;
+  font-size: var(--t-cap) !important;
   padding: 5px 0;
 }
 .vn-session-tools {
@@ -538,7 +538,7 @@
   gap: 10px;
   border: 1px solid #dce1d3;
   background: #fffef8;
-  border-radius: 15px;
+  border-radius: var(--r-md);
   padding: 18px 12px 18px 16px;
 }
 .vn-term-open {
@@ -548,10 +548,10 @@
   border: 0;
   text-align: left;
   padding: 0;
-  color: #293d35;
+  color: var(--ink-700);
 }
 .vn-term-open small {
-  font-size: 10px;
+  font-size: var(--t-cap);
   color: #6f7867;
 }
 .vn-term-open h2 {
@@ -560,7 +560,7 @@
   margin: 6px 0 10px;
 }
 .vn-term-open p {
-  font-size: 13px;
+  font-size: var(--t-body);
   line-height: 1.8;
   overflow-wrap: anywhere;
   display: -webkit-box;
@@ -579,13 +579,13 @@
 }
 .vn-dialog {
   background: #fffdf6;
-  color: #293d35;
+  color: var(--ink-700);
   width: min(620px, calc(100% - 28px));
   max-height: 88dvh;
   overflow: auto;
   padding: 26px;
   border: 1px solid #dbe0d2;
-  border-radius: 20px;
+  border-radius: var(--r-lg);
   box-shadow: 0 20px 90px #1c2b2440;
 }
 .vn-dialog::backdrop {
@@ -600,7 +600,7 @@
   margin-bottom: 20px;
 }
 .vn-dialog-head h2 {
-  font-size: 20px;
+  font-size: var(--t-h2);
   line-height: 1.4;
   overflow-wrap: anywhere;
   font-weight: 700;
@@ -616,10 +616,10 @@
   margin-top: 15px;
 }
 .vn-dialog .dd-check {
-  font-size: 12px;
+  font-size: var(--t-cap);
 }
 .vn-quote {
-  font-size: 12px;
+  font-size: var(--t-cap);
   margin: 12px 0;
   color: #637457;
 }
@@ -637,7 +637,7 @@
   flex-wrap: wrap;
   align-items: center;
   margin: 20px 0;
-  font-size: 12px;
+  font-size: var(--t-cap);
 }
 .vn-reference-links > span {
   width: 100%;
@@ -664,12 +664,12 @@
 }
 .vn-setup-voice {
   border: 1px solid #d8dfcc;
-  border-radius: 13px;
+  border-radius: var(--r-md);
   padding: 12px 16px;
   margin: 15px 0;
 }
 .vn-setup-voice > summary {
-  font-size: 13px;
+  font-size: var(--t-body);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -829,7 +829,7 @@
   }
   .vn-capture-row .dd-secondary {
     padding: 12px;
-    font-size: 12px;
+    font-size: var(--t-cap);
   }
   .vn-capture-row .vn-icon {
     min-width: 36px;
@@ -842,10 +842,10 @@
     width: 92%;
   }
   .vn-transcript-text {
-    font-size: 16px;
+    font-size: var(--t-lead);
   }
   .vn-time {
-    font-size: 9px;
+    font-size: var(--t-cap);
   }
   .vn-player {
     padding: 10px 8px;
@@ -872,7 +872,7 @@
     padding-right: 9px;
   }
   .vn-nudge > span {
-    font-size: 12px;
+    font-size: var(--t-cap);
   }
   .vn-nudge > .dc-companion.is-small {
     width: 56px !important;
@@ -883,7 +883,7 @@
     gap: 12px;
   }
   .vn-session-card strong {
-    font-size: 17px;
+    font-size: var(--t-lead);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -917,7 +917,7 @@
   border-radius: 11px;
   padding: 13px 15px;
   color: #3f5842;
-  font-size: 13px;
+  font-size: var(--t-body);
   line-height: 1.7;
 }
 .vn-choice-list > button:hover {
@@ -925,7 +925,7 @@
   border-color: #a8bc91;
 }
 .vn-choice-list > button > span {
-  font-size: 10px;
+  font-size: var(--t-cap);
   color: #94a280;
   font-variant-numeric: tabular-nums;
 }
@@ -934,7 +934,7 @@
   flex-shrink: 0;
 }
 .vn-setup-choices > p {
-  font-size: 12px;
+  font-size: var(--t-cap);
   color: #64745a;
   margin: 14px 0 10px;
 }
@@ -946,7 +946,7 @@
   padding: 16px;
 }
 .vn-reply-choices > summary {
-  font-size: 14px;
+  font-size: var(--t-body);
   cursor: pointer;
   display: flex;
   gap: 8px;
@@ -959,7 +959,7 @@
 /* Keep the current reply beside the conversation, with secondary actions quieter. */
 .vn-chat-thread {
   background: #f0f2ed;
-  border-radius: 20px;
+  border-radius: var(--r-lg);
   padding: 20px;
 }
 .vn-chat-thread .vn-turn {
@@ -982,7 +982,7 @@
   border: 1px solid #d7dfd0;
   border-radius: 14px;
   background: #f4f7ef;
-  font-size: 14px;
+  font-size: var(--t-body);
   line-height: 1.7;
 }
 .vn-privacy-note strong {
@@ -997,7 +997,7 @@
   cursor: pointer;
 }
 .vn-communication-tips h2 {
-  font-size: 20px;
+  font-size: var(--t-h2);
 }
 .vn-communication-tips blockquote {
   margin: 14px 0;
@@ -1031,7 +1031,7 @@
 }
 .vn-term-results > span {
   flex-basis: 100%;
-  font-size: 13px;
+  font-size: var(--t-body);
   color: #526348;
 }
 .vn-term-results button {

@@ -41,5 +41,5 @@ test("live input notice reserves space beyond the raised button and is linked to
     "utf8",
   );
   assert.match(home, /aria-describedby="live-input-limit"/);
-  assert.match(home, /className="purpose-limit" id="live-input-limit"/);
+  assert.match(home, /className="purpose-limit[^"]*" id="live-input-limit"/);
 });

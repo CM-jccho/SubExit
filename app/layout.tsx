@@ -1,6 +1,7 @@
 import MobileKeyboardViewport from "@/components/MobileKeyboardViewport";
 import { ConsentSessionProvider } from "@/components/ConsentSession";
 import "./globals.css";
+import "./design-tokens.css";
 import "./coach.css";
 import "./conversation.css";
 import "./voice-notebook.css";

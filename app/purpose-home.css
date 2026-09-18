@@ -8,7 +8,7 @@
 }
 .purpose-home .purpose-heading p {
   color: #5b6b5e;
-  font-size: 14px;
+  font-size: var(--t-body);
   margin: 0 0 8px;
 }
 .purpose-heading h1 {
@@ -40,14 +40,14 @@
   padding: 22px 16px;
   border: 1px solid #d4dccf;
   border-radius: 16px;
-  background: #fffefa;
+  background: var(--surface-card);
 }
 .practice-loop svg {
   color: #355e48;
   background: #e1ead8;
   box-sizing: content-box;
   padding: 10px;
-  border-radius: 12px;
+  border-radius: var(--r-md);
 }
 .practice-loop li:nth-child(2) svg {
   background: #deedf3;
@@ -56,12 +56,12 @@
   background: #f5e5d7;
 }
 .practice-loop strong {
-  font-size: 16px;
+  font-size: var(--t-lead);
   line-height: 1.5;
   word-break: keep-all;
 }
 .practice-loop span {
-  font-size: 13px;
+  font-size: var(--t-body);
   line-height: 1.6;
   color: #536053;
   word-break: keep-all;
@@ -75,7 +75,7 @@
   display: flex;
   margin: 12px auto 0;
   min-height: 44px;
-  font-size: 13px;
+  font-size: var(--t-body);
 }
 .purpose-start:focus-visible,
 .purpose-recording:focus-visible {
@@ -93,7 +93,7 @@
 }
 .purpose-recent > span {
   color: #5b6b5e;
-  font-size: 13px;
+  font-size: var(--t-body);
 }
 .purpose-recent button {
   width: 100%;
@@ -109,7 +109,7 @@
   cursor: pointer;
 }
 .purpose-recent strong {
-  font-size: 16px;
+  font-size: var(--t-lead);
   line-height: 1.5;
 }
 .purpose-breadcrumb {
@@ -117,7 +117,7 @@
   align-items: center;
   gap: 16px;
   margin-bottom: 16px;
-  font-size: 14px;
+  font-size: var(--t-body);
   color: #536053;
 }
 .purpose-breadcrumb button {
@@ -146,10 +146,10 @@
     padding: 16px 10px;
   }
   .practice-loop strong {
-    font-size: 14px;
+    font-size: var(--t-body);
   }
   .practice-loop span {
-    font-size: 12px;
+    font-size: var(--t-cap);
   }
 }
 @media (max-width: 380px) {
@@ -162,12 +162,12 @@
     padding: 8px;
   }
   .purpose-recording {
-    font-size: 12px;
+    font-size: var(--t-cap);
   }
 }
 
 .purpose-home .purpose-limit {
-  font-size: 12px;
+  font-size: var(--t-cap);
   color: #536053;
   line-height: 1.7;
   margin: 20px 0 22px;
@@ -181,7 +181,7 @@
   margin: 20px 0;
   padding: 22px;
   border: 1px solid #c9d9bd;
-  border-radius: 22px;
+  border-radius: var(--r-lg);
   background: #eef4e7;
 }
 .coach-presence-character {
@@ -207,13 +207,13 @@
 }
 .coach-presence-copy span {
   color: #537044;
-  font-size: 12px;
+  font-size: var(--t-cap);
   font-weight: 700;
 }
 .purpose-home .coach-presence-copy p {
   margin: 5px 0 0;
   color: #294132;
-  font-size: 16px;
+  font-size: var(--t-lead);
   line-height: 1.7;
   word-break: keep-all;
 }
@@ -240,13 +240,13 @@
   color: #71816f;
 }
 .purpose-home .practice-loop li span {
-  font-size: 13px;
+  font-size: var(--t-body);
   color: #536053;
   white-space: nowrap;
 }
 .purpose-home .coach-start {
   min-height: 64px;
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: #284f39;
   font-size: 19px;
   box-shadow:
@@ -291,12 +291,12 @@
   display: block;
 }
 .coach-live-presence strong {
-  font-size: 14px;
+  font-size: var(--t-body);
   color: #294633;
   line-height: 1.5;
 }
 .coach-live-presence span {
-  font-size: 12px;
+  font-size: var(--t-cap);
   color: #596851;
   line-height: 1.6;
 }
@@ -363,7 +363,7 @@
     height: 70px;
   }
   .purpose-home .coach-presence-copy p {
-    font-size: 14px;
+    font-size: var(--t-body);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -399,15 +399,15 @@
   padding: 18px 16px;
   border-radius: 16px;
   text-align: left;
-  background: #fffefa;
+  background: var(--surface-card);
 }
 .home-core-options strong {
-  font-size: 16px;
+  font-size: var(--t-lead);
   line-height: 1.5;
 }
 .home-core-options span {
   color: #596851;
-  font-size: 12px;
+  font-size: var(--t-cap);
   font-weight: 400;
   line-height: 1.6;
   word-break: keep-all;
@@ -424,6 +424,6 @@
     padding: 14px 10px;
   }
   .home-core-options strong {
-    font-size: 14px;
+    font-size: var(--t-body);
   }
 }

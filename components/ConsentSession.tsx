@@ -72,7 +72,7 @@ export function ConsentSettings() {
         onClick={() => setOpen(true)}
         aria-label="AI 전송 동의 설정"
       >
-        AI 동의 완료
+        <span aria-hidden="true">✓</span> AI 동의 완료
       </button>
       <InputDialog
         open={open}

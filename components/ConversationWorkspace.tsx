@@ -1,4 +1,5 @@
 "use client";
+import InputDialog from "./InputDialog";
 import BrandMark from "./BrandMark";
 import CompactField, { fieldExamples } from "./CompactField";
 import { useAIConsent, ConsentSettings } from "./ConsentSession";
@@ -280,6 +281,7 @@ export default function ConversationWorkspace() {
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [toast, setToast] = useState("");
+  const [cardToolsOpen, setCardToolsOpen] = useState(false);
   const [companions, setCompanions] = useState<CompanionCharacter[]>([]);
   const [companionChoice, setCompanionChoice] =
     useState<CompanionChoice>("auto");
@@ -743,6 +745,7 @@ export default function ConversationWorkspace() {
     window.scrollTo({ top: 0 });
   }
   function openCard(c: ConversationCard) {
+    setCardToolsOpen(false);
     setActive(c);
     setToast("");
     setView("detail");
@@ -785,14 +788,14 @@ export default function ConversationWorkspace() {
             </span>
             <strong>{c.title}</strong>
             <span className="dc-card-goal">{c.goal}</span>
-            <small>
-              {spotlight
-                ? "상황 확인하고 연습 →"
-                : c.lastUsedAt
-                  ? "최근 사용 " +
-                    new Date(c.lastUsedAt).toLocaleDateString("ko-KR")
-                  : "준비 완료 · 언제든 다시 꺼내세요"}
-            </small>
+            {(spotlight || c.lastUsedAt) && (
+              <small>
+                {spotlight
+                  ? "상황 확인하고 연습 →"
+                  : "최근 사용 · " +
+                    new Date(c.lastUsedAt!).toLocaleDateString("ko-KR")}
+              </small>
+            )}
           </span>
           <Icon name="arrow" size={20} />
         </button>
@@ -879,8 +882,28 @@ export default function ConversationWorkspace() {
               onNavigate={navigate}
             />
             {view === "library" && !tour && (
-              <details className="purpose-alternatives">
-                <summary>다른 연습 방법</summary>
+              <section
+                className="purpose-alternatives"
+                aria-label="대화 도움 방식"
+              >
+                <div
+                  className="purpose-switch"
+                  role="group"
+                  aria-label="대화 도움 방식 선택"
+                >
+                  <button
+                    aria-pressed={purpose === "live"}
+                    onClick={() => navigate("library", "live")}
+                  >
+                    지금 도움받기
+                  </button>
+                  <button
+                    aria-pressed={purpose === "practice"}
+                    onClick={() => navigate("library", "practice")}
+                  >
+                    미리 연습하기
+                  </button>
+                </div>
                 <div className="purpose-support" aria-label="대화 연습 도구">
                   <button
                     className="dd-link"
@@ -893,7 +916,7 @@ export default function ConversationWorkspace() {
                     연습 상대 선택
                   </button>
                 </div>
-              </details>
+              </section>
             )}
             {view === "library" && !tour && (
               <ConversationFocusPicker
@@ -1027,15 +1050,6 @@ export default function ConversationWorkspace() {
                   <div className="dc-title">
                     <h1>더보기</h1>
                     <p>대화를 준비할 때 쓰는 보조 도구예요.</p>
-                    <button
-                      type="button"
-                      className="dd-secondary"
-                      onClick={() =>
-                        window.dispatchEvent(new Event("gyeotmal-show-intro"))
-                      }
-                    >
-                      스픽코칭 소개 다시 보기
-                    </button>
                   </div>
                   <div className="focus-tool-grid">
                     {supportTools.map((item) => (
@@ -1055,6 +1069,18 @@ export default function ConversationWorkspace() {
                       </button>
                     ))}
                   </div>
+                  <section className="more-settings" aria-label="안내와 설정">
+                    <h2>안내</h2>
+                    <button
+                      type="button"
+                      className="dd-secondary"
+                      onClick={() =>
+                        window.dispatchEvent(new Event("gyeotmal-show-intro"))
+                      }
+                    >
+                      스픽코칭 소개 다시 보기
+                    </button>
+                  </section>
                 </section>
               )}
               {view === "daily" && (
@@ -1097,6 +1123,11 @@ export default function ConversationWorkspace() {
                 view === "friendChat") && (
                 <VoiceWorkspace
                   onRecords={() => navigate("records")}
+                  onBackToPreparation={
+                    view === "voicePractice" && active
+                      ? () => navigate("detail", "practice")
+                      : undefined
+                  }
                   onRoom={() => navigate("room")}
                   key={
                     view +
@@ -1151,8 +1182,7 @@ export default function ConversationWorkspace() {
                           ? "대화 상황 선택"
                           : effectiveFocus === "all"
                             ? "모든 연습 상황"
-                            : "대화 연습"}{" "}
-                        <span className="dc-count">{focusedCards.length}</span>
+                            : "대화 연습"}
                       </h1>
                     </div>
                     <button className="dd-primary" onClick={() => start()}>
@@ -1194,24 +1224,26 @@ export default function ConversationWorkspace() {
                   <p className="focus-results-status" role="status">
                     {search
                       ? `검색 결과 ${visible.length}개`
-                      : `${effectiveFocus === "all" ? "모든 분야" : focusInfo(focus)?.label || "선택한 상황"} 예시 ${sampleCards.length}개 · 내가 만든 대화 ${personalCards.length}개`}
+                      : "예시를 고르거나 내가 만든 대화로 시작하세요."}
                     {browseAll && focus !== "all" && (
                       <span>
                         내 관심 상황은 {focusInfo(focus)?.label}으로 유지돼요.
                       </span>
                     )}
                   </p>
-                  <label className="dc-search" htmlFor="card-search">
-                    <Icon name="search" size={20} />
-                    <input
-                      id="card-search"
-                      aria-label="대화 검색"
-                      type="search"
-                      placeholder="상대, 상황, 목표로 찾기"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
-                  </label>
+                  {(focusedCards.length >= 6 || search) && (
+                    <label className="dc-search" htmlFor="card-search">
+                      <Icon name="search" size={20} />
+                      <input
+                        id="card-search"
+                        aria-label="대화 검색"
+                        type="search"
+                        placeholder="상대, 상황, 목표로 찾기"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </label>
+                  )}
                   {cards.length ? (
                     <>
                       {visiblePersonal.length > 0 && (
@@ -1219,9 +1251,7 @@ export default function ConversationWorkspace() {
                           className="focus-card-group"
                           aria-label="내가 만든 대화"
                         >
-                          <h2>
-                            내가 만든 대화 <span>{visiblePersonal.length}</span>
-                          </h2>
+                          <h2>내가 만든 대화</h2>
                           {cardList(visiblePersonal)}
                         </section>
                       )}
@@ -1245,7 +1275,7 @@ export default function ConversationWorkspace() {
                                 }
                                 size={20}
                               />
-                              {group.label} <span>{group.cards.length}</span>
+                              {group.label}
                             </h2>
                             {cardList(group.cards)}
                           </section>
@@ -1680,7 +1710,14 @@ export default function ConversationWorkspace() {
                       {purpose === "live" ? "대화 준비" : "연습 준비"}
                     </span>
                   </nav>
-                  <section className="dc-title dc-preparation-heading">
+                  <section className="dc-title dc-preparation-heading dc-preparation-title">
+                    <button
+                      className="dc-icon-button"
+                      aria-label="상황 수정·복사·삭제"
+                      onClick={() => setCardToolsOpen(true)}
+                    >
+                      <Icon name="more" size={22} />
+                    </button>
                     <p className="dc-overline">
                       {active.isSample
                         ? "샘플 · 가상의 상황"
@@ -1726,20 +1763,45 @@ export default function ConversationWorkspace() {
                       </button>
                     </details>
                   </div>
-                  <details className="dc-detail-extra dc-detail-tools">
-                    <summary>상황 수정·복사·삭제</summary>
+                  <InputDialog
+                    open={cardToolsOpen}
+                    title="상황 관리"
+                    onClose={() => setCardToolsOpen(false)}
+                  >
                     <div className="dc-card-tools">
                       <span>
                         최근 수정{" "}
                         {new Date(active.updatedAt).toLocaleDateString("ko-KR")}
                       </span>
-                      <button onClick={() => start(active)}>수정</button>
-                      <button onClick={() => duplicate(active)}>
+                      <button
+                        className="dd-secondary"
+                        onClick={() => {
+                          setCardToolsOpen(false);
+                          start(active);
+                        }}
+                      >
+                        수정
+                      </button>
+                      <button
+                        className="dd-secondary"
+                        onClick={() => {
+                          setCardToolsOpen(false);
+                          duplicate(active);
+                        }}
+                      >
                         복사해서 만들기
                       </button>
-                      <button onClick={() => remove(active)}>삭제</button>
+                      <button
+                        className="dd-link dd-danger"
+                        onClick={() => {
+                          setCardToolsOpen(false);
+                          remove(active);
+                        }}
+                      >
+                        삭제
+                      </button>
                     </div>
-                  </details>
+                  </InputDialog>
                   {error && (
                     <>
                       <p className="dd-error" role="alert">
