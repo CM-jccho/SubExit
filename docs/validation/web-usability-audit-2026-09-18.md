@@ -46,3 +46,4 @@
 ## 참고
 - [W3C — Form notifications](https://www.w3.org/WAI/tutorials/forms/notifications/): 입력 오류·처리 결과를 명확히 알려주는 피드백 원칙.
 - [デジタル庁 — テキストインプット](https://design.digital.go.jp/dads/components/input-text/): 입력란 레이블과 안내 구성 참고.
+
