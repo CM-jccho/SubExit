@@ -1110,7 +1110,7 @@ export default function VoiceWorkspace({
                   ? sessionCharacter.name + "와 AI 대화"
                   : session.kind === "practice"
                     ? "AI와 역할 대화 연습"
-                    : "녹음 분석·코칭"}
+                    : "내 대화 돌아보기"}
               </p>
               <h1>{session.title}</h1>
               {session.isSample && (
@@ -1184,7 +1184,9 @@ export default function VoiceWorkspace({
                 text={
                   session.kind === "chat"
                     ? "지금 궁금한 일부터 편하게 이야기해 주세요."
-                    : "AI가 상대 역할로 먼저 말해요. 내가 문자나 목소리로 답하면 대화가 이어져요."
+                    : sampleMode
+                      ? "미리 작성된 상대 말로 연습해요. 답변 후보를 고르거나 직접 적어 대화를 이어가세요."
+                      : "AI가 상대 역할로 먼저 말해요. 내가 문자나 목소리로 답하면 대화가 이어져요."
                 }
               />
               <button
@@ -1214,6 +1216,9 @@ export default function VoiceWorkspace({
             </div>
           )}
           <div
+            hidden={
+              session.kind !== "recording" && !session.turns.length && !busy
+            }
             className={
               session.kind !== "recording" ? "vn-conversation" : undefined
             }
@@ -1559,20 +1564,22 @@ export default function VoiceWorkspace({
                 </div>
               )}
           </div>
-          {!session.isSample && session.kind === "practice" && (
-            <GardenPractice
-              key={"garden-" + session.id}
-              session={session}
-              disabled={captureBusy || busy}
-              onSave={persist}
-              onRoom={onRoom}
-              onPractice={async (next) => {
-                await putSession(next);
-                open(next);
-                await refresh();
-              }}
-            />
-          )}
+          {!session.isSample &&
+            session.kind === "practice" &&
+            session.turns.some((turn) => turn.role === "user") && (
+              <GardenPractice
+                key={"garden-" + session.id}
+                session={session}
+                disabled={captureBusy || busy}
+                onSave={persist}
+                onRoom={onRoom}
+                onPractice={async (next) => {
+                  await putSession(next);
+                  open(next);
+                  await refresh();
+                }}
+              />
+            )}
           {session.practicePlan && (
             <aside className="dc-drill-focus">
               <strong>이번에 해볼 한 가지</strong>

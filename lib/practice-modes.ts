@@ -1,7 +1,7 @@
 export const practiceModes = [
   {
     id: "library",
-    label: "대화 연습",
+    label: "대화 연습하기",
     description: "부탁하거나 거절할 말을 미리 해봐요.",
     icon: "chat",
     hint: "상대와 주고받으며",

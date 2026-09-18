@@ -529,7 +529,7 @@ test("free setup remains selectable after a guided answer and preserves entered 
   );
   try {
     await settle();
-    await click(button("미리 연습하기"));
+    await click(button("대화 연습하기"));
     await click(button("내 상황 만들기"));
     await click(button("하나씩 정리"));
     await change(
@@ -580,7 +580,7 @@ test("free setup with unavailable AI accepts a local draft and clearly routes to
   });
   try {
     await settle();
-    await click(button("미리 연습하기"));
+    await click(button("대화 연습하기"));
     await click(button("내 상황 만들기"));
     assert(!button("자유롭게 이야기").disabled);
     await click(button("자유롭게 이야기"));
@@ -661,8 +661,17 @@ test("home practice opens a context card and practice keeps a discoverable recor
   );
   try {
     await settle();
-    await click(button("미리 연습하기"));
+    await click(button("대화 연습하기"));
     assert.equal(window.location.search, "?view=library");
+    const storageHelp = document.querySelector(".dc-storage-explainer summary");
+    assert(storageHelp.textContent.includes("저장 위치 안내"));
+    await click(storageHelp);
+    assert(storageHelp.parentElement.open);
+    assert(
+      storageHelp.parentElement.textContent.includes(
+        "다른 기기와 자동 동기화되지 않아요",
+      ),
+    );
     const card = [...document.querySelectorAll(".dc-saved-card")].find((b) =>
       b.textContent.includes("동료에게 검토 부탁하기"),
     );
@@ -2330,7 +2339,7 @@ test("curation starts after choosing practice, keeps personal cards and preserve
     await settle();
     assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
     assert.equal(document.querySelectorAll(".dc-saved-card").length, 0);
-    await click(button("미리 연습하기"));
+    await click(button("대화 연습하기"));
     assert(document.querySelector('[aria-label="대화 맥락 선택"]'));
     await click(document.querySelector('[data-focus="education"]'));
     assert.equal(document.querySelectorAll(".dc-saved-card").length, 1);
@@ -2348,7 +2357,7 @@ test("curation starts after choosing practice, keeps personal cards and preserve
     };
     cards.writeCards([...cards.readCards(), personal]);
     await click(button("홈"));
-    await click(button("미리 연습하기"));
+    await click(button("대화 연습하기"));
     assert.equal(document.querySelectorAll(".dc-saved-card").length, 2);
     assert(document.body.textContent.includes(personal.title));
     await click(button("모든 분야 예시 7"));
@@ -2371,7 +2380,7 @@ test("curation starts after choosing practice, keeps personal cards and preserve
       cards.readCards().filter((c) => c.id !== "card-scene-parent-hours"),
     );
     await click(button("홈"));
-    await click(button("미리 연습하기"));
+    await click(button("대화 연습하기"));
     assert.equal(document.querySelectorAll(".dc-saved-card").length, 1);
     assert(!cards.readCards().some((c) => c.id === "card-scene-parent-hours"));
   } finally {
@@ -2394,7 +2403,7 @@ test("editing practice interest hides only its list and preserves search when ca
       document.querySelector('[aria-label="선택한 대화 맥락"]'),
       null,
     );
-    await click(button("미리 연습하기"));
+    await click(button("대화 연습하기"));
     assert.equal(
       document.querySelector("#card-search"),
       null,
@@ -2480,7 +2489,7 @@ test("writing a custom situation bypasses fixed categories and never opens an un
   const ui = await mount(C);
   try {
     await settle();
-    await click(button("미리 연습하기"));
+    await click(button("대화 연습하기"));
     await click(button("내 상황 직접 설명하기"));
     assert.equal(document.querySelector("dialog[open]"), null);
     assert.equal(
@@ -2512,7 +2521,7 @@ test("home prioritizes live assistance, offers rehearsal second and separates su
     assert.equal(document.querySelectorAll(".practice-loop li").length, 3);
     assert(!button("AI 요청 연습"));
     assert(!button("대화 기초 훈련"));
-    await click(button("미리 연습하기"));
+    await click(button("대화 연습하기"));
     assert.equal(window.location.search, "?view=library");
     assert(document.querySelector("h1").textContent.includes("어떤 상황"));
     await click(button("홈으로"));
@@ -3104,8 +3113,15 @@ test("explicit sample practice preference survives leaving and reopening without
   try {
     await click(document.querySelector(".dc-sample-switch input"));
     await settle();
+    assert(document.querySelector(".vn-conversation").hidden);
+    assert.equal(document.querySelector(".garden-practice"), null);
+    assert(
+      document.body.textContent.includes("미리 작성된 상대 말로 연습해요"),
+    );
     await click(button("상대와 연습 시작"));
     await settle();
+    assert.equal(document.querySelector(".vn-conversation").hidden, false);
+    assert.equal(document.querySelector(".garden-practice"), null);
     const saved = (await store.listSessions())[0];
     assert.equal(saved.sampleMode, true);
     assert.equal(saved.turns.length, 1);
@@ -3196,6 +3212,7 @@ test("inline chat keeps input mounted, saves before the partner responds, and gu
     assert.equal(input.value, "");
     assert.equal(document.querySelector(".input-dialog"), null);
     assert.equal((await store.getSession(original.id)).turns.length, 2);
+    assert(document.querySelector(".garden-practice"));
     assert(input.disabled);
     assert.equal(scrolls, 1);
     assert(document.querySelector(".vn-partner-typing"));
@@ -3303,8 +3320,8 @@ test("practice recording entry opens a new recording without requiring interest 
   );
   try {
     await settle();
-    await click(button("미리 연습하기"));
-    await click(button("내 녹음으로 복기"));
+    await click(button("대화 연습하기"));
+    await click(button("내 대화 돌아보기"));
     await settle();
     assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
     assert.equal(document.querySelector(".dc-nav [aria-current=page]"), null);
@@ -3329,7 +3346,7 @@ test("returning from active practice updates the record list, URL and primary na
   });
   try {
     await settle();
-    await click(button("미리 연습하기"));
+    await click(button("대화 연습하기"));
     await click(document.querySelector(".dc-saved-card"));
     await click(document.querySelector('[data-tour="practice-button"]'));
     await settle();
@@ -3427,7 +3444,7 @@ test("immediate assistance skips the catalogue, reloads safely and rehearsal rem
   const ui = await mount(C);
   try {
     await settle();
-    await click(button("지금 대화 도움받기"));
+    await click(button("답변 추천받기"));
     assert.equal(window.location.search, "?view=quick");
     assert(document.querySelector("#live-text"));
     assert(!document.querySelector(".dc-saved-card"));
@@ -3447,7 +3464,7 @@ test("immediate assistance skips the catalogue, reloads safely and rehearsal rem
       "약속을 다음 주로 바꿀 수 있어?",
     );
     window.confirm = () => false;
-    await click(button("AI 상대와 미리 연습하기"));
+    await click(button("AI 상대와 대화 연습하기"));
     assert.equal(
       document.querySelector("#live-text").value,
       "약속을 다음 주로 바꿀 수 있어?",
@@ -3455,7 +3472,7 @@ test("immediate assistance skips the catalogue, reloads safely and rehearsal rem
     await click(document.querySelector(".dc-nav button"));
     assert(document.querySelector("#live-text"));
     window.confirm = () => true;
-    await click(button("AI 상대와 미리 연습하기"));
+    await click(button("AI 상대와 대화 연습하기"));
     assert.equal(window.location.search, "?view=library");
     assert(!document.querySelector("#live-text"));
     await click(document.querySelector('[data-focus="work"]'));
@@ -3484,11 +3501,11 @@ test("the third core home entry opens recording analysis directly without a situ
       ),
       ["live", "library", "recording"],
     );
-    await click(button("녹음 분석·코칭"));
+    await click(button("내 대화 돌아보기"));
     await settle();
     assert.equal(document.querySelector(".dc-nav [aria-current=page]"), null);
     assert(document.querySelector(".input-launcher"));
-    assert(document.body.textContent.includes("녹음 분석·코칭"));
+    assert(document.body.textContent.includes("내 대화 돌아보기"));
     assert(!document.querySelector('[aria-label="대화 맥락 선택"]'));
     assert.equal(
       (await store.listSessions()).filter((r) => !r.isSample).length,
@@ -4276,7 +4293,7 @@ test("unfinished context protects tab and browser navigation, shows missing fiel
   let asks = 0;
   try {
     await settle();
-    await click(button("미리 연습하기"));
+    await click(button("대화 연습하기"));
     await click(button("내 상황 만들기"));
     await click(button("직접 작성"));
     assert.match(

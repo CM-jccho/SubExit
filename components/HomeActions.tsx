@@ -53,7 +53,7 @@ export default function HomeActions({
           <div className="coach-presence-copy">
             <span>대화 중, 옆에서 함께</span>
             <p>
-              상대가 한 말을 알려주세요.
+              상대가 한 말을 음성이나 글로 알려주세요.
               <br />내 목표에 맞는 다음 한마디를 찾아드릴게요.
             </p>
           </div>
@@ -76,7 +76,7 @@ export default function HomeActions({
             aria-describedby="live-input-limit"
             onClick={onLive}
           >
-            지금 대화 도움받기 <Icon name="arrow" size={20} />
+            답변 추천받기 <Icon name="arrow" size={20} />
           </button>
           <p className="purpose-limit browser-capability" id="live-input-limit">
             <Icon name={speechSupported ? "mic" : "keyboard"} size={16} />
@@ -105,22 +105,22 @@ export default function HomeActions({
         <button
           className="dd-secondary"
           data-purpose="library"
-          aria-label="미리 연습하기"
+          aria-label="대화 연습하기"
           onClick={() => onNavigate("library")}
         >
           <Icon name="chat" size={22} />
-          <strong>미리 연습하기</strong>
-          <span>AI 상대와 대화 · 복기 · 재연습</span>
+          <strong>대화 연습하기</strong>
+          <span>중요한 대화 전에, AI 상대와 미리 연습해요.</span>
         </button>
         <button
           className="dd-secondary"
           data-purpose="recording"
-          aria-label="녹음 분석·코칭"
+          aria-label="내 대화 돌아보기"
           onClick={() => onNavigate("recording")}
         >
           <Icon name="mic" size={22} />
-          <strong>녹음 분석·코칭</strong>
-          <span>내 녹음 첨부 · 분석 · 코칭</span>
+          <strong>내 대화 돌아보기</strong>
+          <span>끝난 대화의 녹음이나 글로 개선할 표현을 찾아요.</span>
         </button>
       </div>
       {error && (

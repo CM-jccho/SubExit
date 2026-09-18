@@ -505,7 +505,7 @@ export default function LiveCoach({
               {prepared ? "내 옆의 대화 코치" : "시작하기 전에"}
             </p>
           )}
-          <h1>지금 대화 도움받기</h1>
+          <h1>답변 추천받기</h1>
           {directEntry && (
             <p>방금 들은 말을 알려주세요. 다음에 할 한마디를 함께 찾아요.</p>
           )}
@@ -1356,7 +1356,7 @@ export default function LiveCoach({
             onPractice();
           }}
         >
-          {directEntry ? "AI 상대와 미리 연습하기" : "이 상황 미리 연습하기"}{" "}
+          {directEntry ? "AI 상대와 대화 연습하기" : "이 상황으로 연습하기"}{" "}
           <Icon name="chat" size={18} />
         </button>
       )}

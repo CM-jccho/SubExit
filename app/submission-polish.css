@@ -856,3 +856,25 @@ html {
     flex-basis: 100%;
   }
 }
+
+.dc-library-tools {
+  align-items: flex-start;
+}
+.dc-library-tools .dc-storage-explainer {
+  flex: 0 1 440px;
+  min-width: 0;
+}
+.dc-library-tools .dc-storage-explainer > summary {
+  width: fit-content;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: var(--t-body);
+}
+.dc-storage-explainer > p {
+  margin: 12px 0 0;
+  font-size: var(--t-body);
+  line-height: 1.65;
+}
+.vn-conversation[hidden] {
+  display: none;
+}

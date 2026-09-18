@@ -893,13 +893,13 @@ export default function ConversationWorkspace() {
                     aria-pressed={purpose === "live"}
                     onClick={() => navigate("quick", "live")}
                   >
-                    지금 도움받기
+                    답변 추천받기
                   </button>
                   <button
                     aria-pressed={purpose === "practice"}
                     onClick={() => navigate("library", "practice")}
                   >
-                    미리 연습하기
+                    대화 연습하기
                   </button>
                 </div>
                 <div className="purpose-support" aria-label="대화 연습 도구">
@@ -907,7 +907,7 @@ export default function ConversationWorkspace() {
                     className="dd-link"
                     onClick={() => navigate("recording")}
                   >
-                    <Icon name="mic" size={18} />내 녹음으로 복기
+                    <Icon name="mic" size={18} />내 대화 돌아보기
                   </button>
                   <button className="dd-link" onClick={() => navigate("room")}>
                     <Icon name="chat" size={18} />
@@ -1305,15 +1305,17 @@ export default function ConversationWorkspace() {
                         </div>
                       )}
                       <div className="dc-library-tools">
-                        <span>
-                          <Icon name="shield" size={16} /> 이 기기에 저장됨
-                          <HelpTip label="내 대화 저장 안내">
-                            확인한 카드를 이 브라우저에 저장해요. 브라우저
-                            데이터를 지우면 사라질 수 있으니, 필요하면 데이터를
-                            내려받아 보관하세요. 다른 기기와 자동 동기화되지
-                            않아요.
-                          </HelpTip>
-                        </span>
+                        <details className="dc-storage-explainer">
+                          <summary>
+                            <Icon name="shield" size={16} /> 저장 위치 안내
+                          </summary>
+                          <p>
+                            카드는 지금 사용하는 기기의 이 브라우저에 저장돼요.
+                            다른 기기와 자동 동기화되지 않아요. 브라우저
+                            데이터를 지우면 사라질 수 있으니, 중요한 카드는
+                            내려받아 보관하세요.
+                          </p>
+                        </details>
                         <button className="dd-link" onClick={exportData}>
                           <Icon name="download" size={17} />
                           카드 내려받기
@@ -1756,7 +1758,7 @@ export default function ConversationWorkspace() {
                       >
                         <Icon name="mic" size={20} />
                         {purpose === "live"
-                          ? "이 상황 미리 연습하기"
+                          ? "이 상황으로 연습하기"
                           : "실제 대화에서 힌트 받기"}
                       </button>
                     </details>
@@ -1837,9 +1839,8 @@ export default function ConversationWorkspace() {
                     <p className="dc-overline">필요할 때, 가볍게</p>
                     <h1>{supportLabel("guide")}</h1>
                     <p>
-                      대화 중에는 ‘지금 대화 도움받기’, 평소에는 ‘미리
-                      연습하기’를 선택하세요. 저장한 연습과 녹음은 내 기록에서
-                      이어보세요.
+                      대화 중에는 ‘답변 추천받기’, 대화 전에는 ‘대화 연습하기’를
+                      선택하세요. 저장한 연습과 녹음은 내 기록에서 이어보세요.
                     </p>
                   </section>
                   <button className="dc-guide-tour" onClick={beginTour}>
@@ -1903,10 +1904,10 @@ export default function ConversationWorkspace() {
                   <details className="dc-guide-faq">
                     <summary>상대와 음성 대화 연습은 어떻게 하나요?</summary>
                     <p>
-                      홈의 ‘대화 연습’에서 카드를 고르고 ‘상대와 대화 연습’을
-                      누르세요. AI가 상대 역할로 말하면 녹음하거나 직접 입력해
-                      답해요. 한 번씩 주고받는 방식이며 상대의 말은 기기
-                      음성으로 읽어줘요. 연습 음성과 문자는 대화 기록에
+                      홈의 ‘대화 연습하기’에서 카드를 고르고 ‘대화 연습
+                      시작하기’를 누르세요. AI가 상대 역할로 말하면 녹음하거나
+                      직접 입력해 답해요. 한 번씩 주고받는 방식이며 상대의 말은
+                      기기 음성으로 읽어줘요. 연습 음성과 문자는 대화 기록에
                       저장돼요.
                     </p>
                   </details>

@@ -9,7 +9,7 @@ type Help = { title: string; text: string; action: string };
 const content: Record<WorkspaceView, Help> = {
   home: {
     title: "어떤 도움이 필요하세요?",
-    text: "대화 중 말이 막혔다면 ‘지금 대화 도움받기’, 미리 준비하려면 ‘미리 연습하기’를 골라주세요.",
+    text: "대화 중 말이 막혔다면 ‘답변 추천받기’, 미리 준비하려면 ‘대화 연습하기’를 골라주세요.",
     action: "홈에서 선택하기",
   },
   library: {
@@ -130,7 +130,7 @@ export default function ScreenHelp({
         : view === "detail" && purpose === "live"
           ? {
               title: "지금 대화의 목표를 확인해 주세요",
-              text: "상대와 목표가 맞으면 ‘지금 대화 도움받기’를 눌러주세요. 상황이 다르면 먼저 수정할 수 있어요.",
+              text: "상대와 목표가 맞으면 ‘답변 추천받기’를 눌러주세요. 상황이 다르면 먼저 수정할 수 있어요.",
               action: "상황 확인 이어하기",
             }
           : content[view];
