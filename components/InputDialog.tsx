@@ -76,11 +76,60 @@ export default function InputDialog({
         preventScroll: true,
       },
     );
+    // Keep Tab within the dialog instead of handing the last control to browser
+    // chrome. The native modal still provides background inertness and Escape.
+    const cycleFocus = (event: KeyboardEvent) => {
+      if (event.key !== "Tab" || event.ctrlKey || event.altKey || event.metaKey)
+        return;
+      if ((event.target as HTMLElement)?.closest("dialog") !== element) return;
+      const controls = Array.from(
+        element.querySelectorAll<HTMLElement>(
+          'button, a[href], input, select, textarea, summary, [tabindex], [contenteditable="true"]',
+        ),
+      ).filter((node) => {
+        if (
+          node.tabIndex < 0 ||
+          node.matches(':disabled, [type="hidden"]') ||
+          node.closest('[hidden], [inert], [aria-hidden="true"]')
+        )
+          return false;
+        const collapsed = node.closest("details:not([open])");
+        if (collapsed && node !== collapsed.querySelector("summary"))
+          return false;
+        for (
+          let parent: HTMLElement | null = node;
+          parent && parent !== element;
+          parent = parent.parentElement
+        ) {
+          const style = window.getComputedStyle(parent);
+          if (style.display === "none" || style.visibility === "hidden")
+            return false;
+        }
+        return true;
+      });
+      const first = controls[0],
+        last = controls[controls.length - 1];
+      if (!first) {
+        event.preventDefault();
+        heading.current?.focus({ preventScroll: true });
+      } else if (!controls.includes(document.activeElement as HTMLElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    element.addEventListener("keydown", cycleFocus);
     window.addEventListener("resize", resize);
     element.addEventListener("focusin", resize);
     viewport?.addEventListener("resize", resize);
     viewport?.addEventListener("scroll", resize);
     return () => {
+      element.removeEventListener("keydown", cycleFocus);
       window.removeEventListener("resize", resize);
       element.removeEventListener("focusin", resize);
       viewport?.removeEventListener("resize", resize);

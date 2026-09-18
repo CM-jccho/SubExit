@@ -8,6 +8,7 @@ import { useConsentPrompt } from "./ConsentSession";
 import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
 import { transcribeAudio } from "@/lib/audio-transcription";
+import { requestMicrophone } from "@/lib/microphone";
 import {
   RECORDING_MAX_BYTES,
   RECORDING_MAX_SECONDS,
@@ -372,9 +373,12 @@ export default function VoiceComposer({
         );
       window.speechSynthesis?.cancel();
       document.querySelectorAll("audio").forEach((a) => a.pause());
-      const media = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true },
-      });
+      const permission = new AbortController();
+      abort.current = permission;
+      const media = await requestMicrophone(
+        { audio: { echoCancellation: true, noiseSuppression: true } },
+        permission.signal,
+      );
       if (epoch.current !== id) {
         media.getTracks().forEach((t) => t.stop());
         return;
@@ -423,13 +427,15 @@ export default function VoiceComposer({
         }
       }, 200);
     } catch (e) {
-      release();
       if (epoch.current === id) {
+        release();
         busy.current = false;
         setPhase("idle");
+        setTyping(true);
+        setNotice("직접 입력하거나 파일을 올려 계속할 수 있어요.");
         setError(
           e instanceof DOMException && e.name === "NotAllowedError"
-            ? "마이크 권한이 거절됐어요. 주소창에서 허용하거나 파일 올리기를 이용해 주세요."
+            ? "마이크 권한이 거절됐어요. 주소창에서 허용하거나 직접 입력·파일 올리기를 이용해 주세요."
             : e instanceof Error
               ? e.message
               : "녹음을 시작하지 못했어요.",
@@ -749,6 +755,19 @@ export default function VoiceComposer({
       {working && phase !== "recording" && phase !== "saving" && (
         <button type="button" className="dd-link" onClick={cancel}>
           처리 취소
+        </button>
+      )}
+      {phase === "permission" && (
+        <button
+          type="button"
+          className="dd-secondary"
+          onClick={() => {
+            cancel();
+            setTyping(true);
+            setNotice("마이크 대기를 중단했어요. 아래에 직접 입력해 주세요.");
+          }}
+        >
+          기다리지 않고 직접 입력
         </button>
       )}
       {clip && (

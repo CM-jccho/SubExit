@@ -1302,3 +1302,137 @@ test("microphone denial retains typed words and direct input remains available",
     await ui.cleanup();
   }
 });
+
+test("QA P05 keeps opponent, partner, goal, situation and boundaries independent through request and history", async () => {
+  const ui = await mount(LiveCoach, {
+    directEntry: true,
+    onBack() {},
+    onDemo() {},
+  });
+  try {
+    const opponent = "왜 이제 약속을 바꾸자는 거야?";
+    const fields = {
+      partner: "친구",
+      goal: "가능한 시간을 물어보고 약속을 다시 정하기",
+      situation: "주말에 만나기로 했지만 일정을 바꿔야 하는 가상 상황",
+      boundaries: "확정하지 않은 날짜는 약속하지 않기",
+    };
+    await quickChange("#live-text", opponent);
+    document.querySelector(".quick-context").open = true;
+    for (const [key, value] of Object.entries(fields)) {
+      const field = document.querySelector(`[name="${key}"]`);
+      field.focus();
+      await quickChange(`[name="${key}"]`, value);
+      assert.equal(document.activeElement, field, `focus stays in ${key}`);
+      assert.equal(document.querySelector("#live-text").value, opponent);
+    }
+    for (const [key, value] of Object.entries(fields))
+      assert.equal(document.querySelector(`[name="${key}"]`).value, value);
+    await click(document.querySelector(".vn-consent input"));
+    let payload;
+    global.fetch = async (url, init) => {
+      payload = JSON.parse(init.body);
+      return Response.json({
+        suggestion: "미안해, 언제가 괜찮을까?",
+        evidence: opponent,
+        reason: "시간 조율",
+        source: "ai",
+        latencyMs: 1,
+      });
+    };
+    await click(button("다음 한마디 받기"));
+    assert.equal(payload.opponent, opponent);
+    for (const [key, value] of Object.entries(fields))
+      assert.equal(payload.context[key], value);
+    assert.equal(document.querySelector("#live-text").value, opponent);
+    await click(button("다음 말 준비"));
+    const history = document.querySelector(".live-recent-cues").textContent;
+    assert(history.includes(opponent));
+    assert(!history.includes(opponent + fields.partner));
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("QA microphone waiting can be cancelled into typing and late permission cannot start recording", async () => {
+  let resolveMedia,
+    stopped = 0;
+  const ui = await mount(
+    Composer,
+    { config, consent: true, textFirst: true, onUse() {} },
+    () => {
+      navigator.mediaDevices.getUserMedia = () =>
+        new Promise((resolve) => {
+          resolveMedia = resolve;
+        });
+    },
+  );
+  try {
+    await quickChange("textarea", "보존할 초안");
+    await click(button("눌러서 말하기"));
+    assert(button("기다리지 않고 직접 입력"));
+    await click(button("기다리지 않고 직접 입력"));
+    assert.equal(document.querySelector("textarea").disabled, false);
+    assert.equal(document.querySelector("textarea").value, "보존할 초안");
+    await act(async () =>
+      resolveMedia({
+        getTracks: () => [
+          {
+            stop() {
+              stopped++;
+            },
+          },
+        ],
+      }),
+    );
+    assert.equal(instances.length, 0);
+    assert.equal(stopped, 1);
+    assert.equal(button("눌러서 말하기").disabled, false);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("QA microphone unanswered permission expires and preserves typing, with late stream cleanup", async (t) => {
+  let resolveMedia,
+    stopped = 0;
+  const ui = await mount(
+    Composer,
+    { config, consent: true, textFirst: true, onUse() {} },
+    () => {
+      navigator.mediaDevices.getUserMedia = () =>
+        new Promise((resolve) => {
+          resolveMedia = resolve;
+        });
+    },
+  );
+  try {
+    await quickChange("textarea", "초안 유지");
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    await click(button("눌러서 말하기"));
+    await act(async () => t.mock.timers.tick(15001));
+    assert(
+      document
+        .querySelector('[role="alert"]')
+        .textContent.includes("마이크 권한 응답을 기다리다 중단"),
+    );
+    assert.equal(document.querySelector("textarea").disabled, false);
+    assert.equal(document.querySelector("textarea").value, "초안 유지");
+    await act(async () =>
+      resolveMedia({
+        getTracks: () => [
+          {
+            stop() {
+              stopped++;
+            },
+          },
+        ],
+      }),
+    );
+    assert.equal(instances.length, 0);
+    assert.equal(stopped, 1);
+  } finally {
+    t.mock.timers.reset();
+    await ui.cleanup();
+  }
+});

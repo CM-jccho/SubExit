@@ -4426,3 +4426,53 @@ test("home distinguishes detected speech capability from permissions and offers 
     }
   }
 });
+
+test("QA E11 help dialog cycles Tab and Shift+Tab within its single action and restores opener", async () => {
+  const Help = require("../components/ScreenHelp.tsx").default;
+  function Harness() {
+    const [open, setOpen] = React.useState(false);
+    return React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(
+        "button",
+        { onClick: () => setOpen(true) },
+        "도움 열기",
+      ),
+      open &&
+        React.createElement(Help, {
+          view: "quick",
+          purpose: "live",
+          choosingFocus: false,
+          onClose: () => setOpen(false),
+        }),
+    );
+  }
+  const ui = await mount(Harness);
+  try {
+    const trigger = button("도움 열기");
+    trigger.focus();
+    await click(trigger);
+    const action = button("입력 이어하기");
+    const tab = async (shiftKey = false) => {
+      const event = new window.KeyboardEvent("keydown", {
+        key: "Tab",
+        shiftKey,
+        bubbles: true,
+        cancelable: true,
+      });
+      await act(async () => document.activeElement.dispatchEvent(event));
+      assert(event.defaultPrevented);
+    };
+    await tab();
+    assert.equal(document.activeElement, action);
+    await tab();
+    assert.equal(document.activeElement, action);
+    await tab(true);
+    assert.equal(document.activeElement, action);
+    await click(action);
+    assert.equal(document.activeElement, trigger);
+  } finally {
+    await ui.cleanup();
+  }
+});

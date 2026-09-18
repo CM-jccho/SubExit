@@ -3,6 +3,7 @@ import { AIConsent } from "./VoiceComposer";
 import { useAIConsent } from "./ConsentSession";
 import LiveSpeechPanel from "./LiveSpeechPanel";
 import { speechConstructor } from "@/lib/live-speech";
+import { requestMicrophone } from "@/lib/microphone";
 import SampleNotice, { SampleSwitch } from "./SampleNotice";
 import { sampledRequest } from "@/lib/resilient-ai";
 import { practiceSampleContext } from "@/lib/demo-bank";
@@ -342,7 +343,9 @@ export default function LiveCoach({
         throw new Error(
           "이 브라우저에서는 마이크 입력을 지원하지 않아요. 직접 입력해 주세요.",
         );
-      const media = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const permission = new AbortController();
+      request.current = permission;
+      const media = await requestMicrophone({ audio: true }, permission.signal);
       if (version.current !== id) {
         media.getTracks().forEach((t) => t.stop());
         return;
@@ -406,10 +409,11 @@ export default function LiveCoach({
         if (rec.state === "recording") rec.stop();
       }, 4000);
     } catch (e) {
-      release();
       if (version.current === id) {
+        release();
         busy.current = false;
         setPhase("idle");
+        setInputMode("text");
         setError(
           e instanceof DOMException && e.name === "NotAllowedError"
             ? "마이크 권한이 필요해요. 주소창의 권한 설정을 확인해 주세요."
@@ -844,6 +848,20 @@ export default function LiveCoach({
                       : "처리 취소"}
                   </button>
                 )}
+                {phase === "permission" && (
+                  <button
+                    className="dd-secondary dd-full"
+                    onClick={() => {
+                      cancel();
+                      setInputMode("text");
+                      setNotice(
+                        "마이크 대기를 중단했어요. 상대 말을 직접 입력해 주세요.",
+                      );
+                    }}
+                  >
+                    기다리지 않고 직접 입력
+                  </button>
+                )}
                 {(!directEntry || phase !== "idle" || notice) && (
                   <CompanionNudge
                     mood={
@@ -893,6 +911,7 @@ export default function LiveCoach({
                     </label>
                     <textarea
                       id="live-text"
+                      name="opponent"
                       maxLength={1000}
                       value={input}
                       disabled={phase !== "idle"}
@@ -945,6 +964,8 @@ export default function LiveCoach({
                               상대 · 선택
                               <input
                                 maxLength={160}
+                                id="quick-partner"
+                                name="partner"
                                 value={quickContext.partner}
                                 placeholder="예: 친구, 직장 동료, 고객"
                                 onChange={(e) =>
@@ -960,6 +981,8 @@ export default function LiveCoach({
                               원하는 결과
                               <input
                                 maxLength={400}
+                                id="quick-goal"
+                                name="goal"
                                 value={quickContext.goal}
                                 placeholder="상대의 뜻을 확인하고 내 입장을 차분히 전달하기"
                                 onChange={(e) =>
@@ -996,6 +1019,8 @@ export default function LiveCoach({
                               상황 설명 · 선택
                               <input
                                 maxLength={800}
+                                id="quick-situation"
+                                name="situation"
                                 value={quickContext.situation}
                                 placeholder="필요한 배경만 짧게 적어주세요"
                                 onChange={(e) =>
@@ -1010,6 +1035,8 @@ export default function LiveCoach({
                               지킬 선 · 선택
                               <input
                                 maxLength={400}
+                                id="quick-boundaries"
+                                name="boundaries"
                                 value={quickContext.boundaries}
                                 placeholder="예: 확정되지 않은 시간은 약속하지 않기"
                                 onChange={(e) =>
