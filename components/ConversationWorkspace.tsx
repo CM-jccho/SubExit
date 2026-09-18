@@ -422,8 +422,6 @@ export default function ConversationWorkspace() {
       setTourStep(0);
       setTour(true);
     }
-    if (query.get("live") === "1")
-      setToast("코칭에 사용할 카드를 선택하거나 새로 만들어 주세요.");
     window.addEventListener("popstate", restore);
     return () => window.removeEventListener("popstate", restore);
   }, []);
@@ -893,7 +891,7 @@ export default function ConversationWorkspace() {
                 >
                   <button
                     aria-pressed={purpose === "live"}
-                    onClick={() => navigate("library", "live")}
+                    onClick={() => navigate("quick", "live")}
                   >
                     지금 도움받기
                   </button>
@@ -960,7 +958,7 @@ export default function ConversationWorkspace() {
               )}
               {view === "home" && (
                 <HomeActions
-                  onLive={() => navigate("library", "live")}
+                  onLive={() => navigate("quick", "live")}
                   onNavigate={(next) => navigate(next, "practice")}
                   onResume={(id) => {
                     navigate("records");
@@ -1811,6 +1809,15 @@ export default function ConversationWorkspace() {
                     </>
                   )}
                 </>
+              )}
+              {view === "quick" && (
+                <LiveCoach
+                  directEntry
+                  savedProfiles={cards.filter((card) => !card.isSample)}
+                  onBack={home}
+                  onDemo={() => navigate("demo")}
+                  onPractice={() => navigate("library", "practice")}
+                />
               )}
               {view === "live" && active && (
                 <LiveCoach

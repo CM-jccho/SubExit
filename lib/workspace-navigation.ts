@@ -14,6 +14,7 @@ export type WorkspaceView =
   | "setup"
   | "detail"
   | "live"
+  | "quick"
   | "demo"
   | "voicePractice"
   | "friendChat";
@@ -21,7 +22,9 @@ export type WorkspaceView =
 export type WorkspacePurpose = "live" | "practice";
 export function workspacePurpose(search: string): WorkspacePurpose {
   const query = new URLSearchParams(search);
-  return query.get("purpose") === "live" || query.get("live") === "1"
+  return query.get("purpose") === "live" ||
+    query.get("live") === "1" ||
+    query.get("view") === "quick"
     ? "live"
     : "practice";
 }
@@ -45,7 +48,12 @@ export function workspaceSection(view: WorkspaceView): WorkspaceView {
 }
 export function workspaceView(search: string): WorkspaceView {
   const query = new URLSearchParams(search);
-  if (query.get("tour") === "1" || query.get("live") === "1") return "library";
+  if (query.get("tour") === "1") return "library";
+  if (
+    query.get("live") === "1" ||
+    (query.get("view") === "library" && query.get("purpose") === "live")
+  )
+    return "quick";
   if (query.get("demo") === "1") return "demo";
   const view = query.get("view");
   return [
@@ -56,6 +64,7 @@ export function workspaceView(search: string): WorkspaceView {
     "prompts",
     "home",
     "library",
+    "quick",
     "room",
     "records",
     "terms",

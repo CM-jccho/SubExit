@@ -611,3 +611,107 @@ html {
 .input-dialog .dd-danger {
   color: var(--danger);
 }
+
+/* Immediate assistance starts with the utterance, not a scenario catalogue. */
+.dc-quick-help .dc-live-heading {
+  margin: 12px 0 20px;
+}
+.dc-quick-help .dc-live-heading h1 {
+  font-size: var(--t-h1);
+}
+.dc-quick-help .dc-live-heading p {
+  margin: 8px 0 0;
+  color: var(--ink-500);
+}
+.dc-quick-help .dc-listen-panel {
+  padding: 20px;
+}
+.dc-quick-help .dc-transcript {
+  margin-top: 16px;
+}
+.dc-quick-help .dc-transcript textarea {
+  min-height: 108px;
+  height: auto;
+  font-size: var(--t-lead);
+}
+.dc-quick-help .dc-mode-switch {
+  margin: 0;
+}
+.quick-context {
+  margin: 16px 0;
+  border: 0;
+  background: var(--surface-page);
+  border-radius: var(--r-md);
+  padding: 12px;
+}
+.quick-context summary {
+  font-size: var(--t-body);
+}
+.quick-context summary span {
+  display: block;
+  font-weight: 400;
+  color: var(--ink-500);
+  font-size: var(--t-body);
+  margin-top: 4px;
+}
+.quick-context fieldset {
+  min-width: 0;
+  border: 0;
+  padding: 16px 0 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+.quick-context label {
+  display: grid;
+  gap: 6px;
+  font-size: var(--t-body);
+}
+.quick-context input,
+.quick-context select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  font-size: var(--t-lead);
+}
+.quick-goals {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.quick-goals button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-full);
+  background: var(--surface-card);
+  color: var(--ink-700);
+  font-size: var(--t-body);
+}
+.quick-goals button[aria-pressed="true"] {
+  background: var(--primary-tint);
+  border-color: var(--primary);
+}
+.quick-sample-option {
+  margin-top: 16px;
+  font-size: var(--t-body);
+}
+.dc-quick-help .vn-consent {
+  margin: 12px 0;
+}
+@media (max-width: 850px) {
+  .dc-quick-help .quick-answer-empty {
+    display: none;
+  }
+  .dc-quick-help .dc-listen-panel {
+    padding: 16px;
+  }
+  .dc-quick-help .dc-live-heading h1 {
+    font-size: 24px;
+  }
+  .dc-quick-help .dc-mode-switch button {
+    padding: 10px 8px;
+    min-height: 44px;
+    font-size: var(--t-body);
+  }
+}

@@ -687,10 +687,7 @@ test("home practice opens a context card and practice keeps a discoverable recor
     await click(button("대화 연습 시작하기"));
     assert.equal(document.querySelector(".dc-preparation-actions"), null);
     assert.equal(window.location.search, "?view=records");
-    assert.equal(
-      document.querySelector('[aria-current="page"]'),
-      null,
-    );
+    assert.equal(document.querySelector('[aria-current="page"]'), null);
     assert(
       document
         .querySelector("h1")
@@ -700,7 +697,11 @@ test("home practice opens a context card and practice keeps a discoverable recor
     assert.equal(document.querySelector(".dc-root").dataset.view, "detail");
     await click(button("내 기록"));
     assert.equal(document.querySelector("h1").textContent, "내 기록");
-    assert(document.querySelector('.record-examples h2').textContent.includes("예시로 먼저"));
+    assert(
+      document
+        .querySelector(".record-examples h2")
+        .textContent.includes("예시로 먼저"),
+    );
     assert(button("녹음·파일 추가"));
   } finally {
     await ui.cleanup();
@@ -735,7 +736,9 @@ test("reload destinations exclude transient drafts and old tutorial parameters",
   for (const view of ["voicePractice", "friendChat"])
     assert.equal(workspaceUrl("https://test.local", view), "/?view=records");
   assert.equal(workspaceView("?view=invalid"), "home");
-  assert.equal(workspaceView("?live=1"), "library");
+  assert.equal(workspaceView("?live=1"), "quick");
+  assert.equal(workspaceView("?view=library&purpose=live"), "quick");
+  assert.equal(workspaceView("?view=quick"), "quick");
 });
 
 const trends = require("../lib/trend-search.ts");
@@ -1721,10 +1724,7 @@ test("foundation training deep links do not mark Home as the current page and re
   try {
     await settle();
     assert.equal(document.querySelector("h1").textContent, "대화 기초 훈련");
-    assert.equal(
-      document.querySelector('[aria-current="page"]'),
-      null,
-    );
+    assert.equal(document.querySelector('[aria-current="page"]'), null);
   } finally {
     await ui.cleanup();
   }
@@ -2171,10 +2171,7 @@ test("messenger has a dedicated home action and restores by URL", async () => {
     await settle();
     assert.equal(document.querySelector("h1").textContent, "메시지 답장");
     assert.equal(window.location.search, "?view=messenger");
-    assert.equal(
-      document.querySelector('[aria-current="page"]'),
-      null,
-    );
+    assert.equal(document.querySelector('[aria-current="page"]'), null);
   } finally {
     await ui.cleanup();
   }
@@ -2303,7 +2300,11 @@ test("communication tips are private editable drafts and reopening a tip preserv
     await settle();
     assert.equal((await store.listTerms()).length, 1);
     await click(button("내 노트에 담기"));
-    assert(document.querySelector(".term-personal-memo summary").textContent.includes("작성됨"));
+    assert(
+      document
+        .querySelector(".term-personal-memo summary")
+        .textContent.includes("작성됨"),
+    );
     await click(document.querySelector(".term-personal-memo summary"));
     await click(document.querySelector('[aria-label="내 메모 수정"]'));
     assert.equal(
@@ -2394,8 +2395,16 @@ test("editing practice interest hides only its list and preserves search when ca
       null,
     );
     await click(button("미리 연습하기"));
-    assert.equal(document.querySelector("#card-search"), null, "Small curated lists do not need search");
-    await click([...document.querySelectorAll(".focus-list-filters button")].find(b => b.textContent.includes("모든 분야 예시")));
+    assert.equal(
+      document.querySelector("#card-search"),
+      null,
+      "Small curated lists do not need search",
+    );
+    await click(
+      [...document.querySelectorAll(".focus-list-filters button")].find((b) =>
+        b.textContent.includes("모든 분야 예시"),
+      ),
+    );
     await change(document.querySelector("#card-search"), "상담 시간");
     await click(button("선택 바꾸기"));
     assert(document.querySelector('[aria-label="대화 맥락 선택"]'));
@@ -2524,10 +2533,7 @@ test("home prioritizes live assistance, offers rehearsal second and separates su
       await settle();
       assert.equal(window.location.search, `?view=${id}`);
       assert(document.querySelector("h1").textContent.includes(label));
-      assert.equal(
-        document.querySelector(".dc-nav [aria-current=page]"),
-        null,
-      );
+      assert.equal(document.querySelector(".dc-nav [aria-current=page]"), null);
       assert.equal(
         document.querySelector(".purpose-breadcrumb [aria-current=location]")
           .textContent,
@@ -2980,7 +2986,10 @@ test("voice input dialog preserves a closed draft, blocks duplicate save and esc
   try {
     assert(!document.querySelector("textarea"));
     await click(button("답변 쓰기"));
-    assert(button("기록 저장").disabled, "Empty input retains a disabled save action");
+    assert(
+      button("기록 저장").disabled,
+      "Empty input retains a disabled save action",
+    );
     assert(button("기록 저장").closest(".input-dialog-footer"));
     assert.equal(button("기록 저장").closest(".input-dialog-body"), null);
     await change(
@@ -3298,10 +3307,7 @@ test("practice recording entry opens a new recording without requiring interest 
     await click(button("내 녹음으로 복기"));
     await settle();
     assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
-    assert.equal(
-      document.querySelector(".dc-nav [aria-current=page]"),
-      null,
-    );
+    assert.equal(document.querySelector(".dc-nav [aria-current=page]"), null);
     assert(document.querySelector(".input-launcher"));
     assert.equal(
       (await store.listSessions()).filter((r) => !r.isSample).length,
@@ -3327,10 +3333,7 @@ test("returning from active practice updates the record list, URL and primary na
     await click(document.querySelector(".dc-saved-card"));
     await click(document.querySelector('[data-tour="practice-button"]'));
     await settle();
-    assert.equal(
-      document.querySelector(".dc-nav [aria-current=page]"),
-      null,
-    );
+    assert.equal(document.querySelector(".dc-nav [aria-current=page]"), null);
     await click(document.querySelector(".vn-consent input"));
     global.fetch = async () =>
       Response.json({ reply: "어떤 부탁인가요?", terms: [] });
@@ -3347,10 +3350,7 @@ test("returning from active practice updates the record list, URL and primary na
       document.querySelector(".vn-chat-composer textarea").value,
       "아직 보내지 않은 말",
     );
-    assert.equal(
-      document.querySelector(".dc-nav [aria-current=page]"),
-      null,
-    );
+    assert.equal(document.querySelector(".dc-nav [aria-current=page]"), null);
     window.confirm = () => true;
     await click(button("내 기록"));
     await settle();
@@ -3422,53 +3422,48 @@ test("speaker confirmation offers an inline solo correction before allowing coac
   }
 });
 
-test("live assistance retains its purpose through reload, skips the rehearsal tour and opens live coaching before optional practice", async () => {
+test("immediate assistance skips the catalogue, reloads safely and rehearsal remains a distinct flow", async () => {
   const C = require("../components/ConversationWorkspace.tsx").default;
   const ui = await mount(C);
   try {
     await settle();
-    assert(
-      document
-        .querySelector('[data-purpose="live"]')
-        .classList.contains("dd-primary"),
-    );
-    assert(
-      document
-        .querySelector('[data-purpose="library"]')
-        .classList.contains("dd-secondary"),
-    );
     await click(button("지금 대화 도움받기"));
-    assert.equal(window.location.search, "?view=library&purpose=live");
-    assert(document.querySelector("h1").textContent.includes("어떤 대화를"));
-    await click(document.querySelector('[data-focus="work"]'));
-    assert(!document.querySelector('[role="dialog"]'));
-    assert(document.querySelector("h1").textContent.includes("대화 상황 선택"));
+    assert.equal(window.location.search, "?view=quick");
+    assert(document.querySelector("#live-text"));
+    assert(!document.querySelector(".dc-saved-card"));
+    assert(!document.querySelector(".dc-preflight"));
+    assert(!document.querySelector("dialog[open]"));
+    assert.notEqual(
+      document.activeElement,
+      document.querySelector("#live-text"),
+    );
+    assert(!document.body.textContent.includes("작업을 취소했어요"));
     await act(async () => ui.root.render(null));
     await act(async () => ui.root.render(React.createElement(C)));
     await settle();
-    assert.equal(window.location.search, "?view=library&purpose=live");
-    assert(document.querySelector("h1").textContent.includes("대화 상황 선택"));
+    assert(document.querySelector("#live-text"));
+    await change(
+      document.querySelector("#live-text"),
+      "약속을 다음 주로 바꿀 수 있어?",
+    );
+    window.confirm = () => false;
+    await click(button("AI 상대와 미리 연습하기"));
+    assert.equal(
+      document.querySelector("#live-text").value,
+      "약속을 다음 주로 바꿀 수 있어?",
+    );
+    await click(document.querySelector(".dc-nav button"));
+    assert(document.querySelector("#live-text"));
+    window.confirm = () => true;
+    await click(button("AI 상대와 미리 연습하기"));
+    assert.equal(window.location.search, "?view=library");
+    assert(!document.querySelector("#live-text"));
+    await click(document.querySelector('[data-focus="work"]'));
+    assert(document.querySelector(".dc-saved-card"));
     await click(document.querySelector(".dc-saved-card"));
-    assert.equal(
-      document
-        .querySelector('[data-tour="practice-button"]')
-        .textContent.trim(),
-      "이 상황으로 도움받기",
-    );
-    await click(button("이 상황으로 도움받기"));
-    await settle();
-    assert.equal(
-      document.querySelector("h1").textContent,
-      "지금 대화 도움받기",
-    );
-    assert(document.body.textContent.includes("최대 4초"));
-    assert(document.body.textContent.includes("처리 중에는"));
-    await click(button("이 상황 미리 연습하기"));
+    assert(button("대화 연습 시작하기"));
+    await click(button("대화 연습 시작하기"));
     assert(document.querySelector('[data-tour="practice-settings"]'));
-    assert.equal(
-      new URLSearchParams(window.location.search).get("purpose"),
-      null,
-    );
     assert.equal(
       (await store.listSessions()).filter((s) => !s.isSample).length,
       0,
@@ -3491,10 +3486,7 @@ test("the third core home entry opens recording analysis directly without a situ
     );
     await click(button("녹음 분석·코칭"));
     await settle();
-    assert.equal(
-      document.querySelector(".dc-nav [aria-current=page]"),
-      null,
-    );
+    assert.equal(document.querySelector(".dc-nav [aria-current=page]"), null);
     assert(document.querySelector(".input-launcher"));
     assert(document.body.textContent.includes("녹음 분석·코칭"));
     assert(!document.querySelector('[aria-label="대화 맥락 선택"]'));
@@ -3613,7 +3605,10 @@ test("term extraction includes the end of long transcripts and renders selectabl
       onTerm: (t) => (selected = t),
     });
     try {
-      assert.equal(document.querySelectorAll(".vn-transcript-text button").length, 1);
+      assert.equal(
+        document.querySelectorAll(".vn-transcript-text button").length,
+        1,
+      );
       await click(document.querySelector(".is-term"));
       assert.equal(selected, "Service Level Agreement");
     } finally {
@@ -3925,7 +3920,12 @@ test("compact fields start small, allow editable examples, preserve completed va
       "가능한 시간을 정하고 싶어요.",
     );
     await change(document.querySelector("textarea"), "Escape로 취소할 수정");
-    await act(async () => Simulate.keyDown(document.querySelector("textarea"), { key: "Escape", nativeEvent: { isComposing: false } }));
+    await act(async () =>
+      Simulate.keyDown(document.querySelector("textarea"), {
+        key: "Escape",
+        nativeEvent: { isComposing: false },
+      }),
+    );
     assert.equal(document.activeElement, button("원하는 결과 수정"));
     assert(button("원하는 결과 수정").textContent.includes("가능한 시간을"));
     await click(button("원하는 결과 수정"));
@@ -4180,78 +4180,130 @@ test("compact dictation requires opt-in, appends recognized words and stops the 
   }
 });
 
-
 test("catalogue save confirms the named expression in the current tab and links to its persisted note", async () => {
   const C = require("../components/TermNotebook.tsx").default;
   const ui = await mount(C, { config });
   try {
     await settle();
     await click(button("분야별 표현 찾기 · 17개 분야"));
-    await click([...document.querySelectorAll(".learn-term")].find(el => el.querySelector("strong").textContent === "핫픽스"));
+    await click(
+      [...document.querySelectorAll(".learn-term")].find(
+        (el) => el.querySelector("strong").textContent === "핫픽스",
+      ),
+    );
     assert.equal(document.querySelectorAll(".term-editor textarea").length, 0);
     assert.equal(document.querySelector(".term-personal-memo").open, false);
     await click(button("내 노트에 추가"));
     await settle();
     assert.equal(document.querySelector(".term-editor"), null);
-    assert.equal(button("분야별 표현 찾기 · 17개 분야").getAttribute("aria-pressed"), "true");
-    assert.match(document.querySelector(".vn-save-receipt").textContent, /핫픽스.*저장했어요/);
-    assert.equal(document.activeElement, document.querySelector(".vn-save-receipt"));
+    assert.equal(
+      button("분야별 표현 찾기 · 17개 분야").getAttribute("aria-pressed"),
+      "true",
+    );
+    assert.match(
+      document.querySelector(".vn-save-receipt").textContent,
+      /핫픽스.*저장했어요/,
+    );
+    assert.equal(
+      document.activeElement,
+      document.querySelector(".vn-save-receipt"),
+    );
     assert.equal((await store.listTerms()).length, 1);
     await click(button("내 노트에서 보기"));
     assert.equal(button("내 노트").getAttribute("aria-pressed"), "true");
     assert.match(document.querySelector(".vn-term-card").textContent, /핫픽스/);
     await click(document.querySelector(".vn-term-open"));
     assert(button("변경 내용 저장"));
-  } finally { await ui.cleanup(); }
+  } finally {
+    await ui.cleanup();
+  }
 });
 
 test("term save blocks double clicks and keeps the draft open on storage failure", async () => {
   const C = require("../components/TermNotebook.tsx").TermEditor;
   const original = store.putTerm;
-  let saves = 0, saved = 0, closed = 0;
-  const ui = await mount(C, { config, seed: { term: "테스트 표현", industry: "", quote: "", sessionId: "" }, onSaved: () => saved++, onClose: () => closed++ });
+  let saves = 0,
+    saved = 0,
+    closed = 0;
+  const ui = await mount(C, {
+    config,
+    seed: { term: "테스트 표현", industry: "", quote: "", sessionId: "" },
+    onSaved: () => saved++,
+    onClose: () => closed++,
+  });
   try {
-    store.putTerm = async () => { saves++; throw new Error("저장 공간을 확인해 주세요."); };
+    store.putTerm = async () => {
+      saves++;
+      throw new Error("저장 공간을 확인해 주세요.");
+    };
     const save = button("이 표현 바로 저장");
-    await act(async () => { save.click(); save.click(); });
+    await act(async () => {
+      save.click();
+      save.click();
+    });
     await settle();
     assert.equal(saves, 1);
     assert.equal(saved, 0);
     assert.equal(closed, 0);
-    assert.match(document.querySelector('[role="alert"]').textContent, /저장 공간/);
-    assert.equal(document.querySelector('.term-editor input').value, "테스트 표현");
+    assert.match(
+      document.querySelector('[role="alert"]').textContent,
+      /저장 공간/,
+    );
+    assert.equal(
+      document.querySelector(".term-editor input").value,
+      "테스트 표현",
+    );
     store.putTerm = original;
     await click(button("이 표현 바로 저장"));
     await settle();
     assert.equal(saved, 1);
     assert.equal(closed, 1);
     assert.equal((await store.listTerms()).length, 1);
-  } finally { store.putTerm = original; await ui.cleanup(); }
+  } finally {
+    store.putTerm = original;
+    await ui.cleanup();
+  }
 });
-
 
 test("unfinished context protects tab and browser navigation, shows missing fields, and saves without a leave prompt", async () => {
   const C = require("../components/ConversationWorkspace.tsx").default;
-  const ui = await mount(C, {}, () => window.localStorage.setItem("ddeundeun-conversation-focus-v1", JSON.stringify({version: 1, focus: "all"})));
+  const ui = await mount(C, {}, () =>
+    window.localStorage.setItem(
+      "ddeundeun-conversation-focus-v1",
+      JSON.stringify({ version: 1, focus: "all" }),
+    ),
+  );
   let asks = 0;
   try {
     await settle();
     await click(button("미리 연습하기"));
     await click(button("내 상황 만들기"));
     await click(button("직접 작성"));
-    assert.match(document.getElementById("profile-save-hint").textContent, /카드 이름.*대화 상대.*어떤 상황.*원하는 결과/);
+    assert.match(
+      document.getElementById("profile-save-hint").textContent,
+      /카드 이름.*대화 상대.*어떤 상황.*원하는 결과/,
+    );
     await click(button("카드 이름 · 필수 입력"));
     await change(document.querySelector("textarea"), "친구 약속 점검");
     await click(button("입력 완료"));
-    window.confirm = () => { asks++; return false; };
+    window.confirm = () => {
+      asks++;
+      return false;
+    };
     await click(button("홈"));
     assert.equal(asks, 1);
     assert.equal(document.querySelector(".dc-root").dataset.view, "setup");
-    assert(button("카드 이름 · 필수 수정").textContent.includes("친구 약속 점검"));
-    const leaving = new window.Event("beforeunload", {cancelable: true});
+    assert(
+      button("카드 이름 · 필수 수정").textContent.includes("친구 약속 점검"),
+    );
+    const leaving = new window.Event("beforeunload", { cancelable: true });
     window.dispatchEvent(leaving);
     assert(leaving.defaultPrevented);
-    for (const [label, value] of [["대화 상대", "친구"], ["어떤 상황인가요?", "약속 시간을 변경하려고 해요."], ["내가 원하는 결과", "서로 가능한 새 시간을 정하기"]]) {
+    for (const [label, value] of [
+      ["대화 상대", "친구"],
+      ["어떤 상황인가요?", "약속 시간을 변경하려고 해요."],
+      ["내가 원하는 결과", "서로 가능한 새 시간을 정하기"],
+    ]) {
       await click(button(label + " · 필수 입력"));
       await change(document.querySelector("textarea"), value);
       await click(button("입력 완료"));
@@ -4260,29 +4312,44 @@ test("unfinished context protects tab and browser navigation, shows missing fiel
     await click(button("내 대화로 저장"));
     assert.equal(asks, 1);
     assert.equal(document.querySelector(".dc-root").dataset.view, "detail");
-    const saved = new window.Event("beforeunload", {cancelable: true});
+    const saved = new window.Event("beforeunload", { cancelable: true });
     window.dispatchEvent(saved);
     assert.equal(saved.defaultPrevented, false);
     await click(button("다른 상황 선택"));
     await click(button("내 상황 만들기"));
-    await change(document.querySelector("#setup-message"), "전송하지 않은 이야기");
-    window.confirm = () => { asks++; return true; };
+    await change(
+      document.querySelector("#setup-message"),
+      "전송하지 않은 이야기",
+    );
+    window.confirm = () => {
+      asks++;
+      return true;
+    };
     await click(button("홈"));
     assert.equal(asks, 2);
     assert.equal(document.querySelector(".dc-root").dataset.view, "home");
     await settle();
-  } finally { await ui.cleanup(); }
+  } finally {
+    await ui.cleanup();
+  }
 });
-
 
 test("ordinary transcript prose has no word buttons and retains its exact text", async () => {
   const { TermText } = require("../components/TermNotebook.tsx");
   const text = "함께 확인할 업무를 정하고 시간을 알려주세요.";
   const ui = await mount(TermText, { text, onTerm() {} });
   try {
-    assert.equal(document.querySelector(".vn-transcript-text").textContent, text);
-    assert.equal(document.querySelectorAll(".vn-transcript-text button").length, 0);
-  } finally { await ui.cleanup(); }
+    assert.equal(
+      document.querySelector(".vn-transcript-text").textContent,
+      text,
+    );
+    assert.equal(
+      document.querySelectorAll(".vn-transcript-text button").length,
+      0,
+    );
+  } finally {
+    await ui.cleanup();
+  }
 });
 
 test("records combine source filters, name sorting and search without mutating saved rows", async () => {
@@ -4291,42 +4358,71 @@ test("records combine source filters, name sorting and search without mutating s
   try {
     await settle();
     await act(async () => {
-      for (const [id,title,isSample,updatedAt] of [
-        ["filter-z","하루 기록",false,"2026-09-18T01:00:00.000Z"],
-        ["filter-a","가족 기록",false,"2026-09-17T01:00:00.000Z"],
-        ["filter-s","샘플 기록",true,"2026-09-16T01:00:00.000Z"],
-      ]) await store.putSession({...session(),id,title,isSample,updatedAt});
+      for (const [id, title, isSample, updatedAt] of [
+        ["filter-z", "하루 기록", false, "2026-09-18T01:00:00.000Z"],
+        ["filter-a", "가족 기록", false, "2026-09-17T01:00:00.000Z"],
+        ["filter-s", "샘플 기록", true, "2026-09-16T01:00:00.000Z"],
+      ])
+        await store.putSession({
+          ...session(),
+          id,
+          title,
+          isSample,
+          updatedAt,
+        });
       ui.root.render(null);
     });
-    await act(async () => ui.root.render(React.createElement(Workspace, {config,onChooseCard(){}})));
+    await act(async () =>
+      ui.root.render(
+        React.createElement(Workspace, { config, onChooseCard() {} }),
+      ),
+    );
     await settle();
-    const titles=()=>[...document.querySelectorAll('.vn-session-card strong')].map(x=>x.textContent);
+    const titles = () =>
+      [...document.querySelectorAll(".vn-session-card strong")].map(
+        (x) => x.textContent,
+      );
     await click(button("내 기록"));
-    assert.deepEqual(titles(),["하루 기록","가족 기록"]);
-    assert.equal(document.querySelector('.record-examples'),null);
-    await change(document.querySelector('[aria-label="기록 정렬"]'),"name");
-    assert.deepEqual(titles(),["가족 기록","하루 기록"]);
-    await change(document.querySelector('[aria-label="대화 기록 검색"]'),"가족");
-    assert.deepEqual(titles(),["가족 기록"]);
+    assert.deepEqual(titles(), ["하루 기록", "가족 기록"]);
+    assert.equal(document.querySelector(".record-examples"), null);
+    await change(document.querySelector('[aria-label="기록 정렬"]'), "name");
+    assert.deepEqual(titles(), ["가족 기록", "하루 기록"]);
+    await change(
+      document.querySelector('[aria-label="대화 기록 검색"]'),
+      "가족",
+    );
+    assert.deepEqual(titles(), ["가족 기록"]);
     await click(button("샘플"));
-    assert.deepEqual(titles(),[]);
-    await change(document.querySelector('[aria-label="대화 기록 검색"]'),"");
-    assert.deepEqual(titles(),["샘플 기록"]);
-    assert(document.querySelector('.record-examples'));
-    assert.equal((await store.getSession("filter-z")).title,"하루 기록");
-  } finally {await ui.cleanup();}
+    assert.deepEqual(titles(), []);
+    await change(document.querySelector('[aria-label="대화 기록 검색"]'), "");
+    assert.deepEqual(titles(), ["샘플 기록"]);
+    assert(document.querySelector(".record-examples"));
+    assert.equal((await store.getSession("filter-z")).title, "하루 기록");
+  } finally {
+    await ui.cleanup();
+  }
 });
 
 test("home distinguishes detected speech capability from permissions and offers a text fallback", async () => {
   const Home = require("../components/HomeActions.tsx").default;
-  for (const supported of [false,true]) {
-    const ui = await mount(Home,{onLive(){},onNavigate(){},onResume(){}},()=>{
-      if(supported) window.SpeechRecognition=class {};
-    });
+  for (const supported of [false, true]) {
+    const ui = await mount(
+      Home,
+      { onLive() {}, onNavigate() {}, onResume() {} },
+      () => {
+        if (supported) window.SpeechRecognition = class {};
+      },
+    );
     try {
-      const message=document.querySelector('#live-input-limit').textContent;
-      assert(message.includes(supported?"권한과 연결 상태":"직접 입력하거나 짧게 녹음"));
-      assert.equal(document.querySelectorAll('[data-purpose]').length,3);
-    } finally {await ui.cleanup();}
+      const message = document.querySelector("#live-input-limit").textContent;
+      assert(
+        message.includes(
+          supported ? "권한과 연결 상태" : "직접 입력하거나 짧게 녹음",
+        ),
+      );
+      assert.equal(document.querySelectorAll("[data-purpose]").length, 3);
+    } finally {
+      await ui.cleanup();
+    }
   }
 });

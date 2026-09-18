@@ -14,7 +14,12 @@ import { useCompanion } from "./CompanionTheme";
 import CompanionNudge from "./CompanionNudge";
 import type { AudioClip } from "@/lib/voice-notebook";
 import { scenarios, tones, type Tone } from "@/lib/scenarios";
-import type { ContextProfile } from "@/lib/conversation-cards";
+import {
+  emptyProfile,
+  type ContextProfile,
+  type ConversationCard,
+} from "@/lib/conversation-cards";
+import { WORKSPACE_LEAVE_EVENT } from "@/lib/navigation-guard";
 import type { CoachResponse } from "@/lib/coach-contract";
 import { Companion, HelpTip, Icon, Waveform } from "./CompanionUI";
 type Phase = "idle" | "permission" | "listening" | "transcribing" | "coaching";
@@ -22,21 +27,32 @@ export default function LiveCoach({
   onBack,
   onDemo,
   onPractice,
-  profile,
+  profile: initialProfile,
+  directEntry = false,
+  savedProfiles = [],
 }: {
   onBack: () => void;
   onDemo: () => void;
   onPractice?: () => void;
   profile?: ContextProfile;
+  directEntry?: boolean;
+  savedProfiles?: ConversationCard[];
 }) {
   const character = useCompanion();
   const [supportsLive, setSupportsLive] = useState(false);
   const [voiceStyle, setVoiceStyle] = useState<"continuous" | "short">(
-    "continuous",
+    directEntry ? "short" : "continuous",
   );
   const [liveActive, setLiveActive] = useState(false);
   const [scenario, setScenario] = useState("sales"),
-    [tone, setTone] = useState<Tone>(profile?.tone || "firm_polite");
+    [tone, setTone] = useState<Tone>(initialProfile?.tone || "firm_polite");
+  const [quickContext, setQuickContext] = useState<ContextProfile>(
+    initialProfile || emptyProfile(),
+  );
+  const [configState, setConfigState] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
+  const [configAttempt, setConfigAttempt] = useState(0);
   const [config, setConfig] = useState({
     available: false,
     voiceAvailable: false,
@@ -54,13 +70,34 @@ export default function LiveCoach({
     [error, setError] = useState("");
   const [clip, setClip] = useState<AudioClip | null>(null),
     [notice, setNotice] = useState("");
-  const [prepared, setPrepared] = useState(false),
-    [inputMode, setInputMode] = useState<"voice" | "text">("voice"),
+  const [prepared, setPrepared] = useState(directEntry),
+    [inputMode, setInputMode] = useState<"voice" | "text">(
+      directEntry ? "text" : "voice",
+    ),
     [copied, setCopied] = useState(false);
   const sampleHistory = useRef<string[]>([]);
   const [recentCues, setRecentCues] = useState<
-    { opponent: string; response: CoachResponse }[]
+    { opponent: string; response: CoachResponse; goal?: string }[]
   >([]);
+  const profile: ContextProfile | undefined = directEntry
+    ? {
+        ...quickContext,
+        title: quickContext.title || "지금 나누는 대화",
+        partner: quickContext.partner.trim() || "대화 상대",
+        situation: quickContext.situation.trim() || "현재 나누는 대화",
+        goal:
+          quickContext.goal.trim() ||
+          "상대의 뜻을 확인하고 내 입장을 차분히 전달하기",
+        tone,
+      }
+    : initialProfile;
+  function updateContext(next: ContextProfile) {
+    setQuickContext(next);
+    setTone(next.tone);
+    setResult(null);
+    sampleHistory.current = [];
+    setNotice("상대와 목표를 바꿨어요. 입력한 상대 말은 그대로예요.");
+  }
   const version = useRef(0),
     busy = useRef(false),
     recorder = useRef<MediaRecorder | null>(null),
@@ -70,13 +107,49 @@ export default function LiveCoach({
     request = useRef<AbortController | null>(null),
     panel = useRef<HTMLElement | null>(null);
   const allowed = consent && adult && (!config.sampleOnly || sample);
+  const previousConsent = useRef(consent);
   useEffect(() => {
-    if (!consent && prepared && !sampleMode) {
+    const revoked = previousConsent.current && !consent;
+    previousConsent.current = consent;
+    if (!consent && prepared && !sampleMode && (!directEntry || revoked)) {
       cancel();
       setLiveActive(false);
-      setPrepared(false);
+      if (!directEntry) setPrepared(false);
     }
   }, [consent, prepared, sampleMode]);
+  const quickDirty =
+    directEntry &&
+    (!!input.trim() ||
+      !!clip ||
+      recentCues.length > 0 ||
+      !!quickContext.goal.trim() ||
+      !!quickContext.partner.trim() ||
+      !!quickContext.situation.trim() ||
+      !!quickContext.boundaries.trim() ||
+      phase !== "idle" ||
+      liveActive);
+  useEffect(() => {
+    if (!quickDirty) return;
+    const leaving = (event: Event) => {
+      if (
+        !event.defaultPrevented &&
+        !window.confirm(
+          "입력한 말과 추천은 이 화면에만 남아요. 화면을 나갈까요?",
+        )
+      )
+        event.preventDefault();
+    };
+    const unloading = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener(WORKSPACE_LEAVE_EVENT, leaving);
+    window.addEventListener("beforeunload", unloading);
+    return () => {
+      window.removeEventListener(WORKSPACE_LEAVE_EVENT, leaving);
+      window.removeEventListener("beforeunload", unloading);
+    };
+  }, [quickDirty]);
   function release() {
     if (timer.current) clearTimeout(timer.current);
     if (ticker.current) clearInterval(ticker.current);
@@ -97,11 +170,22 @@ export default function LiveCoach({
   }
   useEffect(() => {
     setSupportsLive(!!speechConstructor());
+    setConfigState("loading");
     const abort = new AbortController();
     fetch("/api/coach", { signal: abort.signal })
-      .then((r) => r.json())
-      .then(setConfig)
-      .catch(() => {});
+      .then((r) => {
+        if (!r.ok) throw new Error("configuration");
+        return r.json();
+      })
+      .then((value) => {
+        if (!abort.signal.aborted) {
+          setConfig(value);
+          setConfigState("ready");
+        }
+      })
+      .catch(() => {
+        if (!abort.signal.aborted) setConfigState("error");
+      });
     const hide = () => {
       if (document.hidden) {
         cancel();
@@ -120,7 +204,7 @@ export default function LiveCoach({
       release();
       document.removeEventListener("visibilitychange", hide);
     };
-  }, []);
+  }, [configAttempt]);
   useEffect(() => {
     if (result && window.matchMedia("(max-width: 850px)").matches)
       panel.current?.scrollIntoView({ block: "start" });
@@ -155,6 +239,14 @@ export default function LiveCoach({
       text.trim().length < 2
     )
       return;
+    const requestProfile =
+      directEntry && profile
+        ? {
+            ...profile,
+            situation:
+              quickContext.situation.trim() || text.trim().slice(0, 800),
+          }
+        : profile;
     busy.current = true;
     setPhase("coaching");
     setNotice("인식한 말을 바탕으로 답변 힌트를 준비하고 있어요.");
@@ -170,7 +262,7 @@ export default function LiveCoach({
         data = await sampledRequest({
           operation: "coach",
           context:
-            practiceSampleContext(profile) ||
+            practiceSampleContext(requestProfile) ||
             scenarios.find((s) => s.id === scenario)?.title ||
             text,
           previous: sampleHistory.current,
@@ -184,7 +276,7 @@ export default function LiveCoach({
               mode: "ai",
               quick: true,
               scenario,
-              context: profile,
+              context: requestProfile,
               tone,
               opponent: text,
               reply: "",
@@ -201,7 +293,7 @@ export default function LiveCoach({
         setResult(data);
         setRecentCues((items) => [
           ...items.slice(-2),
-          { opponent: text, response: data },
+          { opponent: text, response: data, goal: profile?.goal },
         ]);
         if (data.sample)
           sampleHistory.current = [
@@ -238,7 +330,7 @@ export default function LiveCoach({
     setPhase("permission");
     setError("");
     setResult(null);
-    setInput("");
+    if (!directEntry) setInput("");
     setSeconds(0);
     setNotice("");
     setClip(null);
@@ -389,63 +481,74 @@ export default function LiveCoach({
   }[phase];
   return (
     <div
-      className="dd-live dc-live-app"
+      className={"dd-live dc-live-app" + (directEntry ? " dc-quick-help" : "")}
       data-coach-phase={liveActive ? "listening" : phase}
     >
       <button
         className="dd-back"
         onClick={() => {
-          cancel();
+          if (!directEntry) cancel();
           onBack();
         }}
       >
         <Icon name="back" size={18} />
-        대화 카드로
+        {directEntry ? "홈으로" : "대화 카드로"}
       </button>
       <header className="dc-live-heading">
         <div>
-          <p className="dc-overline">
-            {prepared ? "내 옆의 대화 코치" : "시작하기 전에"}
-          </p>
+          {!directEntry && (
+            <p className="dc-overline">
+              {prepared ? "내 옆의 대화 코치" : "시작하기 전에"}
+            </p>
+          )}
           <h1>지금 대화 도움받기</h1>
+          {directEntry && (
+            <p>방금 들은 말을 알려주세요. 다음에 할 한마디를 함께 찾아요.</p>
+          )}
         </div>
       </header>
-      <div className="coach-live-presence" aria-label="코치 상태" role="status">
-        <Companion
-          small
-          mood={
-            liveActive || phase === "listening"
-              ? "listen"
-              : phase === "coaching" || phase === "transcribing"
-                ? "think"
-                : result
-                  ? "done"
-                  : "rest"
-          }
-        />
-        <div>
-          <strong>
-            {liveActive || phase === "listening"
-              ? "상대 말을 듣고 있어요"
-              : phase === "coaching"
-                ? "내 목표에 맞는 말을 찾고 있어요"
-                : phase === "transcribing"
-                  ? "들린 말을 확인하고 있어요"
+      {(!directEntry || phase !== "idle" || liveActive || result) && (
+        <div
+          className="coach-live-presence"
+          aria-label="코치 상태"
+          role="status"
+        >
+          <Companion
+            small
+            mood={
+              liveActive || phase === "listening"
+                ? "listen"
+                : phase === "coaching" || phase === "transcribing"
+                  ? "think"
                   : result
-                    ? "다음 한마디가 도착했어요"
-                    : "필요한 순간, 함께 준비해요"}
-          </strong>
-          <span
-            className={
-              "mic-status " +
-              (liveActive || phase === "listening" ? "is-listening" : "")
+                    ? "done"
+                    : "rest"
             }
-          >
-            <i aria-hidden="true" />
-            {liveActive ? "듣는 중 · 실시간 자막과 다음 한마디" : status}
-          </span>
+          />
+          <div>
+            <strong>
+              {liveActive || phase === "listening"
+                ? "상대 말을 듣고 있어요"
+                : phase === "coaching"
+                  ? "내 목표에 맞는 말을 찾고 있어요"
+                  : phase === "transcribing"
+                    ? "들린 말을 확인하고 있어요"
+                    : result
+                      ? "다음 한마디가 도착했어요"
+                      : "필요한 순간, 함께 준비해요"}
+            </strong>
+            <span
+              className={
+                "mic-status " +
+                (liveActive || phase === "listening" ? "is-listening" : "")
+              }
+            >
+              <i aria-hidden="true" />
+              {liveActive ? "듣는 중 · 실시간 자막과 다음 한마디" : status}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
       {!prepared ? (
         <section className="dc-preflight">
           <div className="dc-preflight-intro">
@@ -550,76 +653,98 @@ export default function LiveCoach({
         </section>
       ) : (
         <>
-          <div className="dc-session-bar">
-            <span>
-              <Icon name="cards" size={17} />
-              {profile?.title ||
-                scenarios.find((s) => s.id === scenario)?.title}
-            </span>
-            <button
-              className="dd-link"
-              disabled={phase !== "idle" || liveActive}
-              onClick={() => {
-                setPrepared(false);
-                setResult(null);
-              }}
-            >
-              설정
-            </button>
-          </div>
-          <SampleSwitch
-            checked={sampleMode}
-            disabled={phase !== "idle" || liveActive}
-            onChange={(v) => {
-              setSampleMode(v);
-              setResult(null);
-              setError("");
-              setNotice("");
-              if (v) {
-                setInputMode("text");
-                setAutomatic(false);
-              }
-            }}
-          />
-          {supportsLive && !sampleMode && (
-            <div
-              className="dc-mode-switch live-style-switch"
-              aria-label="음성 처리 방식"
-            >
+          {!directEntry && (
+            <div className="dc-session-bar">
+              <span>
+                <Icon name="cards" size={17} />
+                {profile?.title ||
+                  scenarios.find((s) => s.id === scenario)?.title}
+              </span>
               <button
-                aria-pressed={voiceStyle === "continuous"}
-                className={voiceStyle === "continuous" ? "active" : ""}
+                className="dd-link"
                 disabled={phase !== "idle" || liveActive}
-                onClick={() => setVoiceStyle("continuous")}
+                onClick={() => {
+                  setPrepared(false);
+                  setResult(null);
+                }}
               >
-                실시간 자막 · 코칭
-              </button>
-              <button
-                aria-pressed={voiceStyle === "short"}
-                className={voiceStyle === "short" ? "active" : ""}
-                disabled={phase !== "idle" || liveActive}
-                onClick={() => setVoiceStyle("short")}
-              >
-                짧게 녹음 · 직접 입력
+                설정
               </button>
             </div>
           )}
-          {!supportsLive && !sampleMode && (
-            <p className="live-stream-note">
-              이 브라우저는 실시간 자막을 지원하지 않아요. 짧게 녹음하거나 직접
-              입력해 주세요.
-            </p>
-          )}
-          {supportsLive && voiceStyle === "continuous" && !sampleMode ? (
-            <LiveSpeechPanel
-              profile={profile}
-              scenario={scenario}
-              tone={tone}
-              consent={consent}
-              adult={adult}
-              sample={sample}
-              onActiveChange={setLiveActive}
+          {!directEntry && (
+            <SampleSwitch
+              checked={sampleMode}
+              disabled={phase !== "idle" || liveActive}
+              onChange={(v) => {
+                setSampleMode(v);
+                setResult(null);
+                setError("");
+                setNotice("");
+                if (v) {
+                  setInputMode("text");
+                  setAutomatic(false);
+                }
+              }}
             />
+          )}
+          {supportsLive &&
+            !sampleMode &&
+            (!directEntry || voiceStyle === "continuous") && (
+              <div
+                className="dc-mode-switch live-style-switch"
+                aria-label="음성 처리 방식"
+              >
+                <button
+                  aria-pressed={voiceStyle === "continuous"}
+                  className={voiceStyle === "continuous" ? "active" : ""}
+                  disabled={
+                    phase !== "idle" ||
+                    liveActive ||
+                    (directEntry && (!allowed || !config.voiceAvailable))
+                  }
+                  onClick={() => setVoiceStyle("continuous")}
+                >
+                  실시간 자막 · 코칭
+                </button>
+                <button
+                  aria-pressed={voiceStyle === "short"}
+                  className={voiceStyle === "short" ? "active" : ""}
+                  disabled={phase !== "idle" || liveActive}
+                  onClick={() => setVoiceStyle("short")}
+                >
+                  짧게 녹음 · 직접 입력
+                </button>
+              </div>
+            )}
+          {!supportsLive &&
+            !sampleMode &&
+            (!directEntry || inputMode === "voice") && (
+              <p className="live-stream-note">
+                이 브라우저는 실시간 자막을 지원하지 않아요. 짧게 녹음하거나
+                직접 입력해 주세요.
+              </p>
+            )}
+          {supportsLive && voiceStyle === "continuous" && !sampleMode ? (
+            <>
+              {directEntry && (
+                <AIConsent
+                  config={config}
+                  checked={consent}
+                  onChange={setConsent}
+                  disabled={liveActive}
+                />
+              )}
+              <LiveSpeechPanel
+                profile={profile}
+                scenario={scenario}
+                tone={tone}
+                consent={consent}
+                adult={adult}
+                sample={sample}
+                onActiveChange={setLiveActive}
+              />
+            </>
           ) : (
             <div className={"dc-coaching-grid " + (result ? "has-result" : "")}>
               <section className="dc-listen-panel">
@@ -645,6 +770,16 @@ export default function LiveCoach({
                     <Icon name="keyboard" size={18} />
                     직접 입력
                   </button>
+                  {directEntry && supportsLive && !sampleMode && (
+                    <button
+                      disabled={
+                        phase !== "idle" || !allowed || !config.voiceAvailable
+                      }
+                      onClick={() => setVoiceStyle("continuous")}
+                    >
+                      실시간 자막
+                    </button>
+                  )}
                 </div>
                 {sampleMode && (
                   <p className="action-reason" id="sample-voice-reason">
@@ -709,29 +844,31 @@ export default function LiveCoach({
                       : "처리 취소"}
                   </button>
                 )}
-                <CompanionNudge
-                  mood={
-                    phase === "listening"
-                      ? "listen"
-                      : phase === "transcribing" || phase === "coaching"
-                        ? "think"
-                        : input
-                          ? "done"
-                          : "hello"
-                  }
-                  text={
-                    phase === "listening"
-                      ? "다 말했으면 녹음 끝내기를 눌러주세요."
-                      : phase === "coaching"
-                        ? "내 목표와 지킬 선을 보고 답변을 준비하고 있어요."
-                        : notice ||
-                          (sampleMode
-                            ? "상대 말을 입력하면 이 상황의 사전 작성 예시를 보여드려요."
-                            : inputMode === "text"
-                              ? "상대가 방금 한 말을 아래에 적어주세요."
-                              : "마이크를 누르고 한 문장을 들려주세요.")
-                  }
-                />
+                {(!directEntry || phase !== "idle" || notice) && (
+                  <CompanionNudge
+                    mood={
+                      phase === "listening"
+                        ? "listen"
+                        : phase === "transcribing" || phase === "coaching"
+                          ? "think"
+                          : input
+                            ? "done"
+                            : "hello"
+                    }
+                    text={
+                      phase === "listening"
+                        ? "다 말했으면 녹음 끝내기를 눌러주세요."
+                        : phase === "coaching"
+                          ? "내 목표와 지킬 선을 보고 답변을 준비하고 있어요."
+                          : notice ||
+                            (sampleMode
+                              ? "상대 말을 입력하면 이 상황의 사전 작성 예시를 보여드려요."
+                              : inputMode === "text"
+                                ? "상대가 방금 한 말을 아래에 적어주세요."
+                                : "마이크를 누르고 한 문장을 들려주세요.")
+                    }
+                  />
+                )}
                 {clip && (
                   <div className="vn-live-clip">
                     <AudioPlayer clip={clip} />
@@ -747,7 +884,7 @@ export default function LiveCoach({
                   </div>
                 )}
 
-                {(inputMode === "text" || !!input) && (
+                {(directEntry || inputMode === "text" || !!input) && (
                   <div className="dc-transcript">
                     <label htmlFor="live-text">
                       {inputMode === "text"
@@ -766,6 +903,163 @@ export default function LiveCoach({
                       placeholder="상대가 방금 한 말을 적어주세요."
                       rows={3}
                     />
+                    {directEntry && (
+                      <>
+                        <details className="quick-context">
+                          <summary>
+                            상대·목표 조정 <span>{profile?.goal}</span>
+                          </summary>
+                          <fieldset disabled={phase !== "idle"}>
+                            {savedProfiles.length > 0 && (
+                              <label>
+                                저장한 상황 불러오기
+                                <select
+                                  value=""
+                                  onChange={(e) => {
+                                    const card = savedProfiles.find(
+                                      (c) => c.id === e.target.value,
+                                    );
+                                    if (card) updateContext(card);
+                                  }}
+                                >
+                                  <option value="">
+                                    상황 선택 · 입력한 말은 유지돼요
+                                  </option>
+                                  {[...savedProfiles]
+                                    .sort((a, b) =>
+                                      (
+                                        b.lastUsedAt || b.updatedAt
+                                      ).localeCompare(
+                                        a.lastUsedAt || a.updatedAt,
+                                      ),
+                                    )
+                                    .map((card) => (
+                                      <option key={card.id} value={card.id}>
+                                        {card.title}
+                                      </option>
+                                    ))}
+                                </select>
+                              </label>
+                            )}
+                            <label>
+                              상대 · 선택
+                              <input
+                                maxLength={160}
+                                value={quickContext.partner}
+                                placeholder="예: 친구, 직장 동료, 고객"
+                                onChange={(e) =>
+                                  updateContext({
+                                    ...quickContext,
+                                    title: "",
+                                    partner: e.target.value,
+                                  })
+                                }
+                              />
+                            </label>
+                            <label>
+                              원하는 결과
+                              <input
+                                maxLength={400}
+                                value={quickContext.goal}
+                                placeholder="상대의 뜻을 확인하고 내 입장을 차분히 전달하기"
+                                onChange={(e) =>
+                                  updateContext({
+                                    ...quickContext,
+                                    goal: e.target.value,
+                                  })
+                                }
+                              />
+                            </label>
+                            <div
+                              className="quick-goals"
+                              role="group"
+                              aria-label="원하는 결과 예시"
+                            >
+                              {[
+                                "뜻을 확인하고 싶어요",
+                                "정중하게 거절하고 싶어요",
+                                "시간을 조율하고 싶어요",
+                              ].map((goal) => (
+                                <button
+                                  key={goal}
+                                  type="button"
+                                  aria-pressed={quickContext.goal === goal}
+                                  onClick={() =>
+                                    updateContext({ ...quickContext, goal })
+                                  }
+                                >
+                                  {goal}
+                                </button>
+                              ))}
+                            </div>
+                            <label>
+                              상황 설명 · 선택
+                              <input
+                                maxLength={800}
+                                value={quickContext.situation}
+                                placeholder="필요한 배경만 짧게 적어주세요"
+                                onChange={(e) =>
+                                  updateContext({
+                                    ...quickContext,
+                                    situation: e.target.value,
+                                  })
+                                }
+                              />
+                            </label>
+                            <label>
+                              지킬 선 · 선택
+                              <input
+                                maxLength={400}
+                                value={quickContext.boundaries}
+                                placeholder="예: 확정되지 않은 시간은 약속하지 않기"
+                                onChange={(e) =>
+                                  updateContext({
+                                    ...quickContext,
+                                    boundaries: e.target.value,
+                                  })
+                                }
+                              />
+                            </label>
+                            <label>
+                              내 말투
+                              <select
+                                value={tone}
+                                onChange={(e) =>
+                                  updateContext({
+                                    ...quickContext,
+                                    tone: e.target.value as Tone,
+                                  })
+                                }
+                              >
+                                {tones.map((t) => (
+                                  <option key={t.id} value={t.id}>
+                                    {t.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            {quickContext.title && (
+                              <p>불러온 상황: {quickContext.title}</p>
+                            )}
+                            <button
+                              type="button"
+                              className="dd-link"
+                              onClick={() => updateContext(emptyProfile())}
+                            >
+                              기본 목표로 되돌리기
+                            </button>
+                          </fieldset>
+                        </details>
+                        {!sampleMode && (
+                          <AIConsent
+                            config={config}
+                            checked={consent}
+                            onChange={setConsent}
+                            disabled={phase !== "idle"}
+                          />
+                        )}
+                      </>
+                    )}
                     <button
                       className={
                         (result ? "dd-secondary" : "dd-primary") + " dd-full"
@@ -779,7 +1073,9 @@ export default function LiveCoach({
                     >
                       {phase === "coaching"
                         ? "한마디를 준비하는 중"
-                        : "답변 힌트 받기"}
+                        : directEntry
+                          ? "다음 한마디 받기"
+                          : "답변 힌트 받기"}
                       <Icon name="arrow" size={18} />
                     </button>
                     {phase === "idle" && input.trim().length < 2 && (
@@ -787,7 +1083,47 @@ export default function LiveCoach({
                         상대가 한 말을 두 글자 이상 입력해 주세요.
                       </p>
                     )}
+                    {directEntry &&
+                      !sampleMode &&
+                      (!allowed || !config.available) && (
+                        <p className="action-reason" role="status">
+                          {!config.available
+                            ? configState === "loading"
+                              ? "AI 연결 확인 중이에요. 먼저 상대 말을 입력해도 괜찮아요."
+                              : "지금 AI 연결을 사용할 수 없어요. 입력은 유지되며, 아래 샘플로 화면을 체험할 수 있어요."
+                            : "AI 전송에 동의하면 다음 한마디를 받을 수 있어요."}
+                          {!config.available && configState !== "loading" && (
+                            <button
+                              type="button"
+                              className="dd-link"
+                              disabled={phase !== "idle"}
+                              onClick={() => setConfigAttempt((n) => n + 1)}
+                            >
+                              연결 다시 확인
+                            </button>
+                          )}
+                        </p>
+                      )}
                   </div>
+                )}
+                {directEntry && (
+                  <details className="quick-sample-option">
+                    <summary>AI 없이 샘플 체험하기</summary>
+                    <SampleSwitch
+                      checked={sampleMode}
+                      disabled={phase !== "idle"}
+                      onChange={(v) => {
+                        setSampleMode(v);
+                        setResult(null);
+                        setError("");
+                        setNotice("");
+                        if (v) {
+                          setInputMode("text");
+                          setAutomatic(false);
+                        }
+                      }}
+                    />
+                  </details>
                 )}
                 {inputMode === "voice" && (
                   <details className="dc-auto-option">
@@ -816,7 +1152,14 @@ export default function LiveCoach({
                 )}
               </section>
               <aside
-                className={"dc-answer-panel " + (result ? "is-ready" : "")}
+                className={
+                  "dc-answer-panel " +
+                  (result
+                    ? "is-ready"
+                    : directEntry && phase === "idle"
+                      ? "quick-answer-empty"
+                      : "")
+                }
                 ref={panel}
                 aria-live="polite"
                 aria-busy={phase === "coaching"}
@@ -954,6 +1297,7 @@ export default function LiveCoach({
                         <blockquote>{cue.response.suggestion}</blockquote>
                         <small>
                           {cue.response.sample ? "사전 작성 샘플" : "AI 제안"}
+                          {cue.goal ? ` · 목표: ${cue.goal}` : ""}
                         </small>
                       </article>
                     ))}
@@ -981,11 +1325,12 @@ export default function LiveCoach({
           className="dd-link"
           disabled={phase !== "idle"}
           onClick={() => {
-            cancel();
+            if (!directEntry) cancel();
             onPractice();
           }}
         >
-          이 상황 미리 연습하기 <Icon name="chat" size={18} />
+          {directEntry ? "AI 상대와 미리 연습하기" : "이 상황 미리 연습하기"}{" "}
+          <Icon name="chat" size={18} />
         </button>
       )}
     </div>

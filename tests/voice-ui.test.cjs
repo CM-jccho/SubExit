@@ -727,13 +727,26 @@ test("live sample starts without AI consent or connectivity and keeps the select
       /친구와 약속 조정/,
     );
     assert.equal(calls, 0);
-    const firstSuggestion = document.querySelector(".dc-answer-panel blockquote").textContent;
+    const firstSuggestion = document.querySelector(
+      ".dc-answer-panel blockquote",
+    ).textContent;
     await click(button("다음 말 준비"));
     assert.equal(input.value, "");
-    assert(document.querySelector(".live-recent-cues").textContent.includes(firstSuggestion));
-    for (const line of ["일요일은 어때?", "오후 세 시에 만나자", "그럼 어디서 볼까?"]) {
+    assert(
+      document
+        .querySelector(".live-recent-cues")
+        .textContent.includes(firstSuggestion),
+    );
+    for (const line of [
+      "일요일은 어때?",
+      "오후 세 시에 만나자",
+      "그럼 어디서 볼까?",
+    ]) {
       await act(async () => {
-        Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set.call(input, line);
+        Object.getOwnPropertyDescriptor(
+          window.HTMLTextAreaElement.prototype,
+          "value",
+        ).set.call(input, line);
         input.dispatchEvent(new window.Event("input", { bubbles: true }));
       });
       await click(button("답변 힌트 받기"));
@@ -1101,6 +1114,190 @@ test("audio replay explicitly rewinds ended media and retains the source across 
     assert.equal(document.querySelector("audio").src, source);
     await click(button("기본 재생기 열기"));
     assert.equal(audio.controls, true);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+async function quickChange(selector, value) {
+  const element = document.querySelector(selector);
+  assert(element, selector);
+  await act(async () => {
+    require("react-dom/test-utils").Simulate.change(element, {
+      target: { value },
+    });
+  });
+}
+
+test("immediate help shows text before consent and sends a neutral grounded context without a sales assumption", async () => {
+  const ui = await mount(LiveCoach, {
+    directEntry: true,
+    onBack() {},
+    onDemo() {},
+  });
+  try {
+    assert(document.querySelector("#live-text"));
+    assert(!document.querySelector(".dc-preflight"));
+    assert(button("다음 한마디 받기").disabled);
+    assert(!document.body.textContent.includes("작업을 취소"));
+    await quickChange("#live-text", "왜 약속을 변경하자는 거야?");
+    assert(button("다음 한마디 받기").disabled);
+    await click(document.querySelector(".vn-consent input"));
+    let payload;
+    global.fetch = async (url, init) => {
+      assert.equal(url, "/api/coach");
+      payload = JSON.parse(init.body);
+      return Response.json({
+        suggestion: "가능한 시간을 함께 정해볼까?",
+        evidence: "왜 약속을 변경하자는 거야?",
+        reason: "일정 확인",
+        source: "ai",
+        latencyMs: 1,
+      });
+    };
+    await click(button("다음 한마디 받기"));
+    assert.equal(payload.opponent, "왜 약속을 변경하자는 거야?");
+    assert.equal(payload.context.situation, payload.opponent);
+    assert.equal(payload.context.partner, "대화 상대");
+    assert.equal(
+      payload.context.goal,
+      "상대의 뜻을 확인하고 내 입장을 차분히 전달하기",
+    );
+    assert.equal(payload.consent, true);
+    assert.doesNotMatch(JSON.stringify(payload.context), /영업|업무|보고서/);
+    require("../lib/conversation-cards.ts").parseProfile(payload.context);
+    assert(
+      document
+        .querySelector(".dc-answer-panel")
+        .textContent.includes("가능한 시간을"),
+    );
+    await click(button("다음 말 준비"));
+    assert.equal(document.querySelector("#live-text").value, "");
+    assert(
+      document
+        .querySelector(".live-recent-cues")
+        .textContent.includes("가능한 시간을"),
+    );
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("loading a saved situation and changing a goal preserves typed words; offline sample is explicit and makes no AI request", async () => {
+  const card = {
+    ...require("../lib/starter-data.ts").requestCards[1],
+    isSample: false,
+  };
+  const ui = await mount(
+    LiveCoach,
+    { directEntry: true, savedProfiles: [card], onBack() {}, onDemo() {} },
+    () => {
+      global.fetch = async () =>
+        Response.json({
+          available: false,
+          voiceAvailable: false,
+          sampleOnly: true,
+        });
+    },
+  );
+  try {
+    const text = "왜 약속을 변경하자는 건데?";
+    await quickChange("#live-text", text);
+    await quickChange(".quick-context select", card.id);
+    assert.equal(document.querySelector("#live-text").value, text);
+    assert(
+      document.querySelector(".quick-context").textContent.includes(card.title),
+    );
+    await click(button("시간을 조율하고 싶어요"));
+    assert.equal(document.querySelector("#live-text").value, text);
+    let calls = 0;
+    global.fetch = async () => {
+      calls++;
+      throw new Error("must not call AI");
+    };
+    await click(document.querySelector(".quick-sample-option input"));
+    await click(button("다음 한마디 받기"));
+    assert.equal(calls, 0);
+    assert(document.querySelector(".dc-answer-panel .dc-sample-notice"));
+    assert(
+      document
+        .querySelector(".dc-answer-panel")
+        .textContent.includes("친구와 약속 조정"),
+    );
+    await click(button("기본 목표로 되돌리기"));
+    assert.equal(document.querySelector("#live-text").value, text);
+    assert(!document.querySelector(".dc-answer-panel.is-ready"));
+    assert(
+      document
+        .querySelector(".live-recent-cues")
+        .textContent.includes("시간을 조율하고 싶어요"),
+    );
+    await click(document.querySelector(".quick-sample-option input"));
+    assert(button("다음 한마디 받기").disabled);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("failed configuration can be retried without losing direct input or bypassing consent", async () => {
+  const ui = await mount(
+    LiveCoach,
+    { directEntry: true, onBack() {}, onDemo() {} },
+    () => {
+      global.fetch = async () => {
+        throw new Error("offline");
+      };
+    },
+  );
+  try {
+    await quickChange("#live-text", "이 말을 어떻게 답할까요?");
+    assert(button("연결 다시 확인"));
+    global.fetch = async () => Response.json(config);
+    await click(button("연결 다시 확인"));
+    assert.equal(
+      document.querySelector("#live-text").value,
+      "이 말을 어떻게 답할까요?",
+    );
+    assert(button("다음 한마디 받기").disabled);
+    await click(document.querySelector(".vn-consent input"));
+    assert(!button("다음 한마디 받기").disabled);
+    await click(button("동의 철회"));
+    assert(document.querySelector("#live-text"));
+    assert.equal(
+      document.querySelector("#live-text").value,
+      "이 말을 어떻게 답할까요?",
+    );
+    assert(button("다음 한마디 받기").disabled);
+  } finally {
+    await ui.cleanup();
+  }
+});
+
+test("microphone denial retains typed words and direct input remains available", async () => {
+  const ui = await mount(LiveCoach, {
+    directEntry: true,
+    onBack() {},
+    onDemo() {},
+  });
+  try {
+    await quickChange("#live-text", "내가 입력한 상대의 말");
+    await click(document.querySelector(".vn-consent input"));
+    navigator.mediaDevices.getUserMedia = async () => {
+      throw new Error("마이크 권한을 확인해 주세요.");
+    };
+    await click(button("들려주기"));
+    await click(button("상대 말 4초 듣기"));
+    assert.equal(
+      document.querySelector("#live-text").value,
+      "내가 입력한 상대의 말",
+    );
+    assert(
+      document
+        .querySelector("[role=alert]")
+        .textContent.includes("마이크 권한"),
+    );
+    await click(button("직접 입력"));
+    assert(!button("다음 한마디 받기").disabled);
   } finally {
     await ui.cleanup();
   }
