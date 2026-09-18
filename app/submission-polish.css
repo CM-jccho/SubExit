@@ -226,7 +226,6 @@ html {
   .dc-root .vn-session-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .dc-root .purpose-start,
   .dc-root .dc-prepare > .dd-full {
     max-width: 480px;
   }
@@ -558,7 +557,6 @@ html {
   .dc-root .focus-tool-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .dc-root .purpose-start,
   .dc-root .dc-prepare > .dd-full,
   .dc-root .vn-start-practice > .dd-full {
     max-width: 420px;
@@ -713,5 +711,55 @@ html {
     padding: 10px 8px;
     min-height: 44px;
     font-size: var(--t-body);
+  }
+}
+
+/* Keep the primary action attached to its explanation at every viewport width. */
+.dc-root .home-live-entry {
+  display: grid;
+  gap: 20px;
+  margin: 20px 0 28px;
+  padding: clamp(18px, 3vw, 32px);
+  border: 1px solid #c9d9bd;
+  border-radius: var(--r-lg);
+  background: #eef4e7;
+}
+.home-live-entry > .coach-presence {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.home-live-action {
+  display: grid;
+  align-content: center;
+  gap: 16px;
+  min-width: 0;
+}
+.dc-root .home-live-action .practice-loop {
+  margin: 0;
+  gap: 4px 8px;
+}
+.dc-root .home-live-action .practice-loop li {
+  gap: 8px;
+}
+.dc-root .home-live-action .practice-loop li span {
+  font-size: var(--t-cap);
+}
+.dc-root .home-live-action .coach-start {
+  width: 100%;
+  max-width: none;
+  min-height: 56px;
+  margin: 0;
+}
+.dc-root .home-live-action .purpose-limit {
+  margin: 4px 0 0;
+}
+@media (min-width: 1000px) {
+  .dc-root .home-live-entry {
+    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr);
+    align-items: center;
+    gap: clamp(24px, 4vw, 56px);
   }
 }
