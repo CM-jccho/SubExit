@@ -627,8 +627,10 @@ test("workspace navigation preserves section across remount and browser back, an
     await act(async () => ui.root.render(null));
     await act(async () => ui.root.render(React.createElement(C)));
     await settle();
-    assert(
-      document.querySelector("h1").textContent.includes("다음에 뭐라고 말할지"),
+    assert(document.querySelector('.purpose-home [data-purpose="live"]'));
+    assert.equal(
+      document.querySelector('[aria-current="page"]').textContent,
+      "홈",
     );
     await act(async () => {
       window.history.back();

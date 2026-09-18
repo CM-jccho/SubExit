@@ -248,6 +248,15 @@ html {
   .dc-root[data-view="detail"] .dc-shell main {
     padding-bottom: 24px;
   }
+  /* The home footer already reserves space for the fixed navigation. */
+  .dc-root[data-view="home"] .dc-shell main {
+    min-height: 0;
+    padding-bottom: 24px;
+  }
+  .dc-root[data-view="home"] .purpose-home,
+  .dc-root[data-view="home"] .home-core-options {
+    margin-bottom: 0;
+  }
   .dc-root .dc-nav {
     min-height: var(--mobile-nav-height);
   }
