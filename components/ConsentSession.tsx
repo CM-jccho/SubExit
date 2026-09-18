@@ -67,12 +67,14 @@ export function ConsentSettings() {
   return (
     <>
       <button
-        className="consent-settings dd-link"
+        type="button"
+        className="consent-settings"
         disabled={busy}
         onClick={() => setOpen(true)}
         aria-label="AI 전송 동의 설정"
       >
-        <span aria-hidden="true">✓</span> AI 동의 완료
+        <span aria-hidden="true">✓</span>
+        <span>AI 동의 완료</span>
       </button>
       <InputDialog
         open={open}

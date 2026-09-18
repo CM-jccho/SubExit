@@ -1137,9 +1137,9 @@ export default function LiveCoach({
                   </div>
                 )}
                 {directEntry && (
-                  <details className="quick-sample-option">
-                    <summary>AI 없이 샘플 체험하기</summary>
+                  <div className="quick-sample-option">
                     <SampleSwitch
+                      label="AI 없이 샘플 체험하기"
                       checked={sampleMode}
                       disabled={phase !== "idle"}
                       onChange={(v) => {
@@ -1153,7 +1153,7 @@ export default function LiveCoach({
                         }
                       }}
                     />
-                  </details>
+                  </div>
                 )}
                 {inputMode === "voice" && (
                   <details className="dc-auto-option">

@@ -42,8 +42,8 @@ export default function HomeActions({
   return (
     <section className="purpose-home" aria-label="대화 도움과 연습">
       <div className="purpose-heading">
-        <p>대화 중, 내 옆의 AI 도우미</p>
-        <h1>다음에 뭐라고 말할지 막힐 때.</h1>
+        <p>대화 중, 내 옆의 든든한 AI</p>
+        <h1>뭐라고 말할지 막막할 때, 바로 도와드려요</h1>
       </div>
       <div className="home-live-entry">
         <div className="coach-presence" aria-label="대화 코치 안내">

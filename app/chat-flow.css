@@ -1,11 +1,3 @@
-.consent-settings {
-  display: flex;
-  margin: 6px 0 0 auto;
-  min-height: 32px;
-  align-items: center;
-  font-size: var(--t-cap) !important;
-  color: #536b56;
-}
 .consent-settings-content {
   padding: 0 22px 24px;
   line-height: 1.75;

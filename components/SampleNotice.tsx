@@ -37,10 +37,12 @@ export default function SampleNotice({
 export function SampleSwitch({
   checked,
   disabled,
+  label = "샘플로 연습하기 · AI 호출 없음",
   onChange,
 }: {
   checked: boolean;
   disabled?: boolean;
+  label?: string;
   onChange: (v: boolean) => void;
 }) {
   return (
@@ -52,7 +54,7 @@ export function SampleSwitch({
           disabled={disabled}
           onChange={(e) => onChange(e.target.checked)}
         />
-        샘플로 연습하기 · AI 호출 없음
+        <span>{label}</span>
       </label>
       {checked && (
         <p>

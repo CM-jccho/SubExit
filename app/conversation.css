@@ -2113,8 +2113,10 @@
   margin-top: 8px !important;
 }
 .dc-answer-label {
-  font-size: var(--t-cap);
-  color: #5c743f;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #405f2b;
   margin-top: 31px !important;
 }
 .dc-answer-panel blockquote {

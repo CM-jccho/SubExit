@@ -1215,7 +1215,13 @@ test("loading a saved situation and changing a goal preserves typed words; offli
       calls++;
       throw new Error("must not call AI");
     };
-    await click(document.querySelector(".quick-sample-option input"));
+    const sampleToggle = document.querySelector(".quick-sample-option input");
+    assert.equal(sampleToggle.closest("details"), null);
+    assert.match(
+      sampleToggle.closest("label").textContent,
+      /AI 없이 샘플 체험하기/,
+    );
+    await click(sampleToggle);
     await click(button("다음 한마디 받기"));
     assert.equal(calls, 0);
     assert(document.querySelector(".dc-answer-panel .dc-sample-notice"));

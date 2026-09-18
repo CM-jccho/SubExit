@@ -391,8 +391,12 @@ html {
 .dc-root .consent-settings {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--s2);
-  width: fit-content;
+  width: max-content;
+  max-width: 100%;
+  flex-shrink: 0;
+  white-space: nowrap;
   min-height: 44px;
   margin: var(--s2) 0 0 auto;
   padding: var(--s2) var(--s3);
@@ -400,6 +404,13 @@ html {
   background: var(--primary-tint);
   color: var(--ink-700);
   font-size: var(--t-cap);
+  line-height: 1.5;
+}
+.dc-root .consent-settings > span {
+  flex: 0 0 auto;
+}
+.dc-root .consent-settings:hover:not(:disabled) {
+  background: #dce8d3;
 }
 .dc-root .consent-details {
   margin-top: 0;
@@ -693,6 +704,17 @@ html {
 .quick-sample-option {
   margin-top: 16px;
   font-size: var(--t-body);
+}
+.quick-sample-option .dc-sample-switch {
+  margin: 0;
+  padding: 0;
+}
+.quick-sample-option .dd-check {
+  font-size: var(--t-body);
+}
+.quick-sample-option .dc-sample-switch p {
+  margin-left: 34px;
+  font-size: var(--t-cap);
 }
 .dc-quick-help .vn-consent {
   margin: 12px 0;
