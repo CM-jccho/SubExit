@@ -30,7 +30,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   workspacePurpose,
   type WorkspacePurpose,
-  workspaceSection,
   workspaceView,
   workspaceUrl,
   type WorkspaceView as View,
@@ -839,15 +838,13 @@ export default function ConversationWorkspace() {
                 [
                   { id: "home", text: "홈", icon: "home" },
                   { id: "records", text: "내 기록", icon: "book" },
-                  { id: "more", text: "더보기", icon: "book" },
+                  { id: "more", text: "더보기", icon: "more" },
                 ] as const
               ).map((n) => (
                 <button
                   key={n.id}
-                  aria-current={
-                    workspaceSection(view) === n.id ? "page" : undefined
-                  }
-                  className={workspaceSection(view) === n.id ? "active" : ""}
+                  aria-current={view === n.id ? "page" : undefined}
+                  className={view === n.id ? "active" : ""}
                   onClick={() => navigate(n.id)}
                 >
                   <Icon name={n.icon} size={21} />

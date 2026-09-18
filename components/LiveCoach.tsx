@@ -58,6 +58,9 @@ export default function LiveCoach({
     [inputMode, setInputMode] = useState<"voice" | "text">("voice"),
     [copied, setCopied] = useState(false);
   const sampleHistory = useRef<string[]>([]);
+  const [recentCues, setRecentCues] = useState<
+    { opponent: string; response: CoachResponse }[]
+  >([]);
   const version = useRef(0),
     busy = useRef(false),
     recorder = useRef<MediaRecorder | null>(null),
@@ -196,6 +199,10 @@ export default function LiveCoach({
       }
       if (version.current === id) {
         setResult(data);
+        setRecentCues((items) => [
+          ...items.slice(-2),
+          { opponent: text, response: data },
+        ]);
         if (data.sample)
           sampleHistory.current = [
             ...sampleHistory.current.slice(-11),
@@ -506,6 +513,7 @@ export default function LiveCoach({
           )}
           <button
             className="dd-primary dd-full"
+            aria-describedby="live-start-reason"
             disabled={!allowed || !config.available}
             onClick={() => {
               setSampleMode(false);
@@ -515,6 +523,13 @@ export default function LiveCoach({
             이 설정으로 시작
             <Icon name="arrow" size={19} />
           </button>
+          {(!allowed || !config.available) && (
+            <p id="live-start-reason" className="action-reason" role="status">
+              {!consent
+                ? "위의 AI 전송 동의에 체크하면 시작할 수 있어요. 동의 없이 샘플도 체험할 수 있어요."
+                : "AI 연결을 확인한 뒤 시작할 수 있어요. 지금은 샘플로 체험해 보세요."}
+            </p>
+          )}
           <button
             className="dd-secondary dd-full"
             onClick={() => {
@@ -755,6 +770,11 @@ export default function LiveCoach({
                         : "답변 힌트 받기"}
                       <Icon name="arrow" size={18} />
                     </button>
+                    {phase === "idle" && input.trim().length < 2 && (
+                      <p className="action-reason">
+                        상대가 한 말을 두 글자 이상 입력해 주세요.
+                      </p>
+                    )}
                   </div>
                 )}
                 {inputMode === "voice" && (
@@ -800,7 +820,9 @@ export default function LiveCoach({
                 </div>
                 {result ? (
                   <>
-                    {result.sample && <SampleNotice sample={result.sample} />}
+                    {result.sample && (
+                      <SampleNotice sample={result.sample} compact />
+                    )}
                     <p className="dc-answer-label">이렇게 말해볼까요?</p>
                     {profile && (
                       <p className="dc-answer-goal">
@@ -888,6 +910,33 @@ export default function LiveCoach({
                   </div>
                 )}
               </aside>
+              {recentCues.length > 0 && (
+                <section
+                  className="live-recent-cues"
+                  aria-label="최근 추천 한마디"
+                >
+                  <h2>최근 추천 한마디</h2>
+                  <p className="vn-caption">
+                    이 화면에서 받은 최근 두 한마디예요. 화면을 나가면 지워져요.
+                  </p>
+                  {(result ? recentCues.slice(0, -1) : recentCues)
+                    .slice(-2)
+                    .map((cue, index) => (
+                      <article key={index}>
+                        <p>
+                          <span>상대</span> {cue.opponent}
+                        </p>
+                        <blockquote>{cue.response.suggestion}</blockquote>
+                        <small>
+                          {cue.response.sample ? "사전 작성 샘플" : "AI 제안"}
+                        </small>
+                      </article>
+                    ))}
+                  {result && recentCues.length === 1 && (
+                    <p>다음 말을 준비해도 지금 받은 추천이 여기에 남아요.</p>
+                  )}
+                </section>
+              )}
             </div>
           )}
           <details className="dc-pause-guide">

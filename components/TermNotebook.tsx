@@ -36,19 +36,20 @@ export function TermText({
 }) {
   const [expanded, setExpanded] = useState(false);
   const shown = expanded ? text : text.slice(0, 2400);
-  const words = [...candidates]
-    .filter(Boolean)
+  const terms = [
+    ...new Set(candidates.map((term) => term.trim()).filter(Boolean)),
+  ].slice(0, 8);
+  const words = terms
     .sort((a, b) => b.length - a.length)
-    .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  const regex = new RegExp(
-    `(${words.length ? words.join("|") + "|" : ""}[\\p{L}\\p{N}_+#-]+)`,
-    "giu",
-  );
+    .map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const parts = words.length
+    ? shown.split(new RegExp(`(${words.join("|")})`, "giu"))
+    : [shown];
   return (
     <>
       <p className="vn-transcript-text">
-        {shown.split(regex).map((part, i) =>
-          /^[\p{L}\p{N}]/u.test(part) ? (
+        {parts.map((part, i) =>
+          terms.some((term) => term.toLowerCase() === part.toLowerCase()) ? (
             <button
               type="button"
               key={i}
@@ -278,7 +279,11 @@ export function TermEditor({
       {busy && (
         <CompanionNudge
           mood="think"
-          text={saving ? "내 노트에 저장하고 있어요." : "이 말이 쓰인 맥락을 살펴보고 있어요."}
+          text={
+            saving
+              ? "내 노트에 저장하고 있어요."
+              : "이 말이 쓰인 맥락을 살펴보고 있어요."
+          }
         />
       )}
       {note.source === "ai" && (
@@ -304,7 +309,10 @@ export function TermEditor({
       ))}
       <details className="term-personal-memo">
         <summary>내 메모 · 선택{note.memo ? " · 작성됨" : ""}</summary>
-        <p className="vn-caption">내가 기억할 상황이나 나만의 표현을 남겨보세요. 비워두어도 저장할 수 있어요.</p>
+        <p className="vn-caption">
+          내가 기억할 상황이나 나만의 표현을 남겨보세요. 비워두어도 저장할 수
+          있어요.
+        </p>
         <CompactField
           label="내 메모"
           value={note.memo}
@@ -360,7 +368,11 @@ export function TermEditor({
         disabled={busy || !note.term.trim()}
         onClick={() => void save()}
       >
-        {saving ? "저장 중…" : (seed.isNew ?? !seed.note) ? "내 노트에 추가" : "변경 내용 저장"}
+        {saving
+          ? "저장 중…"
+          : (seed.isNew ?? !seed.note)
+            ? "내 노트에 추가"
+            : "변경 내용 저장"}
         <Icon name="check" size={18} />
       </button>
     </InputDialog>
@@ -497,18 +509,35 @@ export default function TermNotebook({
         </button>
       </div>
       {savedNote && (
-        <div className="vn-save-receipt" ref={receipt} tabIndex={-1} role="status">
+        <div
+          className="vn-save-receipt"
+          ref={receipt}
+          tabIndex={-1}
+          role="status"
+        >
           <Icon name="check" size={20} />
           <div>
             <strong>‘{savedNote.term}’를 내 노트에 저장했어요.</strong>
             <span>이 브라우저에서 다시 꺼내볼 수 있어요.</span>
           </div>
           {tab !== "notes" && (
-            <button className="dd-secondary" onClick={() => { setQuery(""); setTab("notes"); }}>
+            <button
+              className="dd-secondary"
+              onClick={() => {
+                setQuery("");
+                setTab("notes");
+              }}
+            >
               내 노트에서 보기
             </button>
           )}
-          <button className="dd-link" aria-label="저장 안내 닫기" onClick={() => setSavedNote(null)}>닫기</button>
+          <button
+            className="dd-link"
+            aria-label="저장 안내 닫기"
+            onClick={() => setSavedNote(null)}
+          >
+            닫기
+          </button>
         </div>
       )}
       {tab === "catalogue" && <TrendSearch config={config} />}

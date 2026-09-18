@@ -17,6 +17,7 @@ export default function InputDialog({
   closeLabel,
   showCloseButton = true,
   children,
+  footer,
 }: {
   open: boolean;
   title: string;
@@ -27,6 +28,7 @@ export default function InputDialog({
   closeLabel?: string;
   showCloseButton?: boolean;
   children: ReactNode;
+  footer?: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null),
     heading = useRef<HTMLHeadingElement>(null),
@@ -93,6 +95,7 @@ export default function InputDialog({
       ref={dialog}
       className={`input-dialog ${className}`}
       aria-labelledby={titleId}
+      aria-modal="true"
       onCancel={(event) => {
         event.preventDefault();
         if (!busy) onClose();
@@ -119,6 +122,7 @@ export default function InputDialog({
           <div ref={body} className="input-dialog-body">
             {children}
           </div>
+          {footer && <footer className="input-dialog-footer">{footer}</footer>}
         </>
       )}
     </dialog>

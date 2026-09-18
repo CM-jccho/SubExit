@@ -70,6 +70,56 @@ export default function LaunchIntro() {
       closeLabel="인트로 건너뛰기"
       onClose={close}
       className="launch-intro"
+      footer={
+        <>
+          <nav className="launch-progress" aria-label="온보딩 단계">
+            {scenes.map((item, index) => (
+              <button
+                type="button"
+                key={item.label}
+                aria-label={item.label}
+                aria-current={step === index ? "step" : undefined}
+                onClick={() => setStep(index)}
+              >
+                <span />
+              </button>
+            ))}
+          </nav>
+          <div className="launch-actions">
+            {step > 0 && (
+              <button
+                type="button"
+                className="dd-link"
+                onClick={() => setStep(step - 1)}
+              >
+                이전
+              </button>
+            )}
+            {step < 2 ? (
+              <button
+                type="button"
+                className="dd-secondary"
+                onClick={() => setStep(step + 1)}
+              >
+                다음
+              </button>
+            ) : (
+              <button type="button" className="dd-primary" onClick={close}>
+                내 대화 시작하기
+              </button>
+            )}
+          </div>
+          {step < 2 && (
+            <button
+              type="button"
+              className="dd-link launch-skip"
+              onClick={close}
+            >
+              건너뛰고 시작하기
+            </button>
+          )}
+        </>
+      }
     >
       <div className="launch-mascot" aria-hidden="true">
         <BrandMark size={112} />
@@ -90,48 +140,6 @@ export default function LaunchIntro() {
         </div>
       </div>
       <p className="gesture-hint">좌우로 밀어서 둘러보세요</p>
-      <nav className="launch-progress" aria-label="온보딩 단계">
-        {scenes.map((item, index) => (
-          <button
-            type="button"
-            key={item.label}
-            aria-label={item.label}
-            aria-current={step === index ? "step" : undefined}
-            onClick={() => setStep(index)}
-          >
-            <span />
-          </button>
-        ))}
-      </nav>
-      <div className="launch-actions">
-        {step > 0 && (
-          <button
-            type="button"
-            className="dd-link"
-            onClick={() => setStep(step - 1)}
-          >
-            이전
-          </button>
-        )}
-        {step < 2 ? (
-          <button
-            type="button"
-            className="dd-secondary"
-            onClick={() => setStep(step + 1)}
-          >
-            다음
-          </button>
-        ) : (
-          <button type="button" className="dd-primary" onClick={close}>
-            내 대화 시작하기
-          </button>
-        )}
-      </div>
-      {step < 2 && (
-        <button type="button" className="dd-link launch-skip" onClick={close}>
-          건너뛰고 시작하기
-        </button>
-      )}
     </InputDialog>
   );
 }

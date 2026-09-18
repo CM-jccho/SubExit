@@ -727,6 +727,23 @@ test("live sample starts without AI consent or connectivity and keeps the select
       /친구와 약속 조정/,
     );
     assert.equal(calls, 0);
+    const firstSuggestion = document.querySelector(".dc-answer-panel blockquote").textContent;
+    await click(button("다음 말 준비"));
+    assert.equal(input.value, "");
+    assert(document.querySelector(".live-recent-cues").textContent.includes(firstSuggestion));
+    for (const line of ["일요일은 어때?", "오후 세 시에 만나자", "그럼 어디서 볼까?"]) {
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set.call(input, line);
+        input.dispatchEvent(new window.Event("input", { bubbles: true }));
+      });
+      await click(button("답변 힌트 받기"));
+      await click(button("다음 말 준비"));
+    }
+    const recent = document.querySelectorAll(".live-recent-cues article");
+    assert.equal(recent.length, 2);
+    assert(recent[0].textContent.includes("오후 세 시에 만나자"));
+    assert(recent[1].textContent.includes("그럼 어디서 볼까?"));
+    assert.equal(calls, 0);
     await click(document.querySelector(".dc-sample-switch input"));
     assert.equal(
       button("이 설정으로 시작").disabled,

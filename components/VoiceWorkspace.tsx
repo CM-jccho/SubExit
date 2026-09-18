@@ -1075,6 +1075,9 @@ export default function VoiceWorkspace({
               <button
                 className="dd-primary dd-full"
                 disabled={!canTalk || busy}
+                aria-describedby={
+                  !canTalk ? "practice-start-reason" : undefined
+                }
                 onClick={() => void respond(session)}
               >
                 {session.kind === "chat"
@@ -1082,6 +1085,17 @@ export default function VoiceWorkspace({
                   : "상대와 연습 시작"}
                 <Icon name="play" size={18} />
               </button>
+              {!canTalk && (
+                <p
+                  id="practice-start-reason"
+                  className="action-reason"
+                  role="status"
+                >
+                  {!consent
+                    ? "AI 전송에 동의하거나 샘플 모드를 선택하면 시작할 수 있어요."
+                    : "AI 연결을 확인하고 있어요. 샘플 모드로 먼저 연습할 수 있어요."}
+                </p>
+              )}
             </div>
           )}
           <div

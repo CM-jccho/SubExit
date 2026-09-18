@@ -1,0 +1,289 @@
+/* Submission review: shared interaction states, readable text and reachable actions. */
+html {
+  scroll-padding-top: 88px;
+}
+.dc-root {
+  --muted: #52634f;
+  --mobile-nav-height: 88px;
+}
+.dc-root,
+.input-dialog {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+.dc-root :is(button, a, input, textarea, select, summary) {
+  scroll-margin-block: 88px 100px;
+}
+.dc-root textarea {
+  resize: vertical;
+}
+.dc-root button:disabled,
+.input-dialog button:disabled {
+  background: #e6e9e3;
+  color: #657060;
+  border-color: #cdd3c8;
+  box-shadow: none;
+  opacity: 1;
+  cursor: not-allowed;
+  transform: none;
+}
+.action-reason {
+  color: #52634f;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 8px 0 16px;
+}
+.dc-root details {
+  border: 1px solid #d9e0d2;
+  border-radius: 12px;
+  background: #f4f6ee;
+  padding: 0 14px;
+  margin-block: 12px;
+}
+.dc-root details > summary,
+.input-dialog details > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 0;
+  list-style: none;
+  cursor: pointer;
+  color: #435d45;
+  font-size: 14px;
+  font-weight: 650;
+}
+.dc-root details > summary::-webkit-details-marker,
+.input-dialog details > summary::-webkit-details-marker {
+  display: none;
+}
+.dc-root details > summary::marker,
+.input-dialog details > summary::marker {
+  content: "";
+}
+.dc-root details > summary::after,
+.input-dialog details > summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  margin-left: auto;
+  margin-right: 5px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+.dc-root details[open] > summary::after,
+.input-dialog details[open] > summary::after {
+  transform: rotate(225deg);
+}
+.dc-root details[open] {
+  padding-bottom: 12px;
+}
+.dc-root .dc-nav button {
+  color: #52634f;
+}
+.dc-root .dc-nav button.active {
+  color: #315d46;
+}
+.dc-root .dc-beta {
+  color: #52634f;
+  font-size: 12px;
+}
+.dc-root
+  :is(
+    .vn-time,
+    .vn-turn-meta time,
+    .vn-nudge small,
+    .vn-autoplay span,
+    .vn-caption,
+    .dc-ai-label,
+    .dc-footnote
+  ) {
+  color: #52634f;
+  font-size: 12px;
+}
+.dc-root .vn-turn-meta time {
+  opacity: 1;
+}
+.dc-root .dd-check {
+  min-height: 44px;
+  padding-block: 8px;
+  cursor: pointer;
+}
+.dc-root .dd-check input[type="checkbox"],
+.input-dialog .dd-check input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  margin-top: 2px;
+}
+.dc-root :is(.dd-link, .dc-footer a, .vn-turn-actions button) {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.dc-root .vn-word.is-term {
+  min-height: 44px;
+  padding: 3px 5px;
+  color: #254e37;
+  background: #e2edda;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-radius: 6px;
+}
+.dc-root .vn-transcript-text {
+  user-select: text;
+}
+.dc-root .dc-sticky-actions {
+  box-shadow: 0 -10px 22px #f7f8f2e6;
+}
+.input-dialog::backdrop {
+  background: rgb(19 36 29 / 70%);
+}
+.input-dialog-footer {
+  flex: 0 0 auto;
+  padding-top: 8px;
+  border-top: 1px solid #d9e0d2;
+  background: #fffefa;
+}
+.launch-intro {
+  max-height: calc(var(--input-height, 100dvh) - 24px);
+  margin-block: 12px;
+}
+.launch-intro .input-dialog-body {
+  flex: 1 1 auto;
+}
+.launch-intro .launch-progress {
+  margin: 0;
+}
+.launch-intro .launch-actions {
+  margin-top: 0;
+}
+.launch-intro .launch-actions .dd-secondary {
+  color: #315d46;
+  background: #e6eedc;
+  border: 1px solid #b8cba9;
+}
+.launch-intro .launch-skip {
+  margin-top: 0;
+}
+.launch-intro .launch-mascot .speak-brand-mark {
+  width: 80px;
+  height: 80px;
+}
+.launch-intro h1 {
+  font-size: clamp(24px, 4vw, 32px);
+  margin: 10px 0 18px;
+}
+.launch-intro .gesture-hint {
+  margin: 4px 0;
+}
+.live-recent-cues {
+  grid-column: 1 / -1;
+  padding: 20px;
+  border-top: 1px solid #d9e0d2;
+}
+.live-recent-cues h2 {
+  font-size: 18px;
+  margin: 0 0 6px;
+}
+.live-recent-cues article {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #eef3e7;
+  margin-top: 12px;
+}
+.live-recent-cues article p {
+  font-size: 14px;
+  color: #52634f;
+}
+.live-recent-cues blockquote {
+  font-size: 18px;
+  margin: 8px 0;
+  color: #293d35;
+}
+.live-recent-cues small {
+  color: #52634f;
+  font-size: 12px;
+}
+.recording-entry {
+  padding: 20px;
+  background: #edf3e5;
+  border-radius: 16px;
+  margin-top: 20px;
+}
+.recording-entry h2 {
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+.recording-entry p {
+  font-size: 14px;
+  margin-top: 8px;
+}
+@media (min-width: 900px) {
+  .dc-root .dc-card-grid,
+  .dc-root .vn-session-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dc-root .purpose-start,
+  .dc-root .dc-prepare > .dd-full {
+    max-width: 480px;
+  }
+}
+@media (max-width: 700px) {
+  html {
+    scroll-padding-top: 80px;
+  }
+  .dc-root .dc-shell main {
+    padding-bottom: calc(
+      var(--mobile-nav-height) + 24px + env(safe-area-inset-bottom)
+    );
+  }
+  .dc-root .dc-footer {
+    padding-bottom: calc(
+      var(--mobile-nav-height) + 20px + env(safe-area-inset-bottom)
+    );
+    font-size: 12px;
+  }
+  .dc-root[data-view="detail"] .dc-shell main {
+    padding-bottom: 24px;
+  }
+  .dc-root .dc-nav {
+    min-height: var(--mobile-nav-height);
+  }
+  .dc-root textarea {
+    resize: none;
+  }
+  .dc-root :is(.vn-caption, .action-reason, .dc-overline, .dc-footnote) {
+    font-size: 14px;
+  }
+  .launch-intro {
+    padding: 12px 16px;
+  }
+  .launch-intro .launch-mascot .speak-brand-mark {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+  }
+  .launch-intro .launch-bubble {
+    margin-block: 8px;
+    padding: 10px 12px;
+  }
+}
+@media (max-height: 680px) {
+  .launch-intro .launch-mascot {
+    display: none;
+  }
+  .launch-intro .launch-progress button {
+    height: 44px;
+  }
+  .launch-intro .launch-scene > p:last-child {
+    margin-bottom: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .launch-intro * {
+    animation: none !important;
+  }
+}

@@ -688,8 +688,8 @@ test("home practice opens a context card and practice keeps a discoverable recor
     assert.equal(document.querySelector(".dc-preparation-actions"), null);
     assert.equal(window.location.search, "?view=records");
     assert.equal(
-      document.querySelector('[aria-current="page"]').textContent,
-      "홈",
+      document.querySelector('[aria-current="page"]'),
+      null,
     );
     assert(
       document
@@ -1702,7 +1702,7 @@ test("saved review opens targeted foundation training and completed training ret
     await ui.cleanup();
   }
 });
-test("foundation training deep links keep Home selected and restore on reload", async () => {
+test("foundation training deep links do not mark Home as the current page and restore on reload", async () => {
   const nav = require("../lib/workspace-navigation.ts");
   assert.equal(nav.workspaceView("?view=training"), "training");
   assert.equal(nav.workspaceSection("training"), "home");
@@ -1723,8 +1723,8 @@ test("foundation training deep links keep Home selected and restore on reload", 
     await settle();
     assert.equal(document.querySelector("h1").textContent, "대화 기초 훈련");
     assert.equal(
-      document.querySelector('[aria-current="page"]').textContent,
-      "홈",
+      document.querySelector('[aria-current="page"]'),
+      null,
     );
   } finally {
     await ui.cleanup();
@@ -2173,8 +2173,8 @@ test("messenger has a dedicated home action and restores by URL", async () => {
     assert.equal(document.querySelector("h1").textContent, "메시지 답장");
     assert.equal(window.location.search, "?view=messenger");
     assert.equal(
-      document.querySelector('[aria-current="page"]').textContent,
-      "더보기",
+      document.querySelector('[aria-current="page"]'),
+      null,
     );
   } finally {
     await ui.cleanup();
@@ -2524,8 +2524,8 @@ test("home prioritizes live assistance, offers rehearsal second and separates su
       assert.equal(window.location.search, `?view=${id}`);
       assert(document.querySelector("h1").textContent.includes(label));
       assert.equal(
-        document.querySelector(".dc-nav [aria-current=page]").textContent,
-        "더보기",
+        document.querySelector(".dc-nav [aria-current=page]"),
+        null,
       );
       assert.equal(
         document.querySelector(".purpose-breadcrumb [aria-current=location]")
@@ -3293,8 +3293,8 @@ test("practice recording entry opens a new recording without requiring interest 
     await settle();
     assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
     assert.equal(
-      document.querySelector(".dc-nav [aria-current=page]").textContent,
-      "내 기록",
+      document.querySelector(".dc-nav [aria-current=page]"),
+      null,
     );
     assert(document.querySelector(".input-launcher"));
     assert.equal(
@@ -3322,8 +3322,8 @@ test("returning from active practice updates the record list, URL and primary na
     await click(document.querySelector('[data-tour="practice-button"]'));
     await settle();
     assert.equal(
-      document.querySelector(".dc-nav [aria-current=page]").textContent,
-      "홈",
+      document.querySelector(".dc-nav [aria-current=page]"),
+      null,
     );
     await click(document.querySelector(".vn-consent input"));
     global.fetch = async () =>
@@ -3342,8 +3342,8 @@ test("returning from active practice updates the record list, URL and primary na
       "아직 보내지 않은 말",
     );
     assert.equal(
-      document.querySelector(".dc-nav [aria-current=page]").textContent,
-      "홈",
+      document.querySelector(".dc-nav [aria-current=page]"),
+      null,
     );
     window.confirm = () => true;
     await click(button("내 기록으로"));
@@ -3486,8 +3486,8 @@ test("the third core home entry opens recording analysis directly without a situ
     await click(button("녹음 분석·코칭"));
     await settle();
     assert.equal(
-      document.querySelector(".dc-nav [aria-current=page]").textContent,
-      "내 기록",
+      document.querySelector(".dc-nav [aria-current=page]"),
+      null,
     );
     assert(document.querySelector(".input-launcher"));
     assert(document.body.textContent.includes("녹음 분석·코칭"));
@@ -3607,6 +3607,7 @@ test("term extraction includes the end of long transcripts and renders selectabl
       onTerm: (t) => (selected = t),
     });
     try {
+      assert.equal(document.querySelectorAll(".vn-transcript-text button").length, 1);
       await click(document.querySelector(".is-term"));
       assert.equal(selected, "Service Level Agreement");
     } finally {
@@ -3970,6 +3971,8 @@ test("onboarding distinguishes next from start and supports safe bidirectional s
   try {
     assert(button("다음").classList.contains("dd-secondary"));
     assert(button("건너뛰고 시작하기"));
+    assert(button("다음").closest(".input-dialog-footer"));
+    assert.equal(button("다음").closest(".input-dialog-body"), null);
     assert(!button("내 대화 시작하기"));
     const panel = document.querySelector(".launch-swipe");
     await swipeOn(panel, [250, 150], [80, 155]);
@@ -4262,5 +4265,16 @@ test("unfinished context protects tab and browser navigation, shows missing fiel
     assert.equal(asks, 2);
     assert.equal(document.querySelector(".dc-root").dataset.view, "home");
     await settle();
+  } finally { await ui.cleanup(); }
+});
+
+
+test("ordinary transcript prose has no word buttons and retains its exact text", async () => {
+  const { TermText } = require("../components/TermNotebook.tsx");
+  const text = "함께 확인할 업무를 정하고 시간을 알려주세요.";
+  const ui = await mount(TermText, { text, onTerm() {} });
+  try {
+    assert.equal(document.querySelector(".vn-transcript-text").textContent, text);
+    assert.equal(document.querySelectorAll(".vn-transcript-text button").length, 0);
   } finally { await ui.cleanup(); }
 });

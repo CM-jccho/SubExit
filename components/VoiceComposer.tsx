@@ -827,10 +827,20 @@ export default function VoiceComposer({
   if (!inDialog) return composer;
   return (
     <>
+      {!textFirst && (
+        <div className="recording-entry">
+          <h2>어떤 대화를 돌아볼까요?</h2>
+          <p>녹음하거나 파일을 올려 시작하세요. 문자만 입력해도 괜찮아요.</p>
+          <p className="vn-caption">
+            음성은 30분·50MB까지, 문자 파일은 TXT·SRT·VTT를 지원해요. 저장 후
+            문자를 확인하고 코칭받을 수 있어요.
+          </p>
+        </div>
+      )}
       <div className="input-launcher" aria-label="대화 입력 열기">
         <button
           type="button"
-          className="dd-primary"
+          className={textFirst ? "dd-primary" : "dd-secondary"}
           disabled={disabled || working}
           onClick={() => {
             setTyping(true);
@@ -842,13 +852,14 @@ export default function VoiceComposer({
             ? "입력 이어쓰기"
             : textFirst
               ? "답변 쓰기"
-              : "기록 남기기"}
+              : "문자로 기록하기"}
         </button>
         <button
           type="button"
-          className="dd-secondary"
+          className={textFirst ? "dd-secondary" : "dd-primary"}
           disabled={disabled || working}
           onClick={() => {
+            setTyping(false);
             setExpanded(true);
             setReceipt("");
           }}
