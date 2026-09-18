@@ -537,9 +537,14 @@ html {
   min-width: 0;
 }
 .vn-session-card strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.vn-session-card small,
+.vn-session-card > span > span {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .practice-settings-bar {
   display: flex;

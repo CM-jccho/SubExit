@@ -43,3 +43,31 @@ test("live input notice reserves space beyond the raised button and is linked to
   assert.match(home, /aria-describedby="live-input-limit"/);
   assert.match(home, /className="purpose-limit[^"]*" id="live-input-limit"/);
 });
+
+test("record list bounds intrinsic grid width and wraps long titles instead of widening the mobile page", () => {
+  const declarations = (selector) => {
+    const result = {};
+    for (const sheet of sheets)
+      sheet.walkRules((rule) => {
+        if (rule.selector !== selector || rule.parent.type !== "root") return;
+        rule.walkDecls((d) => {
+          result[d.prop] = d.value;
+        });
+      });
+    return result;
+  };
+  assert.equal(
+    declarations(".vn-session-list")["grid-template-columns"],
+    "minmax(0, 1fr)",
+  );
+  assert.equal(declarations(".vn-session-card")["min-width"], "0");
+  assert.equal(declarations(".vn-session-card")["max-width"], "100%");
+  assert.equal(
+    declarations(".vn-session-card strong")["white-space"],
+    "normal",
+  );
+  assert.equal(
+    declarations(".vn-session-card strong")["overflow-wrap"],
+    "anywhere",
+  );
+});

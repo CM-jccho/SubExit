@@ -294,10 +294,15 @@
 }
 .vn-session-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   gap: 12px;
   margin: 20px 0 70px;
 }
 .vn-session-card {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
   display: flex;
   align-items: center;
   gap: 17px;
@@ -325,6 +330,9 @@
   font-size: var(--t-cap);
   display: block;
   color: #6c7566;
+}
+.vn-session-card > svg {
+  flex-shrink: 0;
 }
 .vn-session-icon {
   width: 48px;
