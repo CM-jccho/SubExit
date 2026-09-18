@@ -672,7 +672,20 @@ test("home practice opens a context card and practice keeps a discoverable recor
         "검토할 부분과 가능한 시간을 정중하게 부탁하기",
       ),
     );
-    await click(button("상대와 대화 연습"));
+    assert.equal(document.querySelector(".dc-root").dataset.view, "detail");
+    assert(document.querySelector(".dc-detail-compact .dc-detail-extra").open);
+    assert(
+      document
+        .querySelector(".dc-boundary")
+        .textContent.includes("당연히 도와줄 거라고"),
+    );
+    assert.equal(
+      document.querySelectorAll('[data-tour="practice-button"]').length,
+      1,
+    );
+    assert(button("다른 상황 선택"));
+    await click(button("대화 연습 시작하기"));
+    assert.equal(document.querySelector(".dc-preparation-actions"), null);
     assert.equal(window.location.search, "?view=records");
     assert.equal(
       document.querySelector('[aria-current="page"]').textContent,

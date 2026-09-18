@@ -164,8 +164,12 @@ function ContextFacts({
           <dt>원하는 결과</dt>
           <dd>{profile.goal || "이번 대화의 목표를 정해요"}</dd>
         </div>
-        <div>
-          <dt>지킬 선</dt>
+        <div
+          className={compact && profile.boundaries ? "dc-boundary" : undefined}
+        >
+          <dt>
+            <Icon name="shield" size={16} /> 지킬 선
+          </dt>
           <dd>{profile.boundaries || "필요하면 추가해요"}</dd>
         </div>
         {!compact && (
@@ -176,7 +180,7 @@ function ContextFacts({
         )}
       </dl>
       {compact && (
-        <details className="dc-detail-extra">
+        <details className="dc-detail-extra" open>
           <summary>자세한 상황·말투</summary>
           <dl className="dc-facts">
             <div>
@@ -195,6 +199,57 @@ function ContextFacts({
         </details>
       )}
     </>
+  );
+}
+function PreparationActions({
+  purpose,
+  onStart,
+}: {
+  purpose: WorkspacePurpose;
+  onStart: () => void;
+}) {
+  const dock = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = dock.current;
+    const root = element?.closest<HTMLElement>(".dc-root");
+    if (!element || !root) return;
+    const measure = () =>
+      root.style.setProperty(
+        "--preparation-dock-height",
+        `${element.getBoundingClientRect().height}px`,
+      );
+    measure();
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(measure);
+    observer?.observe(element);
+    return () => {
+      observer?.disconnect();
+      root.style.removeProperty("--preparation-dock-height");
+    };
+  }, []);
+  return (
+    <div
+      className="dc-preparation-actions"
+      ref={dock}
+      aria-label="연습 준비 완료"
+    >
+      <p>
+        {purpose === "live"
+          ? "상대 말을 입력하면 다음에 할 말을 도와드려요."
+          : "다음 화면에서 샘플 또는 AI 연습을 선택해요."}
+      </p>
+      <button
+        className="dd-primary dd-full"
+        data-tour="practice-button"
+        onClick={onStart}
+      >
+        <Icon name="chat" size={20} />
+        {purpose === "live" ? "이 상황으로 도움받기" : "대화 연습 시작하기"}
+        <Icon name="arrow" size={18} />
+      </button>
+    </div>
   );
 }
 export default function ConversationWorkspace() {
@@ -721,7 +776,7 @@ export default function ConversationWorkspace() {
     );
   return (
     <CompanionProvider value={currentCharacter}>
-      <div className="dd-root dc-root">
+      <div className="dd-root dc-root" data-view={view}>
         <div className="dc-shell">
           <header className="dc-header">
             <button
@@ -1551,14 +1606,21 @@ export default function ConversationWorkspace() {
               )}
               {view === "detail" && active && (
                 <>
-                  <button
-                    className="dd-back"
-                    onClick={() => navigate("library")}
+                  <nav
+                    className="purpose-breadcrumb dc-preparation-heading"
+                    aria-label="현재 연습 위치"
                   >
-                    <Icon name="back" size={18} />
-                    {purpose === "live" ? "대화 상황 선택" : "대화 연습"}
-                  </button>
-                  <section className="dc-title">
+                    <button
+                      className="dd-back"
+                      onClick={() => navigate("library")}
+                    >
+                      <Icon name="back" size={18} /> 다른 상황 선택
+                    </button>
+                    <span aria-current="location">
+                      {purpose === "live" ? "대화 준비" : "연습 준비"}
+                    </span>
+                  </nav>
+                  <section className="dc-title dc-preparation-heading">
                     <p className="dc-overline">
                       {active.isSample
                         ? "샘플 · 가상의 상황"
@@ -1577,25 +1639,6 @@ export default function ConversationWorkspace() {
                         <Companion small mood="listen" />
                       </div>
                       <ContextFacts profile={active} compact />
-                      <button
-                        className="dd-primary dd-full"
-                        data-tour="practice-button"
-                        onClick={() => {
-                          if (purpose === "live") useCard(active);
-                          else setView("voicePractice", "practice");
-                          window.scrollTo({ top: 0 });
-                        }}
-                      >
-                        <Icon name="chat" size={20} />
-                        {purpose === "live"
-                          ? "이 상황으로 도움받기"
-                          : "상대와 대화 연습"}
-                      </button>
-                      <p className="dc-small-caption">
-                        {purpose === "live"
-                          ? "상대 말을 들려주거나 직접 입력해 답변 힌트를 받아요. 지원 브라우저에서는 계속 들으며 자막을 보여줘요."
-                          : "문자나 목소리로 직접 답하고, 끝나면 내 말을 복기해요."}
-                      </p>
                     </section>
                     <details className="dc-detail-alternative">
                       <summary>
@@ -1846,6 +1889,16 @@ export default function ConversationWorkspace() {
             <a href="/evidence">서비스·데이터 안내</a>
           </footer>
         </div>
+        {view === "detail" && active && (
+          <PreparationActions
+            purpose={purpose}
+            onStart={() => {
+              if (purpose === "live") useCard(active);
+              else setView("voicePractice", "practice");
+              window.scrollTo({ top: 0 });
+            }}
+          />
+        )}
         {helpOpen && (
           <ScreenHelp
             view={view}
