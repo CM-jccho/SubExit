@@ -2,20 +2,88 @@
   "version": 1,
   "description": "인위적으로 재현하는 장애 조건. 실제 서비스 장애 기록이 아닙니다.",
   "cases": [
-    { "id": "daily-429", "status": 429, "body": {"code":"provider_rate_limit","quotaKind":"daily","retryAfter":45}, "reason": "daily" },
-    { "id": "minute-429", "status": 429, "body": {"code":"provider_rate_limit","quotaKind":"minute","retryAfter":45}, "reason": "minute" },
-    { "id": "unknown-429", "status": 429, "body": {"error":"provider limit"}, "reason": "quota" },
-    { "id": "app-429", "status": 429, "body": {"code":"app_rate_limit","retryAfter":60}, "reason": "app_limit" },
-    { "id": "provider-502", "status": 502, "body": {"code":"provider_error"}, "reason": "connection" },
-    { "id": "not-configured-503", "status": 503, "body": {"code":"not_configured"}, "reason": "unavailable" },
-    { "id": "invalid-output-500", "status": 500, "body": {"code":"invalid_output"}, "reason": "response" },
+    {
+      "id": "daily-429",
+      "status": 429,
+      "body": {
+        "code": "provider_rate_limit",
+        "quotaKind": "daily",
+        "retryAfter": 45
+      },
+      "reason": "daily"
+    },
+    {
+      "id": "minute-429",
+      "status": 429,
+      "body": {
+        "code": "provider_rate_limit",
+        "quotaKind": "minute",
+        "retryAfter": 45
+      },
+      "reason": "minute"
+    },
+    {
+      "id": "unknown-429",
+      "status": 429,
+      "body": { "error": "provider limit" },
+      "reason": "quota"
+    },
+    {
+      "id": "app-429",
+      "status": 429,
+      "body": { "code": "app_rate_limit", "retryAfter": 60 },
+      "reason": "app_limit"
+    },
+    {
+      "id": "provider-502",
+      "status": 502,
+      "body": { "code": "provider_error" },
+      "reason": "connection"
+    },
+    {
+      "id": "not-configured-503",
+      "status": 503,
+      "body": { "code": "not_configured" },
+      "reason": "unavailable"
+    },
+    {
+      "id": "invalid-output-500",
+      "status": 500,
+      "body": { "code": "invalid_output" },
+      "reason": "response"
+    },
     { "id": "network-error", "throw": "TypeError", "reason": "connection" },
     { "id": "timeout", "throw": "AbortError", "reason": "connection" },
-    { "id": "malformed-json", "status": 200, "text": "invalid json", "reason": "connection" },
+    {
+      "id": "malformed-json",
+      "status": 200,
+      "text": "invalid json",
+      "reason": "response"
+    },
     { "id": "missing-reply", "status": 200, "body": {}, "reason": "response" },
-    { "id": "invalid-input-400", "status": 400, "body": {"error":"입력 형식을 확인해 주세요."}, "noFallback": true },
-    { "id": "missing-consent-400", "status": 400, "body": {"error":"전송 동의를 확인해 주세요."}, "noFallback": true },
-    { "id": "too-large-413", "status": 413, "body": {"error":"입력 크기를 줄여 주세요."}, "noFallback": true },
-    { "id": "access-denied-403", "status": 403, "body": {"error":"요청 권한을 확인해 주세요."}, "noFallback": true }
+    {
+      "id": "invalid-input-400",
+      "status": 400,
+      "body": { "error": "입력 형식을 확인해 주세요." },
+      "noFallback": true
+    },
+    {
+      "id": "missing-consent-400",
+      "status": 400,
+      "body": { "error": "전송 동의를 확인해 주세요." },
+      "noFallback": true
+    },
+    {
+      "id": "too-large-413",
+      "status": 413,
+      "body": { "error": "입력 크기를 줄여 주세요." },
+      "noFallback": true
+    },
+    {
+      "id": "access-denied-403",
+      "status": 403,
+      "body": { "error": "요청 권한을 확인해 주세요." },
+      "noFallback": true
+    }
   ]
 }

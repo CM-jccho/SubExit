@@ -57,6 +57,10 @@ export function retryAdvice(d: AIOutage) {
   return `${time} 이후 다시 시도해 주세요. (한국 시간)`;
 }
 export function outageMessage(d: AIOutage) {
+  if (d.reason === "daily")
+    return `오늘 제공되는 베타테스트 AI 이용량을 모두 사용했어요. 지금은 새로운 AI 답변을 받을 수 없어요. ${retryAdvice(d)} 기존 기록과 준비된 샘플은 계속 볼 수 있어요.`;
+  if (d.reason === "quota")
+    return "현재 베타테스트 AI 이용 한도에 도달했어요. 지금은 새로운 AI 답변을 받을 수 없어요. 현재 오류로는 정확한 한도 초기화 시점을 알 수 없어요. 기존 기록과 준비된 샘플은 계속 볼 수 있어요.";
   return `${outageLabel(d)}. ${retryAdvice(d)}`;
 }
 export function readAIHold(now = Date.now()): AIOutage | null {

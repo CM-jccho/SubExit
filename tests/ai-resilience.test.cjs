@@ -6,7 +6,7 @@ const quota = require("../lib/quota.ts"),
   client = require("../lib/ai-client.ts"),
   bank = require("../lib/demo-bank.ts"),
   resilient = require("../lib/resilient-ai.ts");
-test("all authored scenarios and operations survive the outage matrix without masking validation errors", async () => {
+test("all scenarios and operations reject outages without fabricating replies or masking validation errors", async () => {
   const report = await simulate();
   assert.equal(
     report.verified,
@@ -97,10 +97,15 @@ test("daily cooldown blocks duplicate calls, survives reload storage, expires an
         { status: 429 },
       );
     };
-    const a = await resilient.sampledRequest(options);
-    assert.equal(a.sample.outage.reason, "daily");
+    await assert.rejects(
+      () => resilient.sampledRequest(options),
+      (e) => e.outage.reason === "daily",
+    );
     const retry = client.readAIHold().retryAt;
-    await resilient.sampledRequest(options);
+    await assert.rejects(
+      () => resilient.sampledRequest(options),
+      (e) => e.outage.reason === "daily",
+    );
     assert.equal(calls, 1);
     assert(
       !window.sessionStorage.getItem("ddeundeun-ai-wait-v1").includes("일정"),
@@ -233,4 +238,21 @@ test("money refusal samples explicitly refuse lending without invented reasons o
     assert.match(text, /어려|어렵/);
     assert.doesNotMatch(text, /조건|먼저|확인|될까요|나중/);
   }
+});
+
+test("beta quota notices distinguish exhaustion from transient failures without promising a reset", () => {
+  const daily = client.outageFor(429, { quotaKind: "daily" });
+  assert.match(
+    client.outageMessage(daily),
+    /오늘 제공되는 베타테스트 AI 이용량을 모두 사용/,
+  );
+  assert.match(client.outageMessage(daily), /초기화 예정/);
+  const unknown = client.outageMessage(client.outageFor(429, {}));
+  assert.match(unknown, /정확한 한도 초기화 시점을 알 수 없어요/);
+  assert.doesNotMatch(unknown, /내일|초기화 예정|모두 사용/);
+  for (const d of [
+    client.outageFor(429, { quotaKind: "minute" }),
+    client.outageFor(502, {}),
+  ])
+    assert.doesNotMatch(client.outageMessage(d), /이용량을 모두|베타테스트/);
 });

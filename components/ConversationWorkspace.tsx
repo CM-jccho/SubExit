@@ -30,6 +30,7 @@ import QuotaHelp from "./QuotaHelp";
 import { useEffect, useRef, useState } from "react";
 import {
   workspacePurpose,
+  workspaceSection,
   type WorkspacePurpose,
   workspaceView,
   workspaceUrl,
@@ -844,8 +845,19 @@ export default function ConversationWorkspace() {
               ).map((n) => (
                 <button
                   key={n.id}
-                  aria-current={view === n.id ? "page" : undefined}
-                  className={view === n.id ? "active" : ""}
+                  aria-current={
+                    view === n.id
+                      ? "page"
+                      : n.id !== "home" && workspaceSection(view) === n.id
+                        ? "location"
+                        : undefined
+                  }
+                  className={
+                    view === n.id ||
+                    (n.id !== "home" && workspaceSection(view) === n.id)
+                      ? "active"
+                      : ""
+                  }
                   onClick={() => navigate(n.id)}
                 >
                   <Icon name={n.icon} size={21} />
@@ -884,25 +896,14 @@ export default function ConversationWorkspace() {
                 className="purpose-alternatives"
                 aria-label="대화 도움 방식"
               >
-                <div
-                  className="purpose-switch"
-                  role="group"
-                  aria-label="대화 도움 방식 선택"
-                >
+                <p className="dc-small-caption">다른 기능으로 이동</p>
+                <div className="purpose-support" aria-label="대화 연습 도구">
                   <button
-                    aria-pressed={purpose === "live"}
+                    className="dd-link"
                     onClick={() => navigate("quick", "live")}
                   >
-                    답변 추천받기
+                    답변 추천받기 <Icon name="arrow" size={16} />
                   </button>
-                  <button
-                    aria-pressed={purpose === "practice"}
-                    onClick={() => navigate("library", "practice")}
-                  >
-                    대화 연습하기
-                  </button>
-                </div>
-                <div className="purpose-support" aria-label="대화 연습 도구">
                   <button
                     className="dd-link"
                     onClick={() => navigate("recording")}
@@ -1337,13 +1338,24 @@ export default function ConversationWorkspace() {
               )}
               {view === "setup" && (
                 <>
-                  <button
-                    className="dd-back"
-                    onClick={() => navigate("library")}
+                  <nav
+                    className="purpose-breadcrumb"
+                    aria-label="현재 상황 준비 위치"
                   >
-                    <Icon name="back" size={18} />
-                    {purpose === "live" ? "대화 상황 선택" : "대화 연습"}
-                  </button>
+                    <button
+                      className="dd-back"
+                      onClick={() => navigate("library")}
+                    >
+                      <Icon name="back" size={18} />
+                      {purpose === "live" ? "대화 상황 선택" : "대화 연습"}
+                    </button>
+                    <span className="breadcrumb-separator" aria-hidden="true">
+                      /
+                    </span>
+                    <span aria-current="location">
+                      {editingId ? "상황 수정" : "내 상황 만들기"}
+                    </span>
+                  </nav>
                   <section className="dc-title">
                     <p className="dc-overline">
                       {editingId
@@ -1704,8 +1716,11 @@ export default function ConversationWorkspace() {
                       className="dd-back"
                       onClick={() => navigate("library")}
                     >
-                      <Icon name="back" size={18} /> 다른 상황 선택
+                      <Icon name="back" size={18} /> 연습 상황 목록
                     </button>
+                    <span className="breadcrumb-separator" aria-hidden="true">
+                      /
+                    </span>
                     <span aria-current="location">
                       {purpose === "live" ? "대화 준비" : "연습 준비"}
                     </span>

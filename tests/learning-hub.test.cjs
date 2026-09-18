@@ -694,7 +694,7 @@ test("home practice opens a context card and practice keeps a discoverable recor
       document.querySelectorAll('[data-tour="practice-button"]').length,
       1,
     );
-    assert(button("다른 상황 선택"));
+    assert(button("연습 상황 목록"));
     await click(button("대화 연습 시작하기"));
     assert.equal(document.querySelector(".dc-preparation-actions"), null);
     assert.equal(window.location.search, "?view=records");
@@ -2546,6 +2546,10 @@ test("home prioritizes live assistance, offers rehearsal second and separates su
       assert(document.querySelector("h1").textContent.includes(label));
       assert.equal(document.querySelector(".dc-nav [aria-current=page]"), null);
       assert.equal(
+        document.querySelector('.dc-nav [aria-current="location"]').textContent,
+        "더보기",
+      );
+      assert.equal(
         document.querySelector(".purpose-breadcrumb [aria-current=location]")
           .textContent,
         label,
@@ -3323,6 +3327,14 @@ test("practice recording entry opens a new recording without requiring interest 
   try {
     await settle();
     await click(button("대화 연습하기"));
+    assert.equal(
+      document.querySelector(".purpose-alternatives .purpose-switch"),
+      null,
+    );
+    assert.match(
+      document.querySelector(".purpose-alternatives").textContent,
+      /다른 기능으로 이동/,
+    );
     await click(button("내 대화 돌아보기"));
     await settle();
     assert.equal(document.querySelector('[aria-label="대화 맥락 선택"]'), null);
@@ -4334,7 +4346,7 @@ test("unfinished context protects tab and browser navigation, shows missing fiel
     const saved = new window.Event("beforeunload", { cancelable: true });
     window.dispatchEvent(saved);
     assert.equal(saved.defaultPrevented, false);
-    await click(button("다른 상황 선택"));
+    await click(button("연습 상황 목록"));
     await click(button("내 상황 만들기"));
     await change(
       document.querySelector("#setup-message"),

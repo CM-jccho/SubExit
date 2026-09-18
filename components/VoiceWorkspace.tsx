@@ -337,6 +337,9 @@ export default function VoiceWorkspace({
     setNotice("");
     const timeout = setTimeout(() => c.abort(), 25000);
     try {
+      // Save the chosen context even if the first AI turn fails.
+      await putSession({ ...current, sampleMode: sampleModeRef.current });
+      if (generation.current !== id || c.signal.aborted) return;
       const d = await sampledRequest({
         operation: current.kind === "chat" ? "companion" : "partner",
         language: current.languages?.partner,
@@ -1093,16 +1096,28 @@ export default function VoiceWorkspace({
         </>
       ) : (
         <>
-          <button
-            className="dd-back"
-            disabled={captureBusy}
-            onClick={() =>
-              onBackToPreparation ? onBackToPreparation() : open(null)
-            }
-          >
-            <Icon name="back" size={18} />
-            {onBackToPreparation ? "연습 준비로" : "내 기록으로"}
-          </button>
+          <nav className="purpose-breadcrumb" aria-label="현재 기록 위치">
+            <button
+              className="dd-back"
+              disabled={captureBusy}
+              onClick={() =>
+                onBackToPreparation ? onBackToPreparation() : open(null)
+              }
+            >
+              <Icon name="back" size={18} />
+              {onBackToPreparation ? "연습 준비로" : "내 기록으로"}
+            </button>
+            <span className="breadcrumb-separator" aria-hidden="true">
+              /
+            </span>
+            <span aria-current="location">
+              {session.kind === "practice"
+                ? "대화 연습"
+                : session.kind === "chat"
+                  ? "AI 대화"
+                  : "내 대화 돌아보기"}
+            </span>
+          </nav>
           <section className="vn-session-heading">
             <div>
               <p className="dc-overline">

@@ -1,29 +1,29 @@
 {
-  "generatedAt": "2026-09-16T09:39:51.205Z",
+  "generatedAt": "2026-09-18T07:09:18.456Z",
   "method": "mocked_provider_responses",
   "liveAICalls": 0,
-  "scenarios": 11,
+  "scenarios": 13,
   "operations": 4,
   "errorConditions": 15,
-  "verified": 660,
-  "authoredResponses": 176,
-  "authoredReviewExamples": 11,
+  "verified": 780,
+  "authoredResponses": 208,
+  "authoredReviewExamples": 13,
   "checks": {
-    "daily-429": 44,
-    "minute-429": 44,
-    "unknown-429": 44,
-    "app-429": 44,
-    "provider-502": 44,
-    "not-configured-503": 44,
-    "invalid-output-500": 44,
-    "network-error": 44,
-    "timeout": 44,
-    "malformed-json": 44,
-    "missing-reply": 44,
-    "invalid-input-400": 44,
-    "missing-consent-400": 44,
-    "too-large-413": 44,
-    "access-denied-403": 44
+    "daily-429": 52,
+    "minute-429": 52,
+    "unknown-429": 52,
+    "app-429": 52,
+    "provider-502": 52,
+    "not-configured-503": 52,
+    "invalid-output-500": 52,
+    "network-error": 52,
+    "timeout": 52,
+    "malformed-json": 52,
+    "missing-reply": 52,
+    "invalid-input-400": 52,
+    "missing-consent-400": 52,
+    "too-large-413": 52,
+    "access-denied-403": 52
   },
   "limitations": [
     "실제 Gemini 응답 품질이나 지연을 측정한 결과가 아닙니다.",
@@ -60,6 +60,13 @@
       "hint": "부탁드릴 내용과 범위를 먼저 설명해도 괜찮을까요?"
     },
     {
+      "topic": "친구와 약속 조정",
+      "opening": "우리 약속 시간을 바꾸고 싶은 거야?",
+      "followup": "바꾸려는 이유를 먼저 얘기해 줄래?",
+      "candidate": "약속을 바꾸자고 해서 미안해. 네가 괜찮은 시간을 같이 찾아볼까?",
+      "hint": "늦게 얘기해서 미안해. 바꾸려는 이유부터 얘기할게. 너는 언제 괜찮아?"
+    },
+    {
       "topic": "일정 조율",
       "opening": "조율하고 싶은 일정이 있나요?",
       "followup": "바꾸고 싶은 부분이 무엇인가요?",
@@ -74,11 +81,18 @@
       "hint": "지금 요청하신 범위와 우선순위를 먼저 확인해도 될까요?"
     },
     {
+      "topic": "돈을 빌려달라는 부탁 거절",
+      "opening": "돈을 조금 빌려줄 수 있을까요?",
+      "followup": "돈을 빌려주기는 어렵다는 말씀이군요.",
+      "candidate": "미안하지만 돈을 빌려주기는 어려워요. 이해해 주셨으면 해요.",
+      "hint": "미안하지만 돈을 빌려주기는 어려워요. 이해해 주셨으면 해요."
+    },
+    {
       "topic": "정중한 거절",
       "opening": "어떤 요청에 대해 이야기하고 싶으세요?",
       "followup": "어느 부분이 부담되시는지 말씀해 주실래요?",
-      "candidate": "제 입장을 먼저 말씀드려도 될까요?",
-      "hint": "제 입장을 먼저 정리해서 말씀드려도 될까요?"
+      "candidate": "미안하지만 이번 부탁은 들어드리기 어려워요.",
+      "hint": "미안하지만 이번 부탁은 들어드리기 어려워요."
     },
     {
       "topic": "면접·발표",
@@ -108,5 +122,6 @@
       "candidate": "제 생각을 먼저 말씀드려도 될까요?",
       "hint": "제가 이해한 내용이 맞는지 먼저 확인해도 될까요?"
     }
-  ]
+  ],
+  "expectedBehavior": "Reject AI failures without automatically substituting authored responses; preserve cancellations and validation errors."
 }

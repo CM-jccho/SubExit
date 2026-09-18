@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { aiFetch } from "@/lib/ai-client";
 import {
   LatestCoachQueue,
@@ -20,7 +20,9 @@ export default function LiveSpeechPanel({
   adult,
   sample,
   onActiveChange,
+  consentControl,
 }: {
+  consentControl?: ReactNode;
   profile?: ContextProfile;
   scenario: string;
   tone: Tone;
@@ -156,54 +158,43 @@ export default function LiveSpeechPanel({
   const active = state !== "idle";
   return (
     <section className="live-stream" aria-label="실시간 자막과 코칭">
-      <div className="live-stream-toolbar">
-        <div role="status">
-          <strong
-            className={
-              "mic-status " + (state === "listening" ? "is-listening" : "")
-            }
-          >
-            <i aria-hidden="true" />
-            {state === "listening"
-              ? "계속 듣고 있어요"
-              : state === "connecting"
-                ? "음성 인식 연결 중"
-                : "실시간 자막 · 자동 코칭"}
-          </strong>
-          <span>
-            {active
-              ? "코칭을 준비하는 동안에도 말을 받아요"
-              : "상대의 말을 자막으로 보며 다음 말을 준비하세요"}
-          </span>
-        </div>
-        <button
-          className={active ? "dd-secondary" : "dd-primary"}
-          onClick={
-            active
-              ? () => {
-                  stop();
-                  setNotice(
-                    "듣기를 멈췄어요. 인식된 말과 마지막 제안은 이 화면에 남아 있어요.",
-                  );
-                }
-              : start
-          }
-          disabled={!active && !speechConsent}
-        >
-          <Icon name={active ? "pause" : "mic"} size={20} />
-          {active ? "듣기 멈춤" : "실시간 듣기 시작"}
-        </button>
-      </div>
-      {!speechConsent && (
-        <p className="action-reason">
-          아래 음성 인식 전송에 동의하면 듣기를 시작할 수 있어요.
+      <section
+        className="live-stream-guide"
+        aria-labelledby="live-guide-heading"
+      >
+        <h2 id="live-guide-heading">사용 방법</h2>
+        <p>
+          동의 후 듣기를 시작하면 왼쪽에 자막이, 오른쪽에 답변 코칭이 나타나요.
+          모바일에서는 위아래로 보여요.
         </p>
-      )}
-      {!speechConsent && (
+        <p>
+          내 목소리와 상대를 자동 구분하지 않아요. 내가 말할 때는 ‘듣기 멈춤’을
+          눌러주세요.
+        </p>
+      </section>
+      <section
+        className="live-stream-settings"
+        aria-labelledby="live-settings-heading"
+      >
+        <h2 id="live-settings-heading">듣기 설정</h2>
+        {profile && (
+          <dl className="live-context-summary">
+            <div>
+              <dt>대화 상대</dt>
+              <dd>{profile.partner}</dd>
+            </div>
+            <div>
+              <dt>내 목표</dt>
+              <dd>{profile.goal}</dd>
+            </div>
+          </dl>
+        )}
+        {consentControl}
         <label className="dd-check live-speech-consent">
           <input
             type="checkbox"
             checked={speechConsent}
+            disabled={active}
             onChange={(e) => setSpeechConsent(e.target.checked)}
           />
           <span>
@@ -211,66 +202,108 @@ export default function LiveSpeechPanel({
             Gemini로 보내 코칭받는 데 동의해요.
           </span>
         </label>
-      )}
-      <div className="live-caption" aria-label="인식 중인 상대 말">
-        <span className="live-stream-label">
-          {active ? "들리는 말" : "인식한 말"}
-        </span>
-        <p
-          ref={captionArea}
-          onScroll={(event) => {
-            const el = event.currentTarget;
-            followCaption.current =
-              el.scrollHeight - el.scrollTop - el.clientHeight < 40;
-          }}
-        >
-          {caption.final}
-          <span className="live-caption-interim">
-            {caption.interim ? " " + caption.interim : ""}
-          </span>
-          {!caption.final && !caption.interim && (
-            <span className="live-caption-placeholder">
-              상대의 말이 여기에 자막처럼 나타나요.
+        <div className="live-stream-toolbar">
+          <div role="status">
+            <strong
+              className={
+                "mic-status " + (state === "listening" ? "is-listening" : "")
+              }
+            >
+              <i aria-hidden="true" />
+              {state === "listening"
+                ? "계속 듣고 있어요"
+                : state === "connecting"
+                  ? "음성 인식 연결 중"
+                  : "듣기 시작 전"}
+            </strong>
+            <span>
+              {active
+                ? "자막과 답변 코칭을 자동으로 갱신해요"
+                : !consent || !adult || !speechConsent
+                  ? "전송 동의를 확인하면 시작할 수 있어요"
+                  : "준비됐어요. 듣기를 시작해 주세요"}
             </span>
-          )}
-        </p>
-        <small>
-          흐린 글자는 인식 중이며 바뀔 수 있어요. 최근 1,000자를 보여줘요.
-        </small>
-      </div>
-      <aside
-        className="live-stream-reply"
-        aria-label="다음 한마디"
-        aria-live="polite"
-        aria-busy={working}
-      >
-        <div className="live-stream-reply-heading">
-          <strong>이렇게 말해볼까요?</strong>
-          <span>
-            {working
-              ? "새 말로 갱신 중"
-              : reply && reply.text !== caption.final
-                ? "이전 말 기준 제안"
-                : reply
-                  ? "AI 제안"
-                  : "말이 정리되면 자동으로 제안해요"}
-          </span>
+          </div>
+          <button
+            className={active ? "dd-secondary" : "dd-primary"}
+            onClick={
+              active
+                ? () => {
+                    stop();
+                    setNotice(
+                      "듣기를 멈췄어요. 인식된 말과 마지막 제안은 이 화면에 남아 있어요.",
+                    );
+                  }
+                : start
+            }
+            disabled={!active && (!speechConsent || !consent || !adult)}
+          >
+            <Icon name={active ? "pause" : "mic"} size={20} />
+            {active ? "듣기 멈춤" : "실시간 듣기 시작"}
+          </button>
         </div>
-        {reply ? (
-          <>
-            <blockquote>{reply.data.suggestion}</blockquote>
-            <details>
-              <summary>어떤 말을 바탕으로 제안했나요?</summary>
-              <q>{reply.data.evidence}</q>
-              <p>{reply.data.reason}</p>
-            </details>
-          </>
-        ) : (
-          <p>
-            자막을 확인하면서 계속 대화하세요. 다음 한마디는 이곳에서 갱신돼요.
+      </section>
+      <div className="live-stream-workspace">
+        <div className="live-caption" aria-label="인식 중인 상대 말">
+          <h2>실시간 자막</h2>
+          <span className="live-stream-label">
+            {active ? "지금 들리는 상대 말" : "듣기를 시작하면 여기에 보여요"}
+          </span>
+          <p
+            ref={captionArea}
+            onScroll={(event) => {
+              const el = event.currentTarget;
+              followCaption.current =
+                el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+            }}
+          >
+            {caption.final}
+            <span className="live-caption-interim">
+              {caption.interim ? " " + caption.interim : ""}
+            </span>
+            {!caption.final && !caption.interim && (
+              <span className="live-caption-placeholder">
+                상대의 말이 여기에 자막처럼 나타나요.
+              </span>
+            )}
           </p>
-        )}
-      </aside>
+          <small>
+            흐린 글자는 인식 중이며 바뀔 수 있어요. 최근 1,000자를 보여줘요.
+          </small>
+        </div>
+        <aside
+          className="live-stream-reply"
+          aria-label="답변 코칭"
+          aria-live="polite"
+          aria-busy={working}
+        >
+          <h2>답변 코칭</h2>
+          <div className="live-stream-reply-heading">
+            <strong>이렇게 말해볼까요?</strong>
+            <span>
+              {working
+                ? "새 말로 갱신 중"
+                : reply && reply.text !== caption.final
+                  ? "이전 말 기준 제안"
+                  : reply
+                    ? "AI 제안"
+                    : "말이 정리되면 자동으로 제안해요"}
+            </span>
+          </div>
+          {reply ? (
+            <>
+              <blockquote>{reply.data.suggestion}</blockquote>
+              <details>
+                <summary>어떤 말을 바탕으로 제안했나요?</summary>
+                <q>{reply.data.evidence}</q>
+                <p>{reply.data.reason}</p>
+              </details>
+            </>
+          ) : (
+            <p>상대의 말이 인식되면 내 목표에 맞는 답변을 여기에 제안해요.</p>
+          )}
+        </aside>
+      </div>
       {error && (
         <div>
           <p className="dd-error" role="alert">
@@ -297,12 +330,8 @@ export default function LiveSpeechPanel({
         </p>
       )}
       <p className="live-stream-note">
-        자막은 바로 표시하고, 코칭은 인식이 확정된 말을 모아 갱신해요. 반복
-        요청은 최소 3초 간격이며 응답 시간은 연결 상태에 따라 달라요.
-      </p>
-      <p className="live-stream-note">
-        상대 목소리가 잘 들리는 곳에서 사용하세요. 내 목소리와 상대를 자동
-        구분하지 않으므로 내가 말할 때는 듣기를 멈춰주세요.
+        자막은 인식되는 대로 보여주고, 답변 코칭은 확정된 말을 바탕으로
+        갱신해요. 응답 속도는 연결 상태에 따라 달라요.
       </p>
     </section>
   );

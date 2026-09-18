@@ -39,7 +39,9 @@ export function SampleSwitch({
   disabled,
   label = "샘플로 연습하기 · AI 호출 없음",
   onChange,
+  description,
 }: {
+  description?: string;
   checked: boolean;
   disabled?: boolean;
   label?: string;
@@ -58,8 +60,8 @@ export function SampleSwitch({
       </label>
       {checked && (
         <p>
-          사전 작성 예시로 흐름을 체험해요. 음성 문자 변환과 AI 복기는 사용하지
-          않아요. 해제하면 AI로 돌아가요.
+          {description ||
+            "사전 작성 예시로 흐름을 체험해요. 직접 쓴 답변을 AI가 분석하지 않아요. 음성 문자 변환과 AI 복기는 사용할 수 없어요. 해제하면 AI로 돌아가요."}
         </p>
       )}
     </div>

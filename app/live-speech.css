@@ -130,3 +130,69 @@
     padding: 10px 6px;
   }
 }
+
+/* Separate instructions, configuration and live output without more nested tabs. */
+.live-stream-guide {
+  padding: 16px 20px;
+  border-left: 3px solid #8ca879;
+  background: #f0f3e9;
+  border-radius: 0 12px 12px 0;
+}
+.live-stream h2 {
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+  font-weight: 750;
+}
+.live-stream-guide p {
+  margin: 6px 0;
+  font-size: var(--t-body);
+}
+.live-stream-settings {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #d6dfce;
+  border-radius: 16px;
+  background: var(--surface-card);
+}
+.live-stream-settings .live-stream-toolbar {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #d6dfce;
+}
+.live-context-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 12px 24px;
+  margin: 0 0 16px;
+}
+.live-context-summary dt {
+  font-size: 14px;
+  color: #536053;
+}
+.live-context-summary dd {
+  margin: 4px 0 0;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.live-stream-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+}
+.live-stream-workspace > * {
+  min-width: 0;
+}
+.live-stream-reply-heading strong {
+  font-size: 20px;
+}
+@media (max-width: 800px) {
+  .live-stream-workspace,
+  .live-context-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .live-stream-settings,
+  .live-stream-guide {
+    padding: 16px;
+  }
+}

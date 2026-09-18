@@ -55,18 +55,13 @@ async function simulate() {
             });
           if (fixture.noFallback)
             await assert.rejects(run, { message: fixture.body.error });
-          else {
-            const d = await run();
-            assert.equal(d.source, "sample");
-            assert.equal(d.sample.outage.reason, fixture.reason);
-            assert.equal(d.sample.topic, row.title);
-            assert.equal(d.evidence, "");
-            assert.equal(d.terms.length, 0);
-            assert(d.reply.length > 0);
-            if (operation === "suggestions")
-              assert.equal(new Set(d.suggestions).size, 3);
-            assert(d.sample.sampleId.startsWith(row.id + ":"));
-          }
+          else if (fixture.throw === "AbortError")
+            await assert.rejects(run, { name: "AbortError" });
+          else
+            await assert.rejects(run, (error) => {
+              assert.equal(error.outage.reason, fixture.reason);
+              return true;
+            });
           verified++;
           counts[fixture.id] = (counts[fixture.id] || 0) + 1;
         }
@@ -76,6 +71,7 @@ async function simulate() {
   return {
     generatedAt: new Date().toISOString(),
     method: "mocked_provider_responses",
+    expectedBehavior: "Reject AI failures without automatically substituting authored responses; preserve cancellations and validation errors.",
     liveAICalls: 0,
     scenarios: demoCases.length,
     operations: 4,

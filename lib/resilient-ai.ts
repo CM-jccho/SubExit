@@ -34,8 +34,8 @@ export async function sampledRequest(options: {
   manual?: boolean;
   language?: Language;
 }): Promise<SampledResponse> {
-  let outage = options.manual ? manualSample() : null;
-  if (!outage) {
+  // Authored examples are opt-in only. An outage must never manufacture a reply.
+  if (!options.manual) {
     try {
       const r = await aiFetch(options.url, options.init);
       const d = await r.json();
@@ -68,20 +68,17 @@ export async function sampledRequest(options: {
         source: "ai",
       };
     } catch (e) {
-      if (e instanceof AIServiceError) outage = e.outage;
-      else if (
-        e instanceof SyntaxError ||
-        (e instanceof Error && e.name === "AbortError")
-      )
-        outage = connectionOutage();
-      else throw e;
+      if (e instanceof SyntaxError)
+        throw new AIServiceError({ ...connectionOutage(), reason: "response" });
+      // In particular, preserve AbortError so canceled requests stay canceled.
+      throw e;
     }
   }
   const sample = sampleResponse(
     options.operation,
     options.context,
     options.previous,
-    outage,
+    manualSample(),
     Math.random,
     options.language,
   );

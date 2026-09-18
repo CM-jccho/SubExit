@@ -919,3 +919,19 @@ html {
   font-size: var(--t-body);
   line-height: 1.65;
 }
+
+/* Breadcrumbs identify the current screen; cross-feature links are not tabs. */
+.dc-root .purpose-breadcrumb {
+  flex-wrap: wrap;
+}
+.dc-root .purpose-breadcrumb [aria-current="location"] {
+  font-weight: 700;
+  color: var(--ink-700);
+}
+.dc-root .purpose-alternatives {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+.dc-root .purpose-alternatives > p {
+  margin: 0;
+}

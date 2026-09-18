@@ -9,6 +9,7 @@ import { sampledRequest } from "@/lib/resilient-ai";
 import { practiceSampleContext } from "@/lib/demo-bank";
 import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
+import SamplePreview from "./SamplePreview";
 import { useEffect, useRef, useState } from "react";
 import AudioPlayer, { inspectAudio } from "./AudioPlayer";
 import { useCompanion } from "./CompanionTheme";
@@ -41,6 +42,7 @@ export default function LiveCoach({
 }) {
   const character = useCompanion();
   const [supportsLive, setSupportsLive] = useState(false);
+  const [samplePreviewOpen, setSamplePreviewOpen] = useState(false);
   const [voiceStyle, setVoiceStyle] = useState<"continuous" | "short">(
     directEntry ? "short" : "continuous",
   );
@@ -62,8 +64,7 @@ export default function LiveCoach({
   const [consent, setConsent] = useAIConsent();
   const adult = consent,
     sample = consent;
-  const [automatic, setAutomatic] = useState(false),
-    [sampleMode, setSampleMode] = useState(false);
+  const [automatic, setAutomatic] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle"),
     [seconds, setSeconds] = useState(0),
     [input, setInput] = useState(""),
@@ -112,12 +113,12 @@ export default function LiveCoach({
   useEffect(() => {
     const revoked = previousConsent.current && !consent;
     previousConsent.current = consent;
-    if (!consent && prepared && !sampleMode && (!directEntry || revoked)) {
+    if (!consent && prepared && (!directEntry || revoked)) {
       cancel();
       setLiveActive(false);
       if (!directEntry) setPrepared(false);
     }
-  }, [consent, prepared, sampleMode]);
+  }, [consent, prepared]);
   const quickDirty =
     directEntry &&
     (!!input.trim() ||
@@ -235,11 +236,7 @@ export default function LiveCoach({
     }
   }
   async function coach(text: string, id = ++version.current) {
-    if (
-      (!sampleMode && (!allowed || !config.available)) ||
-      text.trim().length < 2
-    )
-      return;
+    if (!allowed || !config.available || text.trim().length < 2) return;
     const requestProfile =
       directEntry && profile
         ? {
@@ -270,7 +267,7 @@ export default function LiveCoach({
             .filter(Boolean)
             .join(" "),
           previous: sampleHistory.current,
-          manual: sampleMode,
+          manual: false,
           url: "/api/coach",
           init: {
             method: "POST",
@@ -311,7 +308,10 @@ export default function LiveCoach({
         );
       }
     } catch (e) {
-      if (version.current === id)
+      if (version.current === id) {
+        setNotice(
+          "AI 답변을 받지 못했어요. 입력한 말과 최근 추천은 그대로예요. 샘플로 자동 전환하지 않아요.",
+        );
         setError(
           e instanceof Error && e.name === "AbortError"
             ? "응답이 늦어 요청을 중단했어요. 다시 시도해 주세요."
@@ -319,6 +319,7 @@ export default function LiveCoach({
               ? e.message
               : "연결을 확인해 주세요.",
         );
+      }
     } finally {
       if (version.current === id) {
         busy.current = false;
@@ -327,8 +328,7 @@ export default function LiveCoach({
     }
   }
   async function listen() {
-    if (busy.current || sampleMode || !allowed || !config.voiceAvailable)
-      return;
+    if (busy.current || !allowed || !config.voiceAvailable) return;
     const id = ++version.current;
     busy.current = true;
     setPhase("permission");
@@ -435,7 +435,7 @@ export default function LiveCoach({
     }
   }
   async function transcribeBlob(blob: Blob, id = ++version.current) {
-    if (sampleMode || !allowed || !config.voiceAvailable) return;
+    if (!allowed || !config.voiceAvailable) return;
     busy.current = true;
     setPhase("transcribing");
     setError("");
@@ -454,7 +454,7 @@ export default function LiveCoach({
         );
       setInput(data.text.slice(0, 1000));
       setNotice(
-        "음성 인식이 끝났어요. 아래 문장을 확인하고 ‘답변 힌트 받기’를 눌러주세요.",
+        "음성 인식이 끝났어요. 아래 문장을 확인하고 ‘답변 코칭받기’를 눌러주세요.",
       );
       if (automatic) await coach(data.text.slice(0, 1000), id);
     } catch (e) {
@@ -491,16 +491,26 @@ export default function LiveCoach({
       className={"dd-live dc-live-app" + (directEntry ? " dc-quick-help" : "")}
       data-coach-phase={liveActive ? "listening" : phase}
     >
-      <button
-        className="dd-back"
-        onClick={() => {
-          if (!directEntry) cancel();
-          onBack();
-        }}
-      >
-        <Icon name="back" size={18} />
-        {directEntry ? "홈으로" : "대화 카드로"}
-      </button>
+      <SamplePreview
+        open={samplePreviewOpen}
+        onClose={() => setSamplePreviewOpen(false)}
+      />
+      <nav className="purpose-breadcrumb" aria-label="현재 코칭 위치">
+        <button
+          className="dd-back"
+          onClick={() => {
+            if (!directEntry) cancel();
+            onBack();
+          }}
+        >
+          <Icon name="back" size={18} />
+          {directEntry ? "홈으로" : "대화 카드로"}
+        </button>
+        <span className="breadcrumb-separator" aria-hidden="true">
+          /
+        </span>
+        <span aria-current="location">답변 추천받기</span>
+      </nav>
       <header className="dc-live-heading">
         <div>
           {!directEntry && (
@@ -618,8 +628,8 @@ export default function LiveCoach({
           />
           {!config.available && (
             <p className="dd-notice">
-              AI 연결을 확인하고 있어요. 기다리는 동안 아래에서 이 상황을 샘플로
-              체험할 수 있어요.
+              AI 연결을 확인하고 있어요. 기다리는 동안 아래에서 준비된 상황을
+              샘플로 체험할 수 있어요.
             </p>
           )}
           <button
@@ -627,7 +637,6 @@ export default function LiveCoach({
             aria-describedby="live-start-reason"
             disabled={!allowed || !config.available}
             onClick={() => {
-              setSampleMode(false);
               setPrepared(true);
             }}
           >
@@ -643,16 +652,9 @@ export default function LiveCoach({
           )}
           <button
             className="dd-secondary dd-full"
-            onClick={() => {
-              setSampleMode(true);
-              setInputMode("text");
-              setAutomatic(false);
-              setError("");
-              setNotice("");
-              setPrepared(true);
-            }}
+            onClick={() => setSamplePreviewOpen(true)}
           >
-            이 상황을 샘플로 체험하기
+            준비된 샘플 체험하기
           </button>
           <p className="dc-small-caption">
             AI 전송이나 동의 없이 사전 작성 예시로 체험해요.
@@ -681,68 +683,59 @@ export default function LiveCoach({
           )}
           {!directEntry && (
             <SampleSwitch
-              checked={sampleMode}
+              label="AI 없이 샘플 체험하기"
+              description="준비된 가상 상황과 답변을 별도로 봐요. 입력한 대화는 그대로예요."
+              checked={samplePreviewOpen}
               disabled={phase !== "idle" || liveActive}
-              onChange={(v) => {
-                setSampleMode(v);
-                setResult(null);
-                setError("");
-                setNotice("");
-                if (v) {
-                  setInputMode("text");
-                  setAutomatic(false);
-                }
-              }}
+              onChange={setSamplePreviewOpen}
             />
           )}
-          {supportsLive &&
-            !sampleMode &&
-            (!directEntry || voiceStyle === "continuous") && (
-              <div
-                className="dc-mode-switch live-style-switch"
-                aria-label="음성 처리 방식"
+          {supportsLive && (!directEntry || voiceStyle === "continuous") && (
+            <div
+              className="dc-mode-switch live-style-switch"
+              aria-label="음성 처리 방식"
+            >
+              <button
+                aria-pressed={voiceStyle === "continuous"}
+                className={voiceStyle === "continuous" ? "active" : ""}
+                disabled={
+                  phase !== "idle" ||
+                  liveActive ||
+                  (directEntry && (!allowed || !config.voiceAvailable))
+                }
+                onClick={() => setVoiceStyle("continuous")}
               >
-                <button
-                  aria-pressed={voiceStyle === "continuous"}
-                  className={voiceStyle === "continuous" ? "active" : ""}
-                  disabled={
-                    phase !== "idle" ||
-                    liveActive ||
-                    (directEntry && (!allowed || !config.voiceAvailable))
-                  }
-                  onClick={() => setVoiceStyle("continuous")}
-                >
-                  실시간 자막 · 코칭
-                </button>
-                <button
-                  aria-pressed={voiceStyle === "short"}
-                  className={voiceStyle === "short" ? "active" : ""}
-                  disabled={phase !== "idle" || liveActive}
-                  onClick={() => setVoiceStyle("short")}
-                >
-                  짧게 녹음 · 직접 입력
-                </button>
-              </div>
-            )}
-          {!supportsLive &&
-            !sampleMode &&
-            (!directEntry || inputMode === "voice") && (
-              <p className="live-stream-note">
-                이 브라우저는 실시간 자막을 지원하지 않아요. 짧게 녹음하거나
-                직접 입력해 주세요.
-              </p>
-            )}
-          {supportsLive && voiceStyle === "continuous" && !sampleMode ? (
+                실시간 자막 · 코칭
+              </button>
+              <button
+                aria-pressed={voiceStyle === "short"}
+                className={voiceStyle === "short" ? "active" : ""}
+                disabled={phase !== "idle" || liveActive}
+                onClick={() => setVoiceStyle("short")}
+              >
+                짧게 녹음 · 직접 입력
+              </button>
+            </div>
+          )}
+          {!supportsLive && (!directEntry || inputMode === "voice") && (
+            <p className="live-stream-note">
+              이 브라우저는 실시간 자막을 지원하지 않아요. 짧게 녹음하거나 직접
+              입력해 주세요.
+            </p>
+          )}
+          {supportsLive && voiceStyle === "continuous" ? (
             <>
-              {directEntry && (
-                <AIConsent
-                  config={config}
-                  checked={consent}
-                  onChange={setConsent}
-                  disabled={liveActive}
-                />
-              )}
               <LiveSpeechPanel
+                consentControl={
+                  directEntry ? (
+                    <AIConsent
+                      config={config}
+                      checked={consent}
+                      onChange={setConsent}
+                      disabled={liveActive}
+                    />
+                  ) : undefined
+                }
                 profile={profile}
                 scenario={scenario}
                 tone={tone}
@@ -759,10 +752,7 @@ export default function LiveCoach({
                   <button
                     className={inputMode === "voice" ? "active" : ""}
                     aria-pressed={inputMode === "voice"}
-                    disabled={phase !== "idle" || sampleMode}
-                    aria-describedby={
-                      sampleMode ? "sample-voice-reason" : undefined
-                    }
+                    disabled={phase !== "idle"}
                     onClick={() => setInputMode("voice")}
                   >
                     <Icon name="mic" size={18} />
@@ -777,7 +767,7 @@ export default function LiveCoach({
                     <Icon name="keyboard" size={18} />
                     직접 입력
                   </button>
-                  {directEntry && supportsLive && !sampleMode && (
+                  {directEntry && supportsLive && (
                     <button
                       disabled={
                         phase !== "idle" || !allowed || !config.voiceAvailable
@@ -788,12 +778,6 @@ export default function LiveCoach({
                     </button>
                   )}
                 </div>
-                {sampleMode && (
-                  <p className="action-reason" id="sample-voice-reason">
-                    샘플에서는 직접 입력으로 체험해요. 음성은 AI 모드에서 사용할
-                    수 있어요.
-                  </p>
-                )}
                 {inputMode === "voice" && (
                   <div
                     className={
@@ -882,11 +866,9 @@ export default function LiveCoach({
                         : phase === "coaching"
                           ? "내 목표와 지킬 선을 보고 답변을 준비하고 있어요."
                           : notice ||
-                            (sampleMode
-                              ? "상대 말을 입력하면 이 상황의 사전 작성 예시를 보여드려요."
-                              : inputMode === "text"
-                                ? "상대가 방금 한 말을 아래에 적어주세요."
-                                : "마이크를 누르고 한 문장을 들려주세요.")
+                            (inputMode === "text"
+                              ? "상대가 방금 한 말을 아래에 적어주세요."
+                              : "마이크를 누르고 한 문장을 들려주세요.")
                     }
                   />
                 )}
@@ -896,7 +878,6 @@ export default function LiveCoach({
                     {error && phase === "idle" && (
                       <button
                         className="dd-secondary"
-                        disabled={sampleMode}
                         onClick={() => void transcribeBlob(clip.blob)}
                       >
                         음성 인식 다시 시도
@@ -1080,14 +1061,12 @@ export default function LiveCoach({
                             </button>
                           </fieldset>
                         </details>
-                        {!sampleMode && (
-                          <AIConsent
-                            config={config}
-                            checked={consent}
-                            onChange={setConsent}
-                            disabled={phase !== "idle"}
-                          />
-                        )}
+                        <AIConsent
+                          config={config}
+                          checked={consent}
+                          onChange={setConsent}
+                          disabled={phase !== "idle"}
+                        />
                       </>
                     )}
                     <button
@@ -1095,7 +1074,8 @@ export default function LiveCoach({
                         (result ? "dd-secondary" : "dd-primary") + " dd-full"
                       }
                       disabled={
-                        (!sampleMode && (!allowed || !config.available)) ||
+                        !allowed ||
+                        !config.available ||
                         phase !== "idle" ||
                         input.trim().length < 2
                       }
@@ -1103,9 +1083,7 @@ export default function LiveCoach({
                     >
                       {phase === "coaching"
                         ? "한마디를 준비하는 중"
-                        : directEntry
-                          ? "다음 한마디 받기"
-                          : "답변 힌트 받기"}
+                        : "답변 코칭받기"}
                       <Icon name="arrow" size={18} />
                     </button>
                     {phase === "idle" && input.trim().length < 2 && (
@@ -1113,46 +1091,40 @@ export default function LiveCoach({
                         상대가 한 말을 두 글자 이상 입력해 주세요.
                       </p>
                     )}
-                    {directEntry &&
-                      !sampleMode &&
-                      (!allowed || !config.available) && (
-                        <p className="action-reason" role="status">
-                          {!config.available
-                            ? configState === "loading"
-                              ? "AI 연결 확인 중이에요. 먼저 상대 말을 입력해도 괜찮아요."
-                              : "지금 AI 연결을 사용할 수 없어요. 입력은 유지되며, 아래 샘플로 화면을 체험할 수 있어요."
-                            : "AI 전송에 동의하면 다음 한마디를 받을 수 있어요."}
-                          {!config.available && configState !== "loading" && (
-                            <button
-                              type="button"
-                              className="dd-link"
-                              disabled={phase !== "idle"}
-                              onClick={() => setConfigAttempt((n) => n + 1)}
-                            >
-                              연결 다시 확인
-                            </button>
-                          )}
-                        </p>
-                      )}
+                    {directEntry && (!allowed || !config.available) && (
+                      <p className="action-reason" role="status">
+                        {!config.available
+                          ? configState === "loading"
+                            ? "AI 연결 확인 중이에요. 먼저 상대 말을 입력해도 괜찮아요."
+                            : "지금 AI 연결을 사용할 수 없어요. 입력은 유지되며, 아래 샘플로 화면을 체험할 수 있어요."
+                          : "AI 전송에 동의하면 다음 한마디를 받을 수 있어요."}
+                        {!config.available && configState !== "loading" && (
+                          <button
+                            type="button"
+                            className="dd-link"
+                            disabled={phase !== "idle"}
+                            onClick={() => setConfigAttempt((n) => n + 1)}
+                          >
+                            연결 다시 확인
+                          </button>
+                        )}
+                      </p>
+                    )}
                   </div>
                 )}
                 {directEntry && (
                   <div className="quick-sample-option">
                     <SampleSwitch
                       label="AI 없이 샘플 체험하기"
-                      checked={sampleMode}
+                      description="준비된 가상 상황과 답변을 별도로 봐요. 입력한 대화는 그대로예요."
+                      checked={samplePreviewOpen}
                       disabled={phase !== "idle"}
-                      onChange={(v) => {
-                        setSampleMode(v);
-                        setResult(null);
-                        setError("");
-                        setNotice("");
-                        if (v) {
-                          setInputMode("text");
-                          setAutomatic(false);
-                        }
-                      }}
+                      onChange={setSamplePreviewOpen}
                     />
+                    <p className="dd-small">
+                      준비된 상황을 골라 예시를 봐요. 입력한 대화는 분석하지
+                      않아요.
+                    </p>
                   </div>
                 )}
                 {inputMode === "voice" && (
