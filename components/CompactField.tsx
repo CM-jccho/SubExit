@@ -46,6 +46,17 @@ export default function CompactField({
     [notice, setNotice] = useState("");
   const listening = phase !== "idle";
   const textInput = useRef<HTMLTextAreaElement>(null);
+  const summary = useRef<HTMLButtonElement>(null);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (open) {
+      if (
+        !window.matchMedia?.("(max-width: 600px), (pointer: coarse)")?.matches
+      )
+        textInput.current?.focus({ preventScroll: true });
+    } else if (wasOpen.current) summary.current?.focus({ preventScroll: true });
+    wasOpen.current = open;
+  }, [open]);
   const consentPanel = useRef<HTMLDivElement>(null);
   const speech = useRef<SpeechStream>();
   const original = useRef(value),
@@ -127,11 +138,29 @@ export default function CompactField({
     }
   }
   return (
-    <section className="compact-field">
+    <section
+      className="compact-field"
+      onKeyDown={(event) => {
+        if (
+          event.key === "Escape" &&
+          open &&
+          !disabled &&
+          !event.nativeEvent.isComposing
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+          stop();
+          change.current(original.current);
+          setOpen(false);
+        }
+      }}
+    >
       <span className="compact-field-title">{label}</span>
       {!open ? (
         <button
           className="compact-field-summary"
+          ref={summary}
+          aria-expanded={false}
           type="button"
           disabled={disabled}
           onClick={() => {

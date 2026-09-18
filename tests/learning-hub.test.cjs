@@ -3895,6 +3895,7 @@ test("compact fields start small, allow editable examples, preserve completed va
   try {
     assert(!document.querySelector("textarea"));
     await click(button("원하는 결과 입력"));
+    assert.equal(document.activeElement, document.querySelector("textarea"));
     await click(button("정중하게 거절하고 싶어요."));
     assert.equal(
       document.querySelector("textarea").value,
@@ -3907,6 +3908,7 @@ test("compact fields start small, allow editable examples, preserve completed va
     await click(button("입력 완료"));
     assert(!document.querySelector("textarea"));
     assert(button("원하는 결과 수정").textContent.includes("가능한 시간을"));
+    assert.equal(document.activeElement, button("원하는 결과 수정"));
     await click(button("원하는 결과 수정"));
     await change(document.querySelector("textarea"), "취소할 수정");
     await click(button("취소"));
@@ -3915,6 +3917,11 @@ test("compact fields start small, allow editable examples, preserve completed va
       document.querySelector("textarea").value,
       "가능한 시간을 정하고 싶어요.",
     );
+    await change(document.querySelector("textarea"), "Escape로 취소할 수정");
+    await act(async () => Simulate.keyDown(document.querySelector("textarea"), { key: "Escape", nativeEvent: { isComposing: false } }));
+    assert.equal(document.activeElement, button("원하는 결과 수정"));
+    assert(button("원하는 결과 수정").textContent.includes("가능한 시간을"));
+    await click(button("원하는 결과 수정"));
     await click(button("말해서 입력"));
     assert(document.body.textContent.includes("키보드의 마이크"));
   } finally {
@@ -4211,4 +4218,49 @@ test("term save blocks double clicks and keeps the draft open on storage failure
     assert.equal(closed, 1);
     assert.equal((await store.listTerms()).length, 1);
   } finally { store.putTerm = original; await ui.cleanup(); }
+});
+
+
+test("unfinished context protects tab and browser navigation, shows missing fields, and saves without a leave prompt", async () => {
+  const C = require("../components/ConversationWorkspace.tsx").default;
+  const ui = await mount(C, {}, () => window.localStorage.setItem("ddeundeun-conversation-focus-v1", JSON.stringify({version: 1, focus: "all"})));
+  let asks = 0;
+  try {
+    await settle();
+    await click(button("미리 연습하기"));
+    await click(button("내 상황 만들기"));
+    await click(button("직접 작성"));
+    assert.match(document.getElementById("profile-save-hint").textContent, /카드 이름.*대화 상대.*어떤 상황.*원하는 결과/);
+    await click(button("카드 이름 · 필수 입력"));
+    await change(document.querySelector("textarea"), "친구 약속 점검");
+    await click(button("입력 완료"));
+    window.confirm = () => { asks++; return false; };
+    await click(button("홈"));
+    assert.equal(asks, 1);
+    assert.equal(document.querySelector(".dc-root").dataset.view, "setup");
+    assert(button("카드 이름 · 필수 수정").textContent.includes("친구 약속 점검"));
+    const leaving = new window.Event("beforeunload", {cancelable: true});
+    window.dispatchEvent(leaving);
+    assert(leaving.defaultPrevented);
+    for (const [label, value] of [["대화 상대", "친구"], ["어떤 상황인가요?", "약속 시간을 변경하려고 해요."], ["내가 원하는 결과", "서로 가능한 새 시간을 정하기"]]) {
+      await click(button(label + " · 필수 입력"));
+      await change(document.querySelector("textarea"), value);
+      await click(button("입력 완료"));
+    }
+    assert.equal(document.getElementById("profile-save-hint"), null);
+    await click(button("내 대화로 저장"));
+    assert.equal(asks, 1);
+    assert.equal(document.querySelector(".dc-root").dataset.view, "detail");
+    const saved = new window.Event("beforeunload", {cancelable: true});
+    window.dispatchEvent(saved);
+    assert.equal(saved.defaultPrevented, false);
+    await click(button("다른 상황 선택"));
+    await click(button("내 상황 만들기"));
+    await change(document.querySelector("#setup-message"), "전송하지 않은 이야기");
+    window.confirm = () => { asks++; return true; };
+    await click(button("홈"));
+    assert.equal(asks, 2);
+    assert.equal(document.querySelector(".dc-root").dataset.view, "home");
+    await settle();
+  } finally { await ui.cleanup(); }
 });

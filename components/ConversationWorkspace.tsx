@@ -5,7 +5,10 @@ import { useAIConsent, ConsentSettings } from "./ConsentSession";
 import HomeActions from "./HomeActions";
 import { supportTools, supportLabel } from "@/lib/support-tools";
 import MessengerPractice from "./MessengerPractice";
-import { canLeaveWorkspace } from "@/lib/navigation-guard";
+import {
+  canLeaveWorkspace,
+  WORKSPACE_LEAVE_EVENT,
+} from "@/lib/navigation-guard";
 import ConversationFocusPicker from "./ConversationFocusPicker";
 import FocusScene from "./FocusScene";
 import {
@@ -293,6 +296,40 @@ export default function ConversationWorkspace() {
   const controller = useRef<AbortController | null>(null),
     generation = useRef(0);
   const lastWorkspaceUrl = useRef("");
+  const setupBaseline = useRef({
+    profile: emptyProfile(),
+    companion: "auto" as CompanionChoice,
+  });
+  const setupDirty =
+    view === "setup" &&
+    (!!input.trim() ||
+      busy ||
+      messages.some((message) => message.role === "user") ||
+      JSON.stringify(profile) !==
+        JSON.stringify(setupBaseline.current.profile) ||
+      companionChoice !== setupBaseline.current.companion);
+  useEffect(() => {
+    if (!setupDirty) return;
+    const leaving = (event: Event) => {
+      if (
+        !event.defaultPrevented &&
+        !window.confirm(
+          "아직 저장하지 않은 대화 내용이 있어요. 나가면 입력한 내용이 사라질 수 있어요. 이동할까요?",
+        )
+      )
+        event.preventDefault();
+    };
+    const unloading = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener(WORKSPACE_LEAVE_EVENT, leaving);
+    window.addEventListener("beforeunload", unloading);
+    return () => {
+      window.removeEventListener(WORKSPACE_LEAVE_EVENT, leaving);
+      window.removeEventListener("beforeunload", unloading);
+    };
+  }, [setupDirty]);
   useEffect(() => {
     let mounted = true;
     try {
@@ -409,7 +446,12 @@ export default function ConversationWorkspace() {
     setChoices([]);
     setEditingId(existing?.id);
     setCompanionChoice(existing?.companion || "auto");
-    setProfile(existing || emptyProfile());
+    const initialProfile = existing || emptyProfile();
+    setupBaseline.current = {
+      profile: initialProfile,
+      companion: existing?.companion || "auto",
+    };
+    setProfile(initialProfile);
     setMessages(
       existing ? [] : [{ role: "assistant", text: guidedReply([]).question }],
     );
@@ -653,6 +695,9 @@ export default function ConversationWorkspace() {
       );
     }
   }
+  const missingProfileFields = (
+    ["title", "partner", "situation", "goal"] as const
+  ).filter((key) => !profile[key].trim());
   const canSave = (() => {
     try {
       parseProfile(profile);
@@ -1583,8 +1628,26 @@ export default function ConversationWorkspace() {
                             <QuotaHelp error={error} />
                           </>
                         )}
+                        {missingProfileFields.length > 0 && (
+                          <p
+                            id="profile-save-hint"
+                            className="dc-small-caption"
+                            role="status"
+                          >
+                            저장하려면{" "}
+                            {missingProfileFields
+                              .map((key) => labels[key])
+                              .join(" · ")}{" "}
+                            항목을 입력해 주세요.
+                          </p>
+                        )}
                         <button
                           className="dd-primary dd-full"
+                          aria-describedby={
+                            missingProfileFields.length
+                              ? "profile-save-hint"
+                              : undefined
+                          }
                           disabled={!canSave || busy}
                           onClick={save}
                         >
