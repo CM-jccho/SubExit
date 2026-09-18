@@ -1,0 +1,105 @@
+{
+  "appCommit": "155542bd32f99f0b9003ae31748009746e9e5cff",
+  "automatedTests": {
+    "pass": 198,
+    "fail": 0,
+    "kind": "includes jsdom and mocked API/media; not real-device E2E"
+  },
+  "build": "passed",
+  "renderDeployments": [
+    {
+      "service": "speakcoaching",
+      "deploy": "dep-damajg0u01pc73ev3e8g",
+      "status": "live"
+    },
+    {
+      "service": "ddeundeun-call-render",
+      "deploy": "dep-damajjqjnfac73eds7eg",
+      "status": "live"
+    }
+  ],
+  "httpChecks": [
+    {
+      "name": "health",
+      "result": "pass",
+      "status": 200,
+      "elapsedMs": 16313
+    },
+    {
+      "name": "missing-consent",
+      "result": "pass",
+      "status": 400,
+      "elapsedMs": 805
+    },
+    {
+      "name": "empty-input",
+      "result": "pass",
+      "status": 400,
+      "elapsedMs": 324
+    },
+    {
+      "name": "long-input",
+      "result": "pass",
+      "status": 400,
+      "elapsedMs": 308
+    },
+    {
+      "name": "invalid-turn-order",
+      "result": "pass",
+      "status": 400,
+      "elapsedMs": 324
+    },
+    {
+      "name": "unconfirmed-speaker",
+      "result": "pass",
+      "status": 400,
+      "elapsedMs": 320
+    }
+  ],
+  "aiCheck": {
+    "origin": "https://speakcoaching.onrender.com",
+    "commit": "155542bd32f99f0b9003ae31748009746e9e5cff",
+    "checks": [
+      {
+        "name": "friend-hint",
+        "status": 429,
+        "elapsedMs": 12362,
+        "data": {
+          "error": "Gemini의 일일 사용 한도에 도달했어요. Google 프로젝트의 한도를 확인해 주세요. 일일 한도는 태평양 시간 자정에 초기화돼요. 지금은 저장한 기록과 샘플을 이용할 수 있어요. 한국 시간 9월 18일 오후 4:00 이후 다시 시도해 주세요.",
+          "code": "provider_rate_limit",
+          "quotaKind": "daily",
+          "retryAt": "2026-09-18T07:00:00.000Z",
+          "retryAfter": 14107
+        }
+      },
+      {
+        "remaining": "not-run",
+        "reason": "provider or app rate limit; no repeated quota calls"
+      }
+    ]
+  },
+  "publicAssetCheck": {
+    "title": [
+      "스픽코칭 · 당신의 말 곁에"
+    ],
+    "asset": "/_next/static/chunks/app/page-e585842cec392370.js",
+    "quick_entry_copy": true,
+    "context_copy": false
+  },
+  "vercel": {
+    "origin": "https://speakcoaching-one.vercel.app",
+    "httpStatus": 200,
+    "title": "든든콜 · 대화 연습과 복기",
+    "configuration": {
+      "available": false,
+      "voiceAvailable": false,
+      "configurationStatus": "missing_key",
+      "provider": "Google Gemini",
+      "model": "gemini-2.5-flash",
+      "sampleOnly": true
+    },
+    "mainCommit": "16c05385193052b809eda60b069f5730f1f240c1",
+    "mainUpdate": "rejected by automatic approval review; not changed"
+  },
+  "browser": "CDP refresh tabs timeout 20000ms; no rendered UI verification this release"
+}
