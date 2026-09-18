@@ -6,6 +6,7 @@ import { companionColors, type CompanionCharacter } from "@/lib/companions";
 export type IconName =
   | "play"
   | "book"
+  | "more"
   | "upload"
   | "volume"
   | "home"
@@ -28,6 +29,7 @@ export type IconName =
   | "pause";
 const paths: Record<IconName, string> = {
   play: "m8 4 12 8-12 8z",
+  more: "M5 12h.01 M12 12h.01 M19 12h.01",
   book: "M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3z M12 6v16",
   upload: "M12 17V3 m-5 5 5-5 5 5 M4 17v4h16v-4",
   volume: "m3 9 5 0 5-5v16l-5-5H3z M17 8a6 6 0 0 1 0 8 M20 4a12 12 0 0 1 0 16",

@@ -11,7 +11,7 @@
   border-radius: 5px;
   background: #edf2e8;
   color: #345646;
-  font-size: 11px;
+  font-size: var(--t-cap);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -114,135 +114,6 @@
 .dc-footnote {
   flex-wrap: wrap;
 }
-.dc-spotlight {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  overflow: hidden;
-  color: #183a2c;
-}
-.dc-spotlight::backdrop {
-  background: transparent;
-}
-.dc-spotlight-hole {
-  position: absolute;
-  border: 2px solid #fff2b3;
-  border-radius: 15px;
-  box-shadow:
-    0 0 0 9999px rgb(13 25 21 / 78%),
-    0 0 0 5px rgb(255 242 179 / 22%);
-  pointer-events: none;
-}
-.dc-spotlight-hit {
-  position: absolute;
-  background: transparent;
-  border: 0;
-  border-radius: 15px;
-  cursor: pointer;
-}
-.dc-spotlight-hit:focus-visible {
-  outline: 3px solid #f6d878;
-  outline-offset: -5px;
-}
-.dc-spotlight-panel {
-  position: absolute;
-  width: min(360px, calc(100vw - 24px));
-  padding: 18px 20px 14px;
-  background: #fffbea;
-  border: 1px solid #e1d6b6;
-  border-radius: 5px 20px 18px 20px;
-  box-shadow: 0 8px 32px rgb(0 0 0 / 22%);
-}
-.dc-spotlight-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 11px;
-  font-weight: 700;
-  color: #566556;
-  letter-spacing: 0.06em;
-}
-.dc-spotlight-top button {
-  background: transparent;
-  border: 0;
-  color: inherit;
-  padding: 6px;
-  cursor: pointer;
-}
-.dc-spotlight-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 5px 0;
-}
-.dc-spotlight-title .dc-companion {
-  width: 48px;
-  flex-shrink: 0;
-}
-.dc-spotlight-title h2 {
-  font-family: "Ddeundeun Guide Pen", "Nanum Pen Script", cursive;
-  font-size: 23px;
-  font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  margin: 0;
-  transform: rotate(-2deg);
-}
-.dc-spotlight-panel > p {
-  margin: 10px 0 16px;
-  line-height: 1.65;
-  font-size: 14px;
-}
-.dc-spotlight-controls {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 18px;
-}
-.dc-spotlight-controls .dd-primary {
-  padding: 11px 16px;
-  font-size: 14px;
-  min-height: 44px;
-}
-.dc-spotlight-skip {
-  display: block;
-  margin: 14px auto 0;
-  background: none;
-  border: 0;
-  color: #5d6558;
-  font-size: 11px;
-  padding: 6px 0;
-  cursor: pointer;
-}
-.dc-sketch-arrow {
-  width: 70px;
-  height: 46px;
-  position: absolute;
-  left: 25px;
-  pointer-events: none;
-  overflow: visible;
-}
-.dc-sketch-arrow path {
-  fill: none;
-  stroke: #fff0aa;
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.dc-sketch-arrow.points-up {
-  top: -46px;
-}
-.dc-sketch-arrow.points-down {
-  bottom: -46px;
-  transform: rotate(180deg);
-}
 @media (max-width: 600px) {
   .dc-starter-section {
     padding: 16px;
@@ -262,20 +133,58 @@
     align-items: flex-start;
     flex-direction: column;
   }
-  .dc-spotlight-panel {
-    padding: 14px 17px 10px;
-  }
-  .dc-spotlight-title h2 {
-    font-size: 21px;
+}
+
+/* Help is one compact surface, anchored within the visible viewport. */
+.input-dialog.screen-help {
+  width: min(420px, calc(100% - 24px));
+  margin-top: max(16px, calc(var(--input-height, 100dvh) * 0.12));
+  max-height: calc(var(--input-height, 100dvh) * 0.88 - 32px);
+  padding: 20px;
+  border: 0;
+  border-radius: 22px;
+}
+.screen-help .input-dialog-head h2 {
+  font-size: 13px;
+  color: #697663;
+  font-weight: 600;
+}
+.screen-help .input-dialog-body h3 {
+  font-size: 22px;
+  line-height: 1.4;
+  margin: 8px 0 12px;
+  letter-spacing: -0.5px;
+}
+.screen-help .input-dialog-body > p {
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 0 0 22px;
+}
+.screen-help .dd-primary {
+  min-height: 48px;
+}
+@media (max-width: 600px) {
+  .input-dialog.screen-help {
+    margin-top: max(12px, calc(var(--input-height, 100dvh) * 0.16));
+    max-height: calc(var(--input-height, 100dvh) * 0.84 - 24px);
   }
 }
-@media (max-height: 480px) {
-  .dc-spotlight-title .dc-companion,
-  .dc-sketch-arrow {
-    display: none;
-  }
-  .dc-spotlight-panel {
-    max-height: calc(100dvh - 24px);
-    overflow-y: auto;
-  }
+
+.help-context {
+  padding: 12px 14px;
+  margin: 12px 0;
+  border-radius: 12px;
+  background: #edf3e6;
+}
+.help-context small,
+.help-context strong {
+  display: block;
+}
+.help-context small {
+  margin-bottom: 5px;
+  color: #61735b;
+}
+.help-context strong {
+  font-size: 15px;
+  line-height: 1.6;
 }

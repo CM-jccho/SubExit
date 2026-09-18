@@ -114,7 +114,7 @@
   padding-bottom: 16px;
 }
 .dd-beta {
-  font-size: 10px;
+  font-size: var(--t-cap);
   color: var(--muted);
   letter-spacing: 0.03em;
   align-self: flex-start;
@@ -155,7 +155,7 @@
   margin: 16px 0 22px;
 }
 .dd-sidebar-bottom a {
-  font-size: 11px;
+  font-size: var(--t-cap);
   text-decoration: none;
 }
 .dd-main {
@@ -198,7 +198,7 @@
   font-size: 14px;
 }
 .dd-eyebrow {
-  font-size: 10px !important;
+  font-size: var(--t-cap) !important;
   font-weight: 750;
   color: #678260 !important;
   letter-spacing: 0.12em;
@@ -268,7 +268,7 @@
   margin-top: 17px;
 }
 .dd-source {
-  font-size: 10px;
+  font-size: var(--t-cap);
   display: inline-block;
   border: 1px solid #67806b;
   border-radius: 5px;
@@ -308,7 +308,7 @@
 }
 .dd-art-answer span {
   display: block;
-  font-size: 10px;
+  font-size: var(--t-cap);
   font-weight: 500;
   margin-top: 12px;
   color: #6e7c64;
@@ -412,16 +412,16 @@
   font-size: 14px;
 }
 .dd-scenario p {
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: var(--muted);
   margin: 3px 0 7px;
 }
 .dd-scenario small {
-  font-size: 10px;
+  font-size: var(--t-cap);
   color: #768569;
 }
 .dd-small {
-  font-size: 11px !important;
+  font-size: var(--t-cap) !important;
   color: var(--muted);
   line-height: 1.8;
   margin-top: 12px !important;
@@ -431,7 +431,7 @@
   margin-top: 27px !important;
 }
 .dd-footer {
-  font-size: 10px;
+  font-size: var(--t-cap);
   color: #8b9184;
   display: flex;
   justify-content: space-between;
@@ -485,13 +485,13 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: #56634d;
 }
 .dd-demo-bar button {
   background: transparent;
   color: var(--ink);
-  font-size: 11px;
+  font-size: var(--t-cap);
   white-space: nowrap;
 }
 .dd-person {
@@ -511,7 +511,7 @@
   display: block;
 }
 .dd-person small {
-  font-size: 10px;
+  font-size: var(--t-cap);
   color: var(--muted);
 }
 .dd-lesson > blockquote {
@@ -526,7 +526,7 @@
   padding: 18px 0 22px;
 }
 .dd-round-goal span {
-  font-size: 10px;
+  font-size: var(--t-cap);
   color: #67855b;
   font-weight: 750;
 }
@@ -630,7 +630,7 @@
 }
 .dd-cue details q {
   display: block;
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: #aabca3;
 }
 .dd-cue .dd-small {
@@ -654,7 +654,7 @@
   border-radius: 20px;
   background: #3e5142;
   color: #bdcbb4;
-  font-size: 10px;
+  font-size: var(--t-cap);
   padding: 7px 10px;
 }
 .dd-tones button[aria-pressed="true"] {
@@ -691,7 +691,7 @@
   margin-top: 26px;
 }
 .dd-lesson-footer > span {
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: var(--muted);
 }
 .dd-actions {
@@ -797,7 +797,7 @@
   font-size: 14px;
 }
 .dd-setup summary span {
-  font-size: 10px;
+  font-size: var(--t-cap);
   font-weight: 450;
   color: var(--muted);
   margin-left: 10px;
@@ -810,7 +810,7 @@
   margin-bottom: 24px;
 }
 .dd-mic > span {
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: #6d7f64;
   display: block;
 }
@@ -846,7 +846,7 @@
   padding-top: 20px;
 }
 .dd-fallback > p {
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: #bdcbaa;
   margin-bottom: 8px;
 }
@@ -856,7 +856,7 @@
   display: block;
 }
 .dd-fallback small {
-  font-size: 9px;
+  font-size: var(--t-cap);
   color: #9faf94;
   display: block;
   margin-top: 8px;
@@ -963,7 +963,7 @@
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    font-size: 10px;
+    font-size: var(--t-cap);
     color: #476141;
     min-width: 65px;
   }
@@ -1009,7 +1009,7 @@
     max-width: 290px;
   }
   .dd-eyebrow {
-    font-size: 9px !important;
+    font-size: var(--t-cap) !important;
   }
   .dd-live-banner {
     display: block;
@@ -1033,7 +1033,7 @@
     display: none;
   }
   .dd-live-banner .dd-source {
-    font-size: 9px;
+    font-size: var(--t-cap);
   }
   .dd-daily {
     padding: 20px;
@@ -1070,7 +1070,7 @@
     font-size: 12px;
   }
   .dd-scenario small {
-    font-size: 10px;
+    font-size: var(--t-cap);
   }
   .dd-section-title h2 {
     font-size: 18px;
@@ -1085,7 +1085,7 @@
     font-size: 23px;
   }
   .dd-stats span {
-    font-size: 10px;
+    font-size: var(--t-cap);
   }
   .dd-footer {
     display: block;
@@ -1105,7 +1105,7 @@
     font-size: 22px;
   }
   .dd-demo-bar {
-    font-size: 10px;
+    font-size: var(--t-cap);
     align-items: flex-start;
   }
   .dd-card,
@@ -1113,7 +1113,7 @@
     padding: 23px;
   }
   .dd-notice {
-    font-size: 11px;
+    font-size: var(--t-cap);
   }
   .dd-cue blockquote {
     font-size: 24px;

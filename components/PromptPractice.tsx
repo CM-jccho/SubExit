@@ -1,4 +1,5 @@
 "use client";
+import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
 import {
   promptTasks,
@@ -38,7 +39,7 @@ export default function PromptPractice({
     [prompt, setPrompt] = useState(
       initialSession?.promptPractice?.attempts.at(-1)?.prompt || "",
     ),
-    [consent, setConsent] = useState(false),
+    [consent, setConsent] = useAIConsent(),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),

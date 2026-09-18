@@ -74,13 +74,13 @@
 }
 .dc-room-settings small {
   display: block;
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: #5b6b56;
   line-height: 1.7;
 }
 .dc-room-weather-source {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: #62705d;
   line-height: 1.6;
 }
@@ -571,7 +571,7 @@
   .dc-room-environment .dc-room-sign {
     top: 140px;
     left: 22px;
-    font-size: 11px;
+    font-size: var(--t-cap);
   }
   .dc-room-clock {
     right: 25px;

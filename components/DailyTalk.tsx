@@ -1,4 +1,5 @@
 "use client";
+import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
 import {
   dailyCategories,
@@ -83,7 +84,7 @@ export default function DailyTalk({
     [busy, setBusy] = useState(false),
     [capture, setCapture] = useState(false),
     [useAI, setUseAI] = useState(false),
-    [consent, setConsent] = useState(false),
+    [consent, setConsent] = useAIConsent(),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [suggestion, setSuggestion] = useState<{ text: string; id: number }>(),
@@ -329,11 +330,11 @@ export default function DailyTalk({
   }
   return (
     <CompanionProvider value={friend}>
-      <section className="daily-talk" aria-label="오늘의 한마디">
+      <section className="daily-talk" aria-label={"가볍게 이야기하기"}>
         <div className="dc-page-top">
           <div>
             <p className="dc-overline">점수 없이, 편하게 나누는 1~3분</p>
-            <h1>오늘의 한마디</h1>
+            <h1>{"가볍게 이야기하기"}</h1>
           </div>
           <button
             className="dd-link"

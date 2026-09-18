@@ -6,7 +6,7 @@ import {
 } from "./quota";
 import { NextResponse } from "next/server";
 const buckets = new Map<string, { count: number; until: number }>();
-export function rateAllowed(request: Request, scope: string) {
+export function rateAllowed(request: Request, scope: string, limit = 12) {
   const now = Date.now(),
     key =
       scope +
@@ -15,7 +15,7 @@ export function rateAllowed(request: Request, scope: string) {
         "unknown");
   for (const [k, v] of buckets) if (v.until <= now) buckets.delete(k);
   const row = buckets.get(key) || { count: 0, until: now + 60000 };
-  if (row.count >= 12 || (!buckets.has(key) && buckets.size >= 2000))
+  if (row.count >= limit || (!buckets.has(key) && buckets.size >= 2000))
     return false;
   row.count++;
   buckets.set(key, row);

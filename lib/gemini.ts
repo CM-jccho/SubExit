@@ -26,6 +26,7 @@ export async function geminiGenerate(
   parts: unknown[],
   schema: unknown,
   signal?: AbortSignal,
+  options?: { maxOutputTokens?: number },
 ): Promise<unknown> {
   const config = geminiConfig();
   if (!config.available) throw new Error("not_configured");
@@ -52,7 +53,7 @@ export async function geminiGenerate(
           generationConfig: {
             responseMimeType: "application/json",
             responseJsonSchema: schema,
-            maxOutputTokens: 1800,
+            maxOutputTokens: options?.maxOutputTokens ?? 1800,
             ...(config.model === "gemini-2.5-flash"
               ? { thinkingConfig: { thinkingBudget: 0 } }
               : {}),

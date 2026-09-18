@@ -544,9 +544,6 @@
   outline-offset: 3px;
 }
 @media (max-width: 760px) {
-  .dc-nav {
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-  }
   .focus-tool-grid {
     grid-template-columns: 1fr;
   }
@@ -621,5 +618,93 @@
   .focus-home-controls > .dd-secondary {
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* Preparation has one persistent next action, outside the animated content. */
+.dc-root[data-view="detail"] {
+  padding-bottom: calc(var(--preparation-dock-height, 132px) + 20px);
+}
+.dc-preparation-heading {
+  max-width: 740px;
+  margin-inline: auto;
+}
+.dc-root[data-view="detail"] .dc-title {
+  margin-bottom: 18px;
+}
+.dc-root[data-view="detail"] .dc-title h1 {
+  font-size: clamp(20px, 3.5vw, 26px);
+  line-height: 1.4;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+.dc-root[data-view="detail"] .dc-panel-heading h2 {
+  font-size: 18px;
+}
+.dc-detail-compact .dc-boundary {
+  padding: 14px 17px;
+  margin-inline: -5px;
+  border-radius: 13px;
+  background: #fff2df;
+}
+.dc-detail-compact .dc-boundary dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #79521f;
+}
+.dc-detail-compact .dc-boundary dd {
+  color: #67491f;
+  font-weight: 650;
+}
+.dc-detail-compact .dc-detail-extra {
+  margin-bottom: 0;
+}
+.dc-preparation-actions {
+  position: fixed;
+  z-index: 16;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100%, 788px);
+  box-sizing: border-box;
+  padding: 12px max(20px, env(safe-area-inset-right))
+    calc(12px + env(safe-area-inset-bottom))
+    max(20px, env(safe-area-inset-left));
+  background: #fcfcf5;
+  border-top: 1px solid #dce3d5;
+  box-shadow: 0 -8px 24px #293c2d0a;
+}
+.dc-preparation-actions p {
+  margin: 0 0 8px;
+  color: #5b6956;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+.dc-preparation-actions button {
+  min-height: 48px;
+  white-space: normal;
+}
+.dc-root[data-view="detail"] main :is(button, summary, a) {
+  scroll-margin-bottom: calc(var(--preparation-dock-height, 132px) + 24px);
+}
+@media (max-width: 700px) {
+  .dc-root[data-view="detail"] .dc-nav {
+    display: none;
+  }
+  .dc-root[data-view="detail"] .dc-footer {
+    padding-bottom: 20px;
+  }
+  .dc-root[data-view="detail"] .purpose-breadcrumb {
+    margin-bottom: 12px;
+  }
+  .dc-root[data-view="detail"] .dc-overline {
+    margin-bottom: 6px;
+  }
+}
+@media (max-height: 480px) {
+  .dc-preparation-actions p {
+    display: none;
   }
 }

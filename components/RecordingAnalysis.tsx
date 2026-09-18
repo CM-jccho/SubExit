@@ -1,6 +1,12 @@
 "use client";
+import CompactField, { fieldExamples } from "./CompactField";
+import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
 import { emptyProfile } from "@/lib/conversation-cards";
+import {
+  RECORDING_MAX_TEXT,
+  RECORDING_MAX_SEGMENTS,
+} from "@/lib/recording-limits";
 import {
   aiFetch,
   AIServiceError,
@@ -71,7 +77,7 @@ export function RecordingExamples() {
           >
             <small>가상 녹음의 문자 · 사전 작성 코칭</small>
             <strong>{e.title}</strong>
-            <span>문자 확인 → 화자 확인 → 코칭 결과</span>
+            <span>문자 확인 → 말한 사람 확인 → 코칭 결과</span>
             <em>예시 열기 →</em>
           </button>
         ))}
@@ -148,6 +154,7 @@ export default function RecordingAnalysis({
   onBusy: (busy: boolean) => void;
 }) {
   const sources = session.turns.filter((t) => t.role === "recording");
+  const [segmentPage, setSegmentPage] = useState(0);
   const [sourceId, setSourceId] = useState(
     session.recordingAnalysis?.sourceTurnId || sources[0]?.id || "",
   );
@@ -164,7 +171,7 @@ export default function RecordingAnalysis({
           ? 2
           : 1,
     ),
-    [consent, setConsent] = useState(false),
+    [consent, setConsent] = useAIConsent(),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
@@ -190,10 +197,21 @@ export default function RecordingAnalysis({
     draft &&
     draft.inputKey !== recordingInputKey(source)
   );
-  const tooLong = !!(
-    source?.clip &&
-    (source.clip.duration > 120 || source.clip.blob.size > 2400000)
-  );
+  const tooLong = (draft?.transcript.length || 0) > RECORDING_MAX_TEXT;
+  const speakerCheck = useRef<HTMLDivElement>(null);
+  const hasMySpeech = !!draft?.segments.some((s) => s.role === "user");
+  const unknownSpeakers =
+    draft?.segments.filter((s) => s.role === "unknown").length || 0;
+  function markAllMine() {
+    if (!draft) return;
+    edit({
+      segments: draft.segments.map((s) => ({ ...s, role: "user" })),
+      context: {
+        ...draft.context,
+        partner: draft.context.partner || "혼자 말하기",
+      },
+    });
+  }
   function edit(p: Partial<RecordingAnalysisDraft>) {
     setDraft((d) =>
       d ? { ...d, ...p, confirmed: false, review: undefined } : d,
@@ -312,12 +330,19 @@ export default function RecordingAnalysis({
             ? "이 녹음으로 대화 돌아보기"
             : "이 문자로 대화 돌아보기"}
         </h2>
-        <span>2분 · 2.4MB 이내</span>
+        <span>녹음·문자 코칭</span>
       </div>
       <p>
-        문자 변환 후 발화마다 줄을 나누고, 내 말과 상대 말을 직접 확인해 주세요.
-        자동 화자 분리와 억양 분석은 제공하지 않아요.
+        녹음한 내용이나 대화 문자를 그대로 넣어 주세요. 다음 화면에서 누가
+        말했는지만 확인하면 돼요. 혼자 말한 녹음도 코칭할 수 있어요.
       </p>
+      {source?.clip?.transcription && !source.clip.transcription.complete && (
+        <p className="learn-callout">
+          전체 {source.clip.transcription.total}구간 중{" "}
+          {source.clip.transcription.parts.length}구간만 변환됐어요. 현재 문자만
+          코칭하거나, 위의 ‘문자 변환 이어서’로 나머지를 완료하세요.
+        </p>
+      )}
       {!source || !draft ? (
         <p className="learn-callout">
           먼저 아래에서 파일을 첨부하거나 녹음하고 ‘이 기록에 추가’를
@@ -353,7 +378,7 @@ export default function RecordingAnalysis({
             </label>
           )}
           <ol className="learn-steps">
-            {["문자 수정", "화자·목표 확인", "코칭"].map((s, i) => (
+            {["문자 수정", "말한 사람·목표 확인", "코칭"].map((s, i) => (
               <li
                 className={step === i + 1 ? "active" : ""}
                 key={s}
@@ -383,22 +408,23 @@ export default function RecordingAnalysis({
           )}
           {tooLong && (
             <p className="dd-error" role="alert">
-              2분·2.4MB 이내 음성으로 나누어 다시 첨부해 주세요.
+              코칭할 문자를 60,000자 이내로 나눠 주세요. 원본 음성 크기와 별도로
+              문자를 분석할 수 있어요.
             </p>
           )}
           {step === 1 && (
             <>
               <label className="vn-label">
-                코칭할 문자 · 말하는 사람이 바뀔 때 줄바꿈
+                코칭받을 내용
                 <textarea
                   rows={7}
-                  maxLength={4000}
+                  maxLength={RECORDING_MAX_TEXT}
                   value={draft.transcript}
                   disabled={locked}
                   onChange={(e) =>
                     edit({ transcript: e.target.value, segments: [] })
                   }
-                  placeholder="상대가 한 말\n내가 한 말\n상대가 이어서 한 말"
+                  placeholder="녹음한 내용이나 대화를 그대로 넣어 주세요."
                 />
               </label>
               <small>
@@ -413,54 +439,106 @@ export default function RecordingAnalysis({
                 }
                 onClick={() => {
                   const segments = splitRecordingTranscript(draft.transcript);
-                  if (segments.length < 2 || segments.length > 40) {
+                  if (
+                    segments.length < 1 ||
+                    segments.length > RECORDING_MAX_SEGMENTS
+                  ) {
                     setError(
-                      "화자별로 줄을 나눠 2~40개의 발화로 정리해 주세요.",
+                      "내용이 너무 많아요. 코칭받고 싶은 장면만 남겨 주세요.",
                     );
                     return;
                   }
+                  setSegmentPage(0);
                   void save(
                     { ...draft, segments, confirmed: false, review: undefined },
                     2,
                   );
                 }}
               >
-                수정 문자 저장 · 화자 확인 <Icon name="arrow" size={16} />
+                다음 · 누가 말했나요? <Icon name="arrow" size={16} />
               </button>
             </>
           )}
           {step === 2 && (
             <>
-              <div className="learn-segments">
-                {draft.segments.map((segment, i) => (
-                  <div key={segment.id}>
-                    <label className="vn-label">
-                      발화 {i + 1}의 화자
-                      <select
-                        disabled={locked}
-                        value={segment.role}
-                        onChange={(e) =>
-                          edit({
-                            segments: draft.segments.map((s) =>
-                              s.id === segment.id
-                                ? {
-                                    ...s,
-                                    role: e.target
-                                      .value as RecordingSegment["role"],
-                                  }
-                                : s,
-                            ),
-                          })
-                        }
-                      >
-                        <option value="unknown">선택해 주세요</option>
-                        <option value="user">내 말</option>
-                        <option value="assistant">상대 말</option>
-                      </select>
-                    </label>
-                    <p>{segment.text}</p>
-                  </div>
-                ))}
+              <div
+                ref={speakerCheck}
+                className="learn-speaker-check"
+                tabIndex={-1}
+              >
+                <p className="vn-caption">
+                  혼자 녹음했다면 ‘전부 내 말이에요’를 누르세요. 대화 녹음이라면
+                  각 내용에서 내 말과 상대 말을 선택해 주세요. 자동으로 말한
+                  사람을 추측하지 않아요.
+                </p>
+                <button
+                  className="dd-secondary"
+                  disabled={locked}
+                  onClick={markAllMine}
+                >
+                  전부 내 말이에요
+                </button>
+                {draft.segments.length > 20 && (
+                  <nav
+                    className="vn-toolbar"
+                    aria-label="말한 사람 확인 페이지"
+                  >
+                    <button
+                      className="dd-secondary"
+                      disabled={locked || segmentPage === 0}
+                      onClick={() => setSegmentPage((p) => p - 1)}
+                    >
+                      이전 20개
+                    </button>
+                    <span>
+                      {segmentPage + 1} /{" "}
+                      {Math.ceil(draft.segments.length / 20)}
+                    </span>
+                    <button
+                      className="dd-secondary"
+                      disabled={
+                        locked ||
+                        (segmentPage + 1) * 20 >= draft.segments.length
+                      }
+                      onClick={() => setSegmentPage((p) => p + 1)}
+                    >
+                      다음 20개
+                    </button>
+                  </nav>
+                )}
+                <div className="learn-segments">
+                  {draft.segments
+                    .slice(segmentPage * 20, (segmentPage + 1) * 20)
+                    .map((segment, i) => (
+                      <div key={segment.id}>
+                        <label className="vn-label">
+                          내용 {segmentPage * 20 + i + 1} · 누가 말했나요?
+                          <select
+                            disabled={locked}
+                            value={segment.role}
+                            onChange={(e) =>
+                              edit({
+                                segments: draft.segments.map((s) =>
+                                  s.id === segment.id
+                                    ? {
+                                        ...s,
+                                        role: e.target
+                                          .value as RecordingSegment["role"],
+                                      }
+                                    : s,
+                                ),
+                              })
+                            }
+                          >
+                            <option value="unknown">선택해 주세요</option>
+                            <option value="user">내 말</option>
+                            <option value="assistant">상대 말</option>
+                          </select>
+                        </label>
+                        <p>{segment.text}</p>
+                      </div>
+                    ))}
+                </div>
               </div>
               <div className="learn-grid">
                 {(
@@ -471,20 +549,17 @@ export default function RecordingAnalysis({
                     ["boundaries", "지킬 선 · 선택", 400],
                   ] as const
                 ).map(([key, label, max]) => (
-                  <label className="vn-label" key={key}>
-                    {label}
-                    <textarea
-                      rows={2}
-                      maxLength={max}
-                      disabled={locked}
-                      value={draft.context[key]}
-                      onChange={(e) =>
-                        edit({
-                          context: { ...draft.context, [key]: e.target.value },
-                        })
-                      }
-                    />
-                  </label>
+                  <CompactField
+                    key={key}
+                    label={label}
+                    maxLength={max}
+                    disabled={locked}
+                    value={draft.context[key]}
+                    examples={fieldExamples[key]}
+                    onChange={(value) =>
+                      edit({ context: { ...draft.context, [key]: value } })
+                    }
+                  />
                 ))}
               </div>
               <label className="dd-check">
@@ -509,9 +584,48 @@ export default function RecordingAnalysis({
                 disabled={locked}
               />
               <p className="vn-caption">
-                이번 코칭에는 확인한 문자·화자·목표를 보내요. 음성 원본은 다시
-                전송하지 않아요.
+                이번 코칭에는 확인한 문자·말한 사람·목표를 보내요. 음성 원본은
+                다시 전송하지 않아요.
               </p>
+              {(!hasMySpeech || unknownSpeakers > 0) && (
+                <aside
+                  className="learn-speaker-help"
+                  aria-label="말한 사람 확인 필요"
+                >
+                  <strong>
+                    {!hasMySpeech
+                      ? "코칭할 내 말을 골라주세요"
+                      : `${unknownSpeakers}개 내용의 말한 사람을 확인해 주세요`}
+                  </strong>
+                  <p>확인 체크와 별도로, 누구의 말인지 선택해야 해요.</p>
+                  <button
+                    className="dd-secondary"
+                    disabled={locked}
+                    onClick={markAllMine}
+                  >
+                    혼자 녹음했어요 · 전부 내 말로
+                  </button>
+                  <button
+                    className="dd-link"
+                    disabled={locked}
+                    onClick={() => {
+                      const firstUnknown = draft.segments.findIndex(
+                        (s) => s.role === "unknown",
+                      );
+                      setSegmentPage(
+                        Math.max(0, Math.floor(firstUnknown / 20)),
+                      );
+                      speakerCheck.current?.scrollIntoView({
+                        block: "start",
+                        behavior: "smooth",
+                      });
+                      speakerCheck.current?.focus({ preventScroll: true });
+                    }}
+                  >
+                    대화 녹음이에요 · 말한 사람 확인
+                  </button>
+                </aside>
+              )}
               <div className="vn-toolbar">
                 <button
                   className="dd-secondary"
@@ -525,7 +639,7 @@ export default function RecordingAnalysis({
                   disabled={locked}
                   onClick={() => void save(draft, 2)}
                 >
-                  화자·목표 저장
+                  말한 사람·목표 저장
                 </button>
                 <button
                   className="dd-primary"
@@ -533,6 +647,8 @@ export default function RecordingAnalysis({
                     locked ||
                     stale ||
                     tooLong ||
+                    !hasMySpeech ||
+                    unknownSpeakers > 0 ||
                     !draft.confirmed ||
                     !consent ||
                     !config.available
@@ -556,29 +672,35 @@ export default function RecordingAnalysis({
                   disabled={locked}
                   onClick={() => setStep(2)}
                 >
-                  화자·목표 다시 확인
+                  말한 사람·목표 다시 확인
                 </button>
-                <button
-                  className="dd-primary"
-                  disabled={locked}
-                  onClick={async () => {
-                    try {
-                      await onPractice(recordingDrill(session, draft));
-                    } catch (e) {
-                      setError(
-                        e instanceof Error
-                          ? e.message
-                          : "재연습을 열지 못했어요.",
-                      );
-                    }
-                  }}
-                >
-                  이 장면 다시 연습 <Icon name="arrow" size={16} />
-                </button>
+                {draft.segments[
+                  draft.segments.findIndex(
+                    (s) => s.id === validReview.improvement.turnId,
+                  ) - 1
+                ]?.role === "assistant" && (
+                  <button
+                    className="dd-primary"
+                    disabled={locked}
+                    onClick={async () => {
+                      try {
+                        await onPractice(recordingDrill(session, draft));
+                      } catch (e) {
+                        setError(
+                          e instanceof Error
+                            ? e.message
+                            : "재연습을 열지 못했어요.",
+                        );
+                      }
+                    }}
+                  >
+                    이 장면 다시 연습 <Icon name="arrow" size={16} />
+                  </button>
+                )}
               </div>
               <small>
-                인용한 원문과 내 목표가 맞는지 확인해 주세요. 재연습에서는 녹음
-                속 상대의 직전 말을 가져와 AI가 역할을 이어가요.
+                인용한 원문과 내 목표가 맞는지 확인해 주세요. 상대의 직전 말이
+                있는 장면은 이어서 대화 연습도 할 수 있어요.
               </small>
             </>
           )}

@@ -4,22 +4,27 @@ import { chooseDemoCase, type SampleMeta } from "@/lib/demo-bank";
 export default function SampleNotice({
   sample,
   compact = false,
+  badge = false,
 }: {
   sample: SampleMeta;
   compact?: boolean;
+  badge?: boolean;
 }) {
   const content = (
     <>
       <p>AI가 지금 생성한 답변이 아닌, 사전에 준비한 일반 예시예요.</p>
       <p>{retryAdvice(sample.outage)}</p>
-      <small>
-        {sample.topic} · 예시 {sample.sampleId}
-      </small>
+      <small>{sample.topic}</small>
     </>
   );
   return compact ? (
-    <details className="dc-sample-notice is-compact">
-      <summary>사전 작성 샘플 · {outageLabel(sample.outage)}</summary>
+    <details
+      className={"dc-sample-notice is-compact" + (badge ? " is-badge" : "")}
+    >
+      <summary>
+        {badge ? "샘플 · " : "사전 작성 샘플 · "}
+        {outageLabel(sample.outage)}
+      </summary>
       {content}
     </details>
   ) : (

@@ -1,4 +1,5 @@
 "use client";
+import { useAIConsent } from "./ConsentSession";
 import { useEffect, useRef, useState } from "react";
 import {
   trainingSkills,
@@ -56,7 +57,7 @@ export default function ConversationTraining({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
-    [consent, setConsent] = useState(false),
+    [consent, setConsent] = useAIConsent(),
     [recent, setRecent] = useState<VoiceSession[]>([]),
     [editing, setEditing] = useState(false);
   const alive = useRef(true),
@@ -280,7 +281,7 @@ export default function ConversationTraining({
       <div className="dc-page-top">
         <div>
           <p className="dc-overline">한 번에 기술 하나, 1~3분</p>
-          <h1>기초 훈련</h1>
+          <h1>대화 기초 훈련</h1>
         </div>
         <button className="dd-link" disabled={busy} onClick={onRecords}>
           훈련 기록 보기

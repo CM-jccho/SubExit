@@ -1,0 +1,25 @@
+# Full Next.js server: API routes and Gemini remain server-side.
+services:
+  - type: web
+    name: ddeundeun-call-render
+    runtime: node
+    plan: free
+    region: singapore
+    branch: deploy-render-20260917
+    autoDeployTrigger: "off"
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start -- --hostname 0.0.0.0 --port $PORT
+    healthCheckPath: /api/coach
+    envVars:
+      - key: NODE_VERSION
+        value: 24.19.0
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: GEMINI_DATA_MODE
+        value: free

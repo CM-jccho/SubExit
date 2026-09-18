@@ -7,15 +7,16 @@ export const audioTime = (s: number) =>
 export async function inspectAudio(
   blob: Blob,
   name = "녹음",
+  maxSeconds = 120,
 ): Promise<AudioClip> {
   const context = new AudioContext();
   try {
     const buffer = await context.decodeAudioData(await blob.arrayBuffer());
     if (!Number.isFinite(buffer.duration) || buffer.duration <= 0)
       throw new Error("음성이 비어 있어요. 다시 녹음해 주세요.");
-    if (buffer.duration > 120)
+    if (buffer.duration > maxSeconds)
       throw new Error(
-        "지금은 2분 이하의 음성을 기록할 수 있어요. 짧게 나눈 파일을 선택해 주세요.",
+        `${Math.floor(maxSeconds / 60)}분 이하의 음성을 선택해 주세요.`,
       );
     const samples = buffer.getChannelData(0),
       count = 80,
@@ -43,6 +44,7 @@ export async function inspectAudio(
 }
 export default function AudioPlayer({ clip }: { clip: AudioClip }) {
   const ref = useRef<HTMLAudioElement>(null);
+  const [nativeControls, setNativeControls] = useState(false);
   const [url, setUrl] = useState(""),
     [playing, setPlaying] = useState(false),
     [time, setTime] = useState(0),
@@ -54,18 +56,28 @@ export default function AudioPlayer({ clip }: { clip: AudioClip }) {
     setTime(0);
     setDuration(clip.duration);
     setPlaying(false);
+    setError("");
     return () => URL.revokeObjectURL(u);
-  }, [clip]);
+  }, [clip.blob, clip.duration]);
   async function toggle() {
     try {
-      if (!ref.current) return;
-      if (ref.current.paused) {
+      const audio = ref.current;
+      if (!audio || !url) return;
+      if (audio.paused || audio.ended || audio.currentTime >= duration) {
         document.querySelectorAll("audio").forEach((a) => {
           if (a !== ref.current) a.pause();
         });
         window.speechSynthesis?.cancel();
-        await ref.current.play();
-      } else ref.current.pause();
+        if (
+          audio.ended ||
+          (duration > 0 && audio.currentTime >= duration - 0.05)
+        ) {
+          audio.currentTime = 0;
+          setTime(0);
+        }
+        audio.muted = false;
+        await audio.play();
+      } else audio.pause();
       setError("");
     } catch {
       setError("재생하지 못했어요. 원본을 내려받아 확인해 주세요.");
@@ -77,13 +89,19 @@ export default function AudioPlayer({ clip }: { clip: AudioClip }) {
         ref={ref}
         src={url || undefined}
         preload="metadata"
+        controls={nativeControls}
+        playsInline
         onLoadedMetadata={() => {
           const d = ref.current?.duration;
           if (d && Number.isFinite(d)) setDuration(d);
         }}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
-        onEnded={() => setPlaying(false)}
+        onEnded={() => {
+          setPlaying(false);
+          setTime(0);
+          if (ref.current) ref.current.currentTime = 0;
+        }}
         onTimeUpdate={() => setTime(ref.current?.currentTime || 0)}
         onError={() =>
           setError(
@@ -95,6 +113,7 @@ export default function AudioPlayer({ clip }: { clip: AudioClip }) {
         type="button"
         className="vn-play"
         aria-label={playing ? "음성 일시 정지" : "음성 재생"}
+        disabled={!url}
         onClick={() => void toggle()}
       >
         <Icon name={playing ? "pause" : "play"} size={20} />
@@ -164,6 +183,16 @@ export default function AudioPlayer({ clip }: { clip: AudioClip }) {
           {error}
         </p>
       )}
+      <button
+        type="button"
+        className="dd-link vn-native-toggle"
+        onClick={() => setNativeControls((v) => !v)}
+        aria-expanded={nativeControls}
+      >
+        {nativeControls
+          ? "기본 재생기 접기"
+          : "소리가 안 들리나요? 기본 재생기 열기"}
+      </button>
     </div>
   );
 }

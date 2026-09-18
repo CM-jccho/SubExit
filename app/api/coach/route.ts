@@ -82,10 +82,14 @@ export async function POST(request: Request) {
         { error: "전송·성인 여부 및 무료 API 샘플 조건을 확인해 주세요." },
         400,
       );
-    if (!rateAllowed(request, "coach")) return appRateError();
+    const quick = d.quick === true && !d.reply.trim();
+    if (!rateAllowed(request, "coach", quick ? 24 : 12)) return appRateError();
     const start = Date.now();
     const output = await geminiGenerate(
-      systemPrompt,
+      systemPrompt +
+        (quick
+          ? "\n지금은 실시간 힌트다. suggestion은 120자 이내의 짧은 한 문장, reason은 짧은 한 문장, evidence는 짧고 정확한 인용만 출력한다. pattern과 feedback은 출력하지 않는다."
+          : ""),
       [
         {
           text: JSON.stringify({
@@ -97,11 +101,33 @@ export async function POST(request: Request) {
           }),
         },
       ],
-      coachSchema,
+      quick
+        ? {
+            type: "object",
+            properties: Object.fromEntries(
+              ["suggestion", "evidence", "reason"].map((k) => [
+                k,
+                { type: "string" },
+              ]),
+            ),
+            required: ["suggestion", "evidence", "reason"],
+            additionalProperties: false,
+          }
+        : coachSchema,
       request.signal,
+      quick ? { maxOutputTokens: 500 } : undefined,
     );
     return json({
-      ...validateCoach(output, d.opponent),
+      ...validateCoach(
+        quick && output && typeof output === "object"
+          ? {
+              ...output,
+              pattern: "다음 한마디",
+              feedback: "상황에 맞게 고쳐 말해보세요.",
+            }
+          : output,
+        d.opponent,
+      ),
       source: "ai",
       provider: config.provider,
       model: config.model,

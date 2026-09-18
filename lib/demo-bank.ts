@@ -16,9 +16,17 @@ export function practiceSampleContext(context?: {
   title: string;
   situation: string;
   goal: string;
+  partner?: string;
 }) {
   return context
-    ? [context.title, context.goal, context.situation].join(" ")
+    ? [
+        context.title,
+        context.partner,
+        context.goal,
+        context.situation,
+      ]
+        .filter(Boolean)
+        .join(" ")
     : "";
 }
 export function chooseDemoCase(text: string) {
@@ -29,9 +37,13 @@ export function chooseDemoCase(text: string) {
       row.keywords.some((k) => lower.includes(k)),
   );
   if (responseScene) return responseScene;
+  // Relationship-specific examples take precedence over shared schedule words.
+  if (/친구/.test(lower) && /약속|시간|일정|날짜|만나/.test(lower))
+    return demoCases.find((row) => row.id === "friend-schedule")!;
   let best = demoCases.at(-1)!,
     score = 0;
   for (const row of demoCases.slice(0, -1)) {
+    if (row.id === "friend-schedule") continue;
     const hits = row.keywords.filter((k) => lower.includes(k)).length;
     if (hits > score) {
       best = row;

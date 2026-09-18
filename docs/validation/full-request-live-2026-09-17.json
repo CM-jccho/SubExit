@@ -1,0 +1,117 @@
+{
+  "checkedAt": "2026-09-17T04:17:53.703386+00:00",
+  "base": "https://ddeundeun-call-render.onrender.com",
+  "scope": "HTTP and deployed asset inspection only; no browser interaction or paid AI generation",
+  "checks": [
+    {
+      "name": "home",
+      "status": 200,
+      "title": [
+        "든든콜 · 대화 연습과 복기"
+      ]
+    },
+    {
+      "name": "AI configuration",
+      "status": 200,
+      "body": {
+        "available": true,
+        "voiceAvailable": true,
+        "configurationStatus": "configured",
+        "provider": "Google Gemini",
+        "model": "gemini-2.5-flash",
+        "sampleOnly": true
+      }
+    },
+    {
+      "name": "asset",
+      "path": "/_next/static/css/85705bb00c5f59fa.css",
+      "status": 200,
+      "bytes": 72126,
+      "matchesLocalBuildFilenameAndSize": true
+    },
+    {
+      "name": "asset",
+      "path": "/_next/static/css/3ea28309bd6ae437.css",
+      "status": 200,
+      "bytes": 79721,
+      "matchesLocalBuildFilenameAndSize": true
+    },
+    {
+      "name": "asset",
+      "path": "/_next/static/css/e1dcff8504d9942a.css",
+      "status": 200,
+      "bytes": 24029,
+      "matchesLocalBuildFilenameAndSize": true
+    },
+    {
+      "name": "asset",
+      "path": "/_next/static/chunks/webpack-9cdfb4e8a1e08575.js",
+      "status": 200,
+      "bytes": 3347,
+      "matchesLocalBuildFilenameAndSize": true
+    },
+    {
+      "name": "asset",
+      "path": "/_next/static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "status": 200,
+      "bytes": 173019,
+      "matchesLocalBuildFilenameAndSize": true
+    },
+    {
+      "name": "asset",
+      "path": "/_next/static/chunks/255-37e0f0325134c4d7.js",
+      "status": 200,
+      "bytes": 173687,
+      "matchesLocalBuildFilenameAndSize": true
+    },
+    {
+      "name": "asset",
+      "path": "/_next/static/chunks/main-app-054aafbbed5c077c.js",
+      "status": 200,
+      "bytes": 557,
+      "matchesLocalBuildFilenameAndSize": false
+    },
+    {
+      "name": "asset",
+      "path": "/_next/static/chunks/662-aac511b23f8ff337.js",
+      "status": 200,
+      "bytes": 90202,
+      "matchesLocalBuildFilenameAndSize": true
+    },
+    {
+      "name": "asset",
+      "path": "/_next/static/chunks/app/page-53cf4592a260f4ce.js",
+      "status": 200,
+      "bytes": 293219,
+      "matchesLocalBuildFilenameAndSize": false
+    },
+    {
+      "name": "asset",
+      "path": "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+      "status": 200,
+      "bytes": 112594,
+      "matchesLocalBuildFilenameAndSize": true
+    },
+    {
+      "name": "sample coaching",
+      "status": 200,
+      "source": "sample",
+      "suggestion": "안내 감사합니다. 저는 가입하지 않겠습니다. 통화는 여기서 마치겠습니다."
+    }
+  ],
+  "deployedMarkers": {
+    "input-dialog-status": true,
+    "복사 중": true,
+    "저장 중": true,
+    "모든 연습 상황 보기": true,
+    "AI 요청 연습": true,
+    "가상 커뮤니티 체험": true,
+    "두리": true
+  },
+  "cssMarkers": {
+    "scrollbar-gutter:stable": true,
+    ".input-dialog": true,
+    ".dc-sticky-actions": true,
+    "prefers-reduced-motion": true
+  }
+}

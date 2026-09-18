@@ -6,12 +6,14 @@ import {
   type ConversationFocus,
 } from "@/lib/conversation-focus";
 export default function ConversationFocusPicker({
+  purpose = "practice",
   value,
   onChange,
   onCreate,
   editing,
   onEditingChange,
 }: {
+  purpose?: "live" | "practice";
   value: ConversationFocus | null;
   onCreate?: () => void;
   editing: boolean;
@@ -27,7 +29,11 @@ export default function ConversationFocusPicker({
       <aside className="focus-current" aria-label="선택한 대화 맥락">
         <span>
           <small>내 관심 상황</small>
-          <strong>{focusInfo(value)?.label || "아직 정하지 않음"}</strong>
+          <strong>
+            {value === "all"
+              ? "모든 상황"
+              : focusInfo(value)?.label || "내 상황"}
+          </strong>
         </span>
         <button className="dd-link" onClick={() => onEditingChange(true)}>
           선택 바꾸기
@@ -38,7 +44,11 @@ export default function ConversationFocusPicker({
     <section className="focus-picker" aria-label="대화 맥락 선택">
       <div className="focus-intro">
         <div className="focus-intro-copy">
-          <h1>어떤 상황의 대화를 연습할까요?</h1>
+          <h1>
+            {purpose === "live"
+              ? "어떤 대화를 돕고 싶으세요?"
+              : "어떤 상황의 대화를 연습할까요?"}
+          </h1>
           <p>나에게 필요한 상황부터 골라보세요.</p>
         </div>
       </div>
@@ -70,7 +80,7 @@ export default function ConversationFocusPicker({
             내 상황 직접 설명하기
           </button>
         )}
-        <button className="dd-link" onClick={() => choose("all")}>
+        <button className="dd-secondary" onClick={() => choose("all")}>
           아직 정하지 않았어요 · 전체 둘러보기
         </button>
         {value && (

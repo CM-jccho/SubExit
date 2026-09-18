@@ -181,7 +181,7 @@
   height: 80px;
 }
 .dc-observer-stage small {
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: #55624f;
 }
 .dc-observer-playback {
@@ -323,7 +323,7 @@
     flex-shrink: 0;
   }
   .dc-sticky-actions .dc-overline {
-    font-size: 10px;
+    font-size: var(--t-cap);
   }
   .dc-sticky-actions h1 {
     font-size: 25px;

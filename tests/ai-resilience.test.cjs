@@ -8,9 +8,9 @@ const quota = require("../lib/quota.ts"),
   resilient = require("../lib/resilient-ai.ts");
 test("all authored scenarios and operations survive the outage matrix without masking validation errors", async () => {
   const report = await simulate();
-  assert.equal(report.verified, 660);
+  assert.equal(report.verified, 720);
   assert.equal(report.liveAICalls, 0);
-  assert.equal(report.authoredResponses, 176);
+  assert.equal(report.authoredResponses, 192);
 });
 test("Pacific daily reset respects winter, summer, DST boundaries and midnight, and daily limits override short Retry-After", () => {
   for (const [now, expected] of [
@@ -133,5 +133,53 @@ test("request practice fallbacks use the saved goal instead of treating a review
   assert.equal(
     bank.chooseDemoCase("환불을 부탁하는 고객의 추가 보상 요구").id,
     "refund-pressure",
+  );
+});
+
+test("friend scheduling keeps its relationship across every sample operation and business scheduling stays formal", () => {
+  const { requestCards } = require("../lib/starter-data.ts");
+  const friend = requestCards[1];
+  for (const profile of [
+    friend,
+    {
+      ...friend,
+      title: "시간 변경",
+      situation: "약속 시간을 바꾸고 싶다.",
+      goal: "가능한 날짜와 시간 정하기",
+      myRole: "나",
+    },
+  ]) {
+    const context = bank.practiceSampleContext(profile);
+    assert.equal(bank.chooseDemoCase(context).id, "friend-schedule");
+    for (const [operation, field] of [
+      ["coach", "hints"],
+      ["suggestions", "suggestions"],
+      ["partner", "openings"],
+      ["companion", "companion"],
+    ]) {
+      const row = bank.demoCases.find((r) => r.id === "friend-schedule");
+      for (let i = 0; i < row[field].length; i++) {
+        const result = bank.sampleResponse(
+          operation,
+          context,
+          [],
+          client.manualSample(),
+          () => i / row[field].length,
+        );
+        assert(result.sample.sampleId.startsWith("friend-schedule:"));
+        assert.doesNotMatch(result.reply, /여쭤|확정하기|담당자|보고서|업무/);
+        if (operation === "suggestions")
+          assert.equal(result.suggestions.length, 3);
+      }
+    }
+  }
+  assert.equal(
+    bank.chooseDemoCase("팀장님과 마감 일정 시간 날짜 조율").id,
+    "schedule",
+  );
+  assert.equal(bank.chooseDemoCase("친구의 고민을 듣기").id, "friend");
+  assert.equal(
+    bank.chooseDemoCase("친구와 약속 시간을 바꾸기").id,
+    "friend-schedule",
   );
 });

@@ -1,4 +1,7 @@
 "use client";
+import InputDialog from "./InputDialog";
+import CompactField from "./CompactField";
+import { useAIConsent } from "./ConsentSession";
 import type { ConversationFocus } from "@/lib/conversation-focus";
 import CommunicationTips from "./CommunicationTips";
 import StickyPageTop from "./StickyPageTop";
@@ -31,37 +34,49 @@ export function TermText({
   candidates?: string[];
   onTerm: (term: string) => void;
 }) {
-  const words = [...candidates]
-    .filter(Boolean)
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? text : text.slice(0, 2400);
+  const terms = [
+    ...new Set(candidates.map((term) => term.trim()).filter(Boolean)),
+  ].slice(0, 8);
+  const words = terms
     .sort((a, b) => b.length - a.length)
-    .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  const regex = new RegExp(
-    `(${words.length ? words.join("|") + "|" : ""}[\\p{L}\\p{N}_+#-]+)`,
-    "gu",
-  );
+    .map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const parts = words.length
+    ? shown.split(new RegExp(`(${words.join("|")})`, "giu"))
+    : [shown];
   return (
-    <p className="vn-transcript-text">
-      {text.split(regex).map((part, i) =>
-        /^[\p{L}\p{N}]/u.test(part) ? (
-          <button
-            type="button"
-            key={i}
-            className={
-              "vn-word " +
-              (candidates.some((t) => t.toLowerCase() === part.toLowerCase())
-                ? "is-term"
-                : "")
-            }
-            onClick={() => onTerm(part)}
-            aria-label={part + " 용어 메모 열기"}
-          >
-            {part}
-          </button>
-        ) : (
-          <span key={i}>{part}</span>
-        ),
+    <>
+      <p className="vn-transcript-text">
+        {parts.map((part, i) =>
+          terms.some((term) => term.toLowerCase() === part.toLowerCase()) ? (
+            <button
+              type="button"
+              key={i}
+              className={
+                "vn-word " +
+                (candidates.some((t) => t.toLowerCase() === part.toLowerCase())
+                  ? "is-term"
+                  : "")
+              }
+              onClick={() => onTerm(part)}
+              aria-label={part + " 용어 메모 열기"}
+            >
+              {part}
+            </button>
+          ) : (
+            <span key={i}>{part}</span>
+          ),
+        )}
+      </p>
+      {text.length > 2400 && (
+        <button className="dd-link" onClick={() => setExpanded((v) => !v)}>
+          {expanded
+            ? "문자 접기"
+            : `전체 문자 보기 · ${text.length.toLocaleString()}자`}
+        </button>
       )}
-    </p>
+    </>
   );
 }
 export type TermSeed = {
@@ -70,6 +85,7 @@ export type TermSeed = {
   industry: string;
   sessionId: string;
   note?: TermNote;
+  isNew?: boolean;
 };
 export function TermEditor({
   seed,
@@ -80,10 +96,11 @@ export function TermEditor({
   seed: TermSeed;
   config: AIConfig;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (note: TermNote) => void;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null),
-    abort = useRef<AbortController | null>(null);
+  const abort = useRef<AbortController | null>(null);
+  const operation = useRef(false);
+  const [saving, setSaving] = useState(false);
   const [note, setNote] = useState<TermNote>(
     () =>
       seed.note || {
@@ -94,25 +111,27 @@ export function TermEditor({
         usage: "",
         caution: "",
         memo: "",
-        quote: seed.quote.slice(0, 1500),
+        quote: seed.quote.slice(
+          Math.max(0, seed.quote.indexOf(seed.term) - 500),
+          Math.max(0, seed.quote.indexOf(seed.term) - 500) + 1500,
+        ),
         sessionId: seed.sessionId,
         source: "manual",
         reviewed: false,
         updatedAt: new Date().toISOString(),
       },
   );
-  const [consent, setConsent] = useState(false),
+  const [consent, setConsent] = useAIConsent(),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   useEffect(() => {
-    const d = dialog.current;
-    d?.showModal();
     return () => {
       abort.current?.abort();
-      d?.close();
     };
   }, []);
   async function explain() {
+    if (operation.current) return;
+    operation.current = true;
     setBusy(true);
     setError("");
     const c = new AbortController();
@@ -149,10 +168,14 @@ export function TermEditor({
       else setError("응답이 지연됐어요. 직접 작성하거나 다시 시도해 주세요.");
     } finally {
       clearTimeout(timeout);
+      operation.current = false;
       setBusy(false);
     }
   }
   async function save() {
+    if (operation.current || !note.term.trim()) return;
+    operation.current = true;
+    setSaving(true);
     setError("");
     setBusy(true);
     try {
@@ -170,49 +193,52 @@ export function TermEditor({
         return;
       }
       await putTerm(note);
-      onSaved();
+      onSaved({ ...note, term: note.term.trim() });
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : "저장하지 못했어요.");
     } finally {
+      operation.current = false;
+      setSaving(false);
       setBusy(false);
     }
   }
   const edit = (field: keyof TermNote, value: string) =>
     setNote((n) => ({ ...n, [field]: value, reviewed: false }));
   return (
-    <dialog
-      ref={dialog}
-      className="vn-dialog"
-      aria-labelledby="term-title"
-      onCancel={(e) => {
-        e.preventDefault();
-        onClose();
-      }}
+    <InputDialog
+      open
+      title={"용어 메모"}
+      className="vn-dialog term-editor"
+      busy={busy}
+      closeLabel="용어 메모 닫기"
+      onClose={onClose}
     >
-      <div className="vn-dialog-head">
-        <div>
-          <p className="dc-overline">내가 만난 말</p>
-          <h2 id="term-title">용어 메모</h2>
-        </div>
-        <button
-          className="vn-icon"
-          onClick={onClose}
-          aria-label="용어 메모 닫기"
-        >
-          <Icon name="close" />
-        </button>
-      </div>
       <label className="vn-label">
         용어·표현
         <input
-          autoFocus
           value={note.term}
           disabled={busy}
           maxLength={80}
+          placeholder="저장할 단어나 표현을 입력해 주세요"
           onChange={(e) => edit("term", e.target.value)}
         />
       </label>
+      {!seed.note && (
+        <>
+          <p className="vn-caption">
+            표현만 먼저 저장해도 돼요. 뜻과 예문은 나중에 용어 노트에서 추가할
+            수 있어요.
+          </p>
+          <button
+            className="dd-primary dd-full"
+            disabled={busy || !note.term.trim()}
+            onClick={() => void save()}
+          >
+            {saving ? "저장 중…" : "이 표현 바로 저장"}
+          </button>
+        </>
+      )}
       <label className="vn-label">
         분야 · 업종 · 세대
         <input
@@ -236,6 +262,7 @@ export function TermEditor({
         </details>
       )}
       <AIConsent
+        priority={-1}
         config={config}
         checked={consent}
         onChange={setConsent}
@@ -247,12 +274,16 @@ export function TermEditor({
         onClick={() => void explain()}
       >
         <Icon name="search" size={17} />
-        {busy ? "확인 중" : "맥락에 맞는 뜻 알아보기"}
+        {busy && !saving ? "확인 중" : "맥락에 맞는 뜻 알아보기"}
       </button>
       {busy && (
         <CompanionNudge
           mood="think"
-          text="이 말이 쓰인 맥락을 살펴보고 있어요."
+          text={
+            saving
+              ? "내 노트에 저장하고 있어요."
+              : "이 말이 쓰인 맥락을 살펴보고 있어요."
+          }
         />
       )}
       {note.source === "ai" && (
@@ -265,20 +296,31 @@ export function TermEditor({
           { k: "meaning", title: "뜻", max: 1000 },
           { k: "usage", title: "자연스러운 사용 예", max: 1000 },
           { k: "caution", title: "누구에게, 언제 쓰면 좋을까", max: 600 },
-          { k: "memo", title: "내 메모 · 함께 쓰는 가이드", max: 2000 },
         ] as const
       ).map((f) => (
-        <label className="vn-label" key={f.k}>
-          {f.title}
-          <textarea
-            value={note[f.k]}
-            maxLength={f.max}
-            disabled={busy}
-            rows={2}
-            onChange={(e) => edit(f.k, e.target.value)}
-          />
-        </label>
+        <CompactField
+          key={f.k}
+          label={f.title}
+          value={note[f.k]}
+          maxLength={f.max}
+          disabled={busy}
+          onChange={(value) => edit(f.k, value)}
+        />
       ))}
+      <details className="term-personal-memo">
+        <summary>내 메모 · 선택{note.memo ? " · 작성됨" : ""}</summary>
+        <p className="vn-caption">
+          내가 기억할 상황이나 나만의 표현을 남겨보세요. 비워두어도 저장할 수
+          있어요.
+        </p>
+        <CompactField
+          label="내 메모"
+          value={note.memo}
+          maxLength={2000}
+          disabled={busy}
+          onChange={(value) => edit("memo", value)}
+        />
+      </details>
       <div className="vn-reference-links">
         <span>자료 찾아 확인하기</span>
         {["한국어", "English", "日本語"].map((lang, i) => (
@@ -326,10 +368,14 @@ export function TermEditor({
         disabled={busy || !note.term.trim()}
         onClick={() => void save()}
       >
-        용어 노트에 저장
+        {saving
+          ? "저장 중…"
+          : (seed.isNew ?? !seed.note)
+            ? "내 노트에 추가"
+            : "변경 내용 저장"}
         <Icon name="check" size={18} />
       </button>
-    </dialog>
+    </InputDialog>
   );
 }
 export default function TermNotebook({
@@ -341,9 +387,7 @@ export default function TermNotebook({
   onAsk?: (c: CompanionCharacter) => void;
   focus?: ConversationFocus | null;
 }) {
-  const [tab, setTab] = useState<"notes" | "catalogue" | "tips">(
-    focus && focus !== "all" ? "catalogue" : "notes",
-  );
+  const [tab, setTab] = useState<"notes" | "catalogue" | "tips">("notes");
   const [terms, setTerms] = useState<TermNote[]>([]),
     [query, setQuery] = useState(""),
     [seed, setSeed] = useState<TermSeed | null>(null),
@@ -351,6 +395,13 @@ export default function TermNotebook({
     [notice, setNotice] = useState(""),
     [selected, setSelected] = useState<string[]>([]),
     [preview, setPreview] = useState(false);
+  const [savedNote, setSavedNote] = useState<TermNote | null>(null);
+  const receipt = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!savedNote || seed) return;
+    receipt.current?.scrollIntoView({ block: "nearest", behavior: "auto" });
+    receipt.current?.focus({ preventScroll: true });
+  }, [savedNote, seed]);
   const file = useRef<HTMLInputElement>(null),
     shareDialog = useRef<HTMLDialogElement>(null);
   const refresh = () =>
@@ -457,6 +508,38 @@ export default function TermNotebook({
           소통 팁
         </button>
       </div>
+      {savedNote && (
+        <div
+          className="vn-save-receipt"
+          ref={receipt}
+          tabIndex={-1}
+          role="status"
+        >
+          <Icon name="check" size={20} />
+          <div>
+            <strong>‘{savedNote.term}’를 내 노트에 저장했어요.</strong>
+            <span>이 브라우저에서 다시 꺼내볼 수 있어요.</span>
+          </div>
+          {tab !== "notes" && (
+            <button
+              className="dd-secondary"
+              onClick={() => {
+                setQuery("");
+                setTab("notes");
+              }}
+            >
+              내 노트에서 보기
+            </button>
+          )}
+          <button
+            className="dd-link"
+            aria-label="저장 안내 닫기"
+            onClick={() => setSavedNote(null)}
+          >
+            닫기
+          </button>
+        </div>
+      )}
       {tab === "catalogue" && <TrendSearch config={config} />}
       {tab === "tips" ? (
         <CommunicationTips
@@ -471,6 +554,7 @@ export default function TermNotebook({
               quote: "",
               industry: "소통 팁 · " + tip.context,
               sessionId: "",
+              isNew: !existing,
               note: existing || {
                 id: "term-" + crypto.randomUUID(),
                 term: tip.title,
@@ -502,6 +586,7 @@ export default function TermNotebook({
               quote: "",
               industry: note.industry,
               sessionId: "",
+              isNew: !existing,
               note: existing || { ...note, id: "term-" + crypto.randomUUID() },
             });
           }}
@@ -671,9 +756,9 @@ export default function TermNotebook({
           seed={seed}
           config={config}
           onClose={() => setSeed(null)}
-          onSaved={() => {
+          onSaved={(saved) => {
             void refresh();
-            setNotice("용어와 메모를 저장했어요.");
+            setSavedNote(saved);
           }}
         />
       )}

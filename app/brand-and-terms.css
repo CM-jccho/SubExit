@@ -1,0 +1,73 @@
+.dc-brand-mark {
+  width: 44px;
+  height: 44px;
+  background: #fff6e3;
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.speak-brand-mark {
+  display: block;
+  max-width: 100%;
+  border-radius: var(--r-md);
+}
+.launch-mascot .speak-brand-mark {
+  margin: 0 auto;
+  border-radius: 28px;
+}
+.term-editor .compact-field {
+  margin: 18px 0;
+}
+.term-editor .compact-field-summary {
+  background: #f6f8f1;
+  border-color: transparent;
+}
+.term-editor .compact-field-summary span {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+.term-editor .compact-field-editor textarea {
+  min-height: 84px;
+}
+.term-personal-memo {
+  margin: 20px 0;
+  padding: 14px 0;
+  border-top: 1px solid #e0e5d9;
+}
+.term-personal-memo summary {
+  cursor: pointer;
+  color: #52664f;
+  font-weight: 600;
+  min-height: 32px;
+}
+.vn-save-receipt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  padding: 18px;
+  border-radius: var(--r-lg);
+  background: #eaf3df;
+  color: #315b47;
+  scroll-margin: 110px;
+}
+.vn-save-receipt:focus {
+  outline: none;
+}
+.vn-save-receipt > div {
+  flex: 1;
+  min-width: 180px;
+  overflow-wrap: anywhere;
+}
+.vn-save-receipt strong,
+.vn-save-receipt span {
+  display: block;
+}
+.vn-save-receipt span {
+  margin-top: 4px;
+  font-size: var(--t-body);
+}
+.vn-save-receipt button {
+  min-height: 44px;
+}

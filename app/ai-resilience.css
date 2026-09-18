@@ -48,7 +48,7 @@
 .dc-sample-notice small {
   display: block;
   color: #756245;
-  font-size: 11px;
+  font-size: var(--t-cap);
   overflow-wrap: anywhere;
 }
 .dc-sample-notice summary {

@@ -1,0 +1,21 @@
+/* Keep Safari from zooming small form text; retain user pinch zoom. */
+@media (max-width: 850px), (pointer: coarse) {
+  body :is(input, textarea, select) {
+    font-size: max(16px, 1rem) !important;
+  }
+  html[data-keyboard-open] :is(.dc-nav, .dd-mobile-nav) {
+    display: none;
+  }
+  html[data-keyboard-open] :is(.dc-header, .dc-sticky-actions, .dd-cue) {
+    position: static;
+  }
+  html[data-keyboard-open] :is(input, textarea, select, button) {
+    scroll-margin-block: 12px;
+  }
+  html[data-keyboard-open] .dc-shell main {
+    min-height: 0;
+  }
+  html[data-keyboard-open] textarea {
+    max-height: max(80px, calc(var(--visible-height, 100dvh) * 0.4));
+  }
+}

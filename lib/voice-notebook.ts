@@ -17,6 +17,7 @@ export type AudioClip = {
   duration: number;
   peaks: number[];
   name: string;
+  transcription?: import("./recording-limits").TranscriptionProgress;
 };
 export type VoiceTurn = {
   unchangedSuggestion?: boolean;
@@ -32,6 +33,7 @@ export type VoiceTurn = {
   suggestionsSample?: SampleMeta;
 };
 export type VoiceSession = {
+  sampleMode?: boolean;
   messenger?: import("./messenger").MessengerRecord;
   training?: import("./conversation-training").TrainingRecord;
   promptPractice?: {
@@ -175,7 +177,7 @@ export function parseTermImport(raw: string): TermNote[] {
     throw new Error("1MB 이하의 용어 파일을 선택해 주세요.");
   const d = JSON.parse(raw);
   if (d.version !== 1 || !Array.isArray(d.terms) || d.terms.length > 300)
-    throw new Error("든든콜 용어 JSON 파일을 선택해 주세요.");
+    throw new Error("스픽코칭 용어 JSON 파일을 선택해 주세요.");
   return d.terms.map((t: unknown) => ({
     ...parseTerm(t),
     id: "term-" + crypto.randomUUID(),
@@ -198,7 +200,7 @@ function openDB(): Promise<IDBDatabase> {
         ),
       );
     r.onblocked = () =>
-      reject(new Error("다른 든든콜 탭을 닫고 다시 시도해 주세요."));
+      reject(new Error("다른 스픽코칭 탭을 닫고 다시 시도해 주세요."));
     r.onsuccess = () => {
       r.result.onversionchange = () => r.result.close();
       resolve(r.result);

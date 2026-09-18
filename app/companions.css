@@ -31,7 +31,7 @@
 }
 .dc-friend-picker small {
   display: block;
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: #55665c;
   line-height: 1.6;
 }
@@ -262,7 +262,7 @@
 }
 .dc-room-name small {
   font-weight: 400;
-  font-size: 9px;
+  font-size: var(--t-cap);
 }
 .dc-room-actor.selected .dc-room-name {
   color: #fffef4;
@@ -301,7 +301,7 @@
   overflow-wrap: anywhere;
 }
 .dc-room-selected span {
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: #657260;
 }
 .dc-room-selected p {
@@ -332,7 +332,7 @@
   line-height: 1.5;
 }
 .dc-room-history span {
-  font-size: 11px;
+  font-size: var(--t-cap);
   color: #65705f;
 }
 .dc-room-history svg {
@@ -432,7 +432,7 @@
   width: 64px;
 }
 .dc-shape-picker span {
-  font-size: 11px;
+  font-size: var(--t-cap);
 }
 .dc-color-picker label {
   font-size: 12px;
@@ -497,16 +497,6 @@
   .dc-room-stage {
     min-height: 355px;
   }
-  .dc-nav {
-    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-  }
-  .dc-nav button {
-    padding-left: 3px;
-    padding-right: 3px;
-  }
-  .dc-nav button span {
-    font-size: 10px;
-  }
   .dc-room-friends .dc-companion.is-small {
     width: 40px;
     margin-left: -15px;
@@ -528,13 +518,13 @@
   }
   .dc-room-sign {
     right: 17px;
-    font-size: 11px;
+    font-size: var(--t-cap);
   }
   .dc-room-invite strong {
     font-size: 14px;
   }
   .dc-room-invite small {
-    font-size: 11px;
+    font-size: var(--t-cap);
   }
   .dc-room-friends .dc-companion.is-small {
     width: 34px;
@@ -658,7 +648,7 @@
   gap: 2px;
 }
 .dc-room-switcher > span {
-  font-size: 11px;
+  font-size: var(--t-cap);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }

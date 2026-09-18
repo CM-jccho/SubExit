@@ -1,0 +1,268 @@
+.compact-field {
+  min-width: 0;
+  margin: 12px 0;
+}
+.compact-field-title {
+  display: block;
+  margin-bottom: 7px;
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--ink-500);
+}
+.compact-field-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #d9e1d2;
+  border-radius: 14px;
+  background: var(--surface-card);
+  color: var(--ink-500);
+  text-align: left;
+}
+.compact-field-summary span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--t-body);
+  line-height: 1.6;
+}
+.compact-field-summary b {
+  flex: none;
+  font-size: var(--t-cap);
+  color: #345c41;
+}
+.compact-field-editor {
+  padding: 14px;
+  border: 1px solid #b8cbb5;
+  border-radius: 14px;
+  background: #f8faf3;
+}
+.compact-field-examples,
+.compact-field-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.compact-field-examples button {
+  border: 1px solid #cad8c1;
+  border-radius: var(--r-lg);
+  padding: 8px 12px;
+  font-size: var(--t-body);
+  background: #fff;
+  color: var(--ink-500);
+  text-align: left;
+}
+.compact-field-examples small {
+  width: 100%;
+  font-size: var(--t-cap);
+}
+.compact-field-editor details {
+  margin-top: 12px;
+  font-size: var(--t-cap);
+}
+.launch-intro {
+  text-align: center;
+  background: radial-gradient(
+    ellipse at 50% 20%,
+    #e7f0d4,
+    var(--surface-card) 75%
+  );
+}
+.launch-intro .input-dialog-head {
+  text-align: left;
+}
+.launch-intro h1 {
+  font-size: clamp(28px, 6vw, 42px);
+  line-height: 1.3;
+  margin: 16px 0 28px;
+  letter-spacing: -1.5px;
+}
+.launch-mascot .dc-companion {
+  width: 140px;
+  height: 115px;
+  margin: 0 auto;
+}
+.launch-scene {
+  animation: intro-arrive 0.45s both;
+}
+.launch-progress {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}
+.launch-progress button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+}
+.launch-progress span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c9d6bd;
+}
+.launch-progress [aria-current] span {
+  width: 24px;
+  border-radius: var(--r-sm);
+  background: #365e49;
+}
+.launch-intro .dd-full + .dd-full {
+  margin-top: 10px;
+}
+.launch-intro h1 em {
+  font-style: normal;
+  color: #35674a;
+}
+.launch-intro p {
+  font-size: var(--t-body);
+  line-height: 1.7;
+}
+.launch-orbit {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border: 1px solid #adc49c;
+  border-radius: 50%;
+  margin: 15px auto;
+  box-shadow:
+    0 0 0 12px #dce8cb70,
+    0 0 0 25px #e7eedf70;
+  animation: intro-orbit 2s ease-in-out infinite alternate;
+}
+.launch-orbit span {
+  font-size: 40px;
+  color: #365e43;
+}
+.launch-bubble {
+  padding: 13px 17px;
+  margin: 12px 0;
+  max-width: 88%;
+  font-size: var(--t-body);
+  line-height: 1.5;
+  text-align: left;
+  animation: intro-arrive 0.8s both;
+}
+.launch-question {
+  background: #fff;
+  border: 1px solid #dce2d2;
+  border-radius: 4px 20px 20px;
+}
+.launch-answer {
+  background: #365e49;
+  color: #fff;
+  border-radius: 20px 4px 20px 20px;
+  margin-left: auto;
+  animation-delay: 0.7s;
+}
+@keyframes intro-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes intro-orbit {
+  to {
+    transform: scale(1.06);
+    box-shadow:
+      0 0 0 17px #dce8cb40,
+      0 0 0 31px #e7eedf40;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .launch-orbit,
+  .launch-bubble {
+    animation: none;
+  }
+  .launch-scene,
+  .launch-mascot * {
+    animation: none !important;
+  }
+}
+.launch-swipe {
+  touch-action: pan-y pinch-zoom;
+}
+.launch-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+.launch-actions .dd-primary,
+.launch-actions .dd-secondary {
+  flex: 1;
+  min-height: 48px;
+}
+.launch-skip {
+  display: block;
+  margin: 10px auto 0;
+  min-height: 44px;
+}
+.gesture-hint {
+  color: #647362;
+  font-size: var(--t-cap);
+  text-align: center;
+  margin: 10px 0;
+}
+@media (min-width: 901px) {
+  .launch-intro .gesture-hint {
+    display: none;
+  }
+}
+.compact-voice-consent {
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px solid #ccd9c5;
+  border-radius: 14px;
+  background: #edf3e5;
+}
+.compact-voice-consent p {
+  font-size: var(--t-body);
+  line-height: 1.6;
+}
+.compact-voice-consent button {
+  min-height: 44px;
+  margin: 4px 6px 4px 0;
+}
+.launch-swipe[data-swiping] {
+  border-radius: var(--r-lg);
+  background: var(--surface-card);
+  box-shadow: 0 12px 32px #263c2926;
+  will-change: transform;
+}
+.launch-swipe {
+  border-radius: var(--r-lg);
+}
+@media (max-width: 900px) {
+  .launch-scene {
+    animation: swipe-card-arrive 240ms ease-out;
+  }
+}
+@keyframes swipe-card-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.975) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .launch-scene {
+    animation: none !important;
+  }
+}
