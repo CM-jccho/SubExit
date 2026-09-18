@@ -17,6 +17,7 @@ export function practiceSampleContext(context?: {
   situation: string;
   goal: string;
   partner?: string;
+  boundaries?: string;
 }) {
   return context
     ? [
@@ -24,6 +25,7 @@ export function practiceSampleContext(context?: {
         context.partner,
         context.goal,
         context.situation,
+        context.boundaries,
       ]
         .filter(Boolean)
         .join(" ")
@@ -37,13 +39,29 @@ export function chooseDemoCase(text: string) {
       row.keywords.some((k) => lower.includes(k)),
   );
   if (responseScene) return responseScene;
+  // A money request is not a refusal goal by itself. Require both, so requests
+  // to borrow or to recover a debt do not become advice to refuse lending.
+  const requestText = lower.replace(
+    /(?:돈|금전|현금|생활비|급전)(?:이|은|을)?\s*(?:아니라|말고)/g,
+    "",
+  );
+  const lending =
+    /(?:돈|금전|현금|생활비|급전|[0-9,]+\s*만?\s*원).{0,24}(?:빌려|빌리|빌릴|대여)|(?:빌려|빌리|빌릴).{0,24}(?:돈|금전|현금|생활비|급전)|금전\s*(?:부탁|요청|거래)/.test(
+      requestText,
+    );
+  const declining =
+    /거절|사양|빌려주기\s*싫|빌려줄\s*수\s*없|빌려주지\s*않|빌려주기\s*어려/.test(
+      lower.replace(/거절하지\s*(?:않|말)[가-힣]*/g, ""),
+    );
+  if (lending && declining)
+    return demoCases.find((row) => row.id === "money-decline")!;
   // Relationship-specific examples take precedence over shared schedule words.
   if (/친구/.test(lower) && /약속|시간|일정|날짜|만나/.test(lower))
     return demoCases.find((row) => row.id === "friend-schedule")!;
   let best = demoCases.at(-1)!,
     score = 0;
   for (const row of demoCases.slice(0, -1)) {
-    if (row.id === "friend-schedule") continue;
+    if (["friend-schedule", "money-decline"].includes(row.id)) continue;
     const hits = row.keywords.filter((k) => lower.includes(k)).length;
     if (hits > score) {
       best = row;

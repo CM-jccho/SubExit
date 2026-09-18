@@ -878,3 +878,13 @@ html {
 .vn-conversation[hidden] {
   display: none;
 }
+
+.dc-sample-context {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border-left: 3px solid #a77832;
+  background: #fff5e4;
+  color: #694b22;
+  font-size: var(--t-body);
+  line-height: 1.65;
+}

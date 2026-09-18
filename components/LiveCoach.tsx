@@ -262,10 +262,13 @@ export default function LiveCoach({
       try {
         data = await sampledRequest({
           operation: "coach",
-          context:
+          context: [
             practiceSampleContext(requestProfile) ||
-            scenarios.find((s) => s.id === scenario)?.title ||
+              scenarios.find((s) => s.id === scenario)?.title,
             text,
+          ]
+            .filter(Boolean)
+            .join(" "),
           previous: sampleHistory.current,
           manual: sampleMode,
           url: "/api/coach",
@@ -1202,7 +1205,19 @@ export default function LiveCoach({
                 </div>
                 {result ? (
                   <>
-                    <p className="dc-answer-label">이렇게 말해볼까요?</p>
+                    {result.sample && (
+                      <p className="dc-sample-context" role="status">
+                        {result.sample.outage.reason === "manual"
+                          ? "AI를 사용하지 않는 예시 모드예요."
+                          : "AI 답변을 받지 못해 미리 작성한 예시를 보여드려요."}{" "}
+                        현재 대화를 분석한 결과가 아니에요.
+                      </p>
+                    )}
+                    <p className="dc-answer-label">
+                      {result.sample
+                        ? "참고할 표현 예시"
+                        : "이렇게 말해볼까요?"}
+                    </p>
                     {profile && (
                       <p className="dc-answer-goal">
                         <Icon name="target" size={14} />

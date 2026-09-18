@@ -1436,3 +1436,63 @@ test("QA microphone unanswered permission expires and preserves typing, with lat
     await ui.cleanup();
   }
 });
+
+test("daily quota fallback uses the actual money request and openly labels an authored refusal", async () => {
+  const profile = {
+    ...require("../lib/conversation-cards.ts").emptyProfile(),
+    title: "친구의 부탁",
+    partner: "친구",
+    situation: "친구에게 부탁받은 상황",
+    goal: "부탁을 정중하게 거절하기",
+    boundaries: "나중에 도와주겠다고 약속하지 않기",
+  };
+  const ui = await mount(LiveCoach, { onBack() {}, onDemo() {}, profile });
+  try {
+    for (const c of document.querySelectorAll(
+      ".vn-consent input, .dc-permissions input",
+    ))
+      await click(c);
+    await click(button("이 설정으로 시작"));
+    let calls = 0;
+    global.fetch = async () => {
+      calls++;
+      return Response.json(
+        { code: "provider_rate_limit", quotaKind: "daily", retryAfter: 60 },
+        { status: 429 },
+      );
+    };
+    await click(button("직접 입력"));
+    const input = document.querySelector("#live-text");
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement.prototype,
+        "value",
+      ).set.call(input, "이번에 돈을 조금 빌려줄 수 있어?");
+      input.dispatchEvent(new window.Event("input", { bubbles: true }));
+    });
+    await click(button("답변 힌트 받기"));
+    const answer = document.querySelector(".dc-answer-panel");
+    assert.match(
+      answer.querySelector("blockquote").textContent,
+      /돈.*(?:어려|없어요)/,
+    );
+    assert.doesNotMatch(
+      answer.querySelector("blockquote").textContent,
+      /조건|확인|업무/,
+    );
+    assert.match(
+      answer.querySelector(".dc-sample-context").textContent,
+      /AI 답변을 받지 못해/,
+    );
+    assert.equal(
+      answer.querySelector(".dc-sample-context").closest("details"),
+      null,
+    );
+    assert.match(answer.textContent, /일일 한도 초과/);
+    assert.equal(answer.querySelector(".dc-evidence"), null);
+    assert.equal(input.value, "이번에 돈을 조금 빌려줄 수 있어?");
+    assert.equal(calls, 1);
+  } finally {
+    await ui.cleanup();
+  }
+});

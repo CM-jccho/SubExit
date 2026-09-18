@@ -8,9 +8,14 @@ const quota = require("../lib/quota.ts"),
   resilient = require("../lib/resilient-ai.ts");
 test("all authored scenarios and operations survive the outage matrix without masking validation errors", async () => {
   const report = await simulate();
-  assert.equal(report.verified, 720);
+  assert.equal(
+    report.verified,
+    bank.demoCases.length *
+      4 *
+      require("../fixtures/ai-outages.json").cases.length,
+  );
   assert.equal(report.liveAICalls, 0);
-  assert.equal(report.authoredResponses, 192);
+  assert.equal(report.authoredResponses, 208);
 });
 test("Pacific daily reset respects winter, summer, DST boundaries and midnight, and daily limits override short Retry-After", () => {
   for (const [now, expected] of [
@@ -182,4 +187,50 @@ test("friend scheduling keeps its relationship across every sample operation and
     bank.chooseDemoCase("친구와 약속 시간을 바꾸기").id,
     "friend-schedule",
   );
+});
+
+test("money refusal samples explicitly refuse lending without invented reasons or future promises", () => {
+  const contexts = [
+    "친구가 돈을 빌려달라고 한다. 정중하게 거절하고 싶다.",
+    "직장 동료 금전 부탁 거절하기",
+    "가족이 생활비를 빌려달라고 해요. 사양하고 싶어요.",
+    "친구와 약속 시간을 정하다가 30만원을 빌려달라는 부탁을 받음. 거절하기",
+  ];
+  for (const context of contexts) {
+    assert.equal(bank.chooseDemoCase(context).id, "money-decline");
+    for (const op of ["coach", "suggestions"]) {
+      const previous = [];
+      for (let i = 0; i < 3; i++) {
+        const d = bank.sampleResponse(
+          op,
+          context,
+          previous,
+          client.manualSample(),
+          () => 0,
+        );
+        const texts = op === "coach" ? [d.reply] : d.suggestions;
+        for (const text of texts) {
+          assert.match(text, /돈.*(?:어려워|어려워요|없어요)/);
+          assert.doesNotMatch(
+            text,
+            /조건|확인|업무|다음에|나중에|월급|대출|일부|조금은/,
+          );
+        }
+        previous.push(d.reply);
+      }
+    }
+  }
+  for (const text of [
+    "친구에게 돈을 빌려달라고 정중하게 부탁하기",
+    "친구에게 빌린 돈을 돌려주는 날짜 정하기",
+    "친구가 책을 빌려달라는 부탁을 거절하기",
+    "돈이 아니라 책을 빌려달라는 부탁을 거절하기",
+    "친구의 돈 빌려달라는 부탁을 거절하지 않고 도와주고 싶다",
+  ])
+    assert.notEqual(bank.chooseDemoCase(text).id, "money-decline");
+  const refusal = bank.demoCases.find((r) => r.id === "decline");
+  for (const text of [...refusal.hints, ...refusal.suggestions]) {
+    assert.match(text, /어려|어렵/);
+    assert.doesNotMatch(text, /조건|먼저|확인|될까요|나중/);
+  }
 });
