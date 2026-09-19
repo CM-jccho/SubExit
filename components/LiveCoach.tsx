@@ -1521,13 +1521,26 @@ export default function LiveCoach({
               </aside>
               {recentCues.length > 0 && (
                 <section
-                  className="live-recent-cues"
-                  aria-label="최근 추천 한마디"
+                  className="live-recent-cues live-conversation-memory"
+                  aria-label="이번 대화 기록"
                 >
-                  <h2>방금 대화 돌아보기</h2>
+                  <div className="live-memory-head">
+                    <div>
+                      <span>이번 대화</span>
+                      <h2>
+                        {quickContext.partner.trim()
+                          ? quickContext.partner + "와의 대화"
+                          : "방금 대화"}
+                      </h2>
+                    </div>
+                    {partnerHistoryCount > 0 && (
+                      <span className="live-history-count">
+                        같은 상대 기록 {partnerHistoryCount}건
+                      </span>
+                    )}
+                  </div>
                   <p className="vn-caption">
-                    방금 주고받은 흐름과 추천 한마디를 확인해요. 같은 상황을
-                    다시 연습하며 내 말로 바꿔볼 수 있어요.
+                    상대 말과 받은 제안을 저장하면 다음 대화와 연습에 다시 쓸 수 있어요.
                   </p>
                   {(result ? recentCues.slice(0, -1) : recentCues)
                     .slice(-2)
@@ -1543,24 +1556,68 @@ export default function LiveCoach({
                         </small>
                       </article>
                     ))}
-                  {result && recentCues.length === 1 && (
-                    <p>다음 말을 준비해도 지금 받은 추천이 여기에 남아요.</p>
+                  {(liveSignals.numbers.length > 0 ||
+                    liveSignals.terms.length > 0) && (
+                    <div className="live-signal-summary" aria-label="대화에서 찾은 정보">
+                      <strong>대화에서 찾은 정보</strong>
+                      <div>
+                        {liveSignals.numbers.slice(0, 6).map((value) => (
+                          <span key={"number-" + value}># {value}</span>
+                        ))}
+                        {liveSignals.terms.slice(0, 6).map((value) => (
+                          <span key={"term-" + value}>{value}</span>
+                        ))}
+                      </div>
+                    </div>
                   )}
-                  {onPractice && (
+                  <div className="live-memory-actions">
                     <button
                       type="button"
-                      className="dd-primary live-recap-practice"
-                      disabled={phase !== "idle"}
-                      onClick={() => {
-                        if (!directEntry) cancel();
-                        onPractice();
-                      }}
+                      className="dd-primary"
+                      disabled={
+                        savingHistory ||
+                        phase !== "idle" ||
+                        recentCues.every((cue) => cue.response.sample)
+                      }
+                      onClick={() => void saveLiveConversation()}
                     >
-                      <Icon name="chat" size={18} />
-                      {directEntry
-                        ? "이 흐름으로 대화 연습하기"
-                        : "이 장면 다시 연습하기"}
+                      <Icon name="book" size={18} />
+                      {savingHistory ? "저장 중" : "이번 대화 저장"}
                     </button>
+                    {onPractice && (
+                      <button
+                        type="button"
+                        className="dd-secondary"
+                        disabled={phase !== "idle"}
+                        onClick={() => {
+                          if (!directEntry) cancel();
+                          onPractice();
+                        }}
+                      >
+                        <Icon name="chat" size={18} />
+                        이 흐름으로 다시 연습
+                      </button>
+                    )}
+                    {onRecords && partnerHistoryCount > 0 && (
+                      <button
+                        type="button"
+                        className="dd-link"
+                        onClick={onRecords}
+                      >
+                        같은 상대 기록 보기
+                        <Icon name="arrow" size={16} />
+                      </button>
+                    )}
+                  </div>
+                  {recentCues.every((cue) => cue.response.sample) && (
+                    <p className="vn-caption">
+                      샘플 대화는 내 기록에 저장하지 않아요.
+                    </p>
+                  )}
+                  {historyStatus && (
+                    <p className="live-history-status" role="status">
+                      {historyStatus}
+                    </p>
                   )}
                 </section>
               )}
