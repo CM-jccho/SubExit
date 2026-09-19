@@ -1133,3 +1133,121 @@
     min-height: 36px;
   }
 }
+
+
+/* Unified live-control card: next-line guidance, start/stop, status and context
+   belong to one surface. Supporting input/caption tools stay below. */
+.live-stream-workspace {
+  grid-template-columns: 1fr;
+}
+.live-stream-workspace > .live-stream-reply {
+  grid-column: 1;
+  grid-row: 1;
+}
+.live-stream-workspace > .dc-listen-panel {
+  grid-column: 1;
+  grid-row: 2;
+}
+.live-core-controls {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #c9d8bd;
+}
+.live-core-primary {
+  width: 100%;
+  min-height: 54px;
+  font-size: 16px;
+  font-weight: 800;
+}
+.live-core-state {
+  display: grid;
+  gap: 3px;
+}
+.live-core-state strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #38533d;
+  font-size: 12px;
+}
+.live-core-state span {
+  color: #687765;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.live-core-controls .live-context-compact {
+  margin: 0;
+  background: rgb(255 255 255 / 55%);
+}
+.live-core-controls .live-context-compact small {
+  display: none;
+}
+.live-core-controls .live-stream-note {
+  margin-top: 0;
+}
+.live-stream-workspace > .dc-listen-panel {
+  padding-top: 14px;
+}
+.live-stream-workspace > .dc-listen-panel > .coaching-input-navigation {
+  margin-top: 0;
+}
+@media (min-width: 701px) {
+  .live-stream-workspace > .live-stream-reply {
+    padding: 24px;
+  }
+  .live-core-controls {
+    grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.2fr);
+    align-items: center;
+  }
+  .live-core-primary {
+    grid-column: 1;
+  }
+  .live-core-state {
+    grid-column: 1;
+  }
+  .live-core-controls .live-context-compact {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  .live-core-controls > .live-stream-note,
+  .live-core-controls > .dd-error,
+  .live-core-controls > div:has(.dd-error) {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 700px) {
+  .live-stream-workspace {
+    gap: 10px;
+  }
+  .live-stream-workspace > .live-stream-reply {
+    padding: 14px;
+  }
+  .live-core-controls {
+    margin-top: 12px;
+    padding-top: 12px;
+    gap: 8px;
+  }
+  .live-core-primary {
+    min-height: 50px;
+    font-size: 15px;
+  }
+  .live-core-controls .live-context-compact {
+    padding: 8px 10px;
+  }
+  .live-core-controls .live-context-compact strong {
+    font-size: 12px;
+  }
+  .live-core-controls .live-context-compact .dd-secondary {
+    min-height: 36px;
+    padding: 6px 9px;
+  }
+  .live-remember-card {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+  .live-stream-workspace > .dc-listen-panel {
+    padding: 12px;
+  }
+}
