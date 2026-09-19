@@ -52,7 +52,6 @@ export default function LiveSpeechPanel({
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [speechConsent, setSpeechConsent] = useState(false);
   const speech = useRef<SpeechStream>();
   const queue = useRef<LatestCoachQueue<CoachResponse>>();
   const permission = useRef<AbortController>();
@@ -161,7 +160,7 @@ export default function LiveSpeechPanel({
   }
   async function start() {
     const Engine = speechConstructor();
-    if (!Engine || !available || !speechConsent || !consent || !adult) return;
+    if (!Engine || !available || !consent || !adult) return;
     stop();
     const id = ++generation.current;
     setError("");
@@ -247,13 +246,6 @@ export default function LiveSpeechPanel({
       setNotice("AI 전송 동의를 확인하면 바로 실시간 듣기를 시작할 수 있어요.");
       return;
     }
-    if (!speechConsent) {
-      setNotice("아래 실시간 자막 사용 안내를 확인하면 바로 시작할 수 있어요.");
-      document
-        .getElementById("live-speech-consent")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
     void start();
   }
   return (
@@ -309,33 +301,6 @@ export default function LiveSpeechPanel({
               </span>
             </div>
           </section>
-
-          {(!consent || !adult || !speechConsent) && (
-            <section className="live-start-requirements" aria-label="실시간 듣기 시작 전 확인">
-              {consentControl}
-              {!speechConsent && (
-                <div id="live-speech-consent" className="live-start-consent">
-                  <div>
-                    <strong>실시간 자막 사용 확인</strong>
-                    <p>
-                      브라우저 음성 인식으로 상대 말을 글로 바꾸고, 인식된 문장을 Gemini에 보내 다음 한마디를 만들어요.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="dd-secondary"
-                    disabled={active}
-                    onClick={() => {
-                      setSpeechConsent(true);
-                      setNotice("준비됐어요. 위의 ‘실시간 듣기 시작’을 눌러주세요.");
-                    }}
-                  >
-                    확인
-                  </button>
-                </div>
-              )}
-            </section>
-          )}
 
           {!available && (
             <p role="status" className="live-stream-note">
