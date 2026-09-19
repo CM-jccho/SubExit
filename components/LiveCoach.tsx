@@ -755,8 +755,10 @@ export default function LiveCoach({
             <span>처음 한 번만 확인해요</span>
             <strong>AI 대화 도움을 사용하려면 전송 동의가 필요해요.</strong>
             <p>
-              동의하면 이번 이용 중 다시 묻지 않아요. 음성 기능은 실제로 누를 때
-              Safari·Chrome이 마이크 권한을 별도로 물어봐요.
+              음성·문장은 코칭을 위해 Gemini에 전송돼요. 실시간 자막을 쓰면
+              브라우저 음성 인식 서비스가 음성을 글로 바꿔요. 동의하면 이번 이용
+              중 다시 묻지 않고, 마이크 권한은 실제 기능을 누를 때 Safari·Chrome이
+              별도로 물어봐요.
             </p>
           </div>
           <AIConsent
