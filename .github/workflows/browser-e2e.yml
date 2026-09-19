@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: browser-e2e-main
+  cancel-in-progress: true
+
 jobs:
   chrome-safari-mobile:
     runs-on: ubuntu-latest
