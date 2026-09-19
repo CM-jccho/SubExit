@@ -58,10 +58,10 @@ export default function HomeActions({
             <Companion small mood="hello" />
           </div>
           <div className="coach-presence-copy">
-            <span>지금 대화 도움</span>
+            <span>실시간 대화 도움</span>
             <p>
-              상대의 말을 들려주거나 적어주세요.
-              <br />상황과 내 목표를 바탕으로 지금 필요한 한마디를 제안해요.
+              상대의 말을 들으면 지금 필요한 다음 한마디를 바로 제안해요.
+              <br />직접 입력과 짧게 듣기는 필요할 때 보조로 사용할 수 있어요.
             </p>
           </div>
         </div>
@@ -77,15 +77,15 @@ export default function HomeActions({
               “제가 먼저 공유했어야 했어요. 지금 상황부터 바로 말씀드릴게요.”
             </p>
           </div>
-          <ol className="practice-loop" aria-label="지금 대화 도움받는 과정">
+          <ol className="practice-loop" aria-label="실시간 대화 도움 과정">
             <li>
-              <span>상대 말 이해</span>
+              <span>상대 말 듣기</span>
             </li>
             <li>
               <span>다음 한마디</span>
             </li>
             <li>
-              <span>내 말로 이어가기</span>
+              <span>대화 이어가기</span>
             </li>
           </ol>
           <button
@@ -94,7 +94,7 @@ export default function HomeActions({
             aria-describedby="live-input-limit"
             onClick={onLive}
           >
-            지금 대화 도움받기 <Icon name="arrow" size={20} />
+            실시간 대화 도움 시작 <Icon name="arrow" size={20} />
           </button>
           <p className="purpose-limit browser-capability" id="live-input-limit">
             <Icon name={speechSupported ? "mic" : "keyboard"} size={16} />
@@ -115,10 +115,14 @@ export default function HomeActions({
           </button>
         </section>
       )}
+      <div className="home-secondary-heading">
+        <span>필요할 때 이어서</span>
+        <p>연습과 복기는 실시간 대화를 더 잘 이어가기 위한 보조 도구예요.</p>
+      </div>
       <div
-        className="home-core-options"
+        className="home-core-options home-secondary-tools"
         role="group"
-        aria-label="대화 전후의 핵심 기능"
+        aria-label="대화 전후 보조 기능"
       >
         <button
           className="dd-secondary"
@@ -127,8 +131,8 @@ export default function HomeActions({
           onClick={() => onNavigate("library")}
         >
           <Icon name="chat" size={22} />
-          <strong>대화 전 · 미리 연습하기</strong>
-          <span>중요한 대화 전에, AI 상대와 실제처럼 먼저 말해봐요.</span>
+          <strong>미리 연습</strong>
+          <span>중요한 장면을 AI 상대와 먼저 말해봐요.</span>
         </button>
         <button
           className="dd-secondary"
@@ -137,8 +141,8 @@ export default function HomeActions({
           onClick={() => onNavigate("recording")}
         >
           <Icon name="mic" size={22} />
-          <strong>대화 후 · 내 대화 복기</strong>
-          <span>끝난 대화에서 잘한 말과 다음에 바꿔볼 한마디를 찾아요.</span>
+          <strong>대화 복기</strong>
+          <span>끝난 대화를 돌아보고 같은 장면을 다시 연습해요.</span>
         </button>
       </div>
       {error && (
