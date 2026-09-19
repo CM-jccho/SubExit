@@ -16,7 +16,17 @@ export default function CoachingInputTabs({
 }) {
   return (
     <div className="coaching-input-navigation">
-      <div className="dc-mode-switch" role="group" aria-label="입력 방식">
+      <div className="dc-mode-switch" role="group" aria-label="대화 도움 방식">
+        <button
+          className={value === "continuous" ? "active primary-mode" : ""}
+          aria-pressed={value === "continuous"}
+          disabled={busy || !supportsLive}
+          aria-describedby={!supportsLive ? "live-support-hint" : undefined}
+          onClick={() => onChange("continuous")}
+        >
+          <Icon name="mic" size={18} />
+          실시간 도움
+        </button>
         <button
           className={value === "voice" ? "active" : ""}
           aria-pressed={value === "voice"}
@@ -24,7 +34,7 @@ export default function CoachingInputTabs({
           onClick={() => onChange("voice")}
         >
           <Icon name="mic" size={18} />
-          들려주기
+          짧게 듣기
         </button>
         <button
           className={value === "text" ? "active" : ""}
@@ -34,15 +44,6 @@ export default function CoachingInputTabs({
         >
           <Icon name="keyboard" size={18} />
           직접 입력
-        </button>
-        <button
-          className={value === "continuous" ? "active" : ""}
-          aria-pressed={value === "continuous"}
-          disabled={busy || !supportsLive}
-          aria-describedby={!supportsLive ? "live-support-hint" : undefined}
-          onClick={() => onChange("continuous")}
-        >
-          실시간 자막
         </button>
       </div>
       {!supportsLive && (
