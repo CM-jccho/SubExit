@@ -2,7 +2,11 @@
 import { useEffect, useState } from "react";
 import { listSessions, type VoiceSession } from "@/lib/voice-notebook";
 import type { WorkspaceView } from "@/lib/workspace-navigation";
-import { speechConstructor } from "@/lib/live-speech";
+import {
+  speechSupport,
+  speechSupportMessage,
+  type SpeechSupportReason,
+} from "@/lib/live-speech";
 import { Companion, Icon } from "./CompanionUI";
 
 export default function HomeActions({
@@ -17,9 +21,12 @@ export default function HomeActions({
   const [recent, setRecent] = useState<VoiceSession>();
   const [error, setError] = useState("");
   const [speechSupported, setSpeechSupported] = useState<boolean | null>(null);
+  const [speechReason, setSpeechReason] = useState<SpeechSupportReason>();
   useEffect(() => {
     let active = true;
-    setSpeechSupported(!!speechConstructor());
+    const support = speechSupport();
+    setSpeechSupported(!!support.constructor);
+    setSpeechReason(support.reason);
     listSessions()
       .then((rows) => {
         if (active)
@@ -95,7 +102,7 @@ export default function HomeActions({
               ? "음성 또는 문자로 상대의 말을 입력할 수 있어요."
               : speechSupported
                 ? "대면 대화나 다른 기기 스피커폰 옆에서 실시간 자막을 사용할 수 있어요."
-                : "이 브라우저는 실시간 자막이 제한돼요. 직접 입력하거나 짧게 녹음할 수 있어요."}
+                : speechSupportMessage(speechReason)}
           </p>
         </div>
       </div>
