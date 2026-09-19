@@ -300,3 +300,131 @@
     flex-shrink: 0;
   }
 }
+
+
+/* Realtime help hierarchy: primary action first, requirements second,
+   transcript/result next, detailed guidance last. */
+.live-primary-action {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 18px;
+  border: 1px solid #c9d9bd;
+  border-radius: 18px;
+  background: #eef4e7;
+}
+.live-primary-action.is-active {
+  background: #e8f0df;
+}
+.live-primary-kicker {
+  display: block;
+  margin-bottom: 4px;
+  color: #537044;
+  font-size: var(--t-cap);
+  font-weight: 750;
+}
+.live-primary-action h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #294132;
+}
+.live-primary-action p {
+  margin: 6px 0 0;
+  color: #536053;
+  font-size: var(--t-body);
+  line-height: 1.65;
+}
+.live-primary-cta {
+  width: 100%;
+  min-height: 58px;
+  font-size: 17px;
+  font-weight: 750;
+}
+.live-primary-status {
+  display: grid;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid #d5e1cb;
+}
+.live-primary-status strong,
+.live-primary-status span {
+  display: block;
+}
+.live-primary-status span {
+  color: #64715d;
+  font-size: var(--t-cap);
+  line-height: 1.6;
+}
+.live-start-requirements {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.live-start-consent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid #d7dfcf;
+  border-radius: 14px;
+  background: #f5f6ef;
+}
+.live-start-consent strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: var(--t-body);
+}
+.live-start-consent p {
+  margin: 0;
+  color: #62705a;
+  font-size: var(--t-cap);
+  line-height: 1.55;
+}
+.live-caption-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.live-caption-head h2 {
+  margin: 0;
+}
+.live-caption-to-text {
+  width: 100%;
+}
+.live-guide-detail {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+}
+.live-guide-detail strong {
+  font-size: var(--t-body);
+}
+.live-stream-guide {
+  border-left: 0;
+  border: 1px solid #dde4d6;
+  border-radius: 14px;
+  background: #f7f8f2;
+}
+.live-stream-guide summary {
+  color: #50624e;
+}
+@media (max-width: 540px) {
+  .live-primary-action {
+    padding: 16px;
+  }
+  .live-primary-action h2 {
+    font-size: 19px;
+  }
+  .live-primary-cta {
+    min-height: 56px;
+  }
+  .live-start-consent {
+    grid-template-columns: 1fr;
+  }
+  .live-start-consent .dd-secondary {
+    width: 100%;
+  }
+}
