@@ -401,7 +401,7 @@ export default function LiveCoach({
     setResult(null);
     if (!directEntry) setInput("");
     setSeconds(0);
-    setNotice("");
+    setNotice("마이크 권한을 확인하고 있어요.");
     setClip(null);
     try {
       if (
@@ -411,10 +411,12 @@ export default function LiveCoach({
         throw new Error(
           "이 브라우저에서는 마이크 입력을 지원하지 않아요. 직접 입력해 주세요.",
         );
+      // Keep the permission request in the direct tap call stack. Safari is
+      // strict about media permission prompts originating from a user gesture.
       const permission = new AbortController();
       request.current = permission;
-      const media = await requestMicrophone({ audio: true }, permission.signal);
-      if (version.current !== id) {
+      const media = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (permission.signal.aborted || version.current !== id) {
         media.getTracks().forEach((t) => t.stop());
         return;
       }
@@ -484,7 +486,7 @@ export default function LiveCoach({
         setInputMode("text");
         setError(
           e instanceof DOMException && e.name === "NotAllowedError"
-            ? "마이크 권한이 필요해요. 주소창의 권한 설정을 확인해 주세요."
+            ? "마이크 사용이 거부됐어요. 다시 누르면 Safari가 권한을 물어보고, 이전에 거부했다면 주소창의 사이트 설정에서 마이크를 허용해 주세요."
             : e instanceof Error
               ? e.message
               : "마이크를 시작하지 못했어요.",
