@@ -664,3 +664,100 @@
     width: 100%;
   }
 }
+
+
+/* Quick setup uses tap choices first; text fields appear only for custom values. */
+.live-choice-field {
+  display: grid;
+  gap: 8px;
+}
+.live-choice-field > span {
+  color: #536053;
+  font-size: var(--t-cap);
+  font-weight: 750;
+}
+.live-choice-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.live-choice-grid button {
+  min-height: 38px;
+  padding: 7px 11px;
+  border: 1px solid #d3ddcc;
+  border-radius: 999px;
+  background: #fff;
+  color: #536053;
+  font-size: var(--t-cap);
+  font-weight: 700;
+}
+.live-choice-grid button.active,
+.live-choice-grid button[aria-pressed="true"] {
+  border-color: #6f9365;
+  background: #e6efdd;
+  color: #294f35;
+}
+.live-choice-field > input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #bfcfb8;
+  border-radius: 12px;
+  padding: 9px 11px;
+  background: #fff;
+  color: #294132;
+  font-size: var(--t-body);
+}
+.live-context-running-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.live-context-running-summary span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #e8efe2;
+  color: #435744;
+  font-size: var(--t-cap);
+}
+.live-context-running-summary strong {
+  color: #294132;
+  font-weight: 750;
+}
+.live-context-setup.is-running {
+  padding-block: 9px;
+}
+.live-context-setup.is-running .live-context-setup-head {
+  margin-bottom: 7px;
+}
+@media (max-width: 700px) {
+  .live-choice-field {
+    gap: 6px;
+  }
+  .live-choice-grid {
+    gap: 5px;
+  }
+  .live-choice-grid button {
+    min-height: 34px;
+    padding: 6px 9px;
+    font-size: 11px;
+  }
+  .live-choice-field > input {
+    min-height: 38px;
+    padding: 7px 9px;
+    font-size: 13px;
+  }
+  .live-context-primary-fields {
+    gap: 10px;
+  }
+  .live-context-running-summary {
+    gap: 6px;
+  }
+  .live-context-running-summary span {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+}
