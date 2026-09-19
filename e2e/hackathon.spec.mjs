@@ -267,7 +267,9 @@ test("next-line guidance is above listening controls and settings are optional",
   await expect(page.getByText(SUGGESTION).first()).toBeVisible({
     timeout: 10_000,
   });
-  await expect(page.getByText(/금요일까지 꼭 끝내 주세요/).first()).toBeVisible();
+  await expect(
+    page.locator(".live-remember-card").getByText(/금요일까지 꼭 끝내 주세요/),
+  ).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -294,7 +296,8 @@ test("realtime core flow listens, suggests, saves, and opens records", async ({
   await page.getByRole("button", { name: "대화 도움 시작" }).click();
 
   await expect(page.getByText("상대 말을 듣고 있어요").first()).toBeVisible();
-  await expect(page.getByText(OPPONENT).first()).toBeVisible();
+  await expect(page.getByText("상대 말 확인")).toBeVisible();
+  await expect(page.locator(".live-caption-secondary")).toBeVisible();
   await expect(page.getByText(SUGGESTION).first()).toBeVisible({
     timeout: 10_000,
   });
