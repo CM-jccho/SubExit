@@ -818,13 +818,17 @@
 .coaching-fallback-modes {
   margin-top: 7px;
 }
-.coaching-fallback-modes > summary {
+.coaching-fallback-modes > summary,
+.coaching-fallback-label {
   min-height: 36px;
   display: flex;
   align-items: center;
   color: #657260;
   font-size: var(--t-cap);
   font-weight: 700;
+}
+.coaching-fallback-label {
+  margin: 0 0 4px;
 }
 .coaching-fallback-modes .dc-mode-switch {
   display: grid;
@@ -846,8 +850,12 @@
     width: 30px;
     height: 30px;
   }
-  .coaching-fallback-modes > summary {
+  .coaching-fallback-modes > summary,
+  .coaching-fallback-label {
     min-height: 32px;
     font-size: 11px;
+  }
+  .dc-quick-help {
+    padding-bottom: 100px;
   }
 }
