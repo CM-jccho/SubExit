@@ -308,9 +308,10 @@ export default function LiveCoach({
   }, [consent, prepared]);
   const quickDirty =
     directEntry &&
+    !historySaved &&
     (!!input.trim() ||
       !!clip ||
-      (recentCues.length > 0 && !historySaved) ||
+      recentCues.length > 0 ||
       !!quickContext.goal.trim() ||
       !!quickContext.partner.trim() ||
       !!quickContext.situation.trim() ||
@@ -1502,6 +1503,7 @@ export default function LiveCoach({
                       value={input}
                       disabled={phase !== "idle"}
                       onChange={(e) => {
+                        setHistorySaved(false);
                         setInput(e.target.value);
                         setResult(null);
                       }}
