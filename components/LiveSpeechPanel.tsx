@@ -22,6 +22,7 @@ export default function LiveSpeechPanel({
   adult,
   sample,
   onActiveChange,
+  onCue,
   consentControl,
   available = true,
   unavailableMessage,
@@ -42,6 +43,7 @@ export default function LiveSpeechPanel({
   adult: boolean;
   sample: boolean;
   onActiveChange: (active: boolean) => void;
+  onCue?: (cue: { opponent: string; response: CoachResponse }) => void;
 }) {
   const character = useCompanion();
   const [state, setState] = useState<"idle" | "connecting" | "listening">(
@@ -141,7 +143,10 @@ export default function LiveSpeechPanel({
         return data;
       },
       result: (data, text) => {
-        if (id === generation.current) setReply({ data, text });
+        if (id === generation.current) {
+          setReply({ data, text });
+          onCue?.({ opponent: text, response: data });
+        }
       },
       busy: (busy) => {
         if (id === generation.current) setWorking(busy);
