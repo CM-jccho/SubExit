@@ -15,6 +15,7 @@ import { practiceSampleContext } from "@/lib/demo-bank";
 import { aiFetch } from "@/lib/ai-client";
 import QuotaHelp from "./QuotaHelp";
 import SamplePreview from "./SamplePreview";
+import InputDialog from "./InputDialog";
 import { useEffect, useRef, useState } from "react";
 import AudioPlayer, { inspectAudio } from "./AudioPlayer";
 import { useCompanion } from "./CompanionTheme";
@@ -80,6 +81,7 @@ export default function LiveCoach({
   const [liveSupportReason, setLiveSupportReason] =
     useState<SpeechSupportReason>();
   const [samplePreviewOpen, setSamplePreviewOpen] = useState(false);
+  const [contextOpen, setContextOpen] = useState(false);
   const [voiceStyle, setVoiceStyle] = useState<"continuous" | "short">(
     "continuous",
   );
@@ -200,21 +202,14 @@ export default function LiveCoach({
       const now = new Date().toISOString();
       const cleanPartner = profile.partner.trim() || "대화 상대";
       const signals = mergeConversationSignals(
-        ...recentCues.map((cue) =>
-          extractConversationSignals(
-            cue.opponent + "\n" + cue.response.suggestion,
-          ),
-        ),
+        ...recentCues.map((cue) => extractConversationSignals(cue.opponent)),
       );
       const turns: VoiceTurn[] = recentCues.map((cue, index) => ({
         id: "turn-" + crypto.randomUUID(),
         role: "recording",
         text: cue.opponent,
         suggestions: [cue.response.suggestion],
-        terms: mergeConversationSignals(
-          extractConversationSignals(cue.opponent),
-          extractConversationSignals(cue.response.suggestion),
-        ).terms,
+        terms: extractConversationSignals(cue.opponent).terms,
         createdAt: new Date(Date.now() + index).toISOString(),
       }));
       const groupKey = partnerGroupKey(cleanPartner);
@@ -710,15 +705,14 @@ export default function LiveCoach({
     coaching: "다음 한 문장을 준비 중 · 마이크 꺼짐",
   }[phase];
   const liveSignals = mergeConversationSignals(
-    ...recentCues.map((cue) =>
-      extractConversationSignals(
-        cue.opponent + "\n" + cue.response.suggestion,
-      ),
-    ),
+    ...recentCues.map((cue) => extractConversationSignals(cue.opponent)),
   );
-  const liveSetupComplete =
-    !directEntry ||
-    (!!quickContext.partner.trim() && !!quickContext.goal.trim());
+  const liveSetupComplete = true;
+  const liveRememberItems = [
+    ...liveSignals.commitments.slice(0, 3),
+    ...liveSignals.numbers.slice(0, 3).map((value) => "숫자·일정 · " + value),
+    ...liveSignals.terms.slice(0, 2).map((value) => "용어 · " + value),
+  ];
   const contextControl = directEntry ? (
     <section
       className={
