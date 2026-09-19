@@ -270,12 +270,16 @@ export default function LiveSpeechPanel({
               <h2>
                 {active
                   ? "상대 말을 듣고 있어요"
-                  : "상대 말을 들으면서 다음 한마디를 받아보세요"}
+                  : reply || caption.final
+                    ? "다음 말을 이어가 볼까요?"
+                    : "상대 말을 들으면 다음 한마디를 바로 보여드려요"}
               </h2>
               <p>
                 {active
                   ? "자막과 AI 제안이 대화 흐름에 맞춰 계속 갱신돼요."
-                  : "버튼을 누르고 상대의 말을 들려주면 자막과 다음 한마디를 바로 이어서 보여드려요."}
+                  : reply || caption.final
+                    ? "다시 듣기를 시작하면 다음 발화에 맞춰 새 한마디를 준비해요."
+                    : "대화 상대와 목표를 확인하고 시작하세요. 자막은 보조로 기록돼요."}
               </p>
             </div>
             <button
@@ -284,7 +288,11 @@ export default function LiveSpeechPanel({
               onClick={handlePrimaryAction}
             >
               <Icon name={active ? "pause" : "mic"} size={22} />
-              {active ? "듣기 멈춤" : "실시간 듣기 시작"}
+              {active
+                ? "내가 말할게요"
+                : reply || caption.final
+                  ? "다시 상대 말 듣기"
+                  : "대화 도움 시작"}
             </button>
             <div className="live-primary-status" role="status">
               <strong
@@ -403,7 +411,7 @@ export default function LiveSpeechPanel({
                 브라우저 음성 인식 서비스가 음성을 글로 바꾸고, 확정된 문장을 Gemini에 보내 다음 한마디를 만들어요.
               </p>
               <p>
-                내 목소리와 상대를 자동 구분하지 않아요. 내가 말할 때는 ‘듣기 멈춤’을 눌러주세요.
+                내 목소리와 상대를 자동 구분하지 않아요. 내가 말할 때는 ‘내가 말할게요’를 눌러주세요.
               </p>
               <p>
                 자막은 인식되는 대로 보여주고, AI 제안 속도는 연결 상태에 따라 달라질 수 있어요.
