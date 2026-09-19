@@ -19,7 +19,18 @@ import { useEffect, useRef, useState } from "react";
 import AudioPlayer, { inspectAudio } from "./AudioPlayer";
 import { useCompanion } from "./CompanionTheme";
 import CompanionNudge from "./CompanionNudge";
-import type { AudioClip } from "@/lib/voice-notebook";
+import {
+  listSessions,
+  putSession,
+  type AudioClip,
+  type VoiceSession,
+  type VoiceTurn,
+} from "@/lib/voice-notebook";
+import {
+  extractConversationSignals,
+  mergeConversationSignals,
+  partnerGroupKey,
+} from "@/lib/conversation-signals";
 import { scenarios, tones, type Tone } from "@/lib/scenarios";
 import {
   emptyProfile,
@@ -34,6 +45,7 @@ export default function LiveCoach({
   onBack,
   onDemo,
   onPractice,
+  onRecords,
   profile: initialProfile,
   directEntry = false,
   savedProfiles = [],
@@ -41,6 +53,7 @@ export default function LiveCoach({
   onBack: () => void;
   onDemo: () => void;
   onPractice?: () => void;
+  onRecords?: () => void;
   profile?: ContextProfile;
   directEntry?: boolean;
   savedProfiles?: ConversationCard[];
@@ -91,6 +104,9 @@ export default function LiveCoach({
   const [recentCues, setRecentCues] = useState<
     { opponent: string; response: CoachResponse; goal?: string }[]
   >([]);
+  const [historyStatus, setHistoryStatus] = useState("");
+  const [partnerHistoryCount, setPartnerHistoryCount] = useState(0);
+  const [savingHistory, setSavingHistory] = useState(false);
   const profile: ContextProfile | undefined = directEntry
     ? {
         ...quickContext,
@@ -109,6 +125,118 @@ export default function LiveCoach({
     setResult(null);
     sampleHistory.current = [];
     setNotice("상대와 목표를 바꿨어요. 입력한 상대 말은 그대로예요.");
+  }
+  function addRecentCue(cue: {
+    opponent: string;
+    response: CoachResponse;
+    goal?: string;
+  }) {
+    setRecentCues((items) => {
+      const previous = items.at(-1);
+      const duplicate =
+        previous?.opponent === cue.opponent &&
+        previous?.response.suggestion === cue.response.suggestion;
+      return duplicate ? items : [...items.slice(-11), cue];
+    });
+  }
+  useEffect(() => {
+    const key = partnerGroupKey(quickContext.partner);
+    if (!directEntry || !key) {
+      setPartnerHistoryCount(0);
+      return;
+    }
+    let active = true;
+    void listSessions()
+      .then((rows) => {
+        if (!active) return;
+        setPartnerHistoryCount(
+          rows.filter(
+            (session) =>
+              session.liveMeta?.groupKey === key ||
+              partnerGroupKey(session.context?.partner || "") === key,
+          ).length,
+        );
+      })
+      .catch(() => {
+        if (active) setPartnerHistoryCount(0);
+      });
+    return () => {
+      active = false;
+    };
+  }, [directEntry, quickContext.partner]);
+
+  async function saveLiveConversation() {
+    if (!profile || recentCues.length === 0 || savingHistory) return;
+    setSavingHistory(true);
+    setHistoryStatus("");
+    try {
+      const now = new Date().toISOString();
+      const cleanPartner = profile.partner.trim() || "대화 상대";
+      const signals = mergeConversationSignals(
+        ...recentCues.map((cue) =>
+          extractConversationSignals(
+            cue.opponent + "\n" + cue.response.suggestion,
+          ),
+        ),
+      );
+      const turns: VoiceTurn[] = recentCues.map((cue, index) => ({
+        id: "turn-" + crypto.randomUUID(),
+        role: "recording",
+        text: cue.opponent,
+        suggestions: [cue.response.suggestion],
+        terms: mergeConversationSignals(
+          extractConversationSignals(cue.opponent),
+          extractConversationSignals(cue.response.suggestion),
+        ).terms,
+        createdAt: new Date(Date.now() + index).toISOString(),
+      }));
+      const groupKey = partnerGroupKey(cleanPartner);
+      const session: VoiceSession = {
+        id: "session-" + crypto.randomUUID(),
+        title: (cleanPartner + " · 실시간 대화").slice(0, 80),
+        kind: "recording",
+        context: {
+          ...profile,
+          title:
+            profile.title && profile.title !== "지금 나누는 대화"
+              ? profile.title
+              : cleanPartner + " 대화",
+        },
+        industry: "",
+        turns,
+        createdAt: now,
+        updatedAt: now,
+        liveMeta: {
+          version: 1,
+          source: "live-help",
+          groupKey,
+          partner: cleanPartner,
+          signals,
+        },
+      };
+      await putSession(session);
+      const rows = await listSessions();
+      const count = rows.filter(
+        (item) =>
+          item.liveMeta?.groupKey === groupKey ||
+          partnerGroupKey(item.context?.partner || "") === groupKey,
+      ).length;
+      setPartnerHistoryCount(count);
+      const parts = ["대화를 내 기록에 저장했어요."];
+      if (count > 1) parts.push("같은 상대 기록 " + count + "건으로 묶여요.");
+      if (signals.numbers.length)
+        parts.push("숫자·날짜·금액 " + signals.numbers.length + "개");
+      if (signals.terms.length) parts.push("용어 " + signals.terms.length + "개");
+      setHistoryStatus(parts.join(" "));
+    } catch (e) {
+      setHistoryStatus(
+        e instanceof Error
+          ? e.message
+          : "대화를 저장하지 못했어요. 다시 시도해 주세요.",
+      );
+    } finally {
+      setSavingHistory(false);
+    }
   }
   const version = useRef(0),
     busy = useRef(false),
