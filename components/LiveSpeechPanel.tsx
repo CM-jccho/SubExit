@@ -270,94 +270,7 @@ export default function LiveSpeechPanel({
         }
       >
         <section className="dc-listen-panel">
-          <section className={"live-primary-action" + (active ? " is-active" : "")}>
-            <div>
-              <span className="live-primary-kicker">실시간 대화 도움</span>
-              <h2>
-                {active
-                  ? "상대 말을 듣고 있어요"
-                  : reply || caption.final
-                    ? "다음 말을 이어가 볼까요?"
-                    : "상대 말을 들으면 다음 한마디를 바로 보여드려요"}
-              </h2>
-              <p>
-                {active
-                  ? "자막과 AI 제안이 대화 흐름에 맞춰 계속 갱신돼요."
-                  : reply || caption.final
-                    ? "다시 듣기를 시작하면 다음 발화에 맞춰 새 한마디를 준비해요."
-                    : "대화 상대와 목표를 확인하고 시작하세요. 자막은 보조로 기록돼요."}
-              </p>
-            </div>
-            <button
-              type="button"
-              className={active ? "dd-secondary live-primary-cta" : "dd-primary live-primary-cta"}
-              onClick={handlePrimaryAction}
-            >
-              <Icon name={active ? "pause" : "mic"} size={22} />
-              {active
-                ? "내가 말할게요"
-                : !readyToStart
-                  ? "상대·목표 선택 후 시작"
-                  : reply || caption.final
-                    ? "다시 상대 말 듣기"
-                    : "대화 도움 시작"}
-            </button>
-            <div className="live-primary-status" role="status">
-              <strong
-                className={
-                  "mic-status " +
-                  (state === "listening" ? "is-listening" : "")
-                }
-              >
-                <i aria-hidden="true" />
-                {state === "listening"
-                  ? "계속 듣고 있어요"
-                  : state === "connecting"
-                    ? "마이크와 음성 인식을 연결하고 있어요"
-                    : "준비 전"}
-              </strong>
-              <span>
-                {state === "listening"
-                  ? "확정된 말을 바탕으로 다음 한마디를 자동으로 갱신해요."
-                  : "실시간 도움을 가장 먼저 시작하고, 필요한 설정은 아래에서 최소한으로 확인해요."}
-              </span>
-            </div>
-          </section>
-
-          {contextControl}
           {inputTabs}
-
-          {!available && (
-            <p role="status" className="live-stream-note">
-              {unavailableMessage ||
-                "AI 연결을 확인하지 못해 듣기를 시작할 수 없어요. 잠시 후 다시 열어 주세요."}
-            </p>
-          )}
-          {error && (
-            <div>
-              <p className="dd-error" role="alert">
-                {error}
-              </p>
-              <QuotaHelp error={error} />
-              {state === "listening" && (
-                <button
-                  className="dd-secondary"
-                  onClick={() => {
-                    setError("");
-                    makeQueue(generation.current);
-                    queue.current?.update(finalText.current);
-                  }}
-                >
-                  코칭 다시 연결
-                </button>
-              )}
-            </div>
-          )}
-          {notice && (
-            <p role="status" className="live-stream-note">
-              {notice}
-            </p>
-          )}
 
           {(active || caption.final || caption.interim || reply) && (
             <details className="live-caption live-caption-secondary">
@@ -402,29 +315,16 @@ export default function LiveSpeechPanel({
           )}
 
           <details className="live-stream-guide" aria-labelledby="live-guide-heading">
-            <summary id="live-guide-heading">설정 · 개인정보 · 사용 방법</summary>
-            {!contextControl && profile && (
-              <dl className="live-context-summary">
-                <div>
-                  <dt>대화 상대</dt>
-                  <dd>{profile.partner}</dd>
-                </div>
-                <div>
-                  <dt>내 목표</dt>
-                  <dd>{profile.goal}</dd>
-                </div>
-              </dl>
-            )}
+            <summary id="live-guide-heading">음성 인식 · 개인정보 · 사용 방법</summary>
             <div className="live-guide-detail">
-              <strong>실시간 자막은 이렇게 처리해요</strong>
+              <strong>실시간 듣기는 이렇게 사용해요</strong>
               <p>
-                브라우저 음성 인식 서비스가 음성을 글로 바꾸고, 확정된 문장을 Gemini에 보내 다음 한마디를 만들어요.
+                브라우저 음성 인식 서비스가 상대 말을 글로 바꾸고, 확정된 문장을
+                Gemini에 보내 다음 한마디를 만들어요.
               </p>
               <p>
-                내 목소리와 상대를 자동 구분하지 않아요. 내가 말할 때는 ‘내가 말할게요’를 눌러주세요.
-              </p>
-              <p>
-                자막은 인식되는 대로 보여주고, AI 제안 속도는 연결 상태에 따라 달라질 수 있어요.
+                내가 말할 때는 상단의 ‘내가 말할게요’를 눌러 잠시 멈추고,
+                말한 뒤 다시 상대 말 듣기를 시작하면 돼요.
               </p>
             </div>
           </details>
@@ -475,6 +375,68 @@ export default function LiveSpeechPanel({
               <span>실제 대화 중에는 이 영역만 보고 말해도 돼요.</span>
             </div>
           )}
+
+          <section className="live-core-controls" aria-label="실시간 대화 제어">
+            <button
+              type="button"
+              className={
+                active
+                  ? "dd-secondary live-core-primary"
+                  : "dd-primary live-core-primary"
+              }
+              onClick={handlePrimaryAction}
+            >
+              <Icon name={active ? "pause" : "mic"} size={21} />
+              {active
+                ? "내가 말할게요"
+                : reply || caption.final
+                  ? "다시 상대 말 듣기"
+                  : "대화 도움 시작"}
+            </button>
+
+            <div className="live-core-state" role="status">
+              <strong
+                className={
+                  "mic-status " +
+                  (state === "listening" ? "is-listening" : "")
+                }
+              >
+                <i aria-hidden="true" />
+                {state === "listening"
+                  ? "상대 말을 듣고 있어요"
+                  : state === "connecting"
+                    ? "마이크 연결 중"
+                    : "듣기 전"}
+              </strong>
+              <span>
+                {state === "listening"
+                  ? "새 말이 들어오면 위의 한마디가 자동으로 갱신돼요."
+                  : "설정 없이 바로 시작하거나, 필요할 때 상대·목표만 바꿀 수 있어요."}
+              </span>
+            </div>
+
+            {contextControl}
+
+            {!available && (
+              <p role="status" className="live-stream-note">
+                {unavailableMessage ||
+                  "AI 연결을 확인하지 못해 듣기를 시작할 수 없어요. 잠시 후 다시 열어 주세요."}
+              </p>
+            )}
+            {error && (
+              <div>
+                <p className="dd-error" role="alert">
+                  {error}
+                </p>
+                <QuotaHelp error={error} />
+              </div>
+            )}
+            {notice && (
+              <p role="status" className="live-stream-note">
+                {notice}
+              </p>
+            )}
+          </section>
 
           <section className="live-remember-card" aria-label="이번 대화에서 꼭 기억할 것">
             <div className="live-remember-heading">
