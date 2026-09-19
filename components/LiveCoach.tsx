@@ -680,6 +680,13 @@ export default function LiveCoach({
     transcribing: "들린 말을 글로 바꾸는 중 · 마이크 꺼짐",
     coaching: "다음 한 문장을 준비 중 · 마이크 꺼짐",
   }[phase];
+  const liveSignals = mergeConversationSignals(
+    ...recentCues.map((cue) =>
+      extractConversationSignals(
+        cue.opponent + "\n" + cue.response.suggestion,
+      ),
+    ),
+  );
   const contextControl = directEntry ? (
     <section className="quick-context live-context-setup" aria-label="이번 대화 설정">
       <div className="live-context-setup-head">
