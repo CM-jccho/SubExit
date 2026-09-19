@@ -135,7 +135,7 @@ export default function VoiceWorkspace({
     [notice, setNotice] = useState(""),
     [search, setSearch] = useState(""),
     [recordFilter, setRecordFilter] = useState<"all" | "mine" | "sample">(
-      "all",
+      "mine",
     ),
     [recordSort, setRecordSort] = useState<"recent" | "name">("recent"),
     [settingsOpen, setSettingsOpen] = useState(false),
