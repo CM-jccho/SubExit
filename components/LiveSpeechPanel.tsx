@@ -360,13 +360,17 @@ export default function LiveSpeechPanel({
           )}
 
           {(active || caption.final || caption.interim || reply) && (
-            <div className="live-caption" aria-label="인식 중인 상대 말">
-              <div className="live-caption-head">
-                <h2>지금 들리는 상대 말</h2>
-                <span className="live-stream-label">
-                  {active ? "실시간 자막" : "마지막으로 인식한 말"}
+            <details className="live-caption live-caption-secondary">
+              <summary>
+                <span>
+                  <strong>상대 말 확인</strong>
+                  <small>{active ? "실시간 인식 중" : "마지막으로 인식한 말"}</small>
                 </span>
-              </div>
+                <em>
+                  {(caption.interim || caption.final).slice(-56) ||
+                    "말을 인식하면 여기에 짧게 보여요"}
+                </em>
+              </summary>
               <p
                 ref={captionArea}
                 onScroll={(event) => {
@@ -379,13 +383,8 @@ export default function LiveSpeechPanel({
                 <span className="live-caption-interim">
                   {caption.interim ? " " + caption.interim : ""}
                 </span>
-                {!caption.final && !caption.interim && (
-                  <span className="live-caption-placeholder">
-                    듣기 시작 후 상대의 말이 여기에 나타나요.
-                  </span>
-                )}
               </p>
-            </div>
+            </details>
           )}
 
           {onUseText && (
