@@ -735,7 +735,7 @@ export default function LiveCoach({
         onClick={() => setContextOpen(true)}
       >
         <Icon name="cards" size={16} />
-        설정
+        상대·목표
       </button>
     </div>
   ) : undefined;
