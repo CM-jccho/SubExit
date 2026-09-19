@@ -3,7 +3,11 @@ import { AIConsent } from "./VoiceComposer";
 import { useAIConsent } from "./ConsentSession";
 import LiveSpeechPanel from "./LiveSpeechPanel";
 import CoachingInputTabs from "./CoachingInputTabs";
-import { speechConstructor } from "@/lib/live-speech";
+import {
+  speechSupport,
+  speechSupportMessage,
+  type SpeechSupportReason,
+} from "@/lib/live-speech";
 import { requestMicrophone } from "@/lib/microphone";
 import SampleNotice, { SampleSwitch } from "./SampleNotice";
 import { sampledRequest } from "@/lib/resilient-ai";
@@ -43,6 +47,8 @@ export default function LiveCoach({
 }) {
   const character = useCompanion();
   const [supportsLive, setSupportsLive] = useState(false);
+  const [liveSupportReason, setLiveSupportReason] =
+    useState<SpeechSupportReason>();
   const [samplePreviewOpen, setSamplePreviewOpen] = useState(false);
   const [voiceStyle, setVoiceStyle] = useState<"continuous" | "short">(
     directEntry ? "short" : "continuous",
@@ -61,6 +67,11 @@ export default function LiveCoach({
     available: false,
     voiceAvailable: false,
     sampleOnly: true,
+    configurationStatus: "unknown" as
+      | "unknown"
+      | "missing_key"
+      | "disabled"
+      | "configured",
   });
   const [consent, setConsent] = useAIConsent();
   const adult = consent,
@@ -110,6 +121,19 @@ export default function LiveCoach({
     request = useRef<AbortController | null>(null),
     panel = useRef<HTMLElement | null>(null);
   const allowed = consent && adult && (!config.sampleOnly || sample);
+  const aiUnavailableMessage =
+    configState === "loading"
+      ? "AI 연결을 확인하고 있어요."
+      : configState === "error"
+        ? "AI 연결 상태를 불러오지 못했어요. 연결을 다시 확인해 주세요."
+        : config.configurationStatus === "missing_key"
+          ? "현재 운영 서버에 AI 연결 키가 없어 음성·문자 코칭을 시작할 수 없어요."
+          : config.configurationStatus === "disabled"
+            ? "현재 운영 설정에서 AI 코칭이 꺼져 있어요."
+            : "현재 AI 연결을 사용할 수 없어요. 잠시 후 다시 확인해 주세요.";
+  const voiceUnavailableMessage = !config.available
+    ? aiUnavailableMessage
+    : "현재 운영 설정에서 음성 인식이 꺼져 있어요. 직접 입력은 사용할 수 있어요.";
   const previousConsent = useRef(consent);
   useEffect(() => {
     const revoked = previousConsent.current && !consent;
@@ -172,10 +196,12 @@ export default function LiveCoach({
     setPhase("idle");
   }
   useEffect(() => {
-    setSupportsLive(!!speechConstructor());
+    const support = speechSupport();
+    setSupportsLive(!!support.constructor);
+    setLiveSupportReason(support.reason);
     setConfigState("loading");
     const abort = new AbortController();
-    fetch("/api/coach", { signal: abort.signal })
+    fetch("/api/coach", { signal: abort.signal, cache: "no-store" })
       .then((r) => {
         if (!r.ok) throw new Error("configuration");
         return r.json();
@@ -641,6 +667,9 @@ export default function LiveCoach({
         supportsLive && voiceStyle === "continuous" ? "continuous" : inputMode
       }
       supportsLive={supportsLive}
+      unsupportedMessage={
+        !supportsLive ? speechSupportMessage(liveSupportReason) : undefined
+      }
       busy={phase !== "idle" || liveActive}
       onChange={(mode) => {
         setVoiceStyle(mode === "continuous" ? "continuous" : "short");
@@ -861,6 +890,7 @@ export default function LiveCoach({
                 inputTabs={inputTabs}
                 contextControl={contextControl}
                 available={config.available}
+                unavailableMessage={aiUnavailableMessage}
                 onUseText={(text) => {
                   if (text.trim())
                     setInput((previous) =>
@@ -940,9 +970,17 @@ export default function LiveCoach({
                       </HelpTip>
                     </span>
                     {!config.voiceAvailable && (
-                      <p className="dd-small">
-                        현재는 직접 입력으로 코칭받을 수 있어요.
-                      </p>
+                      <div className="voice-availability-note" role="status">
+                        <p className="dd-small">{voiceUnavailableMessage}</p>
+                        <button
+                          type="button"
+                          className="dd-link"
+                          disabled={phase !== "idle"}
+                          onClick={() => setConfigAttempt((n) => n + 1)}
+                        >
+                          AI 연결 다시 확인
+                        </button>
+                      </div>
                     )}
                   </div>
                 )}
@@ -1063,9 +1101,8 @@ export default function LiveCoach({
                     {directEntry && (!allowed || !config.available) && (
                       <p className="action-reason" role="status">
                         {!config.available
-                          ? configState === "loading"
-                            ? "AI 연결 확인 중이에요. 먼저 상대 말을 입력해도 괜찮아요."
-                            : "지금 AI 연결을 사용할 수 없어요. 입력은 유지되며, 아래 샘플로 화면을 체험할 수 있어요."
+                          ? aiUnavailableMessage +
+                            " 입력은 유지되며, 아래 샘플로 화면을 체험할 수 있어요."
                           : "AI 전송에 동의하면 다음 한마디를 받을 수 있어요."}
                         {!config.available && configState !== "loading" && (
                           <button
