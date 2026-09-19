@@ -138,13 +138,20 @@ async function openQuickHelp(page) {
 
 async function choosePartnerGoal(page) {
   await page
+    .getByLabel("이번 대화 설정 요약")
+    .getByRole("button", { name: "설정", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await dialog
     .getByRole("group", { name: "대화 상대 빠른 선택" })
     .getByRole("button", { name: "동료", exact: true })
     .click();
-  await page
+  await dialog
     .getByRole("group", { name: "대화 목표 빠른 선택" })
     .getByRole("button", { name: "일정 조율", exact: true })
     .click();
+  await page.getByRole("button", { name: "대화 설정 닫기" }).click();
 }
 
 async function grantAIConsent(page) {
