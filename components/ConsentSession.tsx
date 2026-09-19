@@ -84,7 +84,8 @@ export function ConsentSettings() {
         <div className="consent-settings-content">
           <p>
             이번 이용 중 문자 변환·코칭·복기·용어 설명에 필요한 음성과 문장을
-            Google Gemini로 보내는 데 동의했어요.
+            Google Gemini로 보내는 데 동의했어요. 실시간 자막을 사용할 때는
+            브라우저 음성 인식 서비스가 음성을 글로 바꾸는 과정도 포함돼요.
           </p>
           <p>
             화면을 이동해도 다시 묻지 않아요. 새로고침하거나 페이지를 닫으면
