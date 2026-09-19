@@ -47,8 +47,8 @@ export default function CoachingInputTabs({
         </p>
       )}
 
-      <details className="coaching-fallback-modes" open={fallbackActive}>
-        <summary>다른 방식으로 입력</summary>
+      <div className="coaching-fallback-modes">
+        <p className="coaching-fallback-label">다른 방식으로 입력</p>
         <div className="dc-mode-switch" role="group" aria-label="보조 입력 방식">
           <button
             type="button"
@@ -71,7 +71,7 @@ export default function CoachingInputTabs({
             직접 입력
           </button>
         </div>
-      </details>
+      </div>
 
       {busy && (
         <p className="live-stream-note">

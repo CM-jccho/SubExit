@@ -545,7 +545,7 @@ export default function VoiceComposer({
           <strong>내 답변</strong>
           {replyTo && (
             <p>
-              <span>답장할 말</span> {replyTo.text}
+              <span>상대의 말</span> {replyTo.text}
             </p>
           )}
           {goal && <small>내 목표 · {goal}</small>}
