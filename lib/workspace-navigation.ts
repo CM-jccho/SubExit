@@ -85,9 +85,11 @@ export function workspaceUrl(
   // Drafts and active calls reload into their saved collection, never an empty call.
   const destination = ["setup", "detail", "live"].includes(view)
     ? "library"
-    : ["voicePractice", "friendChat", "recording"].includes(view)
+    : ["friendChat", "recording"].includes(view)
       ? "records"
-      : view;
+      : view === "voicePractice"
+        ? "library"
+        : view;
   if (destination !== "home") url.searchParams.set("view", destination);
   if (purpose === "live" && destination === "library")
     url.searchParams.set("purpose", "live");

@@ -31,7 +31,7 @@ export default function PracticeNavigation({
       </span>
       <span aria-current="location">
         {view === "library" && purpose === "live"
-          ? "답변 추천받기"
+          ? "실시간 대화 도움"
           : current.label}
       </span>
     </nav>
