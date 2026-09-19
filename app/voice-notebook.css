@@ -1046,3 +1046,67 @@
   overflow-wrap: anywhere;
   max-width: 100%;
 }
+
+
+/* Live-help sessions become reusable conversation memory in Records. */
+.live-record-summary {
+  margin: 14px 0 18px;
+  padding: 14px 16px;
+  border: 1px solid #d7e0cf;
+  border-radius: 16px;
+  background: #f4f7ef;
+}
+.live-record-summary-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.live-record-summary-head > div > span {
+  display: block;
+  color: #5a7547;
+  font-size: var(--t-cap);
+  font-weight: 750;
+}
+.live-record-summary-head > div > strong {
+  display: block;
+  margin-top: 2px;
+  color: #294132;
+  font-size: var(--t-lead);
+}
+.live-record-summary-head > span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #e5eddc;
+  color: #48623d;
+  font-size: var(--t-cap);
+  font-weight: 700;
+}
+.live-record-signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.live-record-signals span {
+  padding: 5px 8px;
+  border: 1px solid #d3deca;
+  border-radius: 999px;
+  background: #fff;
+  color: #50624e;
+  font-size: var(--t-cap);
+}
+.live-record-summary > p {
+  margin: 10px 0 0;
+  color: #62705a;
+  font-size: var(--t-cap);
+  line-height: 1.6;
+}
+@media (max-width: 700px) {
+  .live-record-summary {
+    padding: 12px;
+  }
+  .live-record-summary-head > div > strong {
+    font-size: var(--t-body);
+  }
+}
