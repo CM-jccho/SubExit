@@ -3,31 +3,31 @@ import { useEffect, useState } from "react";
 import InputDialog from "./InputDialog";
 import BrandMark from "./BrandMark";
 import useHorizontalSwipe from "./useHorizontalSwipe";
-const KEY = "speakcoaching-intro-v1";
+const KEY = "speakcoaching-intro-v2";
 const scenes = [
   {
-    title: "말이 막히는 순간, 다음 한마디",
-    label: "대화 중",
-    question: "“왜 미리 말 안 했어요?”",
-    answer: "“제가 먼저 공유했어야 했어요. 지금 상황부터 바로 말씀드릴게요.”",
+    title: "상대 말을 듣고, 다음 한마디",
+    label: "실시간 도움",
+    question: "상대 “왜 미리 말 안 했어요?”",
+    answer: "스픽코칭 “제가 먼저 공유했어야 했어요. 지금 상황부터 말씀드릴게요.”",
     detail:
-      "실제 대화에서 순간 말이 막힐 때, 상대의 말과 내 목표를 바탕으로 지금 필요한 한마디를 제안해요. 그대로 따라 하기보다 내 말로 바꿔 이어가세요.",
+      "대화 중 말이 막히는 순간, 상대의 말을 듣고 내 목표에 맞는 다음 한마디를 바로 제안해요. 자막은 보조이고, 화면의 중심은 지금 말할 한마디예요.",
   },
   {
-    title: "중요한 대화는, 미리 말해보세요",
-    label: "대화 전",
-    question: "이 부탁, 어떻게 거절하지?",
-    answer: "내 입장을 지키면서도 관계를 해치지 않는 표현을 먼저 연습해요.",
+    title: "시작 전에 두 가지만 정해요",
+    label: "상대·목표",
+    question: "누구와 이야기하나요?",
+    answer: "상대와 이번 대화의 목표만 고르면 준비 끝.",
     detail:
-      "상사, 고객, 친구처럼 실제 상대를 떠올리고 AI와 먼저 말해볼 수 있어요. 유창함보다 내가 원하는 결과를 분명하게 전하는 연습에 집중해요.",
+      "친구·동료·고객처럼 상대를 정하고, 확인·거절·일정 조율처럼 원하는 결과를 선택해요. 상황 설명과 지킬 선은 필요할 때만 추가할 수 있어요.",
   },
   {
-    title: "끝난 대화도, 다음 실전이 됩니다",
-    label: "대화 후",
-    question: "아까 왜 그렇게 말했지…",
-    answer: "잘한 말과 다음에 바꿔볼 한마디를 함께 찾아봐요.",
+    title: "끝난 대화는 다음 대화로 이어져요",
+    label: "저장·재연습",
+    question: "이번 대화, 다음에도 기억할까요?",
+    answer: "저장하면 같은 상대의 기록과 묶고 다시 연습할 수 있어요.",
     detail:
-      "녹음이나 문자로 실제 내 말을 돌아보고, 근거 있는 피드백을 확인한 뒤 같은 장면을 다시 연습할 수 있어요. 준비 → 실전 → 복기가 하나의 흐름으로 이어져요.",
+      "사용자가 저장한 대화는 내 기록에 남고, 숫자·날짜·금액·용어 같은 정보를 다시 확인할 수 있어요. 어려웠던 장면은 같은 흐름으로 다시 연습해요.",
   },
 ];
 export default function LaunchIntro() {
@@ -48,6 +48,16 @@ export default function LaunchIntro() {
     try {
       localStorage.setItem(KEY, "seen");
     } catch {}
+  }
+  function startLiveHelp() {
+    close();
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", "quick");
+    url.searchParams.set("purpose", "live");
+    url.searchParams.delete("tour");
+    url.searchParams.delete("demo");
+    window.history.pushState(null, "", url.pathname + url.search);
+    window.dispatchEvent(new PopStateEvent("popstate"));
   }
   useEffect(() => {
     const reopen = () => {
@@ -104,7 +114,11 @@ export default function LaunchIntro() {
                 다음
               </button>
             ) : (
-              <button type="button" className="dd-primary" onClick={close}>
+              <button
+                type="button"
+                className="dd-primary"
+                onClick={startLiveHelp}
+              >
                 실시간 대화 도움 시작
               </button>
             )}
@@ -139,7 +153,7 @@ export default function LaunchIntro() {
           <p>{scene.detail}</p>
         </div>
       </div>
-      <p className="gesture-hint">좌우로 밀어서 둘러보세요</p>
+      <p className="gesture-hint">3단계만 보면 바로 시작할 수 있어요</p>
     </InputDialog>
   );
 }
