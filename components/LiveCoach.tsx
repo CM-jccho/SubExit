@@ -714,41 +714,71 @@ export default function LiveCoach({
     ...liveSignals.terms.slice(0, 2).map((value) => "용어 · " + value),
   ];
   const contextControl = directEntry ? (
-    <section
-      className={
-        "quick-context live-context-setup" +
-        (liveActive ? " is-running" : "")
-      }
-      aria-label="이번 대화 설정"
-    >
-      <div className="live-context-setup-head">
-        <div>
-          <span>대화 시작 전</span>
-          <strong>누구와, 무엇을 말할지 먼저 정해요.</strong>
-        </div>
-        {partnerHistoryCount > 0 && (
-          <span className="live-history-count">
-            같은 상대 기록 {partnerHistoryCount}건
-          </span>
-        )}
+    <div className="live-context-compact" aria-label="이번 대화 설정 요약">
+      <div>
+        <span>대화 설정</span>
+        <strong>
+          {quickContext.partner.trim() || "기본 상대"}
+          {" · "}
+          {quickContext.goal.trim() || "기본 목표"}
+        </strong>
+        <small>설정하지 않아도 바로 시작할 수 있어요.</small>
       </div>
-      {liveActive ? (
-        <div className="live-context-running-summary">
-          <span>
-            <strong>상대</strong>
-            {quickContext.partner || "대화 상대"}
-          </span>
-          <span>
-            <strong>목표</strong>
-            {quickContext.goal || "내 뜻 전달하기"}
-          </span>
-        </div>
-      ) : (
-      <fieldset disabled={phase !== "idle"}>
+      <button
+        type="button"
+        className="dd-secondary"
+        disabled={phase !== "idle" || liveActive}
+        onClick={() => setContextOpen(true)}
+      >
+        <Icon name="cards" size={16} />
+        설정
+      </button>
+    </div>
+  ) : undefined;
+
+  const contextDialogContent = directEntry ? (
+    <div className="live-context-dialog">
+      <p className="vn-caption">
+        설정하지 않아도 기본 코칭으로 바로 시작할 수 있어요. 중요한 대화라면
+        상대와 목표만 정하면 제안이 더 구체적해져요.
+      </p>
+      <fieldset disabled={phase !== "idle" || liveActive}>
+        {savedProfiles.length > 0 && (
+          <label className="live-context-saved">
+            저장한 상황 불러오기
+            <select
+              value=""
+              onChange={(e) => {
+                const card = savedProfiles.find(
+                  (item) => item.id === e.target.value,
+                );
+                if (card) updateContext(card);
+              }}
+            >
+              <option value="">저장한 상황 선택</option>
+              {[...savedProfiles]
+                .sort((a, b) =>
+                  (b.lastUsedAt || b.updatedAt).localeCompare(
+                    a.lastUsedAt || a.updatedAt,
+                  ),
+                )
+                .map((card) => (
+                  <option key={card.id} value={card.id}>
+                    {card.title}
+                  </option>
+                ))}
+            </select>
+          </label>
+        )}
+
         <div className="live-context-primary-fields">
           <div className="live-choice-field">
             <span>대화 상대</span>
-            <div className="live-choice-grid" role="group" aria-label="대화 상대 빠른 선택">
+            <div
+              className="live-choice-grid"
+              role="group"
+              aria-label="대화 상대 빠른 선택"
+            >
               {QUICK_PARTNERS.map((partner) => (
                 <button
                   type="button"
@@ -794,8 +824,6 @@ export default function LiveCoach({
               <input
                 autoFocus
                 maxLength={160}
-                id="quick-partner"
-                name="partner"
                 value={quickContext.partner}
                 placeholder="예: 마케팅팀 김팀장"
                 onChange={(e) =>
@@ -811,7 +839,11 @@ export default function LiveCoach({
 
           <div className="live-choice-field">
             <span>이번 대화 목표</span>
-            <div className="live-choice-grid live-choice-goals" role="group" aria-label="대화 목표 빠른 선택">
+            <div
+              className="live-choice-grid live-choice-goals"
+              role="group"
+              aria-label="대화 목표 빠른 선택"
+            >
               {QUICK_GOALS.map((goal) => (
                 <button
                   type="button"
@@ -855,10 +887,8 @@ export default function LiveCoach({
               <input
                 autoFocus
                 maxLength={400}
-                id="quick-goal"
-                name="goal"
                 value={quickContext.goal}
-                placeholder="이번 대화에서 얻고 싶은 결과를 적어주세요"
+                placeholder="이번 대화에서 얻고 싶은 결과"
                 onChange={(e) =>
                   setQuickContext((current) => ({
                     ...current,
@@ -869,42 +899,14 @@ export default function LiveCoach({
             )}
           </div>
         </div>
+
         <details className="live-context-more">
           <summary>상황·지킬 선·말투 더 설정</summary>
           <div className="live-context-more-fields">
-            {savedProfiles.length > 0 && (
-              <label>
-                저장한 상황 불러오기
-                <select
-                  value=""
-                  onChange={(e) => {
-                    const card = savedProfiles.find(
-                      (item) => item.id === e.target.value,
-                    );
-                    if (card) updateContext(card);
-                  }}
-                >
-                  <option value="">저장한 상황 선택</option>
-                  {[...savedProfiles]
-                    .sort((a, b) =>
-                      (b.lastUsedAt || b.updatedAt).localeCompare(
-                        a.lastUsedAt || a.updatedAt,
-                      ),
-                    )
-                    .map((card) => (
-                      <option key={card.id} value={card.id}>
-                        {card.title}
-                      </option>
-                    ))}
-                </select>
-              </label>
-            )}
             <label>
               상황 설명 · 선택
               <input
                 maxLength={800}
-                id="quick-situation"
-                name="situation"
                 value={quickContext.situation}
                 placeholder="필요한 배경만 짧게"
                 onChange={(e) =>
@@ -919,8 +921,6 @@ export default function LiveCoach({
               지킬 선 · 선택
               <input
                 maxLength={400}
-                id="quick-boundaries"
-                name="boundaries"
                 value={quickContext.boundaries}
                 placeholder="예: 확정 전 완료 시간을 약속하지 않기"
                 onChange={(e) =>
@@ -959,9 +959,21 @@ export default function LiveCoach({
           </div>
         </details>
       </fieldset>
+      {partnerHistoryCount > 0 && (
+        <p className="live-history-status">
+          같은 상대의 저장된 대화가 {partnerHistoryCount}건 있어요.
+        </p>
       )}
-    </section>
-  ) : undefined;
+      <button
+        type="button"
+        className="dd-primary dd-full"
+        onClick={() => setContextOpen(false)}
+      >
+        설정 적용
+      </button>
+    </div>
+  ) : null;
+
   const inputTabs = (
     <CoachingInputTabs
       value={
