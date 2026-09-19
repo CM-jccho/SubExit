@@ -1858,6 +1858,7 @@ export default function ConversationWorkspace() {
                   onBack={home}
                   onDemo={() => navigate("demo")}
                   onPractice={() => navigate("library", "practice")}
+                  onRecords={() => navigate("records")}
                 />
               )}
               {view === "live" && active && (
