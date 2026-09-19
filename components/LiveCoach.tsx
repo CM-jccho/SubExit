@@ -1095,6 +1095,12 @@ export default function LiveCoach({
                 adult={adult}
                 sample={sample}
                 onActiveChange={setLiveActive}
+                onCue={(cue) =>
+                  addRecentCue({
+                    ...cue,
+                    goal: profile?.goal,
+                  })
+                }
               />
             </>
           ) : (
