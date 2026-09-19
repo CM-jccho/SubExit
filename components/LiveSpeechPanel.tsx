@@ -262,6 +262,7 @@ export default function LiveSpeechPanel({
       >
         <section className="dc-listen-panel">
           {inputTabs}
+          {contextControl}
 
           <section className={"live-primary-action" + (active ? " is-active" : "")}>
             <div>
@@ -367,8 +368,6 @@ export default function LiveSpeechPanel({
               </p>
             </div>
           )}
-
-          {contextControl}
 
           {onUseText && (
             <button
