@@ -172,6 +172,7 @@ async function readLiveSessions(page) {
                 partner: row.liveMeta.partner,
                 suggestions: row.turns.flatMap((turn) => turn.suggestions || []),
                 turns: row.turns.map((turn) => turn.text),
+                commitments: row.liveMeta.signals.commitments || [],
               })),
           );
           db.close();
@@ -267,10 +268,15 @@ test("realtime core flow listens, suggests, saves, and opens records", async ({
   expect(sessions.at(-1).partner).toBe("동료");
   expect(sessions.at(-1).turns).toContain(OPPONENT);
   expect(sessions.at(-1).suggestions).toContain(SUGGESTION);
+  expect(sessions.at(-1).commitments.length).toBeGreaterThan(0);
+  await expect(page.getByText("꼭 기억").first()).toBeVisible();
 
   await page.getByRole("button", { name: "내 기록", exact: true }).click();
   await expect(page).toHaveURL(/view=records/);
   await expect(page.getByText("실시간 대화").first()).toBeVisible();
+  const record = page.locator(".vn-session-card").filter({ hasText: "동료" }).first();
+  await record.click();
+  await expect(page.getByText("꼭 기억").first()).toBeVisible();
   expect(unexpectedDialogs).toEqual([]);
   expect(errors).toEqual([]);
 });
