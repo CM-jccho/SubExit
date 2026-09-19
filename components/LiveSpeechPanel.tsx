@@ -6,6 +6,7 @@ import {
   SpeechStream,
   speechConstructor,
 } from "@/lib/live-speech";
+import { requestMicrophone } from "@/lib/microphone";
 import type { CoachResponse } from "@/lib/coach-contract";
 import type { ContextProfile } from "@/lib/conversation-cards";
 import type { Tone } from "@/lib/scenarios";
@@ -54,6 +55,8 @@ export default function LiveSpeechPanel({
   const [speechConsent, setSpeechConsent] = useState(false);
   const speech = useRef<SpeechStream>();
   const queue = useRef<LatestCoachQueue<CoachResponse>>();
+  const permission = useRef<AbortController>();
+  const stateRef = useRef<"idle" | "connecting" | "listening">("idle");
   const finalText = useRef("");
   const captionArea = useRef<HTMLParagraphElement>(null);
   const followCaption = useRef(true);
@@ -64,17 +67,26 @@ export default function LiveSpeechPanel({
     if (captionArea.current && followCaption.current)
       captionArea.current.scrollTop = captionArea.current.scrollHeight;
   }, [caption]);
+  function setRecognitionState(next: "idle" | "connecting" | "listening") {
+    stateRef.current = next;
+    setState(next);
+  }
   function stop() {
     generation.current++;
+    permission.current?.abort();
     speech.current?.stop();
     queue.current?.cancel();
-    setState("idle");
+    setRecognitionState("idle");
     setWorking(false);
     activeCallback.current(false);
   }
   useEffect(() => {
     const hide = () => {
-      if (document.hidden) {
+      if (!document.hidden) return;
+      // iOS Safari can briefly hide the page while native microphone/speech
+      // permission UI is open. Keep the permission/connection attempt alive
+      // and stop only after recognition has actually begun listening.
+      if (stateRef.current === "listening") {
         stop();
         setNotice("화면을 벗어나 듣기를 멈췄어요. 다시 시작해 주세요.");
       }
@@ -82,6 +94,7 @@ export default function LiveSpeechPanel({
     document.addEventListener("visibilitychange", hide);
     return () => {
       generation.current++;
+      permission.current?.abort();
       speech.current?.stop();
       queue.current?.cancel();
       document.removeEventListener("visibilitychange", hide);
@@ -146,39 +159,73 @@ export default function LiveSpeechPanel({
       },
     });
   }
-  function start() {
+  async function start() {
     const Engine = speechConstructor();
     if (!Engine || !available || !speechConsent || !consent || !adult) return;
     stop();
     const id = ++generation.current;
     setError("");
-    setNotice("");
+    setNotice("마이크 권한을 확인하고 있어요.");
     setReply(undefined);
     setCaption({ final: "", interim: "" });
     finalText.current = "";
     followCaption.current = true;
     activeCallback.current(true);
-    makeQueue(id);
-    speech.current = new SpeechStream(Engine, {
-      state: (s) => {
-        if (id === generation.current) setState(s);
-      },
-      caption: (final, interim) => {
-        if (id !== generation.current) return;
-        finalText.current = final;
-        setCaption({ final, interim });
-        queue.current?.update(final);
-      },
-      notice: (message) => {
-        if (id === generation.current) setNotice(message);
-      },
-      error: (message) => {
-        if (id !== generation.current) return;
-        stop();
-        setError(message);
-      },
-    });
-    speech.current.start();
+    setRecognitionState("connecting");
+
+    const controller = new AbortController();
+    permission.current = controller;
+    try {
+      if (!navigator.mediaDevices?.getUserMedia)
+        throw new Error(
+          "이 브라우저에서는 마이크를 사용할 수 없어요. 들려주기나 직접 입력을 이용해 주세요.",
+        );
+      const media = await requestMicrophone(
+        { audio: { echoCancellation: true, noiseSuppression: true } },
+        controller.signal,
+      );
+      media.getTracks().forEach((track) => track.stop());
+      if (id !== generation.current) return;
+
+      setNotice("마이크 권한을 확인했어요. 실시간 음성 인식을 연결하고 있어요.");
+      makeQueue(id);
+      speech.current = new SpeechStream(Engine, {
+        state: (s) => {
+          if (id === generation.current) setRecognitionState(s);
+        },
+        caption: (final, interim) => {
+          if (id !== generation.current) return;
+          finalText.current = final;
+          setCaption({ final, interim });
+          queue.current?.update(final);
+        },
+        notice: (message) => {
+          if (id === generation.current) setNotice(message);
+        },
+        error: (message) => {
+          if (id !== generation.current) return;
+          stop();
+          setError(message);
+        },
+      });
+      speech.current.start();
+    } catch (e) {
+      if (id !== generation.current) return;
+      setRecognitionState("idle");
+      activeCallback.current(false);
+      setNotice("");
+      setError(
+        e instanceof DOMException && e.name === "NotAllowedError"
+          ? "마이크 권한이 필요해요. Safari 주소창의 사이트 설정에서 마이크를 허용한 뒤 다시 시작해 주세요."
+          : e instanceof Error && e.name === "AbortError"
+            ? "마이크 연결을 취소했어요."
+            : e instanceof Error
+              ? e.message
+              : "마이크를 시작하지 못했어요.",
+      );
+    } finally {
+      if (permission.current === controller) permission.current = undefined;
+    }
   }
   const active = state !== "idle";
   return (
@@ -298,7 +345,7 @@ export default function LiveSpeechPanel({
                           "듣기를 멈췄어요. 인식된 말과 마지막 제안은 이 화면에 남아 있어요.",
                         );
                       }
-                    : start
+                    : () => void start()
                 }
                 disabled={
                   !active &&
