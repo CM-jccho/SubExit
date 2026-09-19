@@ -22,6 +22,7 @@ export default function LiveSpeechPanel({
   adult,
   sample,
   onActiveChange,
+  readyToStart = true,
   onCue,
   consentControl,
   available = true,
@@ -43,6 +44,7 @@ export default function LiveSpeechPanel({
   adult: boolean;
   sample: boolean;
   onActiveChange: (active: boolean) => void;
+  readyToStart?: boolean;
   onCue?: (cue: { opponent: string; response: CoachResponse }) => void;
 }) {
   const character = useCompanion();
@@ -240,6 +242,13 @@ export default function LiveSpeechPanel({
       );
       return;
     }
+    if (!readyToStart) {
+      setNotice("먼저 위에서 대화 상대와 이번 대화 목표를 선택해 주세요.");
+      document
+        .querySelector(".live-context-setup")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     if (!available) {
       setError(
         unavailableMessage ||
@@ -290,9 +299,11 @@ export default function LiveSpeechPanel({
               <Icon name={active ? "pause" : "mic"} size={22} />
               {active
                 ? "내가 말할게요"
-                : reply || caption.final
-                  ? "다시 상대 말 듣기"
-                  : "대화 도움 시작"}
+                : !readyToStart
+                  ? "상대·목표 선택 후 시작"
+                  : reply || caption.final
+                    ? "다시 상대 말 듣기"
+                    : "대화 도움 시작"}
             </button>
             <div className="live-primary-status" role="status">
               <strong
