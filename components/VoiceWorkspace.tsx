@@ -1064,18 +1064,44 @@ export default function VoiceWorkspace({
                             ? "오늘의 한마디"
                             : s.isSample
                               ? "샘플 · 사전 작성 대화"
-                              : s.kind === "chat"
-                                ? "친구와 대화"
-                                : s.kind === "practice"
-                                  ? "상대와 연습"
-                                  : "음성 기록"}{" "}
+                              : s.liveMeta
+                                ? "실시간 대화"
+                                : s.kind === "chat"
+                                  ? "친구와 대화"
+                                  : s.kind === "practice"
+                                    ? "상대와 연습"
+                                    : "음성 기록"}{" "}
                     · {new Date(s.updatedAt).toLocaleDateString("ko-KR")}
                   </small>
                   <strong>{s.title}</strong>
                   <span>
-                    {s.turns.length}개 대화 ·{" "}
-                    {s.turns.filter((t) => t.clip).length}개 음성
-                    {s.industry ? " · " + s.industry : ""}
+                    {s.liveMeta ? (
+                      <>
+                        상대 {s.liveMeta.partner}
+                        {" · "}같은 상대{" "}
+                        {
+                          sessions.filter(
+                            (item) =>
+                              item.liveMeta?.groupKey === s.liveMeta?.groupKey,
+                          ).length
+                        }
+                        건
+                        {s.liveMeta.signals.numbers.length
+                          ? " · 숫자/일정 " +
+                            s.liveMeta.signals.numbers.length +
+                            "개"
+                          : ""}
+                        {s.liveMeta.signals.terms.length
+                          ? " · 용어 " + s.liveMeta.signals.terms.length + "개"
+                          : ""}
+                      </>
+                    ) : (
+                      <>
+                        {s.turns.length}개 대화 ·{" "}
+                        {s.turns.filter((t) => t.clip).length}개 음성
+                        {s.industry ? " · " + s.industry : ""}
+                      </>
+                    )}
                   </span>
                 </span>
                 <Icon name="arrow" size={18} />
