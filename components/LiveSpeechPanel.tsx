@@ -23,6 +23,7 @@ export default function LiveSpeechPanel({
   onActiveChange,
   consentControl,
   available = true,
+  unavailableMessage,
   onUseText,
   inputTabs,
   contextControl,
@@ -31,6 +32,7 @@ export default function LiveSpeechPanel({
   contextControl?: ReactNode;
   onUseText?: (text: string) => void;
   available?: boolean;
+  unavailableMessage?: string;
   consentControl?: ReactNode;
   profile?: ContextProfile;
   scenario: string;
@@ -311,8 +313,8 @@ export default function LiveSpeechPanel({
 
           {!available && (
             <p role="status" className="live-stream-note">
-              AI 연결을 확인하지 못해 듣기를 시작할 수 없어요. 잠시 후 다시 열어
-              주세요.
+              {unavailableMessage ||
+                "AI 연결을 확인하지 못해 듣기를 시작할 수 없어요. 잠시 후 다시 열어 주세요."}
             </p>
           )}
           {error && (
