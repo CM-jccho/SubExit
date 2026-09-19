@@ -1191,6 +1191,11 @@ export default function LiveCoach({
                             disabled={phase !== "idle" || input.trim().length < 2}
                             onClick={() => {
                               setTone(option.id);
+                              if (directEntry)
+                                setQuickContext((current) => ({
+                                  ...current,
+                                  tone: option.id,
+                                }));
                               void coach(input, option.id);
                             }}
                           >
@@ -1315,6 +1320,22 @@ export default function LiveCoach({
                     ))}
                   {result && recentCues.length === 1 && (
                     <p>다음 말을 준비해도 지금 받은 추천이 여기에 남아요.</p>
+                  )}
+                  {onPractice && (
+                    <button
+                      type="button"
+                      className="dd-primary live-recap-practice"
+                      disabled={phase !== "idle"}
+                      onClick={() => {
+                        if (!directEntry) cancel();
+                        onPractice();
+                      }}
+                    >
+                      <Icon name="chat" size={18} />
+                      {directEntry
+                        ? "이 흐름으로 대화 연습하기"
+                        : "이 장면 다시 연습하기"}
+                    </button>
                   )}
                 </section>
               )}
