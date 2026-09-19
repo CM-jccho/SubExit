@@ -1355,6 +1355,7 @@ export default function LiveCoach({
             <div className={"dc-coaching-grid " + (result ? "has-result" : "")}>
               <section className="dc-listen-panel">
                 {inputTabs}
+                {directEntry && contextControl}
                 {inputMode === "voice" && (
                   <div
                     className={
@@ -1504,7 +1505,6 @@ export default function LiveCoach({
                       placeholder="상대가 방금 한 말을 적어주세요."
                       rows={3}
                     />
-                    {directEntry && contextControl}
                     <button
                       className={
                         (result ? "dd-secondary" : "dd-primary") + " dd-full"
