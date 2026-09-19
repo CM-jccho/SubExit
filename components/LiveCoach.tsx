@@ -470,10 +470,11 @@ export default function LiveCoach({
       }
       if (version.current === id) {
         setResult(data);
-        setRecentCues((items) => [
-          ...items.slice(-2),
-          { opponent: text, response: data, goal: profile?.goal },
-        ]);
+        addRecentCue({
+          opponent: text,
+          response: data,
+          goal: profile?.goal,
+        });
         if (data.sample)
           sampleHistory.current = [
             ...sampleHistory.current.slice(-11),
