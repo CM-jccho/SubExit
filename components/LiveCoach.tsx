@@ -727,39 +727,128 @@ export default function LiveCoach({
       </div>
       <fieldset disabled={phase !== "idle" || liveActive}>
         <div className="live-context-primary-fields">
-          <label>
-            대화 상대
-            <input
-              maxLength={160}
-              id="quick-partner"
-              name="partner"
-              value={quickContext.partner}
-              placeholder="예: 팀장, 고객, 친구"
-              onChange={(e) =>
-                updateContext({
-                  ...quickContext,
-                  title: "",
-                  partner: e.target.value,
-                })
-              }
-            />
-          </label>
-          <label>
-            이번 대화 목표
-            <input
-              maxLength={400}
-              id="quick-goal"
-              name="goal"
-              value={quickContext.goal}
-              placeholder="예: 일정 다시 합의하기"
-              onChange={(e) =>
-                updateContext({
-                  ...quickContext,
-                  goal: e.target.value,
-                })
-              }
-            />
-          </label>
+          <div className="live-choice-field">
+            <span>대화 상대</span>
+            <div className="live-choice-grid" role="group" aria-label="대화 상대 빠른 선택">
+              {QUICK_PARTNERS.map((partner) => (
+                <button
+                  type="button"
+                  key={partner}
+                  className={
+                    quickContext.partner === partner && !customPartnerOpen
+                      ? "active"
+                      : ""
+                  }
+                  aria-pressed={
+                    quickContext.partner === partner && !customPartnerOpen
+                  }
+                  onClick={() => {
+                    setCustomPartnerOpen(false);
+                    updateContext({
+                      ...quickContext,
+                      title: "",
+                      partner,
+                    });
+                  }}
+                >
+                  {partner}
+                </button>
+              ))}
+              <button
+                type="button"
+                className={customPartnerOpen ? "active" : ""}
+                aria-pressed={customPartnerOpen}
+                onClick={() => {
+                  setCustomPartnerOpen(true);
+                  if (isQuickPartner(quickContext.partner))
+                    setQuickContext((current) => ({
+                      ...current,
+                      title: "",
+                      partner: "",
+                    }));
+                }}
+              >
+                직접 입력
+              </button>
+            </div>
+            {customPartnerOpen && (
+              <input
+                autoFocus
+                maxLength={160}
+                id="quick-partner"
+                name="partner"
+                value={quickContext.partner}
+                placeholder="예: 마케팅팀 김팀장"
+                onChange={(e) =>
+                  setQuickContext((current) => ({
+                    ...current,
+                    title: "",
+                    partner: e.target.value,
+                  }))
+                }
+              />
+            )}
+          </div>
+
+          <div className="live-choice-field">
+            <span>이번 대화 목표</span>
+            <div className="live-choice-grid live-choice-goals" role="group" aria-label="대화 목표 빠른 선택">
+              {QUICK_GOALS.map((goal) => (
+                <button
+                  type="button"
+                  key={goal.value}
+                  className={
+                    quickContext.goal === goal.value && !customGoalOpen
+                      ? "active"
+                      : ""
+                  }
+                  aria-pressed={
+                    quickContext.goal === goal.value && !customGoalOpen
+                  }
+                  onClick={() => {
+                    setCustomGoalOpen(false);
+                    updateContext({
+                      ...quickContext,
+                      goal: goal.value,
+                    });
+                  }}
+                >
+                  {goal.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                className={customGoalOpen ? "active" : ""}
+                aria-pressed={customGoalOpen}
+                onClick={() => {
+                  setCustomGoalOpen(true);
+                  if (isQuickGoal(quickContext.goal))
+                    setQuickContext((current) => ({
+                      ...current,
+                      goal: "",
+                    }));
+                }}
+              >
+                직접 입력
+              </button>
+            </div>
+            {customGoalOpen && (
+              <input
+                autoFocus
+                maxLength={400}
+                id="quick-goal"
+                name="goal"
+                value={quickContext.goal}
+                placeholder="이번 대화에서 얻고 싶은 결과를 적어주세요"
+                onChange={(e) =>
+                  setQuickContext((current) => ({
+                    ...current,
+                    goal: e.target.value,
+                  }))
+                }
+              />
+            )}
+          </div>
         </div>
         <details className="live-context-more">
           <summary>상황·지킬 선·말투 더 설정</summary>
