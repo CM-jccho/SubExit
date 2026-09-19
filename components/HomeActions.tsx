@@ -42,8 +42,8 @@ export default function HomeActions({
   return (
     <section className="purpose-home" aria-label="대화 도움과 연습">
       <div className="purpose-heading">
-        <p>대화 중, 내 옆의 든든한 AI</p>
-        <h1>뭐라고 말할지 막막할 때, 바로 도와드려요</h1>
+        <p>말이 막히는 순간, 바로 옆에서</p>
+        <h1>다음 한마디가 필요할 때, 스픽코칭</h1>
       </div>
       <div className="home-live-entry">
         <div className="coach-presence" aria-label="대화 코치 안내">
@@ -51,23 +51,23 @@ export default function HomeActions({
             <Companion small mood="hello" />
           </div>
           <div className="coach-presence-copy">
-            <span>대화 중, 옆에서 함께</span>
+            <span>지금 대화 도움</span>
             <p>
-              상대가 한 말을 음성이나 글로 알려주세요.
-              <br />내 목표에 맞는 다음 한마디를 찾아드릴게요.
+              상대의 말을 들려주거나 적어주세요.
+              <br />상황과 내 목표를 바탕으로 지금 필요한 한마디를 제안해요.
             </p>
           </div>
         </div>
         <div className="home-live-action">
           <ol className="practice-loop" aria-label="지금 대화 도움받는 과정">
             <li>
-              <span>상대 말 입력</span>
+              <span>상대 말 이해</span>
             </li>
             <li>
               <span>다음 한마디</span>
             </li>
             <li>
-              <span>대화 이어가기</span>
+              <span>내 말로 이어가기</span>
             </li>
           </ol>
           <button
@@ -76,7 +76,7 @@ export default function HomeActions({
             aria-describedby="live-input-limit"
             onClick={onLive}
           >
-            답변 추천받기 <Icon name="arrow" size={20} />
+            지금 대화 도움받기 <Icon name="arrow" size={20} />
           </button>
           <p className="purpose-limit browser-capability" id="live-input-limit">
             <Icon name={speechSupported ? "mic" : "keyboard"} size={16} />
@@ -105,22 +105,22 @@ export default function HomeActions({
         <button
           className="dd-secondary"
           data-purpose="library"
-          aria-label="대화 연습하기"
+          aria-label="대화 전 미리 연습하기"
           onClick={() => onNavigate("library")}
         >
           <Icon name="chat" size={22} />
-          <strong>대화 연습하기</strong>
-          <span>중요한 대화 전에, AI 상대와 미리 연습해요.</span>
+          <strong>대화 전 · 미리 연습하기</strong>
+          <span>중요한 대화 전에, AI 상대와 실제처럼 먼저 말해봐요.</span>
         </button>
         <button
           className="dd-secondary"
           data-purpose="recording"
-          aria-label="내 대화 돌아보기"
+          aria-label="대화 후 내 대화 복기하기"
           onClick={() => onNavigate("recording")}
         >
           <Icon name="mic" size={22} />
-          <strong>내 대화 돌아보기</strong>
-          <span>끝난 대화의 녹음이나 글로 개선할 표현을 찾아요.</span>
+          <strong>대화 후 · 내 대화 복기</strong>
+          <span>끝난 대화에서 잘한 말과 다음에 바꿔볼 한마디를 찾아요.</span>
         </button>
       </div>
       {error && (
