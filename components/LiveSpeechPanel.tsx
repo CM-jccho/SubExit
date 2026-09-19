@@ -270,9 +270,6 @@ export default function LiveSpeechPanel({
         }
       >
         <section className="dc-listen-panel">
-          {inputTabs}
-          {contextControl}
-
           <section className={"live-primary-action" + (active ? " is-active" : "")}>
             <div>
               <span className="live-primary-kicker">실시간 대화 도움</span>
@@ -326,6 +323,9 @@ export default function LiveSpeechPanel({
               </span>
             </div>
           </section>
+
+          {contextControl}
+          {inputTabs}
 
           {!available && (
             <p role="status" className="live-stream-note">
