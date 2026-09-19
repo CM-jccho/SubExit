@@ -25,7 +25,7 @@ export default function HomeActions({
   useEffect(() => {
     let active = true;
     const support = speechSupport();
-    setSpeechSupported(!!support.constructor);
+    setSpeechSupported(!!support.Engine);
     setSpeechReason(support.reason);
     listSessions()
       .then((rows) => {
