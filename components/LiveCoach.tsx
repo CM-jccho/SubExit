@@ -246,6 +246,8 @@ export default function LiveCoach({
       setPartnerHistoryCount(count);
       const parts = ["내 기록에 저장했어요."];
       if (count > 1) parts.push("같은 상대 기록 " + count + "건으로 묶여요.");
+      if (signals.commitments.length)
+        parts.push("약속·할 일 " + signals.commitments.length + "개");
       if (signals.numbers.length)
         parts.push("숫자·날짜·금액 " + signals.numbers.length + "개");
       if (signals.terms.length) parts.push("용어 " + signals.terms.length + "개");
@@ -1041,11 +1043,15 @@ export default function LiveCoach({
                       </ul>
                     </div>
                   )}
-                  {(liveSignals.numbers.length > 0 ||
+                  {(liveSignals.commitments.length > 0 ||
+                    liveSignals.numbers.length > 0 ||
                     liveSignals.terms.length > 0) && (
-                    <div className="live-signal-summary" aria-label="대화에서 찾은 정보">
-                      <strong>대화에서 찾은 정보</strong>
+                    <div className="live-signal-summary" aria-label="대화에서 꼭 기억할 정보">
+                      <strong>꼭 기억할 것</strong>
                       <div>
+                        {liveSignals.commitments.slice(0, 4).map((value) => (
+                          <span key={"commitment-" + value}>✓ {value}</span>
+                        ))}
                         {liveSignals.numbers.slice(0, 6).map((value) => (
                           <span key={"number-" + value}># {value}</span>
                         ))}
