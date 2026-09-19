@@ -761,3 +761,92 @@
     font-size: 11px;
   }
 }
+
+
+/* Realtime help is the main mode; short voice/text live behind a secondary disclosure. */
+.coaching-primary-mode {
+  width: 100%;
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #cbd9c1;
+  border-radius: 15px;
+  background: #f1f6ec;
+  color: #294132;
+  text-align: left;
+}
+.coaching-primary-mode.active {
+  border-color: #78976f;
+  background: #e7efdf;
+}
+.coaching-primary-mode > span:nth-child(2) {
+  min-width: 0;
+}
+.coaching-primary-mode strong,
+.coaching-primary-mode small {
+  display: block;
+}
+.coaching-primary-mode strong {
+  font-size: var(--t-body);
+}
+.coaching-primary-mode small {
+  margin-top: 2px;
+  color: #60705b;
+  font-size: var(--t-cap);
+  font-weight: 500;
+}
+.coaching-primary-mode em {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #315a3c;
+  color: #fff;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 750;
+}
+.coaching-primary-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: #dce9d2;
+}
+.coaching-fallback-modes {
+  margin-top: 7px;
+}
+.coaching-fallback-modes > summary {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  color: #657260;
+  font-size: var(--t-cap);
+  font-weight: 700;
+}
+.coaching-fallback-modes .dc-mode-switch {
+  margin-top: 4px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 700px) {
+  .coaching-primary-mode {
+    min-height: 50px;
+    padding: 8px 10px;
+  }
+  .coaching-primary-mode strong {
+    font-size: 13px;
+  }
+  .coaching-primary-mode small {
+    font-size: 11px;
+  }
+  .coaching-primary-icon {
+    width: 30px;
+    height: 30px;
+  }
+  .coaching-fallback-modes > summary {
+    min-height: 32px;
+    font-size: 11px;
+  }
+}
