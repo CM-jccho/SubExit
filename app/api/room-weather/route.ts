@@ -20,9 +20,13 @@ export async function GET(request: Request) {
       timeformat: "unixtime",
       forecast_days: "1",
     });
+    const fetchOptions = {
+      next: { revalidate: 1800 },
+      signal: AbortSignal.timeout(7000),
+    } as RequestInit & { next: { revalidate: number } };
     const response = await fetch(
       "https://api.open-meteo.com/v1/forecast?" + params,
-      { next: { revalidate: 1800 }, signal: AbortSignal.timeout(7000) },
+      fetchOptions,
     );
     if (!response.ok) throw new Error("weather_unavailable");
     const weather = parseRoomWeather(await response.json(), city.id);
