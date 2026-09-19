@@ -673,7 +673,7 @@ export default function LiveCoach({
         );
       setInput(data.text.slice(0, 1000));
       setNotice(
-        "음성 인식이 끝났어요. 아래 문장을 확인하고 ‘답변 코칭받기’를 눌러주세요.",
+        "음성 인식이 끝났어요. 아래 문장을 확인하고 ‘다음 한마디 받기’를 눌러주세요.",
       );
       if (automatic) await coach(data.text.slice(0, 1000), tone, id);
     } catch (e) {
@@ -1107,7 +1107,7 @@ export default function LiveCoach({
         <span className="breadcrumb-separator" aria-hidden="true">
           /
         </span>
-        <span aria-current="location">지금 대화 도움</span>
+        <span aria-current="location">실시간 대화 도움</span>
       </nav>
       <header className="dc-live-heading">
         <div>
@@ -1116,11 +1116,11 @@ export default function LiveCoach({
               {prepared ? "내 옆의 대화 코치" : "시작하기 전에"}
             </p>
           )}
-          <h1>지금 대화 도움</h1>
+          <h1>실시간 대화 도움</h1>
           {directEntry && (
             <p>
-              상대의 말을 들려주거나 입력하면, 지금 필요한 다음 한마디를
-              제안해요.
+              상대 말을 들으면 지금 필요한 다음 한마디를 바로 제안해요.
+              짧게 듣기와 직접 입력은 필요할 때 사용할 수 있어요.
             </p>
           )}
         </div>
@@ -1183,7 +1183,7 @@ export default function LiveCoach({
               }
             >
               <i aria-hidden="true" />
-              {liveActive ? "듣는 중 · 실시간 자막과 다음 한마디" : status}
+              {liveActive ? "듣는 중 · 상대 말과 다음 한마디" : status}
             </span>
           </div>
         </div>
