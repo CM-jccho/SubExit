@@ -334,32 +334,34 @@ export default function LiveSpeechPanel({
             </p>
           )}
 
-          <div className="live-caption" aria-label="인식 중인 상대 말">
-            <div className="live-caption-head">
-              <h2>지금 들리는 상대 말</h2>
-              <span className="live-stream-label">
-                {active ? "실시간 자막" : "듣기를 시작하면 여기에 보여요"}
-              </span>
-            </div>
-            <p
-              ref={captionArea}
-              onScroll={(event) => {
-                const el = event.currentTarget;
-                followCaption.current =
-                  el.scrollHeight - el.scrollTop - el.clientHeight < 40;
-              }}
-            >
-              {caption.final}
-              <span className="live-caption-interim">
-                {caption.interim ? " " + caption.interim : ""}
-              </span>
-              {!caption.final && !caption.interim && (
-                <span className="live-caption-placeholder">
-                  상대의 말이 여기에 자막처럼 나타나요.
+          {(active || caption.final || caption.interim || reply) && (
+            <div className="live-caption" aria-label="인식 중인 상대 말">
+              <div className="live-caption-head">
+                <h2>지금 들리는 상대 말</h2>
+                <span className="live-stream-label">
+                  {active ? "실시간 자막" : "마지막으로 인식한 말"}
                 </span>
-              )}
-            </p>
-          </div>
+              </div>
+              <p
+                ref={captionArea}
+                onScroll={(event) => {
+                  const el = event.currentTarget;
+                  followCaption.current =
+                    el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+                }}
+              >
+                {caption.final}
+                <span className="live-caption-interim">
+                  {caption.interim ? " " + caption.interim : ""}
+                </span>
+                {!caption.final && !caption.interim && (
+                  <span className="live-caption-placeholder">
+                    듣기 시작 후 상대의 말이 여기에 나타나요.
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
 
           {contextControl}
 
