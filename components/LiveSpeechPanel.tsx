@@ -230,18 +230,31 @@ export default function LiveSpeechPanel({
               </dl>
             )}
             {consentControl}
-            <label className="dd-check live-speech-consent">
-              <input
-                type="checkbox"
-                checked={speechConsent}
-                disabled={active}
-                onChange={(e) => setSpeechConsent(e.target.checked)}
-              />
-              <span>
-                브라우저 음성 인식 서비스로 음성을 보내 자막을 만들고, 인식된
-                문장을 Gemini로 보내 코칭받는 데 동의해요.
-              </span>
-            </label>
+            <div className="live-speech-disclosure" role="note">
+              <div>
+                <strong>실시간 자막 사용 안내</strong>
+                <p>
+                  상단의 AI 전송 동의와 별개로, 실시간 자막은 브라우저 음성
+                  인식 서비스에도 음성을 보내 글로 바꿔요. 인식된 문장은
+                  Gemini로 보내 다음 한마디를 만들어요.
+                </p>
+              </div>
+              {speechConsent ? (
+                <span className="live-speech-confirmed">
+                  <Icon name="check" size={16} />
+                  실시간 자막 안내 확인됨
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="dd-secondary"
+                  disabled={active}
+                  onClick={() => setSpeechConsent(true)}
+                >
+                  안내 확인하고 실시간 자막 사용
+                </button>
+              )}
+            </div>
             <div className="live-stream-toolbar">
               <div role="status">
                 <strong
@@ -262,9 +275,11 @@ export default function LiveSpeechPanel({
                     ? "자막과 답변 코칭을 자동으로 갱신해요"
                     : !available
                       ? "AI 연결을 확인해 주세요"
-                      : !consent || !adult || !speechConsent
-                        ? "전송 동의를 확인하면 시작할 수 있어요"
-                        : "준비됐어요. 듣기를 시작해 주세요"}
+                      : !consent || !adult
+                        ? "상단 AI 전송 동의를 확인하면 시작할 수 있어요"
+                        : !speechConsent
+                          ? "실시간 자막 사용 안내를 확인하면 시작할 수 있어요"
+                          : "준비됐어요. 듣기를 시작해 주세요"}
                 </span>
               </div>
               <button
@@ -364,11 +379,11 @@ export default function LiveSpeechPanel({
         >
           <div className="dc-answer-heading">
             <Icon name="chat" size={20} />
-            <span>{character.name}의 답변 코칭</span>
+            <span>지금 필요한 한마디</span>
           </div>
           {reply && (
             <div className="live-stream-reply-heading">
-              <strong>이렇게 말해볼까요?</strong>
+              <strong>다음 한마디</strong>
               <span>
                 {working
                   ? "새 말로 갱신 중"
@@ -412,7 +427,7 @@ export default function LiveSpeechPanel({
                   ? "내 목표에 맞게 생각 중이에요"
                   : "듣고 나서, 함께 생각해요"}
               </h2>
-              <p>상대의 말이 인식되면 내 목표에 맞는 답변을 여기에 제안해요.</p>
+              <p>상대의 말이 인식되면 지금 필요한 다음 한마디를 여기에 제안해요.</p>
             </div>
           )}
         </aside>
