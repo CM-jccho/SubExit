@@ -14,13 +14,41 @@ export interface SpeechEngine {
   abort(): void;
 }
 export type SpeechConstructor = new () => SpeechEngine;
-export function speechConstructor(): SpeechConstructor | undefined {
-  if (typeof window === "undefined") return;
+export type SpeechSupportReason = "unsupported" | "ios-non-safari";
+
+export function speechSupport(): {
+  constructor?: SpeechConstructor;
+  reason?: SpeechSupportReason;
+} {
+  if (typeof window === "undefined") return {};
   const host = window as unknown as {
     SpeechRecognition?: SpeechConstructor;
     webkitSpeechRecognition?: SpeechConstructor;
   };
-  return host.SpeechRecognition || host.webkitSpeechRecognition;
+  const Engine = host.SpeechRecognition || host.webkitSpeechRecognition;
+  if (!Engine) return { reason: "unsupported" };
+
+  const ua = navigator.userAgent || "";
+  const isiOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  // On iOS, non-Safari browsers can expose webkitSpeechRecognition even when
+  // the embedding browser cannot actually start the recognition service.
+  const nonSafariIOS =
+    isiOS && /(CriOS|FxiOS|EdgiOS|OPiOS|GSA)/.test(ua);
+  if (nonSafariIOS) return { reason: "ios-non-safari" };
+
+  return { constructor: Engine };
+}
+
+export function speechSupportMessage(reason?: SpeechSupportReason) {
+  if (reason === "ios-non-safari")
+    return "iPhone에서는 Safari에서 실시간 자막을 사용해 주세요. 현재 브라우저에서는 들려주기나 직접 입력을 이용할 수 있어요.";
+  return "이 브라우저는 실시간 자막을 지원하지 않아요. 들려주기나 직접 입력을 이용해 주세요.";
+}
+
+export function speechConstructor(): SpeechConstructor | undefined {
+  return speechSupport().constructor;
 }
 export const tailTranscript = (text: string) => text.trim().slice(-1000);
 
