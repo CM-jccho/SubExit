@@ -249,6 +249,8 @@ export default function LiveCoach({
       if (signals.numbers.length)
         parts.push("숫자·날짜·금액 " + signals.numbers.length + "개");
       if (signals.terms.length) parts.push("용어 " + signals.terms.length + "개");
+      if (signals.commitments.length)
+        parts.push("꼭 기억 " + signals.commitments.length + "개");
       setHistoryStatus(parts.join(" "));
       setHistorySaved(true);
     } catch (e) {
@@ -1028,6 +1030,17 @@ export default function LiveCoach({
                         </small>
                       </article>
                     ))}
+                  {liveRememberItems.length > 0 && (
+                    <div className="live-remember-summary" aria-label="꼭 기억할 내용">
+                      <strong>꼭 기억</strong>
+                      <small>상대가 실제로 한 말에서 약속·기한·중요 정보를 찾았어요.</small>
+                      <ul>
+                        {liveRememberItems.map((value) => (
+                          <li key={value}>{value}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   {(liveSignals.numbers.length > 0 ||
                     liveSignals.terms.length > 0) && (
                     <div className="live-signal-summary" aria-label="대화에서 찾은 정보">
