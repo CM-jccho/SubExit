@@ -1094,6 +1094,11 @@ export default function VoiceWorkspace({
                         {s.liveMeta.signals.terms.length
                           ? " · 용어 " + s.liveMeta.signals.terms.length + "개"
                           : ""}
+                        {s.liveMeta.signals.commitments?.length
+                          ? " · 꼭 기억 " +
+                            s.liveMeta.signals.commitments.length +
+                            "개"
+                          : ""}
                       </>
                     ) : (
                       <>
@@ -1194,6 +1199,16 @@ export default function VoiceWorkspace({
                   건
                 </span>
               </div>
+              {session.liveMeta.signals.commitments?.length ? (
+                <div className="live-record-memory">
+                  <strong>꼭 기억</strong>
+                  <ul>
+                    {session.liveMeta.signals.commitments.map((value) => (
+                      <li key={value}>{value}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
               {(session.liveMeta.signals.numbers.length > 0 ||
                 session.liveMeta.signals.terms.length > 0) && (
                 <div className="live-record-signals">
