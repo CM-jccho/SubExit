@@ -380,7 +380,20 @@ export default function LiveCoach({
     }
   }
   async function listen() {
-    if (busy.current || !allowed || !config.voiceAvailable) return;
+    if (busy.current) {
+      setError("이전 작업을 처리하고 있어요. 잠시 후 다시 눌러주세요.");
+      return;
+    }
+    if (!allowed) {
+      setError("먼저 상단의 AI 전송 동의를 확인해 주세요.");
+      setNotice("마이크를 시작하지 않았어요.");
+      return;
+    }
+    if (!config.voiceAvailable) {
+      setError(voiceUnavailableMessage);
+      setNotice("마이크를 시작하지 않았어요.");
+      return;
+    }
     const id = ++version.current;
     busy.current = true;
     setPhase("permission");
@@ -957,6 +970,7 @@ export default function LiveCoach({
                     <Waveform active={phase === "listening"} />
                     <p role="status">{status}</p>
                     <button
+                      type="button"
                       className="dc-mic-button"
                       aria-label={
                         phase === "listening"
@@ -964,10 +978,13 @@ export default function LiveCoach({
                           : "상대 말 4초 듣기"
                       }
                       disabled={
-                        phase !== "listening" &&
-                        (!allowed || !config.voiceAvailable || phase !== "idle")
+                        phase !== "listening" && phase !== "idle"
                       }
-                      onClick={phase === "listening" ? finishRecording : listen}
+                      onClick={
+                        phase === "listening"
+                          ? finishRecording
+                          : () => void listen()
+                      }
                     >
                       <Icon
                         name={phase === "listening" ? "pause" : "mic"}
@@ -987,17 +1004,26 @@ export default function LiveCoach({
                         않아요.
                       </HelpTip>
                     </span>
-                    {!config.voiceAvailable && (
+                    {phase === "idle" && (!allowed || !config.voiceAvailable) && (
                       <div className="voice-availability-note" role="status">
-                        <p className="dd-small">{voiceUnavailableMessage}</p>
-                        <button
-                          type="button"
-                          className="dd-link"
-                          disabled={phase !== "idle"}
-                          onClick={() => setConfigAttempt((n) => n + 1)}
-                        >
-                          AI 연결 다시 확인
-                        </button>
+                        {!allowed && (
+                          <p className="dd-small">
+                            AI 전송 동의를 확인한 뒤 마이크를 시작할 수 있어요.
+                          </p>
+                        )}
+                        {!config.voiceAvailable && (
+                          <>
+                            <p className="dd-small">{voiceUnavailableMessage}</p>
+                            <button
+                              type="button"
+                              className="dd-link"
+                              disabled={phase !== "idle"}
+                              onClick={() => setConfigAttempt((n) => n + 1)}
+                            >
+                              AI 연결 다시 확인
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
