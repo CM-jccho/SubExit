@@ -105,7 +105,7 @@ export default function LaunchIntro() {
               </button>
             ) : (
               <button type="button" className="dd-primary" onClick={close}>
-                지금 대화 도움받기
+                실시간 대화 도움 시작
               </button>
             )}
           </div>
