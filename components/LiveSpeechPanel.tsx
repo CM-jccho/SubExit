@@ -10,8 +10,7 @@ import { requestMicrophone } from "@/lib/microphone";
 import type { CoachResponse } from "@/lib/coach-contract";
 import type { ContextProfile } from "@/lib/conversation-cards";
 import type { Tone } from "@/lib/scenarios";
-import { Icon, Companion } from "./CompanionUI";
-import { useCompanion } from "./CompanionTheme";
+import { Icon } from "./CompanionUI";
 import QuotaHelp from "./QuotaHelp";
 
 export default function LiveSpeechPanel({
@@ -24,6 +23,7 @@ export default function LiveSpeechPanel({
   onActiveChange,
   readyToStart = true,
   onCue,
+  rememberItems = [],
   consentControl,
   available = true,
   unavailableMessage,
@@ -46,8 +46,8 @@ export default function LiveSpeechPanel({
   onActiveChange: (active: boolean) => void;
   readyToStart?: boolean;
   onCue?: (cue: { opponent: string; response: CoachResponse }) => void;
+  rememberItems?: string[];
 }) {
-  const character = useCompanion();
   const [state, setState] = useState<"idle" | "connecting" | "listening">(
     "idle",
   );
@@ -433,7 +433,7 @@ export default function LiveSpeechPanel({
         <aside
           className={
             "dc-answer-panel live-stream-reply " +
-            (reply ? "is-ready" : "quick-answer-empty")
+            (reply ? "is-ready" : "is-waiting")
           }
           aria-label="답변 코칭"
           aria-live="polite"
@@ -460,38 +460,54 @@ export default function LiveSpeechPanel({
           {reply ? (
             <>
               <blockquote>{reply.data.suggestion}</blockquote>
-              <details>
-                <summary>어떤 말을 바탕으로 제안했나요?</summary>
+              <details className="live-answer-evidence">
+                <summary>왜 이 말을 제안했나요?</summary>
                 <q>{reply.data.evidence}</q>
                 <p>{reply.data.reason}</p>
               </details>
             </>
           ) : (
-            <div className="dc-answer-wait">
-              {profile && (
-                <div className="live-goal-brief">
-                  <h2>이번 대화에서 기억할 것</h2>
-                  <p>
-                    <strong>원하는 결과</strong>
-                    {profile.goal}
-                  </p>
-                  {profile.boundaries && (
-                    <p className="live-boundary">
-                      <strong>지킬 선</strong>
-                      {profile.boundaries}
-                    </p>
-                  )}
-                </div>
-              )}
-              <Companion small mood={working ? "think" : "listen"} />
-              <h2>
+            <div className="live-answer-placeholder">
+              <strong>
                 {working
-                  ? "내 목표에 맞게 생각 중이에요"
-                  : "듣고 나서, 함께 생각해요"}
-              </h2>
-              <p>상대의 말이 인식되면 지금 필요한 다음 한마디를 여기에 제안해요.</p>
+                  ? "다음 한마디를 준비하고 있어요…"
+                  : "상대 말을 들으면 여기에 바로 보여드려요."}
+              </strong>
+              <span>실제 대화 중에는 이 영역만 보고 말해도 돼요.</span>
             </div>
           )}
+
+          <section className="live-remember-card" aria-label="이번 대화에서 꼭 기억할 것">
+            <div className="live-remember-heading">
+              <Icon name="book" size={17} />
+              <strong>꼭 기억할 것</strong>
+            </div>
+            <ul>
+              {profile?.goal && (
+                <li>
+                  <span>목표</span>
+                  {profile.goal}
+                </li>
+              )}
+              {profile?.boundaries && (
+                <li>
+                  <span>지킬 선</span>
+                  {profile.boundaries}
+                </li>
+              )}
+              {rememberItems.slice(0, 5).map((item, index) => (
+                <li key={index} className="live-remember-detected">
+                  <span>{index === 0 ? "대화에서" : "기억"}</span>
+                  {item}
+                </li>
+              ))}
+              {!profile?.boundaries && rememberItems.length === 0 && (
+                <li className="live-remember-empty">
+                  상대가 약속한 일정·해야 할 일·중요한 숫자가 잡히면 여기에 남겨요.
+                </li>
+              )}
+            </ul>
+          </section>
         </aside>
       </div>
     </section>
