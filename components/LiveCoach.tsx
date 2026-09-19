@@ -642,7 +642,7 @@ export default function LiveCoach({
         setInputMode("text");
         setError(
           e instanceof DOMException && e.name === "NotAllowedError"
-            ? "마이크 사용이 거부됐어요. 다시 누르면 Safari가 권한을 물어보고, 이전에 거부했다면 주소창의 사이트 설정에서 마이크를 허용해 주세요."
+            ? "마이크 사용이 거부됐어요. 다시 눌러 권한을 허용하거나, 이전에 거부했다면 브라우저의 사이트 설정에서 마이크를 허용해 주세요."
             : e instanceof Error
               ? e.message
               : "마이크를 시작하지 못했어요.",
