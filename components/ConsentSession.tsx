@@ -19,10 +19,26 @@ type SessionConsent = {
 };
 const ConsentContext = createContext<SessionConsent | null>(null);
 
-// Authorization belongs to this app visit, never to a saved conversation.
-// Deliberately memory-only: reloading/closing the page starts a new visit.
+// Authorization belongs to this browser-tab visit, never to a saved conversation.
+// Keep it across refreshes in the same tab, but clear it when the tab/session ends.
+const SESSION_KEY = "speakcoaching-ai-consent-session-v1";
+
 export function ConsentSessionProvider({ children }: { children: ReactNode }) {
-  const [allowed, setAllowed] = useState(false);
+  const [allowedState, setAllowedState] = useState(() => {
+    try {
+      return sessionStorage.getItem(SESSION_KEY) === "allowed";
+    } catch {
+      return false;
+    }
+  });
+  const setAllowed = useCallback((value: boolean) => {
+    setAllowedState(value);
+    try {
+      if (value) sessionStorage.setItem(SESSION_KEY, "allowed");
+      else sessionStorage.removeItem(SESSION_KEY);
+    } catch {}
+  }, []);
+  const allowed = allowedState;
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const register = useCallback((prompt: Prompt) => {
     setPrompts((items) => [...items.filter((p) => p.id !== prompt.id), prompt]);
