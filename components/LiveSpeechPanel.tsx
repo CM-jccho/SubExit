@@ -181,7 +181,11 @@ export default function LiveSpeechPanel({
   const active = state !== "idle";
   return (
     <section className="live-stream" aria-label="실시간 자막과 코칭">
-      <div className="dc-coaching-grid live-stream-workspace">
+      <div
+        className={
+          "dc-coaching-grid live-stream-workspace" + (reply ? " has-result" : "")
+        }
+      >
         <section className="dc-listen-panel">
           {inputTabs}
           <div className="live-caption" aria-label="인식 중인 상대 말">
