@@ -236,16 +236,23 @@ export default function LiveCoach({
       clearTimeout(timeout);
     }
   }
-  async function coach(text: string, id = ++version.current) {
+  async function coach(
+    text: string,
+    requestedTone: Tone = tone,
+    id = ++version.current,
+  ) {
     if (!allowed || !config.available || text.trim().length < 2) return;
     const requestProfile =
       directEntry && profile
         ? {
             ...profile,
+            tone: requestedTone,
             situation:
               quickContext.situation.trim() || text.trim().slice(0, 800),
           }
-        : profile;
+        : profile
+          ? { ...profile, tone: requestedTone }
+          : profile;
     busy.current = true;
     setPhase("coaching");
     setNotice("인식한 말을 바탕으로 답변 힌트를 준비하고 있어요.");
@@ -279,7 +286,7 @@ export default function LiveCoach({
               quick: true,
               scenario,
               context: requestProfile,
-              tone,
+              tone: requestedTone,
               opponent: text,
               reply: "",
               consent,
@@ -457,7 +464,7 @@ export default function LiveCoach({
       setNotice(
         "음성 인식이 끝났어요. 아래 문장을 확인하고 ‘답변 코칭받기’를 눌러주세요.",
       );
-      if (automatic) await coach(data.text.slice(0, 1000), id);
+      if (automatic) await coach(data.text.slice(0, 1000), tone, id);
     } catch (e) {
       if (version.current === id) {
         setNotice("");
@@ -664,7 +671,7 @@ export default function LiveCoach({
         <span className="breadcrumb-separator" aria-hidden="true">
           /
         </span>
-        <span aria-current="location">답변 추천받기</span>
+        <span aria-current="location">지금 대화 도움</span>
       </nav>
       <header className="dc-live-heading">
         <div>
@@ -673,9 +680,12 @@ export default function LiveCoach({
               {prepared ? "내 옆의 대화 코치" : "시작하기 전에"}
             </p>
           )}
-          <h1>답변 추천받기</h1>
+          <h1>지금 대화 도움</h1>
           {directEntry && (
-            <p>방금 들은 말을 알려주세요. 다음에 할 한마디를 함께 찾아요.</p>
+            <p>
+              상대의 말을 들려주거나 입력하면, 지금 필요한 다음 한마디를
+              제안해요.
+            </p>
           )}
         </div>
       </header>
@@ -1042,7 +1052,7 @@ export default function LiveCoach({
                     >
                       {phase === "coaching"
                         ? "한마디를 준비하는 중"
-                        : "답변 코칭받기"}
+                        : "다음 한마디 받기"}
                       <Icon name="arrow" size={18} />
                     </button>
                     {phase === "idle" && input.trim().length < 2 && (
@@ -1127,7 +1137,7 @@ export default function LiveCoach({
               >
                 <div className="dc-answer-heading">
                   <Icon name="chat" size={20} />
-                  <span>{character.name}의 답변 코칭</span>
+                  <span>지금 필요한 한마디</span>
                   {result?.sample ? (
                     <SampleNotice sample={result.sample} compact badge />
                   ) : result ? (
@@ -1147,7 +1157,7 @@ export default function LiveCoach({
                     <p className="dc-answer-label">
                       {result.sample
                         ? "참고할 표현 예시"
-                        : "이렇게 말해볼까요?"}
+                        : "다음 한마디"}
                     </p>
                     {profile && (
                       <p className="dc-answer-goal">
@@ -1161,6 +1171,34 @@ export default function LiveCoach({
                     >
                       {result.suggestion}
                     </blockquote>
+                    {!result.sample && (
+                      <div
+                        className="dc-answer-variants"
+                        role="group"
+                        aria-label="답변 말투 바꾸기"
+                      >
+                        <span>이 한마디를</span>
+                        {([
+                          { id: "warm", label: "부드럽게" },
+                          { id: "firm_polite", label: "분명하게" },
+                          { id: "cold", label: "짧게" },
+                        ] as { id: Tone; label: string }[]).map((option) => (
+                          <button
+                            type="button"
+                            key={option.id}
+                            className={tone === option.id ? "active" : ""}
+                            aria-pressed={tone === option.id}
+                            disabled={phase !== "idle" || input.trim().length < 2}
+                            onClick={() => {
+                              setTone(option.id);
+                              void coach(input, option.id);
+                            }}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <div className="dc-answer-actions">
                       <button
                         className="dd-primary"
@@ -1256,9 +1294,10 @@ export default function LiveCoach({
                   className="live-recent-cues"
                   aria-label="최근 추천 한마디"
                 >
-                  <h2>최근 추천 한마디</h2>
+                  <h2>방금 대화 돌아보기</h2>
                   <p className="vn-caption">
-                    이 화면에서 받은 최근 두 한마디예요. 화면을 나가면 지워져요.
+                    방금 주고받은 흐름과 추천 한마디를 확인해요. 같은 상황을
+                    다시 연습하며 내 말로 바꿔볼 수 있어요.
                   </p>
                   {(result ? recentCues.slice(0, -1) : recentCues)
                     .slice(-2)
