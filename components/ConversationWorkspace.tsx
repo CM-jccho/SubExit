@@ -904,7 +904,7 @@ export default function ConversationWorkspace() {
                     className="dd-link"
                     onClick={() => navigate("quick", "live")}
                   >
-                    답변 추천받기 <Icon name="arrow" size={16} />
+                    실시간 대화 도움 <Icon name="arrow" size={16} />
                   </button>
                   <button
                     className="dd-link"
