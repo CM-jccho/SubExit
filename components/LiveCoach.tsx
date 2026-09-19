@@ -712,8 +712,17 @@ export default function LiveCoach({
       ),
     ),
   );
+  const liveSetupComplete =
+    !directEntry ||
+    (!!quickContext.partner.trim() && !!quickContext.goal.trim());
   const contextControl = directEntry ? (
-    <section className="quick-context live-context-setup" aria-label="이번 대화 설정">
+    <section
+      className={
+        "quick-context live-context-setup" +
+        (liveActive ? " is-running" : "")
+      }
+      aria-label="이번 대화 설정"
+    >
       <div className="live-context-setup-head">
         <div>
           <span>대화 시작 전</span>
@@ -725,7 +734,19 @@ export default function LiveCoach({
           </span>
         )}
       </div>
-      <fieldset disabled={phase !== "idle" || liveActive}>
+      {liveActive ? (
+        <div className="live-context-running-summary">
+          <span>
+            <strong>상대</strong>
+            {quickContext.partner || "대화 상대"}
+          </span>
+          <span>
+            <strong>목표</strong>
+            {quickContext.goal || "내 뜻 전달하기"}
+          </span>
+        </div>
+      ) : (
+      <fieldset disabled={phase !== "idle"}>
         <div className="live-context-primary-fields">
           <div className="live-choice-field">
             <span>대화 상대</span>
@@ -940,6 +961,7 @@ export default function LiveCoach({
           </div>
         </details>
       </fieldset>
+      )}
     </section>
   ) : undefined;
   const inputTabs = (
@@ -1320,6 +1342,7 @@ export default function LiveCoach({
                 adult={adult}
                 sample={sample}
                 onActiveChange={setLiveActive}
+                readyToStart={liveSetupComplete}
                 onCue={(cue) =>
                   addRecentCue({
                     ...cue,
