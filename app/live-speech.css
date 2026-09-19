@@ -194,3 +194,83 @@
 .live-stream-reply-heading {
   margin-top: 24px;
 }
+
+
+/* Next-line coaching polish: one clear suggestion, quick tone refinements, and
+   a distinct realtime-caption acknowledgement instead of a second checkbox. */
+.dc-answer-variants {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0 18px;
+}
+.dc-answer-variants > span {
+  font-size: var(--t-cap);
+  color: #68745f;
+  margin-right: 2px;
+}
+.dc-answer-variants button {
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid #d6dfce;
+  border-radius: 999px;
+  background: #fff;
+  color: #40513f;
+  font-size: var(--t-cap);
+  font-weight: 700;
+}
+.dc-answer-variants button.active,
+.dc-answer-variants button[aria-pressed="true"] {
+  background: #e8f0dd;
+  border-color: #8ca879;
+  color: #2f5f40;
+}
+.live-speech-disclosure {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: #edf2e7;
+  border: 1px solid #d6dfce;
+  border-radius: var(--r-md);
+}
+.live-speech-disclosure strong {
+  display: block;
+  font-size: var(--t-body);
+  margin-bottom: 4px;
+}
+.live-speech-disclosure p {
+  margin: 0;
+  font-size: var(--t-body);
+  line-height: 1.7;
+  color: #596851;
+}
+.live-speech-disclosure .dd-secondary {
+  justify-self: start;
+}
+.live-speech-confirmed {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #e1ecd7;
+  color: #356047;
+  font-size: var(--t-cap);
+  font-weight: 750;
+}
+@media (max-width: 540px) {
+  .dc-answer-variants {
+    align-items: stretch;
+  }
+  .dc-answer-variants > span {
+    width: 100%;
+  }
+  .dc-answer-variants button {
+    flex: 1;
+  }
+  .live-speech-disclosure .dd-secondary {
+    width: 100%;
+  }
+}
