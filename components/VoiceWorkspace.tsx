@@ -1176,6 +1176,41 @@ export default function VoiceWorkspace({
               </span>
             )}
           </section>
+          {session.liveMeta && (
+            <section className="live-record-summary" aria-label="실시간 대화 요약 정보">
+              <div className="live-record-summary-head">
+                <div>
+                  <span>실시간 대화 기록</span>
+                  <strong>{session.liveMeta.partner}</strong>
+                </div>
+                <span>
+                  같은 상대{" "}
+                  {
+                    sessions.filter(
+                      (item) =>
+                        item.liveMeta?.groupKey === session.liveMeta?.groupKey,
+                    ).length
+                  }
+                  건
+                </span>
+              </div>
+              {(session.liveMeta.signals.numbers.length > 0 ||
+                session.liveMeta.signals.terms.length > 0) && (
+                <div className="live-record-signals">
+                  {session.liveMeta.signals.numbers.map((value) => (
+                    <span key={"number-" + value}># {value}</span>
+                  ))}
+                  {session.liveMeta.signals.terms.map((value) => (
+                    <span key={"term-" + value}>{value}</span>
+                  ))}
+                </div>
+              )}
+              <p>
+                이 기록은 같은 상대의 다음 대화 준비와 재연습에 다시 활용할 수
+                있어요.
+              </p>
+            </section>
+          )}
           {inConversation ? (
             <>
               <div className="practice-settings-bar">
