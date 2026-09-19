@@ -749,6 +749,25 @@ export default function LiveCoach({
           )}
         </div>
       </header>
+      {!consent && (
+        <section className="live-entry-consent" aria-label="AI 사용 전 한 번 확인">
+          <div className="live-entry-consent-copy">
+            <span>처음 한 번만 확인해요</span>
+            <strong>AI 대화 도움을 사용하려면 전송 동의가 필요해요.</strong>
+            <p>
+              동의하면 이번 이용 중 다시 묻지 않아요. 음성 기능은 실제로 누를 때
+              Safari·Chrome이 마이크 권한을 별도로 물어봐요.
+            </p>
+          </div>
+          <AIConsent
+            config={config}
+            checked={consent}
+            onChange={setConsent}
+            disabled={phase !== "idle" || liveActive}
+            priority={-10}
+          />
+        </section>
+      )}
       {(!directEntry || phase !== "idle" || liveActive || result) && (
         <div
           className="coach-live-presence"
@@ -937,16 +956,7 @@ export default function LiveCoach({
                       : "직접 입력으로 바꿨어요. 상대가 한 말을 적어 주세요.",
                   );
                 }}
-                consentControl={
-                  directEntry ? (
-                    <AIConsent
-                      config={config}
-                      checked={consent}
-                      onChange={setConsent}
-                      disabled={liveActive}
-                    />
-                  ) : undefined
-                }
+                consentControl={undefined}
                 profile={profile}
                 scenario={scenario}
                 tone={tone}
@@ -1109,17 +1119,7 @@ export default function LiveCoach({
                       placeholder="상대가 방금 한 말을 적어주세요."
                       rows={3}
                     />
-                    {directEntry && (
-                      <>
-                        {contextControl}
-                        <AIConsent
-                          config={config}
-                          checked={consent}
-                          onChange={setConsent}
-                          disabled={phase !== "idle"}
-                        />
-                      </>
-                    )}
+                    {directEntry && contextControl}
                     <button
                       className={
                         (result ? "dd-secondary" : "dd-primary") + " dd-full"
