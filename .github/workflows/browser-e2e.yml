@@ -1,0 +1,77 @@
+name: Browser E2E
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "e2e/**"
+      - "playwright.config.mjs"
+      - ".github/workflows/browser-e2e.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  chrome-safari-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      E2E_BASE_URL: https://speakcoaching-one.vercel.app
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Install Playwright test runner
+        run: npm install --no-save @playwright/test@1.57.0
+
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Wait for current production UI
+        shell: bash
+        run: |
+          for attempt in {1..36}; do
+            if curl -fsS "$E2E_BASE_URL/evidence" | grep -q "핵심 경험"; then
+              echo "Production is ready."
+              exit 0
+            fi
+            echo "Waiting for production... ($attempt/36)"
+            sleep 10
+          done
+          echo "Production did not expose the expected current UI in time."
+          exit 1
+
+      - name: Run Chrome and Safari-engine mobile E2E
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-e2e-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
