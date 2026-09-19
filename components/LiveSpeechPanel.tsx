@@ -228,6 +228,34 @@ export default function LiveSpeechPanel({
     }
   }
   const active = state !== "idle";
+  function handlePrimaryAction() {
+    if (active) {
+      stop();
+      setNotice(
+        "듣기를 멈췄어요. 인식된 말과 마지막 제안은 이 화면에 남아 있어요.",
+      );
+      return;
+    }
+    if (!available) {
+      setError(
+        unavailableMessage ||
+          "AI 연결을 확인하지 못해 지금은 듣기를 시작할 수 없어요.",
+      );
+      return;
+    }
+    if (!consent || !adult) {
+      setNotice("AI 전송 동의를 확인하면 바로 실시간 듣기를 시작할 수 있어요.");
+      return;
+    }
+    if (!speechConsent) {
+      setNotice("아래 실시간 자막 사용 안내를 확인하면 바로 시작할 수 있어요.");
+      document
+        .getElementById("live-speech-consent")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    void start();
+  }
   return (
     <section className="live-stream" aria-label="실시간 자막과 코칭">
       <div
@@ -237,126 +265,77 @@ export default function LiveSpeechPanel({
       >
         <section className="dc-listen-panel">
           {inputTabs}
-          <div className="live-caption" aria-label="인식 중인 상대 말">
-            <h2>상대가 어떤 말을 했나요?</h2>
-            <span className="live-stream-label">
-              {active ? "지금 들리는 상대 말" : "듣기를 시작하면 여기에 보여요"}
-            </span>
-            <p
-              ref={captionArea}
-              onScroll={(event) => {
-                const el = event.currentTarget;
-                followCaption.current =
-                  el.scrollHeight - el.scrollTop - el.clientHeight < 40;
-              }}
-            >
-              {caption.final}
-              <span className="live-caption-interim">
-                {caption.interim ? " " + caption.interim : ""}
-              </span>
-              {!caption.final && !caption.interim && (
-                <span className="live-caption-placeholder">
-                  상대의 말이 여기에 자막처럼 나타나요.
-                </span>
-              )}
-            </p>
-            <small>
-              흐린 글자는 인식 중이며 바뀔 수 있어요. 최근 1,000자를 보여줘요.
-            </small>
-          </div>
-          {contextControl}
-          <section
-            className="live-stream-settings"
-            aria-labelledby="live-settings-heading"
-          >
-            <h2 id="live-settings-heading">듣기 설정</h2>
-            {!contextControl && profile && (
-              <dl className="live-context-summary">
-                <div>
-                  <dt>대화 상대</dt>
-                  <dd>{profile.partner}</dd>
-                </div>
-                <div>
-                  <dt>내 목표</dt>
-                  <dd>{profile.goal}</dd>
-                </div>
-              </dl>
-            )}
-            {consentControl}
-            <div className="live-speech-disclosure" role="note">
-              <div>
-                <strong>실시간 자막 사용 안내</strong>
-                <p>
-                  상단의 AI 전송 동의와 별개로, 실시간 자막은 브라우저 음성
-                  인식 서비스에도 음성을 보내 글로 바꿔요. 인식된 문장은
-                  Gemini로 보내 다음 한마디를 만들어요.
-                </p>
-              </div>
-              {speechConsent ? (
-                <span className="live-speech-confirmed">
-                  <Icon name="check" size={16} />
-                  실시간 자막 안내 확인됨
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  className="dd-secondary"
-                  disabled={active}
-                  onClick={() => setSpeechConsent(true)}
-                >
-                  안내 확인하고 실시간 자막 사용
-                </button>
-              )}
+
+          <section className={"live-primary-action" + (active ? " is-active" : "")}>
+            <div>
+              <span className="live-primary-kicker">실시간 대화 도움</span>
+              <h2>
+                {active
+                  ? "상대 말을 듣고 있어요"
+                  : "상대 말을 들으면서 다음 한마디를 받아보세요"}
+              </h2>
+              <p>
+                {active
+                  ? "자막과 AI 제안이 대화 흐름에 맞춰 계속 갱신돼요."
+                  : "버튼을 누르고 상대의 말을 들려주면 자막과 다음 한마디를 바로 이어서 보여드려요."}
+              </p>
             </div>
-            <div className="live-stream-toolbar">
-              <div role="status">
-                <strong
-                  className={
-                    "mic-status " +
-                    (state === "listening" ? "is-listening" : "")
-                  }
-                >
-                  <i aria-hidden="true" />
-                  {state === "listening"
-                    ? "계속 듣고 있어요"
-                    : state === "connecting"
-                      ? "음성 인식 연결 중"
-                      : "듣기 시작 전"}
-                </strong>
-                <span>
-                  {active
-                    ? "자막과 답변 코칭을 자동으로 갱신해요"
-                    : !available
-                      ? "AI 연결을 확인해 주세요"
-                      : !consent || !adult
-                        ? "상단 AI 전송 동의를 확인하면 시작할 수 있어요"
-                        : !speechConsent
-                          ? "실시간 자막 사용 안내를 확인하면 시작할 수 있어요"
-                          : "준비됐어요. 듣기를 시작해 주세요"}
-                </span>
-              </div>
-              <button
-                className={active ? "dd-secondary" : "dd-primary"}
-                onClick={
-                  active
-                    ? () => {
-                        stop();
-                        setNotice(
-                          "듣기를 멈췄어요. 인식된 말과 마지막 제안은 이 화면에 남아 있어요.",
-                        );
-                      }
-                    : () => void start()
-                }
-                disabled={
-                  !active &&
-                  (!available || !speechConsent || !consent || !adult)
+            <button
+              type="button"
+              className={active ? "dd-secondary live-primary-cta" : "dd-primary live-primary-cta"}
+              onClick={handlePrimaryAction}
+            >
+              <Icon name={active ? "pause" : "mic"} size={22} />
+              {active ? "듣기 멈춤" : "실시간 듣기 시작"}
+            </button>
+            <div className="live-primary-status" role="status">
+              <strong
+                className={
+                  "mic-status " +
+                  (state === "listening" ? "is-listening" : "")
                 }
               >
-                <Icon name={active ? "pause" : "mic"} size={20} />
-                {active ? "듣기 멈춤" : "실시간 듣기 시작"}
-              </button>
+                <i aria-hidden="true" />
+                {state === "listening"
+                  ? "계속 듣고 있어요"
+                  : state === "connecting"
+                    ? "마이크와 음성 인식을 연결하고 있어요"
+                    : "준비 전"}
+              </strong>
+              <span>
+                {state === "listening"
+                  ? "확정된 말을 바탕으로 다음 한마디를 자동으로 갱신해요."
+                  : "실시간 도움을 가장 먼저 시작하고, 필요한 설정은 아래에서 최소한으로 확인해요."}
+              </span>
             </div>
           </section>
+
+          {(!consent || !adult || !speechConsent) && (
+            <section className="live-start-requirements" aria-label="실시간 듣기 시작 전 확인">
+              {consentControl}
+              {!speechConsent && (
+                <div id="live-speech-consent" className="live-start-consent">
+                  <div>
+                    <strong>실시간 자막 사용 확인</strong>
+                    <p>
+                      브라우저 음성 인식으로 상대 말을 글로 바꾸고, 인식된 문장을 Gemini에 보내 다음 한마디를 만들어요.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="dd-secondary"
+                    disabled={active}
+                    onClick={() => {
+                      setSpeechConsent(true);
+                      setNotice("준비됐어요. 위의 ‘실시간 듣기 시작’을 눌러주세요.");
+                    }}
+                  >
+                    확인
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
 
           {!available && (
             <p role="status" className="live-stream-note">
@@ -389,9 +368,39 @@ export default function LiveSpeechPanel({
               {notice}
             </p>
           )}
+
+          <div className="live-caption" aria-label="인식 중인 상대 말">
+            <div className="live-caption-head">
+              <h2>지금 들리는 상대 말</h2>
+              <span className="live-stream-label">
+                {active ? "실시간 자막" : "듣기를 시작하면 여기에 보여요"}
+              </span>
+            </div>
+            <p
+              ref={captionArea}
+              onScroll={(event) => {
+                const el = event.currentTarget;
+                followCaption.current =
+                  el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+              }}
+            >
+              {caption.final}
+              <span className="live-caption-interim">
+                {caption.interim ? " " + caption.interim : ""}
+              </span>
+              {!caption.final && !caption.interim && (
+                <span className="live-caption-placeholder">
+                  상대의 말이 여기에 자막처럼 나타나요.
+                </span>
+              )}
+            </p>
+          </div>
+
+          {contextControl}
+
           {onUseText && (
             <button
-              className="dd-secondary"
+              className="dd-secondary live-caption-to-text"
               onClick={() => {
                 stop();
                 onUseText(
@@ -402,23 +411,33 @@ export default function LiveSpeechPanel({
               자막을 직접 입력으로 이어가기
             </button>
           )}
-          <p className="live-stream-note">
-            자막은 인식되는 대로 보여주고, 답변 코칭은 확정된 말을 바탕으로
-            갱신해요. 응답 속도는 연결 상태에 따라 달라요.
-          </p>
-          <details
-            className="live-stream-guide"
-            aria-labelledby="live-guide-heading"
-          >
-            <summary id="live-guide-heading">실시간 자막 사용 방법</summary>
-            <p>
-              동의 후 듣기를 시작하면 왼쪽에 자막이, 오른쪽에 답변 코칭이
-              나타나요. 모바일에서는 위아래로 보여요.
-            </p>
-            <p>
-              내 목소리와 상대를 자동 구분하지 않아요. 내가 말할 때는 ‘듣기
-              멈춤’을 눌러주세요.
-            </p>
+
+          <details className="live-stream-guide" aria-labelledby="live-guide-heading">
+            <summary id="live-guide-heading">설정 · 개인정보 · 사용 방법</summary>
+            {!contextControl && profile && (
+              <dl className="live-context-summary">
+                <div>
+                  <dt>대화 상대</dt>
+                  <dd>{profile.partner}</dd>
+                </div>
+                <div>
+                  <dt>내 목표</dt>
+                  <dd>{profile.goal}</dd>
+                </div>
+              </dl>
+            )}
+            <div className="live-guide-detail">
+              <strong>실시간 자막은 이렇게 처리해요</strong>
+              <p>
+                브라우저 음성 인식 서비스가 음성을 글로 바꾸고, 확정된 문장을 Gemini에 보내 다음 한마디를 만들어요.
+              </p>
+              <p>
+                내 목소리와 상대를 자동 구분하지 않아요. 내가 말할 때는 ‘듣기 멈춤’을 눌러주세요.
+              </p>
+              <p>
+                자막은 인식되는 대로 보여주고, AI 제안 속도는 연결 상태에 따라 달라질 수 있어요.
+              </p>
+            </div>
           </details>
         </section>
         <aside
