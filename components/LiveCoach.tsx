@@ -51,7 +51,7 @@ export default function LiveCoach({
     useState<SpeechSupportReason>();
   const [samplePreviewOpen, setSamplePreviewOpen] = useState(false);
   const [voiceStyle, setVoiceStyle] = useState<"continuous" | "short">(
-    directEntry ? "short" : "continuous",
+    "continuous",
   );
   const [liveActive, setLiveActive] = useState(false);
   const [scenario, setScenario] = useState("sales"),
@@ -85,9 +85,7 @@ export default function LiveCoach({
   const [clip, setClip] = useState<AudioClip | null>(null),
     [notice, setNotice] = useState("");
   const [prepared, setPrepared] = useState(directEntry),
-    [inputMode, setInputMode] = useState<"voice" | "text">(
-      directEntry ? "text" : "voice",
-    ),
+    [inputMode, setInputMode] = useState<"voice" | "text">("voice"),
     [copied, setCopied] = useState(false);
   const sampleHistory = useRef<string[]>([]);
   const [recentCues, setRecentCues] = useState<
