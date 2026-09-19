@@ -222,7 +222,7 @@ export default function LiveSpeechPanel({
       setNotice("");
       setError(
         e instanceof DOMException && e.name === "NotAllowedError"
-          ? "마이크 권한이 필요해요. Safari 주소창의 사이트 설정에서 마이크를 허용한 뒤 다시 시작해 주세요."
+          ? "마이크 권한이 필요해요. 브라우저의 사이트 설정에서 마이크를 허용한 뒤 다시 시작해 주세요."
           : e instanceof Error && e.name === "AbortError"
             ? "마이크 연결을 취소했어요."
             : e instanceof Error
