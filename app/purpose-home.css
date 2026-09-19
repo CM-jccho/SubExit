@@ -467,3 +467,81 @@
     font-size: var(--t-cap);
   }
 }
+
+
+/* Reframe home around realtime conversation help; practice/review stay secondary. */
+.home-secondary-heading {
+  margin: 18px 0 8px;
+}
+.home-secondary-heading > span {
+  display: block;
+  color: #536d45;
+  font-size: var(--t-cap);
+  font-weight: 750;
+}
+.home-secondary-heading > p {
+  margin: 3px 0 0;
+  color: #68745f;
+  font-size: var(--t-cap);
+  line-height: 1.55;
+}
+.home-secondary-tools {
+  margin-top: 8px;
+}
+.home-secondary-tools .dd-secondary {
+  padding: 13px 14px;
+  background: #fafbf7;
+}
+.home-secondary-tools strong {
+  font-size: var(--t-body);
+}
+.home-secondary-tools span {
+  font-size: var(--t-cap);
+}
+@media (max-width: 700px) {
+  .purpose-home .home-live-entry {
+    gap: 12px;
+    padding: 16px;
+    margin: 12px 0 16px;
+  }
+  .purpose-home .coach-presence {
+    gap: 12px;
+  }
+  .purpose-home .coach-presence-character {
+    flex-basis: 66px;
+  }
+  .purpose-home .coach-presence-character .dc-companion {
+    width: 66px;
+    height: 62px;
+  }
+  .purpose-home .coach-presence-copy p {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .purpose-home .home-live-example {
+    margin: 2px 0 8px;
+    padding: 10px;
+  }
+  .purpose-home .practice-loop {
+    margin: 8px 0;
+  }
+  .purpose-home .coach-start {
+    min-height: 54px;
+    font-size: 16px;
+  }
+  .purpose-home .home-secondary-tools {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 0;
+  }
+  .purpose-home .home-secondary-tools .dd-secondary {
+    padding: 11px 10px;
+    gap: 5px;
+  }
+  .purpose-home .home-secondary-tools strong {
+    font-size: 13px;
+  }
+  .purpose-home .home-secondary-tools span {
+    display: none;
+  }
+}
