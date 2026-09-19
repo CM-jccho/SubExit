@@ -55,6 +55,16 @@ export type VoiceSession = {
   languages?: ConversationLanguages;
   recordingAnalysis?: RecordingAnalysisDraft;
   review?: PracticeReview;
+  liveMeta?: {
+    version: 1;
+    source: "live-help";
+    groupKey: string;
+    partner: string;
+    signals: {
+      numbers: string[];
+      terms: string[];
+    };
+  };
   practicePlan?: {
     focus: string;
     sourceSessionId: string;
