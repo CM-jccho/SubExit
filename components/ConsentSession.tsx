@@ -24,13 +24,13 @@ const ConsentContext = createContext<SessionConsent | null>(null);
 const SESSION_KEY = "speakcoaching-ai-consent-session-v1";
 
 export function ConsentSessionProvider({ children }: { children: ReactNode }) {
-  const [allowedState, setAllowedState] = useState(() => {
+  const [allowedState, setAllowedState] = useState(false);
+  useEffect(() => {
     try {
-      return sessionStorage.getItem(SESSION_KEY) === "allowed";
-    } catch {
-      return false;
-    }
-  });
+      if (sessionStorage.getItem(SESSION_KEY) === "allowed")
+        setAllowedState(true);
+    } catch {}
+  }, []);
   const setAllowed = useCallback((value: boolean) => {
     setAllowedState(value);
     try {
