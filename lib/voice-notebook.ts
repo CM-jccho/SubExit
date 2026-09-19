@@ -63,6 +63,7 @@ export type VoiceSession = {
     signals: {
       numbers: string[];
       terms: string[];
+      commitments: string[];
     };
   };
   practicePlan?: {
