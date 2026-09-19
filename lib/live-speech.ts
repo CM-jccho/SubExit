@@ -17,7 +17,7 @@ export type SpeechConstructor = new () => SpeechEngine;
 export type SpeechSupportReason = "unsupported" | "ios-non-safari";
 
 export function speechSupport(): {
-  constructor?: SpeechConstructor;
+  Engine?: SpeechConstructor;
   reason?: SpeechSupportReason;
 } {
   if (typeof window === "undefined") return {};
@@ -38,7 +38,7 @@ export function speechSupport(): {
     isiOS && /(CriOS|FxiOS|EdgiOS|OPiOS|GSA)/.test(ua);
   if (nonSafariIOS) return { reason: "ios-non-safari" };
 
-  return { constructor: Engine };
+  return { Engine };
 }
 
 export function speechSupportMessage(reason?: SpeechSupportReason) {
@@ -48,7 +48,7 @@ export function speechSupportMessage(reason?: SpeechSupportReason) {
 }
 
 export function speechConstructor(): SpeechConstructor | undefined {
-  return speechSupport().constructor;
+  return speechSupport().Engine;
 }
 export const tailTranscript = (text: string) => text.trim().slice(-1000);
 
