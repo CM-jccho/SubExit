@@ -237,6 +237,40 @@ test("onboarding finishes at the actual realtime-help screen", async ({
   expect(errors).toEqual([]);
 });
 
+test("next-line guidance is above listening controls and settings are optional", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name === "iphone-chrome-fallback");
+  const errors = watchPageErrors(page);
+
+  await installFakeRealtimeSpeech(page);
+  await mockCoach(page);
+  await openQuickHelp(page);
+  await grantAIConsent(page);
+
+  const answer = page.locator(".live-stream-reply");
+  const listen = page.locator(".live-primary-action");
+  await expect(answer).toBeVisible();
+  await expect(page.getByText("꼭 기억할 것").first()).toBeVisible();
+  await expect(page.getByText("설정하지 않아도 바로 시작할 수 있어요.")).toBeVisible();
+
+  const answerBox = await answer.boundingBox();
+  const listenBox = await listen.boundingBox();
+  expect(answerBox).not.toBeNull();
+  expect(listenBox).not.toBeNull();
+  expect(answerBox.y).toBeLessThan(listenBox.y);
+
+  const start = page.getByRole("button", { name: "대화 도움 시작" });
+  await expect(start).toBeEnabled();
+  await start.click();
+
+  await expect(page.getByText(SUGGESTION).first()).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(page.getByText(/금요일까지 꼭 끝내 주세요/).first()).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
 test("realtime core flow listens, suggests, saves, and opens records", async ({
   page,
 }, testInfo) => {
