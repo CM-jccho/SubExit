@@ -59,6 +59,17 @@ export default function HomeActions({
           </div>
         </div>
         <div className="home-live-action">
+          <div className="home-live-example" aria-label="스픽코칭 사용 장면 예시">
+            <span className="home-live-example-label">한 장면으로 보면</span>
+            <p>
+              <strong>상대</strong>
+              “왜 미리 말 안 했어요?”
+            </p>
+            <p>
+              <strong>스픽코칭</strong>
+              “제가 먼저 공유했어야 했어요. 지금 상황부터 바로 말씀드릴게요.”
+            </p>
+          </div>
           <ol className="practice-loop" aria-label="지금 대화 도움받는 과정">
             <li>
               <span>상대 말 이해</span>
