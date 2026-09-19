@@ -41,6 +41,23 @@ import { WORKSPACE_LEAVE_EVENT } from "@/lib/navigation-guard";
 import type { CoachResponse } from "@/lib/coach-contract";
 import { Companion, HelpTip, Icon, Waveform } from "./CompanionUI";
 type Phase = "idle" | "permission" | "listening" | "transcribing" | "coaching";
+
+const QUICK_PARTNERS = ["상사", "동료", "고객", "친구", "가족", "연인"] as const;
+const QUICK_GOALS = [
+  { label: "뜻 확인", value: "상대의 뜻을 확인하고 싶어요" },
+  { label: "정중한 거절", value: "정중하게 거절하고 싶어요" },
+  { label: "일정 조율", value: "일정을 다시 조율하고 싶어요" },
+  { label: "내 입장 설명", value: "내 입장을 차분히 설명하고 싶어요" },
+  { label: "요청·부탁", value: "상대에게 요청하거나 부탁하고 싶어요" },
+  { label: "갈등 정리", value: "감정을 키우지 않고 갈등을 정리하고 싶어요" },
+] as const;
+
+function isQuickPartner(value: string) {
+  return QUICK_PARTNERS.some((item) => item === value);
+}
+function isQuickGoal(value: string) {
+  return QUICK_GOALS.some((item) => item.value === value);
+}
 export default function LiveCoach({
   onBack,
   onDemo,
@@ -71,6 +88,12 @@ export default function LiveCoach({
     [tone, setTone] = useState<Tone>(initialProfile?.tone || "firm_polite");
   const [quickContext, setQuickContext] = useState<ContextProfile>(
     initialProfile || emptyProfile(),
+  );
+  const [customPartnerOpen, setCustomPartnerOpen] = useState(
+    !!initialProfile?.partner && !isQuickPartner(initialProfile.partner),
+  );
+  const [customGoalOpen, setCustomGoalOpen] = useState(
+    !!initialProfile?.goal && !isQuickGoal(initialProfile.goal),
   );
   const [configState, setConfigState] = useState<"loading" | "ready" | "error">(
     "loading",
@@ -122,6 +145,8 @@ export default function LiveCoach({
   function updateContext(next: ContextProfile) {
     setQuickContext(next);
     setTone(next.tone);
+    setCustomPartnerOpen(!!next.partner && !isQuickPartner(next.partner));
+    setCustomGoalOpen(!!next.goal && !isQuickGoal(next.goal));
     setResult(null);
     sampleHistory.current = [];
     setNotice("상대와 목표를 바꿨어요. 입력한 상대 말은 그대로예요.");
