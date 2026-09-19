@@ -197,7 +197,7 @@ export default function LiveCoach({
   }
   useEffect(() => {
     const support = speechSupport();
-    setSupportsLive(!!support.constructor);
+    setSupportsLive(!!support.Engine);
     setLiveSupportReason(support.reason);
     setConfigState("loading");
     const abort = new AbortController();
