@@ -1103,6 +1103,15 @@ export default function LiveCoach({
         open={samplePreviewOpen}
         onClose={() => setSamplePreviewOpen(false)}
       />
+      <InputDialog
+        open={contextOpen}
+        title="상대·목표 설정"
+        closeLabel="대화 설정 닫기"
+        onClose={() => setContextOpen(false)}
+        className="live-context-dialog-shell"
+      >
+        {contextDialogContent}
+      </InputDialog>
       <nav className="purpose-breadcrumb" aria-label="현재 코칭 위치">
         <button
           className="dd-back"
@@ -1359,6 +1368,7 @@ export default function LiveCoach({
                     goal: profile?.goal,
                   })
                 }
+                rememberItems={liveRememberItems}
               />
             </>
           ) : (
