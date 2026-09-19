@@ -130,6 +130,7 @@ export default function LiveCoach({
   const [historyStatus, setHistoryStatus] = useState("");
   const [partnerHistoryCount, setPartnerHistoryCount] = useState(0);
   const [savingHistory, setSavingHistory] = useState(false);
+  const [historySaved, setHistorySaved] = useState(false);
   const profile: ContextProfile | undefined = directEntry
     ? {
         ...quickContext,
@@ -156,6 +157,7 @@ export default function LiveCoach({
     response: CoachResponse;
     goal?: string;
   }) {
+    setHistorySaved(false);
     setRecentCues((items) => {
       const previous = items.at(-1);
       const duplicate =
@@ -247,12 +249,13 @@ export default function LiveCoach({
           partnerGroupKey(item.context?.partner || "") === groupKey,
       ).length;
       setPartnerHistoryCount(count);
-      const parts = ["대화를 내 기록에 저장했어요."];
+      const parts = ["내 기록에 저장했어요."];
       if (count > 1) parts.push("같은 상대 기록 " + count + "건으로 묶여요.");
       if (signals.numbers.length)
         parts.push("숫자·날짜·금액 " + signals.numbers.length + "개");
       if (signals.terms.length) parts.push("용어 " + signals.terms.length + "개");
       setHistoryStatus(parts.join(" "));
+      setHistorySaved(true);
     } catch (e) {
       setHistoryStatus(
         e instanceof Error
@@ -307,7 +310,7 @@ export default function LiveCoach({
     directEntry &&
     (!!input.trim() ||
       !!clip ||
-      recentCues.length > 0 ||
+      (recentCues.length > 0 && !historySaved) ||
       !!quickContext.goal.trim() ||
       !!quickContext.partner.trim() ||
       !!quickContext.situation.trim() ||

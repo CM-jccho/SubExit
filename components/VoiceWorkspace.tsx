@@ -903,7 +903,7 @@ export default function VoiceWorkspace({
           <div>
             <strong>
               {session.context.partner}
-              <span>AI 연습 상대</span>
+              {session.kind === "practice" && <span>AI 연습 상대</span>}
             </strong>
             <p>내 역할 · {session.context.myRole || "대화 참여자"}</p>
             <p>목표 · {session.context.goal}</p>
@@ -1124,7 +1124,7 @@ export default function VoiceWorkspace({
         </>
       ) : (
         <>
-          <nav className="purpose-breadcrumb" aria-label="현재 기록 위치">
+          <nav className="purpose-breadcrumb" aria-label={session.kind === "practice" ? "현재 연습 위치" : "현재 기록 위치"}>
             <button
               className="dd-back"
               disabled={captureBusy}
@@ -1795,7 +1795,7 @@ export default function VoiceWorkspace({
                           session.turns
                             .map(
                               (t) =>
-                                `**${t.role === "assistant" ? (session.kind === "chat" ? sessionCharacter.name : session.context?.partner) || "AI 연습 상대" : t.role === "user" ? "나" : "녹음"}**\n\n${t.origin === "recording" ? "[녹음에서 가져온 상대 말]\n\n" : ""}${t.sample ? "[사전 작성 샘플 · " + t.sample.topic + "] " + outageMessage(t.sample.outage) + "\n\n" : ""}${t.text || "(문자 변환 없는 음성)"}\n`,
+                                `**${t.role === "assistant" ? (session.kind === "chat" ? sessionCharacter.name : session.context?.partner || (session.kind === "practice" ? "AI 연습 상대" : "상대")) : t.role === "user" ? "나" : "녹음"}**\n\n${t.origin === "recording" ? "[녹음에서 가져온 상대 말]\n\n" : ""}${t.sample ? "[사전 작성 샘플 · " + t.sample.topic + "] " + outageMessage(t.sample.outage) + "\n\n" : ""}${t.text || "(문자 변환 없는 음성)"}\n`,
                             )
                             .join("\n"),
                       ],
