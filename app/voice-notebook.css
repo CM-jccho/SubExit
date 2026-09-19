@@ -1110,3 +1110,63 @@
     font-size: var(--t-body);
   }
 }
+
+
+/* Conversation Memory: explicit promises and follow-ups should read before metadata chips. */
+.live-record-memory,
+.live-remember-summary {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid #d7dfc9;
+  border-radius: 14px;
+  background: #fff8df;
+}
+.live-record-memory > strong,
+.live-remember-summary > strong {
+  display: block;
+  color: #5d4c24;
+  font-size: var(--t-body);
+  font-weight: 800;
+}
+.live-remember-summary > small {
+  display: block;
+  margin-top: 3px;
+  color: #756a4b;
+  font-size: var(--t-cap);
+  line-height: 1.55;
+}
+.live-record-memory ul,
+.live-remember-summary ul {
+  display: grid;
+  gap: 7px;
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.live-record-memory li,
+.live-remember-summary li {
+  position: relative;
+  padding-left: 18px;
+  color: #443f31;
+  font-size: var(--t-body);
+  line-height: 1.55;
+}
+.live-record-memory li::before,
+.live-remember-summary li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #6d784e;
+  font-weight: 800;
+}
+@media (max-width: 700px) {
+  .live-record-memory,
+  .live-remember-summary {
+    padding: 10px 12px;
+  }
+  .live-record-memory li,
+  .live-remember-summary li {
+    font-size: 13px;
+  }
+}
