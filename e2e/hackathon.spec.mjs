@@ -139,7 +139,7 @@ async function openQuickHelp(page) {
 async function choosePartnerGoal(page) {
   await page
     .getByLabel("이번 대화 설정 요약")
-    .getByRole("button", { name: "설정", exact: true })
+    .getByRole("button", { name: "상대·목표", exact: true })
     .click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
