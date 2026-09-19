@@ -114,6 +114,8 @@ export default function LiveCoach({
   }
   const version = useRef(0),
     busy = useRef(false),
+    phaseRef = useRef<Phase>("idle"),
+    liveActiveRef = useRef(false),
     recorder = useRef<MediaRecorder | null>(null),
     stream = useRef<MediaStream | null>(null),
     timer = useRef<ReturnType<typeof setTimeout> | null>(null),
@@ -135,6 +137,12 @@ export default function LiveCoach({
     ? aiUnavailableMessage
     : "현재 운영 설정에서 음성 인식이 꺼져 있어요. 직접 입력은 사용할 수 있어요.";
   const previousConsent = useRef(consent);
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+  useEffect(() => {
+    liveActiveRef.current = liveActive;
+  }, [liveActive]);
   useEffect(() => {
     const revoked = previousConsent.current && !consent;
     previousConsent.current = consent;
@@ -216,8 +224,18 @@ export default function LiveCoach({
         if (!abort.signal.aborted) setConfigState("error");
       });
     const hide = () => {
-      if (document.hidden) {
+      if (!document.hidden) return;
+      // iOS can briefly mark the page hidden while a native microphone or
+      // speech-recognition permission sheet is open. Do not cancel the user's
+      // permission request; only stop once capture/processing is actually active.
+      if (
+        phaseRef.current === "listening" ||
+        phaseRef.current === "transcribing" ||
+        phaseRef.current === "coaching" ||
+        liveActiveRef.current
+      ) {
         cancel();
+        setLiveActive(false);
         setError("화면이 비활성화되어 마이크와 요청을 중단했어요.");
       }
     };
