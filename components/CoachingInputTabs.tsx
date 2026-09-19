@@ -6,11 +6,13 @@ export default function CoachingInputTabs({
   onChange,
   busy,
   supportsLive,
+  unsupportedMessage,
 }: {
   value: CoachingInputMode;
   onChange: (mode: CoachingInputMode) => void;
   busy: boolean;
   supportsLive: boolean;
+  unsupportedMessage?: string;
 }) {
   return (
     <div className="coaching-input-navigation">
@@ -45,8 +47,8 @@ export default function CoachingInputTabs({
       </div>
       {!supportsLive && (
         <p id="live-support-hint" className="live-stream-note">
-          이 브라우저는 실시간 자막을 지원하지 않아요. 들려주기나 직접 입력을
-          이용해 주세요.
+          {unsupportedMessage ||
+            "이 브라우저는 실시간 자막을 지원하지 않아요. 들려주기나 직접 입력을 이용해 주세요."}
         </p>
       )}
       {busy && (
