@@ -428,3 +428,43 @@
     width: 100%;
   }
 }
+
+
+/* One-time consent sits at the top of live help instead of being repeated per input mode. */
+.live-entry-consent {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 16px;
+  border: 1px solid #d5dfcc;
+  border-radius: 16px;
+  background: #f3f6ee;
+}
+.live-entry-consent-copy > span {
+  display: block;
+  margin-bottom: 4px;
+  color: #527043;
+  font-size: var(--t-cap);
+  font-weight: 750;
+}
+.live-entry-consent-copy > strong {
+  display: block;
+  color: #294132;
+  font-size: var(--t-body);
+  line-height: 1.55;
+}
+.live-entry-consent-copy > p {
+  margin: 5px 0 0;
+  color: #61705b;
+  font-size: var(--t-cap);
+  line-height: 1.65;
+}
+.live-entry-consent .consent-disclosure {
+  margin: 0;
+}
+.live-entry-consent .vn-consent {
+  margin: 0;
+}
+.live-entry-consent .consent-details {
+  margin-top: 8px;
+}
