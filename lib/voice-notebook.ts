@@ -272,10 +272,11 @@ export async function putSession(session: VoiceSession): Promise<IDBValidKey> {
 
   // Rewards are secondary. A reward write must never roll back a conversation
   // that has already been safely stored.
+  let rewardDb: IDBDatabase | null = null;
   try {
-    const rewardDb = await openDB();
+    rewardDb = await openDB();
     await new Promise<void>((resolve, reject) => {
-      const tx = rewardDb.transaction("meta", "readwrite");
+      const tx = rewardDb!.transaction("meta", "readwrite");
       const meta = tx.objectStore("meta");
       const request = meta.get("practice-garden-v1");
       request.onsuccess = () =>
@@ -283,11 +284,12 @@ export async function putSession(session: VoiceSession): Promise<IDBValidKey> {
       tx.oncomplete = () => resolve();
       tx.onabort = tx.onerror = () => reject(tx.error);
     });
-    rewardDb.close();
     gardenChanged();
   } catch {
     // The record itself is the source of truth. Reward persistence can recover
     // on a later save without making the user lose this conversation.
+  } finally {
+    rewardDb?.close();
   }
 
   return session.id;
