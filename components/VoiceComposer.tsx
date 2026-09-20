@@ -25,6 +25,11 @@ import {
   type AudioClip,
 } from "@/lib/voice-notebook";
 export type VoiceDraft = { text: string; clip?: AudioClip };
+export type VoiceUseResult = {
+  keepDraft?: boolean;
+  receipt?: string;
+  notice?: string;
+};
 export type AIConfig = {
   available: boolean;
   voiceAvailable?: boolean;
@@ -106,7 +111,9 @@ export default function VoiceComposer({
   onConsentChange,
   submitDisabled = false,
 }: {
-  onUse: (draft: VoiceDraft) => Promise<void> | void;
+  onUse: (
+    draft: VoiceDraft,
+  ) => Promise<void | VoiceUseResult> | void | VoiceUseResult;
   submitLabel?: string;
   config: AIConfig;
   consent: boolean;
@@ -135,6 +142,7 @@ export default function VoiceComposer({
     setChosen(undefined);
   }, [replyTo?.id]);
   const [receipt, setReceipt] = useState("");
+  const [savedTextOnly, setSavedTextOnly] = useState(false);
   const editor = useRef<HTMLTextAreaElement>(null);
   const [clip, setClip] = useState<AudioClip>(),
     [text, setText] = useState(""),
@@ -163,6 +171,7 @@ export default function VoiceComposer({
     if (suggestion) {
       if (inDialog) setExpanded(true);
       setReceipt("");
+      setSavedTextOnly(false);
       setText(suggestion.text);
       setTyping(true);
       setNotice(
@@ -177,8 +186,10 @@ export default function VoiceComposer({
   useEffect(() => {
     if (!dirty) return;
     const guard = (event: Event) => {
-      if (!window.confirm("작성 중인 입력이 있어요. 저장하지 않고 이동할까요?"))
-        event.preventDefault();
+      const message = savedTextOnly
+        ? "문자는 저장됐지만 음성 원본은 이 화면에만 남아 있어요. 내려받지 않고 이동할까요?"
+        : "작성 중인 입력이 있어요. 저장하지 않고 이동할까요?";
+      if (!window.confirm(message)) event.preventDefault();
     };
     const unload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
@@ -190,7 +201,7 @@ export default function VoiceComposer({
       window.removeEventListener(WORKSPACE_LEAVE_EVENT, guard);
       window.removeEventListener("beforeunload", unload);
     };
-  }, [inDialog, dirty]);
+  }, [inDialog, dirty, savedTextOnly]);
   function release() {
     if (timer.current) clearInterval(timer.current);
     timer.current = null;
@@ -229,6 +240,7 @@ export default function VoiceComposer({
       setNotice(transcriptionBlock);
       return;
     }
+    setSavedTextOnly(false);
     setPhase("transcribing");
     setNotice("녹음 완료 · 음성을 글로 바꾸고 있어요.");
     setError("");
@@ -339,6 +351,7 @@ export default function VoiceComposer({
         longRecording ? RECORDING_MAX_SECONDS : 120,
       );
       if (epoch.current !== id) return;
+      setSavedTextOnly(false);
       setClip(c);
       setText("");
       setError("");
@@ -491,9 +504,21 @@ export default function VoiceComposer({
     setPhase("saving");
     setError("");
     try {
-      await onUse({ clip: outgoingClip, text: outgoingText });
+      const result = await onUse({ clip: outgoingClip, text: outgoingText });
       if (epoch.current !== id) return;
+      if (result && result.keepDraft) {
+        setSavedTextOnly(true);
+        setReceipt(result.receipt || "변환된 문자는 저장했어요.");
+        setNotice(
+          result.notice ||
+            "문자는 저장했지만 음성 원본은 이 화면에만 남아 있어요. 내려받은 뒤 닫아 주세요.",
+        );
+        setChosen(undefined);
+        setShowCandidates(false);
+        return;
+      }
       setExpanded(false);
+      setSavedTextOnly(false);
       setReceipt(textFirst ? "답변을 기록했어요." : "기록에 저장했어요.");
       setText("");
       setClip(undefined);
@@ -518,6 +543,11 @@ export default function VoiceComposer({
     }
   }
   const working = phase !== "idle";
+  const transcribing = phase === "transcribing";
+  const transcriptionDone = clip?.transcription?.parts.length || 0;
+  const transcriptionTotal =
+    clip?.transcription?.total ||
+    (clip ? Math.max(1, Math.ceil(clip.duration / 45)) : 1);
   const submitAction = (
     <button
       type="button"
@@ -525,13 +555,18 @@ export default function VoiceComposer({
       disabled={
         (!text.trim() && !clip) ||
         working ||
+        savedTextOnly ||
         disabled ||
         submitDisabled ||
         (requireText && !text.trim())
       }
       onClick={() => void use()}
     >
-      {phase === "saving" ? "저장 중" : submitLabel}
+      {phase === "saving"
+        ? "저장 중"
+        : savedTextOnly
+          ? "문자 기록 저장됨"
+          : submitLabel}
       <Icon name="send" size={17} />
     </button>
   );
@@ -642,7 +677,7 @@ export default function VoiceComposer({
           )}
         </div>
       )}
-      <div className="vn-capture-row">
+      {!transcribing && <div className="vn-capture-row">
         <button
           type="button"
           className={"vn-record " + (phase === "recording" ? "recording" : "")}
@@ -686,6 +721,7 @@ export default function VoiceComposer({
             const f = e.target.files?.[0];
             e.target.value = "";
             if (f) {
+              setSavedTextOnly(false);
               if (longRecording && /\.(txt|srt|vtt)$/i.test(f.name)) {
                 const id = ++epoch.current;
                 busy.current = true;
@@ -726,14 +762,14 @@ export default function VoiceComposer({
             }
           }}
         />
-      </div>
+      </div>}
       {textFirst ? (
         notice && (
           <p className="vn-compose-notice" role="status">
             {notice}
           </p>
         )
-      ) : (
+      ) : transcribing ? null : (
         <CompanionNudge
           mood={
             phase === "recording"
@@ -754,11 +790,14 @@ export default function VoiceComposer({
           }
         />
       )}
-      {working && phase !== "recording" && phase !== "saving" && (
-        <button type="button" className="dd-link" onClick={cancel}>
-          처리 취소
-        </button>
-      )}
+      {working &&
+        phase !== "recording" &&
+        phase !== "saving" &&
+        phase !== "transcribing" && (
+          <button type="button" className="dd-link" onClick={cancel}>
+            처리 취소
+          </button>
+        )}
       {phase === "permission" && (
         <button
           type="button"
@@ -772,9 +811,40 @@ export default function VoiceComposer({
           기다리지 않고 직접 입력
         </button>
       )}
+      {transcribing && clip && (
+        <div className="vn-transcription-progress" role="status">
+          <div>
+            <strong>음성을 문자로 바꾸는 중</strong>
+            <span>
+              {transcriptionDone}/{transcriptionTotal}구간
+            </span>
+          </div>
+          <progress
+            max={transcriptionTotal}
+            value={Math.min(transcriptionDone, transcriptionTotal)}
+          />
+          <p>
+            {transcriptionDone
+              ? "완료된 구간은 유지돼요. 변환이 끝나면 문자를 확인하고 저장하세요."
+              : "오디오를 45초 단위로 준비하고 있어요. 잠시만 기다려 주세요."}
+          </p>
+          <button type="button" className="dd-link" onClick={cancel}>
+            변환 중단
+          </button>
+        </div>
+      )}
       {clip && (
         <>
           <AudioPlayer clip={clip} />
+          {savedTextOnly && (
+            <div className="vn-storage-fallback" role="status">
+              <strong>변환된 문자는 저장했어요.</strong>
+              <p>
+                이 브라우저의 저장 공간 때문에 음성 원본은 기록에 넣지 못했어요.
+                위 플레이어의 내려받기 버튼으로 원본을 보관한 뒤 닫아 주세요.
+              </p>
+            </div>
+          )}
           {transcriptionBlock && (
             <div className="vn-transcription-help" role="status">
               <p>{transcriptionBlock}</p>
@@ -804,7 +874,7 @@ export default function VoiceComposer({
               )}
             </div>
           )}
-          {!transcriptionBlock && (
+          {!transcriptionBlock && !transcribing && !savedTextOnly && (
             <button
               type="button"
               className="dd-link"
@@ -822,19 +892,24 @@ export default function VoiceComposer({
       )}
       {(typing || text || clip) && (
         <label className="vn-label">
-          {clip
-            ? "인식한 말 · 필요하면 고쳐주세요"
+          {transcribing
+            ? "변환 중인 문자 · 완료된 구간까지 확인"
+            : clip
+              ? "인식한 말 · 필요하면 고쳐주세요"
             : textFirst
               ? "내 답장"
               : "직접 입력"}
           <textarea
             ref={editor}
             aria-label="인식한 말 또는 직접 입력"
-            rows={3}
+            rows={longRecording ? 7 : 3}
             maxLength={longRecording ? RECORDING_MAX_TEXT : 4000}
             value={text}
-            disabled={working || disabled}
-            onChange={(e) => setText(e.target.value)}
+            disabled={working || disabled || savedTextOnly}
+            onChange={(e) => {
+              setSavedTextOnly(false);
+              setText(e.target.value);
+            }}
             placeholder={
               textFirst
                 ? "상대에게 하듯 편하게 답해보세요."
