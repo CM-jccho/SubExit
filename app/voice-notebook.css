@@ -1262,3 +1262,154 @@
     padding: 11px 12px;
   }
 }
+
+
+/* Recording start screen hierarchy:
+   settings + input actions are primary, privacy/consent guidance is secondary. */
+.recording-settings-card {
+  margin: 14px 0 12px;
+  border: 1px solid #bdcfb4;
+  border-radius: 16px;
+  background: #f8fbf3;
+  box-shadow: 0 1px 0 rgba(45, 82, 54, 0.04);
+}
+.recording-settings-card > summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  min-height: 68px;
+  padding: 14px 16px;
+  cursor: pointer;
+  color: #31533a;
+  font-weight: 800;
+}
+.recording-settings-card > summary > span {
+  font-size: 15px;
+}
+.recording-settings-card > summary > small {
+  grid-column: 1;
+  color: #6e7d6b;
+  font-size: 11px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recording-settings-card[open] > summary {
+  border-bottom: 1px solid #d9e3d4;
+}
+.recording-settings-card .vn-session-settings {
+  padding: 2px 16px 14px;
+}
+
+.recording-primary-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 10px 0 8px;
+}
+.recording-primary-actions button {
+  width: 100%;
+  min-height: 54px;
+}
+
+.recording-entry-secondary {
+  margin-top: 10px;
+  padding: 14px 16px;
+  border: 1px solid #e1e5db;
+  background: #f6f7f2;
+  color: #5e6c5e;
+}
+.recording-entry-secondary h2 {
+  font-size: 15px;
+  color: #425645;
+}
+.recording-entry-secondary p {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.recording-entry-secondary .vn-caption {
+  color: #778176;
+  font-size: 11px;
+}
+
+.recording-support-info {
+  margin: 26px 0 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e4dc;
+}
+.recording-support-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.recording-support-heading > span {
+  color: #617061;
+  font-size: 12px;
+  font-weight: 800;
+}
+.recording-support-heading > small {
+  color: #8a9388;
+  font-size: 10px;
+}
+.recording-support-info .recording-data-note {
+  margin: 0 0 8px;
+  border: 1px solid #e1e5dd;
+  border-radius: 13px;
+  background: #fafbf8;
+}
+.recording-support-info .recording-data-note > summary {
+  min-height: 46px;
+  padding: 11px 13px;
+  color: #667366;
+  font-size: 12px;
+  font-weight: 700;
+}
+.recording-support-info .recording-data-note > p {
+  margin: 0;
+  padding: 0 13px 13px;
+  color: #788277;
+  font-size: 11px;
+  line-height: 1.65;
+}
+.recording-support-info .consent-disclosure {
+  margin-top: 8px;
+  border-color: #e1e5dd;
+  background: #fafbf8;
+}
+.recording-support-info .vn-consent {
+  color: #657265;
+  font-size: 12px !important;
+}
+
+@media (max-width: 700px) {
+  .recording-settings-card {
+    margin-top: 8px;
+  }
+  .recording-settings-card > summary {
+    min-height: 62px;
+    padding: 12px 14px;
+  }
+  .recording-settings-card .vn-session-settings {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 0 14px 12px;
+  }
+  .recording-primary-actions {
+    margin-top: 8px;
+  }
+  .recording-primary-actions button {
+    min-height: 50px;
+    padding-inline: 10px;
+    font-size: 14px;
+  }
+  .recording-entry-secondary {
+    padding: 12px 14px;
+  }
+  .recording-support-info {
+    margin-top: 22px;
+  }
+}
