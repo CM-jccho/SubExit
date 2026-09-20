@@ -66,28 +66,6 @@ export default function HomeActions({
           </div>
         </div>
         <div className="home-live-action">
-          <div className="home-live-example" aria-label="스픽코칭 사용 장면 예시">
-            <span className="home-live-example-label">한 장면으로 보면</span>
-            <p>
-              <strong>상대</strong>
-              “왜 미리 말 안 했어요?”
-            </p>
-            <p>
-              <strong>스픽코칭</strong>
-              “제가 먼저 공유했어야 했어요. 지금 상황부터 바로 말씀드릴게요.”
-            </p>
-          </div>
-          <ol className="practice-loop" aria-label="실시간 대화 도움 과정">
-            <li>
-              <span>상대 말 듣기</span>
-            </li>
-            <li>
-              <span>다음 한마디</span>
-            </li>
-            <li>
-              <span>대화 이어가기</span>
-            </li>
-          </ol>
           <button
             className="dd-primary purpose-start coach-start"
             data-purpose="live"
@@ -101,9 +79,20 @@ export default function HomeActions({
             {speechSupported === null
               ? "음성 또는 문자로 상대의 말을 입력할 수 있어요."
               : speechSupported
-                ? "대면 대화나 다른 기기 스피커폰 옆에서 실시간 자막을 사용할 수 있어요."
+                ? "상대 말을 들으면서 다음 한마디를 바로 받아볼 수 있어요."
                 : speechSupportMessage(speechReason)}
           </p>
+          <div className="home-live-example" aria-label="스픽코칭 사용 장면 예시">
+            <span className="home-live-example-label">이렇게 도와드려요</span>
+            <p>
+              <strong>상대</strong>
+              “왜 미리 말 안 했어요?”
+            </p>
+            <p>
+              <strong>스픽코칭</strong>
+              “제가 먼저 공유했어야 했어요. 지금 상황부터 바로 말씀드릴게요.”
+            </p>
+          </div>
         </div>
       </div>
       {recent && (
