@@ -1162,9 +1162,9 @@ export default function LiveCoach({
         </div>
       </header>
       {!consent && (
-        <section className="live-entry-consent" aria-label="AI 사용 전 한 번 확인">
+        <section className="live-entry-consent" aria-label="AI 사용 동의">
           <div className="live-entry-consent-copy">
-            <span>처음 한 번만 확인해요</span>
+            <span>AI 사용 동의 · 처음 한 번</span>
             <strong>AI 대화 도움을 사용하려면 전송 동의가 필요해요.</strong>
             <p>
               음성·문장을 AI 코칭에 사용해요. 이번 탭에서는 한 번만 확인하고,
@@ -1822,15 +1822,22 @@ export default function LiveCoach({
       )}
       {onPractice && (
         <button
-          className="dd-link"
-          disabled={phase !== "idle"}
+          type="button"
+          className="dd-secondary dd-full live-practice-cta"
+          disabled={phase !== "idle" || liveActive}
           onClick={() => {
             if (!directEntry) cancel();
             onPractice();
           }}
         >
-          {directEntry ? "AI 상대와 대화 연습하기" : "이 상황으로 연습하기"}{" "}
           <Icon name="chat" size={18} />
+          <span>
+            <strong>
+              {directEntry ? "AI 상대와 대화 연습하기" : "이 상황으로 연습하기"}
+            </strong>
+            {directEntry && <small>연습할 상황을 골라 AI 상대와 미리 말해봐요.</small>}
+          </span>
+          <Icon name="arrow" size={16} />
         </button>
       )}
     </div>
