@@ -496,7 +496,39 @@ export default function VoiceWorkspace({
       turns: [...session.turns, turn],
     };
     followConversation.current = session.kind !== "recording";
-    await persist(next);
+    try {
+      await persist(next);
+    } catch (error) {
+      if (
+        session.kind === "recording" &&
+        draft.clip &&
+        draft.text.trim()
+      ) {
+        const textOnlyTurn: VoiceTurn = { ...turn, clip: undefined };
+        const textOnlyNext = {
+          ...session,
+          updatedAt: new Date().toISOString(),
+          turns: [...session.turns, textOnlyTurn],
+        };
+        try {
+          await persist(textOnlyNext);
+          setSuggestion(undefined);
+          setNotice(
+            "변환된 문자는 저장했어요. 음성 원본은 브라우저 저장 공간 때문에 저장하지 못했어요.",
+          );
+          return {
+            keepDraft: true,
+            receipt: "문자 기록 저장 완료 · 음성 원본은 내려받아 보관해 주세요.",
+            notice:
+              "문자는 내 기록에 저장됐어요. 음성 원본은 위 플레이어의 내려받기 버튼으로 보관한 뒤 닫아 주세요.",
+          };
+        } catch {
+          // If even the lightweight transcript cannot be stored, surface the
+          // original persistence problem instead of pretending anything saved.
+        }
+      }
+      throw error;
+    }
     setSuggestion(undefined);
     setNotice(
       session.kind === "recording" ? "음성과 문자를 이 기기에 저장했어요." : "",
