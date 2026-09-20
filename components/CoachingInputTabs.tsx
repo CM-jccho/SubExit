@@ -18,6 +18,31 @@ export default function CoachingInputTabs({
 }) {
   const liveActive = value === "continuous" && supportsLive;
 
+  const fallbackButtons = (
+    <div className="dc-mode-switch" role="group" aria-label="보조 입력 방식">
+      <button
+        type="button"
+        className={value === "voice" ? "active" : ""}
+        aria-pressed={value === "voice"}
+        disabled={busy}
+        onClick={() => onChange("voice")}
+      >
+        <Icon name="mic" size={17} />
+        짧게 듣기
+      </button>
+      <button
+        type="button"
+        className={value === "text" ? "active" : ""}
+        aria-pressed={value === "text"}
+        disabled={busy}
+        onClick={() => onChange("text")}
+      >
+        <Icon name="keyboard" size={17} />
+        직접 입력
+      </button>
+    </div>
+  );
+
   return (
     <div className="coaching-input-navigation">
       {!supportsLive && (
@@ -39,34 +64,17 @@ export default function CoachingInputTabs({
         </button>
       )}
 
-      <details
-        className="coaching-fallback-modes"
-        open={!supportsLive || !liveActive}
-      >
-        <summary>다른 방식으로 입력</summary>
-        <div className="dc-mode-switch" role="group" aria-label="보조 입력 방식">
-          <button
-            type="button"
-            className={value === "voice" ? "active" : ""}
-            aria-pressed={value === "voice"}
-            disabled={busy}
-            onClick={() => onChange("voice")}
-          >
-            <Icon name="mic" size={17} />
-            짧게 듣기
-          </button>
-          <button
-            type="button"
-            className={value === "text" ? "active" : ""}
-            aria-pressed={value === "text"}
-            disabled={busy}
-            onClick={() => onChange("text")}
-          >
-            <Icon name="keyboard" size={17} />
-            직접 입력
-          </button>
+      {supportsLive ? (
+        <details className="coaching-fallback-modes">
+          <summary>다른 방식으로 입력</summary>
+          {fallbackButtons}
+        </details>
+      ) : (
+        <div className="coaching-fallback-modes fallback-always-open">
+          <p className="coaching-fallback-label">다른 방식으로 입력</p>
+          {fallbackButtons}
         </div>
-      </details>
+      )}
 
       {busy && (
         <p className="live-stream-note">
