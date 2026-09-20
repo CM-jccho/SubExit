@@ -151,6 +151,22 @@ export default function VoiceWorkspace({
   const followConversation = useRef(false);
   const latestTurnId = session?.turns.at(-1)?.id;
   useEffect(() => {
+    if (reviewOutage?.reason !== "manual") return;
+    const timer = window.setTimeout(() => {
+      document
+        .querySelector<HTMLElement>("[data-review-example]")
+        ?.scrollIntoView({
+          block: "nearest",
+          behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)")
+            .matches
+            ? "auto"
+            : "smooth",
+        });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [reviewOutage]);
+
+  useEffect(() => {
     if (!followConversation.current) return;
     const latest =
       thread.current?.querySelector<HTMLElement>("[data-latest-turn]");
@@ -413,7 +429,9 @@ export default function VoiceWorkspace({
   async function reviewPractice() {
     if (!session?.context || busy || (!sampleMode && !consent)) return;
     if (sampleMode) {
-      setReviewOutage(manualSample());
+      setReviewOutage((current) =>
+        current?.reason === "manual" ? null : manualSample(),
+      );
       return;
     }
     setReviewOutage(null);
@@ -1766,12 +1784,6 @@ export default function VoiceWorkspace({
             session.kind === "practice" &&
             session.turns.filter((t) => t.role === "user").length >= 2 && (
               <section className="dc-review">
-                {reviewOutage && (
-                  <ReviewExample
-                    context={practiceSampleContext(session.context)}
-                    outage={reviewOutage}
-                  />
-                )}
                 <div className="vn-toolbar">
                   <h2>내 대화 복기</h2>
                   <span>
@@ -1816,10 +1828,15 @@ export default function VoiceWorkspace({
                     >
                       이 장면부터 다시 연습 <Icon name="arrow" size={16} />
                     </button>
-                    <small>
-                      목표와 지킬 선은 유지돼요. AI 제안이 내 의도와 맞는지
-                      근거를 확인하세요.
-                    </small>
+                    <details className="vn-inline-help">
+                      <summary>
+                        <Icon name="help" size={15} />
+                        재연습은 어떻게 이어지나요?
+                      </summary>
+                      <p>
+                        목표와 지킬 선은 유지하고, 같은 장면부터 다시 연습해요.
+                      </p>
+                    </details>
                     <details className="dc-guide-faq training-review-entry">
                       <summary>필요한 기술부터 훈련하기</summary>
                       <p>
@@ -1847,27 +1864,47 @@ export default function VoiceWorkspace({
                     </details>
                   </>
                 ) : (
-                  <>
+                  <div className="review-entry-compact">
                     <p>
-                      내가 실제로 한 말에서 잘한 점과 고쳐 말할 부분을 찾아요.
-                      분석한 장면은 다시 연습할 수 있어요.
+                      {sampleMode
+                        ? "먼저 복기 예시를 보고 흐름을 확인해 보세요."
+                        : "실제 내 말에서 한 가지 개선점을 찾아 같은 장면을 다시 연습해요."}
                     </p>
                     <button
                       className="dd-secondary"
                       disabled={busy || captureBusy || !canTalk}
                       onClick={() => void reviewPractice()}
+                      aria-expanded={reviewOutage?.reason === "manual"}
                     >
                       {sampleMode
-                        ? "가상 대화의 복기 예시 보기"
+                        ? reviewOutage?.reason === "manual"
+                          ? "복기 예시 닫기"
+                          : "복기 예시 보기"
                         : session.review
                           ? "이어진 대화까지 다시 복기"
                           : "AI로 이 대화 복기하기"}
                     </button>
-                    <small>
-                      이 대화의 문자와 카드 설정을 전송해요. 음성 파일과 다른
-                      대화는 보내지 않아요.
-                    </small>
-                  </>
+
+                    {reviewOutage && (
+                      <ReviewExample
+                        context={practiceSampleContext(session.context)}
+                        outage={reviewOutage}
+                      />
+                    )}
+
+                    {!sampleMode && (
+                      <details className="vn-inline-help">
+                        <summary>
+                          <Icon name="help" size={15} />
+                          AI에 무엇을 보내나요?
+                        </summary>
+                        <p>
+                          이 대화의 문자와 카드 설정만 보내며, 음성 파일과 다른
+                          대화는 보내지 않아요.
+                        </p>
+                      </details>
+                    )}
+                  </div>
                 )}
               </section>
             )}
