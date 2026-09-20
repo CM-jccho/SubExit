@@ -311,6 +311,35 @@ test("next-line guidance is above listening controls and settings are optional",
   expect(errors).toEqual([]);
 });
 
+test("desktop keeps must-remember content above conversation settings", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "chrome-mobile");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await installFakeRealtimeSpeech(page);
+  await mockCoach(page);
+  await openQuickHelp(page);
+  await grantAIConsent(page);
+
+  const remember = page.locator(".live-remember-card");
+  const context = page.getByLabel("이번 대화 설정 요약");
+  const liveState = page.locator(".live-core-state");
+
+  await expect(remember).toBeVisible();
+  await expect(context).toBeVisible();
+  await expect(liveState).toBeVisible();
+
+  const rememberBox = await remember.boundingBox();
+  const contextBox = await context.boundingBox();
+  const stateBox = await liveState.boundingBox();
+
+  expect(rememberBox).not.toBeNull();
+  expect(contextBox).not.toBeNull();
+  expect(stateBox).not.toBeNull();
+  expect(rememberBox.y).toBeLessThan(contextBox.y);
+  expect(contextBox.y).toBeLessThan(stateBox.y);
+});
+
 test("AI practice CTA moves from quick help to practice selection", async ({
   page,
 }) => {
