@@ -156,8 +156,14 @@ async function choosePartnerGoal(page) {
 
 async function grantAIConsent(page) {
   const checkbox = page.getByRole("checkbox").first();
-  if (await checkbox.isVisible()) await checkbox.check();
-  await expect(page.getByRole("button", { name: /AI 동의 완료/ })).toBeVisible();
+  if (await checkbox.isVisible()) await checkbox.click();
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        sessionStorage.getItem("speakcoaching-ai-consent-session-v1"),
+      ),
+    )
+    .toBe("allowed");
 }
 
 async function readLiveSessions(page) {
@@ -226,6 +232,7 @@ test("onboarding finishes at the actual realtime-help screen", async ({
   ).toBeVisible();
 
   await page
+    .getByRole("dialog")
     .getByRole("button", { name: "실시간 대화 도움 시작" })
     .click();
 
@@ -358,7 +365,13 @@ test("AI consent survives a refresh in the same tab", async ({ page }) => {
   await grantAIConsent(page);
 
   await page.reload({ waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("button", { name: /AI 동의 완료/ })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        sessionStorage.getItem("speakcoaching-ai-consent-session-v1"),
+      ),
+    )
+    .toBe("allowed");
   await expect(page.getByText("처음 한 번만 확인해요")).toHaveCount(0);
 });
 
