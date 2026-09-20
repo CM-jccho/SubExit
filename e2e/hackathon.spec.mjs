@@ -344,7 +344,7 @@ test("realtime core flow listens, suggests, saves, and opens records", async ({
   expect(errors).toEqual([]);
 });
 
-test("direct text input is visible without opening another disclosure", async ({
+test("direct text input is one secondary action away from realtime help", async ({
   page,
 }) => {
   const errors = watchPageErrors(page);
@@ -352,7 +352,13 @@ test("direct text input is visible without opening another disclosure", async ({
   await openQuickHelp(page);
 
   const fallback = page.locator(".coaching-fallback-modes");
-  await expect(fallback.getByText("다른 방식으로 입력")).toBeVisible();
+  const summary = fallback.getByText("다른 방식으로 입력");
+  await expect(summary).toBeVisible();
+
+  if (await fallback.evaluate((element) => element.tagName === "DETAILS")) {
+    await summary.click();
+  }
+
   const textButton = fallback.getByRole("button", { name: "직접 입력" });
   await expect(textButton).toBeVisible();
   await textButton.click();
