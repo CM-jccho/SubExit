@@ -256,8 +256,10 @@ test("next-line guidance is above listening controls and settings are optional",
   await grantAIConsent(page);
 
   const answer = page.locator(".live-stream-reply");
-  const listen = page.locator(".live-primary-action");
+  const coreControls = page.locator(".live-core-controls");
+  const secondaryTools = page.locator(".dc-listen-panel");
   await expect(answer).toBeVisible();
+  await expect(coreControls).toBeVisible();
   await expect(page.getByText("꼭 기억할 것").first()).toBeVisible();
   await expect(page.getByLabel("이번 대화 설정 요약")).toBeVisible();
   await expect(
@@ -266,11 +268,16 @@ test("next-line guidance is above listening controls and settings are optional",
       .getByRole("button", { name: "상대·목표", exact: true }),
   ).toBeVisible();
 
+  expect(
+    await answer.evaluate((element) =>
+      element.contains(document.querySelector(".live-core-controls")),
+    ),
+  ).toBe(true);
   const answerBox = await answer.boundingBox();
-  const listenBox = await listen.boundingBox();
+  const secondaryBox = await secondaryTools.boundingBox();
   expect(answerBox).not.toBeNull();
-  expect(listenBox).not.toBeNull();
-  expect(answerBox.y).toBeLessThan(listenBox.y);
+  expect(secondaryBox).not.toBeNull();
+  expect(answerBox.y).toBeLessThan(secondaryBox.y);
 
   const start = page.getByRole("button", { name: "대화 도움 시작" });
   await expect(start).toBeEnabled();
