@@ -259,7 +259,12 @@ test("next-line guidance is above listening controls and settings are optional",
   const listen = page.locator(".live-primary-action");
   await expect(answer).toBeVisible();
   await expect(page.getByText("꼭 기억할 것").first()).toBeVisible();
-  await expect(page.getByText("설정하지 않아도 바로 시작할 수 있어요.")).toBeVisible();
+  await expect(page.getByLabel("이번 대화 설정 요약")).toBeVisible();
+  await expect(
+    page
+      .getByLabel("이번 대화 설정 요약")
+      .getByRole("button", { name: "설정", exact: true }),
+  ).toBeVisible();
 
   const answerBox = await answer.boundingBox();
   const listenBox = await listen.boundingBox();
@@ -386,7 +391,7 @@ test("microphone denial never looks like a dead button", async ({
   await grantAIConsent(page);
 
   await page.getByRole("button", { name: "대화 도움 시작" }).click();
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.locator(".dd-error")).toContainText(
     "브라우저의 사이트 설정에서 마이크를 허용",
   );
 });
