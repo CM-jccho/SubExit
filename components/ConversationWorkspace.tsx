@@ -1857,7 +1857,13 @@ export default function ConversationWorkspace() {
                   savedProfiles={cards.filter((card) => !card.isSample)}
                   onBack={home}
                   onDemo={() => navigate("demo")}
-                  onPractice={() => navigate("library", "practice")}
+                  onPractice={() => {
+                    setActive(undefined);
+                    setRecordId(undefined);
+                    setView("library", "practice");
+                    setToast("연습할 상황을 선택해 주세요.");
+                    window.scrollTo({ top: 0 });
+                  }}
                   onRecords={() => navigate("records")}
                 />
               )}
