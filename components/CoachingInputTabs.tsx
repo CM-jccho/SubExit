@@ -41,7 +41,7 @@ export default function CoachingInputTabs({
 
       <details
         className="coaching-fallback-modes"
-        defaultOpen={!supportsLive || !liveActive}
+        open={!supportsLive || !liveActive}
       >
         <summary>다른 방식으로 입력</summary>
         <div className="dc-mode-switch" role="group" aria-label="보조 입력 방식">
