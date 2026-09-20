@@ -849,11 +849,26 @@ export default function VoiceWorkspace({
   const preparationControls = session && (
     <>
       {(session.kind !== "recording" || !session.turns.length) && (
-        <details className="vn-start-options">
+        <details
+          className={
+            session.kind === "recording"
+              ? "vn-start-options recording-settings-card"
+              : "vn-start-options"
+          }
+        >
           <summary>
-            {session.kind === "recording"
-              ? "기록 이름·업종 설정"
-              : "언어·자동 읽기·기록 설정"}
+            <span>
+              {session.kind === "recording"
+                ? "기록 이름·업종 설정"
+                : "언어·자동 읽기·기록 설정"}
+            </span>
+            {session.kind === "recording" && (
+              <small>
+                {session.title}
+                {" · "}
+                {session.industry.trim() || "업종 미설정"}
+              </small>
+            )}
           </summary>
           {!session.turns.length && (
             <div className="vn-session-settings">
@@ -947,15 +962,17 @@ export default function VoiceWorkspace({
           </div>
         </div>
       )}
-      <details className="vn-data-note">
-        <summary>음성과 문자는 어디에 남나요?</summary>
-        <p>
-          이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으며 브라우저 데이터를
-          지우면 사라질 수 있어요. 음성 원본과 대화 문자를 내려받을 수 있어요.
-          AI 문자 변환·연습·친구 대화·복기·용어 설명을 요청하면 해당 입력을
-          Google Gemini에 전송해요.
-        </p>
-      </details>
+      {session.kind !== "recording" && (
+        <details className="vn-data-note">
+          <summary>음성과 문자는 어디에 남나요?</summary>
+          <p>
+            이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으며 브라우저 데이터를
+            지우면 사라질 수 있어요. 음성 원본과 대화 문자를 내려받을 수 있어요.
+            AI 문자 변환·연습·친구 대화·복기·용어 설명을 요청하면 해당 입력을
+            Google Gemini에 전송해요.
+          </p>
+        </details>
+      )}
       {!session.isSample && session.kind !== "recording" && (
         <SampleSwitch
           checked={sampleMode}
@@ -1290,7 +1307,8 @@ export default function VoiceWorkspace({
             preparationControls
           )}
           {!session.isSample &&
-            (!sampleMode || session.kind === "recording") && (
+            session.kind !== "recording" &&
+            !sampleMode && (
               <AIConsent
                 priority={0}
                 config={config}
@@ -1695,6 +1713,29 @@ export default function VoiceWorkspace({
                 </div>
               )}
           </div>
+          {!session.isSample && session.kind === "recording" && (
+            <section className="recording-support-info" aria-label="녹음 기록 안내 및 동의">
+              <div className="recording-support-heading">
+                <span>안내 및 동의</span>
+                <small>필요할 때만 확인하세요.</small>
+              </div>
+              <details className="vn-data-note recording-data-note">
+                <summary>음성과 문자는 어디에 남나요?</summary>
+                <p>
+                  이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으며 브라우저
+                  데이터를 지우면 사라질 수 있어요. 음성 원본과 대화 문자는
+                  내려받을 수 있어요.
+                </p>
+              </details>
+              <AIConsent
+                priority={0}
+                config={config}
+                checked={consent}
+                onChange={setConsent}
+                disabled={busy || captureBusy}
+              />
+            </section>
+          )}
           {!session.isSample &&
             session.kind === "practice" &&
             session.turns.some((turn) => turn.role === "user") && (
