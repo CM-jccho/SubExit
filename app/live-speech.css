@@ -1361,3 +1361,99 @@
     font-size: 11px;
   }
 }
+
+
+/* Live-help polish: keep status readable, separate setup from consent,
+   and make the practice handoff an explicit secondary action. */
+.live-core-state-compact {
+  width: fit-content;
+  max-width: 100%;
+}
+.live-core-state-compact .mic-status,
+.live-core-state-compact strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: auto;
+  max-width: 100%;
+  white-space: nowrap;
+  word-break: keep-all;
+  writing-mode: horizontal-tb;
+}
+
+.live-core-controls .live-context-compact {
+  border: 1px solid #c8d8bd;
+  background: #f7fbf1;
+  box-shadow: inset 3px 0 0 #7a9a68;
+}
+.live-core-controls .live-context-compact > div > span {
+  color: #4c6d43;
+}
+.live-core-controls .live-context-compact > div > strong {
+  color: #294132;
+}
+
+.live-entry-consent {
+  border-color: #dddeda;
+  background: #fafaf7;
+  box-shadow: none;
+}
+.live-entry-consent-copy > span {
+  color: #747b72;
+}
+.live-entry-consent-copy > strong {
+  color: #49534b;
+}
+.live-entry-consent-copy > p {
+  color: #7b8279;
+}
+.live-entry-consent .consent-disclosure {
+  border-color: #e2e3df;
+  background: #fff;
+}
+
+.live-practice-cta {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px !important;
+  width: 100%;
+  margin-top: 18px;
+  padding: 13px 15px !important;
+  text-align: left;
+  background: #f7f9f3 !important;
+  border-color: #d4ddcf !important;
+}
+.live-practice-cta > span {
+  min-width: 0;
+}
+.live-practice-cta strong,
+.live-practice-cta small {
+  display: block;
+}
+.live-practice-cta strong {
+  color: #38513f;
+  font-size: 14px;
+}
+.live-practice-cta small {
+  margin-top: 2px;
+  color: #768176;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+@media (max-width: 700px) {
+  .live-core-state-compact {
+    min-height: 24px;
+    padding: 1px 0;
+  }
+  .live-core-state-compact .mic-status,
+  .live-core-state-compact strong {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+  .live-practice-cta {
+    margin-top: 12px;
+  }
+}
