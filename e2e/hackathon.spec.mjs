@@ -281,6 +281,12 @@ test("next-line guidance is above listening controls and settings are optional",
       .getByRole("button", { name: "상대·목표", exact: true }),
   ).toBeVisible();
 
+  const idleStatus = page.locator(".live-core-state-compact .mic-status");
+  await expect(idleStatus).toHaveText("듣기 전");
+  expect(
+    await idleStatus.evaluate((element) => getComputedStyle(element).whiteSpace),
+  ).toBe("nowrap");
+
   expect(
     await answer.evaluate((element) =>
       element.contains(document.querySelector(".live-core-controls")),
@@ -302,6 +308,25 @@ test("next-line guidance is above listening controls and settings are optional",
   await expect(
     page.locator(".live-remember-card").getByText(/금요일까지 꼭 끝내 주세요/),
   ).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("AI practice CTA moves from quick help to practice selection", async ({
+  page,
+}) => {
+  const errors = watchPageErrors(page);
+  await mockCoach(page);
+  await openQuickHelp(page);
+
+  const practice = page.getByRole("button", {
+    name: /AI 상대와 대화 연습하기/,
+  });
+  await expect(practice).toBeVisible();
+  await expect(practice).toBeEnabled();
+  await practice.click();
+
+  await expect(page).toHaveURL(/view=library/);
+  await expect(page).toHaveURL(/purpose=practice/);
   expect(errors).toEqual([]);
 });
 
@@ -403,7 +428,7 @@ test("AI consent survives a refresh in the same tab", async ({ page }) => {
       ),
     )
     .toBe("allowed");
-  await expect(page.getByText("처음 한 번만 확인해요")).toHaveCount(0);
+  await expect(page.getByText("AI 사용 동의 · 처음 한 번")).toHaveCount(0);
 });
 
 test("microphone denial never looks like a dead button", async ({
