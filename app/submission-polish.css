@@ -1207,3 +1207,37 @@ html {
     padding-bottom: calc(66px + env(safe-area-inset-bottom));
   }
 }
+
+
+/* Home mobile: keep the floating dock from covering the recent-resume card. */
+@media (max-width: 700px) {
+  .dc-root[data-view="home"] {
+    --mobile-nav-height: 56px;
+  }
+
+  .dc-root[data-view="home"] .dc-nav {
+    left: 20px;
+    right: 20px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    min-height: 54px;
+    padding: 4px;
+    border-radius: 20px;
+  }
+
+  .dc-root[data-view="home"] .dc-nav button {
+    min-height: 44px;
+    padding: 5px 7px;
+    gap: 5px;
+    font-size: 10px;
+    border-radius: 14px;
+  }
+
+  .dc-root[data-view="home"] .dc-nav button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .dc-root[data-view="home"] .purpose-home {
+    padding-bottom: calc(74px + env(safe-area-inset-bottom));
+  }
+}
