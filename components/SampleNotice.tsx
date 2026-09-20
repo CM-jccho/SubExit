@@ -75,27 +75,37 @@ export function ReviewExample({
   outage: AIOutage;
 }) {
   const row = chooseDemoCase(context);
+
+  if (outage.reason === "manual")
+    return (
+      <aside className="dc-sample-review" role="status" data-review-example>
+        <span>사전 작성 예시 · 내 대화 분석 아님</span>
+        <blockquote>{row.reviewExample.before}</blockquote>
+        <div className="dc-sample-review-rewrite">
+          <strong>다시 말한다면</strong>
+          <p>{row.reviewExample.rewrite}</p>
+        </div>
+        <details>
+          <summary>왜 이렇게 바꿨나요?</summary>
+          <p>{row.reviewExample.note}</p>
+          <small>{row.title}</small>
+        </details>
+      </aside>
+    );
+
   return (
     <aside className="dc-sample-notice" role="status">
       <strong>
-        {outage.reason === "manual"
-          ? "사전 작성 복기 예시"
-          : "AI 복기를 완료하지 못했어요"}{" "}
-        · {outageLabel(outage)}
+        AI 복기를 완료하지 못했어요 · {outageLabel(outage)}
       </strong>
       <p>{retryAdvice(outage)}</p>
-      <p>
-        내 기록은 그대로 남아 있어요. 기다리는 동안 ‘내 목표를 말했는지’, ‘확인
-        없이 약속한 부분은 없는지’를 직접 살펴보세요.
-      </p>
       <details>
-        <summary>가상 대화의 복기 예시 보기</summary>
+        <summary>기록과 대체 예시 확인</summary>
         <p>
-          <b>{row.title} · 사전 작성 예시</b> — 아래 문장은 내 대화에서 가져온
-          것이 아니에요.
+          내 기록은 그대로 남아 있어요. 목표를 말했는지, 확인 없이 약속한
+          부분은 없는지 먼저 살펴보세요.
         </p>
         <blockquote>{row.reviewExample.before}</blockquote>
-        <p>{row.reviewExample.note}</p>
         <strong>다시 말하는 예시</strong>
         <p>{row.reviewExample.rewrite}</p>
       </details>
