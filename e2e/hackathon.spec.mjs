@@ -263,7 +263,7 @@ test("next-line guidance is above listening controls and settings are optional",
   await expect(
     page
       .getByLabel("이번 대화 설정 요약")
-      .getByRole("button", { name: "설정", exact: true }),
+      .getByRole("button", { name: "상대·목표", exact: true }),
   ).toBeVisible();
 
   const answerBox = await answer.boundingBox();
