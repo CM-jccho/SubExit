@@ -260,8 +260,21 @@ test("next-line guidance is above listening controls and settings are optional",
   const secondaryTools = page.locator(".dc-listen-panel");
   await expect(answer).toBeVisible();
   await expect(coreControls).toBeVisible();
+  const remember = page.locator(".live-remember-card");
+  const context = page.getByLabel("이번 대화 설정 요약");
+  const liveState = page.locator(".live-core-state");
   await expect(page.getByText("꼭 기억할 것").first()).toBeVisible();
-  await expect(page.getByLabel("이번 대화 설정 요약")).toBeVisible();
+  await expect(remember).toBeVisible();
+  await expect(context).toBeVisible();
+
+  const rememberBox = await remember.boundingBox();
+  const contextBox = await context.boundingBox();
+  const stateBox = await liveState.boundingBox();
+  expect(rememberBox).not.toBeNull();
+  expect(contextBox).not.toBeNull();
+  expect(stateBox).not.toBeNull();
+  expect(rememberBox.y).toBeLessThan(contextBox.y);
+  expect(rememberBox.y).toBeLessThan(stateBox.y);
   await expect(
     page
       .getByLabel("이번 대화 설정 요약")
