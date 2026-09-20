@@ -1457,3 +1457,45 @@
     margin-top: 12px;
   }
 }
+
+
+/* Keep the realtime decision hierarchy identical on desktop and mobile.
+   Earlier desktop two-column layout placed conversation setup beside/above
+   must-remember items, which made secondary settings look more important. */
+@media (min-width: 701px) {
+  .live-core-controls {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .live-core-primary {
+    grid-column: 1;
+    grid-row: auto;
+    order: 1;
+  }
+
+  .live-core-controls > .live-remember-card {
+    grid-column: 1;
+    grid-row: auto;
+    order: 2;
+  }
+
+  .live-core-controls > .live-context-compact {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    order: 3;
+  }
+
+  .live-core-controls > .live-core-state {
+    grid-column: 1;
+    grid-row: auto;
+    order: 4;
+  }
+
+  .live-core-controls > .live-stream-note,
+  .live-core-controls > .dd-error,
+  .live-core-controls > div:has(.dd-error) {
+    grid-column: 1;
+    order: 5;
+  }
+}
