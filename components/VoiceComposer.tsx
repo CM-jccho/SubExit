@@ -932,17 +932,7 @@ export default function VoiceComposer({
   if (!inDialog) return composer;
   return (
     <>
-      {!textFirst && (
-        <div className="recording-entry">
-          <h2>어떤 대화를 돌아볼까요?</h2>
-          <p>녹음하거나 파일을 올려 시작하세요. 문자만 입력해도 괜찮아요.</p>
-          <p className="vn-caption">
-            음성은 30분·50MB까지, 문자 파일은 TXT·SRT·VTT를 지원해요. 저장 후
-            문자를 확인하고 코칭받을 수 있어요.
-          </p>
-        </div>
-      )}
-      <div className="input-launcher" aria-label="대화 입력 열기">
+      <div className="input-launcher recording-primary-actions" aria-label="대화 입력 열기">
         <button
           type="button"
           className={textFirst ? "dd-primary" : "dd-secondary"}
@@ -972,6 +962,16 @@ export default function VoiceComposer({
           녹음·파일 추가
         </button>
       </div>
+      {!textFirst && (
+        <div className="recording-entry recording-entry-secondary">
+          <h2>어떤 대화를 돌아볼까요?</h2>
+          <p>녹음하거나 파일을 올려 시작하세요. 문자만 입력해도 괜찮아요.</p>
+          <p className="vn-caption">
+            음성은 30분·50MB까지, 문자 파일은 TXT·SRT·VTT를 지원해요. 저장 후
+            문자를 확인하고 코칭받을 수 있어요.
+          </p>
+        </div>
+      )}
       <p className="input-dialog-status" role="status">
         {receipt ||
           (dirty && !expanded
