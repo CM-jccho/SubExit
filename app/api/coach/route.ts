@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     const output = await geminiGenerate(
       systemPrompt +
         (quick
-          ? "\n지금은 실시간 힌트다. suggestion은 120자 이내의 짧은 한 문장, reason은 짧은 한 문장, evidence는 짧고 정확한 인용만 출력한다. pattern과 feedback은 출력하지 않는다."
+          ? "\n지금은 실시간 힌트다. suggestion은 120자 이내의 짧은 한 문장, reason은 짧은 한 문장, evidence는 짧고 정확한 인용만 출력한다. opponent와 context에 없는 날짜·요일·기간·금액·수치·약속을 새로 만들거나 바꾸지 않는다. 입력의 '내일', '금요일', '다음 주' 같은 시간 표현을 다른 시점으로 바꾸지 않는다. pattern과 feedback은 출력하지 않는다."
           : ""),
       [
         {
