@@ -228,6 +228,25 @@ export default function RecordingAnalysis({
       },
     });
   }
+  function markAlternating(first: "user" | "assistant") {
+    if (!draft) return;
+    edit({
+      segments: draft.segments.map((segment, index) => ({
+        ...segment,
+        role:
+          index % 2 === 0
+            ? first
+            : first === "user"
+              ? "assistant"
+              : "user",
+      })),
+    });
+    setNotice(
+      first === "user"
+        ? "내가 먼저 말한 대화로 초안을 지정했어요. 틀린 부분만 눌러 바꿔주세요."
+        : "상대가 먼저 말한 대화로 초안을 지정했어요. 틀린 부분만 눌러 바꿔주세요.",
+    );
+  }
   function edit(p: Partial<RecordingAnalysisDraft>) {
     setDraft((d) =>
       d ? { ...d, ...p, confirmed: false, review: undefined } : d,
@@ -482,18 +501,39 @@ export default function RecordingAnalysis({
                 className="learn-speaker-check"
                 tabIndex={-1}
               >
-                <p className="vn-caption">
-                  혼자 녹음했다면 ‘전부 내 말이에요’를 누르세요. 대화 녹음이라면
-                  각 내용에서 내 말과 상대 말을 선택해 주세요. 자동으로 말한
-                  사람을 추측하지 않아요.
-                </p>
-                <button
-                  className="dd-secondary"
-                  disabled={locked}
-                  onClick={markAllMine}
-                >
-                  전부 내 말이에요
-                </button>
+                <div className="learn-speaker-quick">
+                  <strong>누가 먼저 말했나요?</strong>
+                  <p className="vn-caption">
+                    가장 가까운 패턴을 한 번 선택한 뒤, 틀린 부분만 아래에서
+                    바꿔주세요. 앱이 음성만으로 화자를 확정하지는 않아요.
+                  </p>
+                  <div className="learn-speaker-quick-actions">
+                    <button
+                      type="button"
+                      className="dd-secondary"
+                      disabled={locked}
+                      onClick={markAllMine}
+                    >
+                      혼자 녹음 · 전부 내 말
+                    </button>
+                    <button
+                      type="button"
+                      className="dd-secondary"
+                      disabled={locked}
+                      onClick={() => markAlternating("assistant")}
+                    >
+                      상대가 먼저
+                    </button>
+                    <button
+                      type="button"
+                      className="dd-secondary"
+                      disabled={locked}
+                      onClick={() => markAlternating("user")}
+                    >
+                      내가 먼저
+                    </button>
+                  </div>
+                </div>
                 {draft.segments.length > 20 && (
                   <nav
                     className="vn-toolbar"
@@ -527,30 +567,51 @@ export default function RecordingAnalysis({
                     .slice(segmentPage * 20, (segmentPage + 1) * 20)
                     .map((segment, i) => (
                       <div key={segment.id}>
-                        <label className="vn-label">
-                          내용 {segmentPage * 20 + i + 1} · 누가 말했나요?
-                          <select
-                            disabled={locked}
-                            value={segment.role}
-                            onChange={(e) =>
-                              edit({
-                                segments: draft.segments.map((s) =>
-                                  s.id === segment.id
-                                    ? {
-                                        ...s,
-                                        role: e.target
-                                          .value as RecordingSegment["role"],
-                                      }
-                                    : s,
-                                ),
-                              })
-                            }
+                        <div className="learn-segment-head">
+                          <span>내용 {segmentPage * 20 + i + 1}</span>
+                          <div
+                            className="learn-speaker-toggle"
+                            role="group"
+                            aria-label={`내용 ${segmentPage * 20 + i + 1} 화자 선택`}
                           >
-                            <option value="unknown">선택해 주세요</option>
-                            <option value="user">내 말</option>
-                            <option value="assistant">상대 말</option>
-                          </select>
-                        </label>
+                            <button
+                              type="button"
+                              className={segment.role === "user" ? "active" : ""}
+                              aria-pressed={segment.role === "user"}
+                              disabled={locked}
+                              onClick={() =>
+                                edit({
+                                  segments: draft.segments.map((s) =>
+                                    s.id === segment.id
+                                      ? { ...s, role: "user" }
+                                      : s,
+                                  ),
+                                })
+                              }
+                            >
+                              내 말
+                            </button>
+                            <button
+                              type="button"
+                              className={
+                                segment.role === "assistant" ? "active" : ""
+                              }
+                              aria-pressed={segment.role === "assistant"}
+                              disabled={locked}
+                              onClick={() =>
+                                edit({
+                                  segments: draft.segments.map((s) =>
+                                    s.id === segment.id
+                                      ? { ...s, role: "assistant" }
+                                      : s,
+                                  ),
+                                })
+                              }
+                            >
+                              상대 말
+                            </button>
+                          </div>
+                        </div>
                         <p>{segment.text}</p>
                       </div>
                     ))}
@@ -613,7 +674,10 @@ export default function RecordingAnalysis({
                       ? "코칭할 내 말을 골라주세요"
                       : `${unknownSpeakers}개 내용의 말한 사람을 확인해 주세요`}
                   </strong>
-                  <p>확인 체크와 별도로, 누구의 말인지 선택해야 해요.</p>
+                  <p>
+                    위의 빠른 지정을 먼저 사용한 뒤, 잘못 지정된 내용만
+                    수정하면 돼요.
+                  </p>
                   <button
                     className="dd-secondary"
                     disabled={locked}
