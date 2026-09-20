@@ -348,15 +348,12 @@ export default function LiveSpeechPanel({
           </div>
           {reply && (
             <div className="live-stream-reply-heading">
-              <strong>다음 한마디</strong>
               <span>
                 {working
                   ? "새 말로 갱신 중"
-                  : reply && reply.text !== caption.final
+                  : reply.text !== caption.final
                     ? "이전 말 기준 제안"
-                    : reply
-                      ? "AI 제안"
-                      : "말이 정리되면 자동으로 제안해요"}
+                    : "AI 제안"}
               </span>
             </div>
           )}
