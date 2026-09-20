@@ -722,9 +722,9 @@ export default function LiveCoach({
       <div>
         <span>대화 설정</span>
         <strong>
-          {quickContext.partner.trim() || "기본 상대"}
+          {quickContext.partner.trim() || "상대 미설정"}
           {" · "}
-          {quickContext.goal.trim() || "기본 목표"}
+          {quickContext.goal.trim() || "기본 코칭"}
         </strong>
         <small>설정하지 않아도 바로 시작할 수 있어요.</small>
       </div>
@@ -1184,7 +1184,7 @@ export default function LiveCoach({
           />
         </section>
       )}
-      {(!directEntry || phase !== "idle" || liveActive || result) && (
+      {!directEntry && (!directEntry || phase !== "idle" || liveActive || result) && (
         <div
           className="coach-live-presence"
           aria-label="코치 상태"
@@ -1388,6 +1388,14 @@ export default function LiveCoach({
                   })
                 }
                 rememberItems={liveRememberItems}
+                rememberGoal={
+                  directEntry ? quickContext.goal.trim() || undefined : profile?.goal
+                }
+                rememberBoundary={
+                  directEntry
+                    ? quickContext.boundaries.trim() || undefined
+                    : profile?.boundaries
+                }
               />
             </>
           ) : (
