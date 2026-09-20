@@ -398,6 +398,8 @@ export default function LiveSpeechPanel({
                   : "대화 도움 시작"}
             </button>
 
+            {contextControl}
+
             <div className="live-core-state" role="status">
               <strong
                 className={
@@ -415,11 +417,9 @@ export default function LiveSpeechPanel({
               <span>
                 {state === "listening"
                   ? "새 말이 들어오면 위의 한마디가 자동으로 갱신돼요."
-                  : "설정 없이 바로 시작하거나, 필요할 때 상대·목표만 바꿀 수 있어요."}
+                  : "설정 없이 바로 시작할 수 있어요."}
               </span>
             </div>
-
-            {contextControl}
 
             {!available && (
               <p role="status" className="live-stream-note">
