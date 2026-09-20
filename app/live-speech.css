@@ -1251,3 +1251,113 @@
     padding: 12px;
   }
 }
+
+
+/* Final mobile hierarchy: the user mainly needs the next line and what to remember.
+   Realtime status and alternate input methods stay compact and secondary. */
+.live-core-controls > .live-remember-card {
+  order: 2;
+  margin-top: 0;
+  padding: 12px 0 0;
+  border-top: 1px solid #c9d8bd;
+}
+.live-core-controls > .live-context-compact {
+  order: 3;
+}
+.live-core-controls > .live-core-state {
+  order: 4;
+}
+.live-core-controls > .live-stream-note,
+.live-core-controls > div:has(.dd-error) {
+  order: 5;
+}
+.live-core-state-compact {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+}
+.live-core-state-compact strong {
+  color: #657360;
+  font-size: 11px;
+  font-weight: 700;
+}
+.live-core-state-compact .mic-status i {
+  width: 7px;
+  height: 7px;
+}
+.live-core-controls > .live-remember-card .live-remember-heading strong {
+  font-size: 15px;
+}
+.live-core-controls > .live-remember-card .live-remember-empty {
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.live-core-controls > .live-remember-card .live-remember-detected {
+  border: 1px solid #eadfae;
+  background: #fff6d9;
+}
+.coaching-input-navigation {
+  margin-top: 0;
+}
+.coaching-return-live {
+  width: 100%;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #d7dfcf;
+  border-radius: 12px;
+  background: #f6f8f2;
+  color: #4d624e;
+  font-size: 12px;
+  font-weight: 700;
+}
+.coaching-fallback-modes {
+  margin-top: 0;
+  border: 0;
+}
+.coaching-fallback-modes > summary {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  color: #697565;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.coaching-fallback-modes > summary::marker {
+  color: #83907d;
+}
+.coaching-fallback-modes .dc-mode-switch {
+  margin-top: 4px;
+}
+@media (max-width: 700px) {
+  .live-core-controls {
+    gap: 7px;
+  }
+  .live-core-controls > .live-remember-card {
+    padding-top: 10px;
+  }
+  .live-core-controls > .live-remember-card ul {
+    margin-top: 8px;
+  }
+  .live-core-controls > .live-remember-card li {
+    padding: 8px 9px;
+    grid-template-columns: 62px minmax(0, 1fr);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .live-core-state-compact {
+    min-height: 22px;
+  }
+  .live-stream-workspace > .dc-listen-panel {
+    padding-top: 8px;
+  }
+  .coaching-fallback-modes > summary {
+    min-height: 34px;
+    font-size: 11px;
+  }
+}
