@@ -156,17 +156,21 @@ export default function InputDialog({
             <h2 id={titleId} ref={heading} tabIndex={-1}>
               {title}
             </h2>
-            {showCloseButton && (
-              <button
-                type="button"
-                className="dd-link"
-                disabled={busy}
-                onClick={onClose}
-                aria-label={closeLabel || `${title} 닫기`}
-              >
-                닫기
-              </button>
-            )}
+            {showCloseButton &&
+              (busy ? (
+                <span className="input-dialog-busy" role="status">
+                  처리 중
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="dd-link"
+                  onClick={onClose}
+                  aria-label={closeLabel || `${title} 닫기`}
+                >
+                  닫기
+                </button>
+              ))}
           </header>
           <div ref={body} className="input-dialog-body">
             {children}
