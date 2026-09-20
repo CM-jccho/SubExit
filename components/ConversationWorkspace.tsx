@@ -1858,7 +1858,7 @@ export default function ConversationWorkspace() {
                   onBack={home}
                   onDemo={() => navigate("demo")}
                   onPractice={() => {
-                    setActive(undefined);
+                    setActive(null);
                     setRecordId(undefined);
                     setView("library", "practice");
                     setToast("연습할 상황을 선택해 주세요.");
