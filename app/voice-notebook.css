@@ -1170,3 +1170,95 @@
     font-size: 13px;
   }
 }
+
+
+/* Long recording transcription should read as one clear process, not as a mix
+   of editable controls and retry actions. */
+.vn-transcription-progress {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 14px 16px;
+  border: 1px solid #cbd9c5;
+  border-radius: 14px;
+  background: #f3f7ee;
+}
+.vn-transcription-progress > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.vn-transcription-progress strong {
+  color: #38533f;
+  font-size: var(--t-body);
+}
+.vn-transcription-progress span {
+  flex: 0 0 auto;
+  color: #63735f;
+  font-size: var(--t-cap);
+  font-variant-numeric: tabular-nums;
+}
+.vn-transcription-progress progress {
+  width: 100%;
+  height: 10px;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #dfe8d9;
+}
+.vn-transcription-progress progress::-webkit-progress-bar {
+  background: #dfe8d9;
+  border-radius: 999px;
+}
+.vn-transcription-progress progress::-webkit-progress-value {
+  background: #5f845f;
+  border-radius: 999px;
+}
+.vn-transcription-progress progress::-moz-progress-bar {
+  background: #5f845f;
+  border-radius: 999px;
+}
+.vn-transcription-progress p {
+  margin: 0;
+  color: #667363;
+  font-size: var(--t-cap);
+  line-height: 1.6;
+}
+.vn-transcription-progress .dd-link {
+  width: fit-content;
+  min-height: 30px;
+  padding: 0;
+}
+
+.vn-storage-fallback {
+  margin: 12px 0;
+  padding: 13px 15px;
+  border: 1px solid #e4c9b7;
+  border-radius: 14px;
+  background: #fff2e9;
+}
+.vn-storage-fallback strong {
+  display: block;
+  color: #8c4e31;
+  font-size: var(--t-body);
+}
+.vn-storage-fallback p {
+  margin: 5px 0 0;
+  color: #7a604f;
+  font-size: var(--t-cap);
+  line-height: 1.65;
+}
+
+@media (max-width: 700px) {
+  .vn-transcription-progress {
+    padding: 12px;
+    gap: 8px;
+  }
+  .vn-transcription-progress strong {
+    font-size: 13px;
+  }
+  .vn-storage-fallback {
+    padding: 11px 12px;
+  }
+}
