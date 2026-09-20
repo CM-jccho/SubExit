@@ -60,8 +60,8 @@ export default function HomeActions({
           <div className="coach-presence-copy">
             <span>실시간 대화 도움</span>
             <p>
-              상대의 말을 들으면 지금 필요한 다음 한마디를 바로 제안해요.
-              <br />직접 입력과 짧게 듣기는 필요할 때 보조로 사용할 수 있어요.
+              상대의 말을 들으면 지금 필요한 다음 한마디를 바로 제안해요. 직접
+              입력과 짧게 듣기는 필요할 때 보조로 사용할 수 있어요.
             </p>
           </div>
         </div>
