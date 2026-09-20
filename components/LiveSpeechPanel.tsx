@@ -24,6 +24,8 @@ export default function LiveSpeechPanel({
   readyToStart = true,
   onCue,
   rememberItems = [],
+  rememberGoal,
+  rememberBoundary,
   consentControl,
   available = true,
   unavailableMessage,
@@ -47,6 +49,8 @@ export default function LiveSpeechPanel({
   readyToStart?: boolean;
   onCue?: (cue: { opponent: string; response: CoachResponse }) => void;
   rememberItems?: string[];
+  rememberGoal?: string;
+  rememberBoundary?: string;
 }) {
   const [state, setState] = useState<"idle" | "connecting" | "listening">(
     "idle",
@@ -444,16 +448,16 @@ export default function LiveSpeechPanel({
               <strong>꼭 기억할 것</strong>
             </div>
             <ul>
-              {profile?.goal && (
+              {rememberGoal && (
                 <li>
                   <span>목표</span>
-                  {profile.goal}
+                  {rememberGoal}
                 </li>
               )}
-              {profile?.boundaries && (
+              {rememberBoundary && (
                 <li>
                   <span>지킬 선</span>
-                  {profile.boundaries}
+                  {rememberBoundary}
                 </li>
               )}
               {rememberItems.slice(0, 5).map((item, index) => (
@@ -462,7 +466,7 @@ export default function LiveSpeechPanel({
                   {item}
                 </li>
               ))}
-              {!profile?.boundaries && rememberItems.length === 0 && (
+              {!rememberGoal && !rememberBoundary && rememberItems.length === 0 && (
                 <li className="live-remember-empty">
                   상대가 약속한 일정·해야 할 일·중요한 숫자가 잡히면 여기에 남겨요.
                 </li>
