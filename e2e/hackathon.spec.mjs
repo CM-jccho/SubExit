@@ -166,6 +166,83 @@ async function grantAIConsent(page) {
     .toBe("allowed");
 }
 
+async function seedPracticeReviewSession(page) {
+  await page.evaluate(async () => {
+    const now = new Date().toISOString();
+    const session = {
+      id: "session-e2e-review",
+      title: "E2E 복기 테스트",
+      kind: "practice",
+      sampleMode: true,
+      industry: "",
+      context: {
+        title: "상담 일정 조율",
+        myRole: "교사",
+        partner: "학부모",
+        situation: "상담 일정을 다시 정해야 하는 상황",
+        goal: "가능한 상담 시간을 안내하기",
+        boundaries: "확인 전 확정 약속하지 않기",
+        tone: "warm",
+      },
+      turns: [
+        {
+          id: "turn-1",
+          role: "assistant",
+          text: "오늘 바로 상담 가능할까요?",
+          terms: [],
+          createdAt: now,
+        },
+        {
+          id: "turn-2",
+          role: "user",
+          text: "앞으로 밤에도 바로 답할게요.",
+          terms: [],
+          createdAt: now,
+        },
+        {
+          id: "turn-3",
+          role: "assistant",
+          text: "그럼 밤에 다시 연락드릴게요.",
+          terms: [],
+          createdAt: now,
+        },
+        {
+          id: "turn-4",
+          role: "user",
+          text: "네, 언제든 연락 주세요.",
+          terms: [],
+          createdAt: now,
+        },
+      ],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await new Promise((resolve, reject) => {
+      const request = indexedDB.open("ddeundeun-voice-notebook-v1", 2);
+      request.onupgradeneeded = () => {
+        for (const name of ["sessions", "terms", "meta"])
+          if (!request.result.objectStoreNames.contains(name))
+            request.result.createObjectStore(name, { keyPath: "id" });
+      };
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const db = request.result;
+        const tx = db.transaction("sessions", "readwrite");
+        tx.objectStore("sessions").put(session);
+        tx.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        tx.onerror = tx.onabort = () => {
+          db.close();
+          reject(tx.error);
+        };
+      };
+    });
+  });
+}
+
 async function readLiveSessions(page) {
   return await page.evaluate(async () => {
     return await new Promise((resolve, reject) => {
@@ -409,6 +486,35 @@ test("realtime core flow listens, suggests, saves, and opens records", async ({
   await expect(page.getByText("꼭 기억").first()).toBeVisible();
   expect(unexpectedDialogs).toEqual([]);
   expect(errors).toEqual([]);
+});
+
+test("sample review example opens beside its button and can close again", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("speakcoaching-intro-v2", "seen");
+  });
+  await page.goto("/?view=records", { waitUntil: "domcontentloaded" });
+  await seedPracticeReviewSession(page);
+  await page.reload({ waitUntil: "domcontentloaded" });
+
+  const card = page.locator(".vn-session-card").filter({ hasText: "E2E 복기 테스트" });
+  await expect(card).toBeVisible();
+  await card.click();
+
+  const openReview = page.getByRole("button", { name: "복기 예시 보기" });
+  await expect(openReview).toBeVisible();
+  await openReview.click();
+
+  const example = page.locator("[data-review-example]");
+  await expect(example).toBeVisible();
+  await expect(example.getByText("다시 말한다면")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "복기 예시 닫기" }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "복기 예시 닫기" }).click();
+  await expect(example).toHaveCount(0);
 });
 
 test("direct text input is one secondary action away from realtime help", async ({
