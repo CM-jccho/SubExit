@@ -247,12 +247,10 @@ export default function LiveCoach({
       const parts = ["내 기록에 저장했어요."];
       if (count > 1) parts.push("같은 상대 기록 " + count + "건으로 묶여요.");
       if (signals.commitments.length)
-        parts.push("약속·할 일 " + signals.commitments.length + "개");
+        parts.push("꼭 기억 " + signals.commitments.length + "개");
       if (signals.numbers.length)
         parts.push("숫자·날짜·금액 " + signals.numbers.length + "개");
       if (signals.terms.length) parts.push("용어 " + signals.terms.length + "개");
-      if (signals.commitments.length)
-        parts.push("꼭 기억 " + signals.commitments.length + "개");
       setHistoryStatus(parts.join(" "));
       setHistorySaved(true);
     } catch (e) {
@@ -1169,10 +1167,8 @@ export default function LiveCoach({
             <span>처음 한 번만 확인해요</span>
             <strong>AI 대화 도움을 사용하려면 전송 동의가 필요해요.</strong>
             <p>
-              음성·문장은 코칭을 위해 Gemini에 전송돼요. 실시간 자막을 쓰면
-              브라우저 음성 인식 서비스가 음성을 글로 바꿔요. 동의하면 이번 이용
-              중 다시 묻지 않고, 마이크 권한은 실제 기능을 누를 때 Safari·Chrome이
-              별도로 물어봐요.
+              음성·문장을 AI 코칭에 사용해요. 이번 탭에서는 한 번만 확인하고,
+              마이크 권한은 실제 기능을 누를 때 브라우저가 별도로 물어봐요.
             </p>
           </div>
           <AIConsent
