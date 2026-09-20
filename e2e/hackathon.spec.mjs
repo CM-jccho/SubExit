@@ -326,7 +326,7 @@ test("AI practice CTA moves from quick help to practice selection", async ({
   await practice.click();
 
   await expect(page).toHaveURL(/view=library/);
-  await expect(page).toHaveURL(/purpose=practice/);
+  await expect(page.getByText("연습할 상황을 선택해 주세요.")).toBeVisible();
   expect(errors).toEqual([]);
 });
 
