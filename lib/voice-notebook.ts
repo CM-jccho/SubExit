@@ -254,27 +254,43 @@ export const getSession = (id: string) =>
   transact<VoiceSession | undefined>("sessions", "readonly", (s) => s.get(id));
 export async function putSession(session: VoiceSession): Promise<IDBValidKey> {
   const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(["sessions", "meta"], "readwrite");
-    tx.objectStore("sessions").put(session);
-    const meta = tx.objectStore("meta"),
-      request = meta.get("practice-garden-v1");
-    request.onsuccess = () =>
-      meta.put(earnGarden(request.result || emptyGarden(), session));
-    tx.oncomplete = () => {
-      db.close();
-      gardenChanged();
-      resolve(session.id);
-    };
-    tx.onabort = tx.onerror = () => {
-      db.close();
-      reject(
-        new Error(
-          "기록과 보상을 저장하지 못했어요. 저장 공간을 확인해 주세요.",
-        ),
-      );
-    };
-  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction("sessions", "readwrite");
+      tx.objectStore("sessions").put(session);
+      tx.oncomplete = () => resolve();
+      tx.onabort = tx.onerror = () =>
+        reject(
+          new Error(
+            "기록을 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.",
+          ),
+        );
+    });
+  } finally {
+    db.close();
+  }
+
+  // Rewards are secondary. A reward write must never roll back a conversation
+  // that has already been safely stored.
+  try {
+    const rewardDb = await openDB();
+    await new Promise<void>((resolve, reject) => {
+      const tx = rewardDb.transaction("meta", "readwrite");
+      const meta = tx.objectStore("meta");
+      const request = meta.get("practice-garden-v1");
+      request.onsuccess = () =>
+        meta.put(earnGarden(request.result || emptyGarden(), session));
+      tx.oncomplete = () => resolve();
+      tx.onabort = tx.onerror = () => reject(tx.error);
+    });
+    rewardDb.close();
+    gardenChanged();
+  } catch {
+    // The record itself is the source of truth. Reward persistence can recover
+    // on a later save without making the user lose this conversation.
+  }
+
+  return session.id;
 }
 function gardenChanged() {
   if (typeof window !== "undefined")
