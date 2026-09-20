@@ -395,9 +395,41 @@ export default function LiveSpeechPanel({
                   : "대화 도움 시작"}
             </button>
 
+            <section className="live-remember-card" aria-label="이번 대화에서 꼭 기억할 것">
+              <div className="live-remember-heading">
+                <Icon name="book" size={17} />
+                <strong>꼭 기억할 것</strong>
+              </div>
+              <ul>
+                {rememberGoal && (
+                  <li>
+                    <span>목표</span>
+                    {rememberGoal}
+                  </li>
+                )}
+                {rememberBoundary && (
+                  <li>
+                    <span>지킬 선</span>
+                    {rememberBoundary}
+                  </li>
+                )}
+                {rememberItems.slice(0, 5).map((item, index) => (
+                  <li key={index} className="live-remember-detected">
+                    <span>{index === 0 ? "대화에서" : "기억"}</span>
+                    {item}
+                  </li>
+                ))}
+                {!rememberGoal && !rememberBoundary && rememberItems.length === 0 && (
+                  <li className="live-remember-empty">
+                    약속·해야 할 일·일정·중요한 숫자가 잡히면 여기에 남겨요.
+                  </li>
+                )}
+              </ul>
+            </section>
+
             {contextControl}
 
-            <div className="live-core-state" role="status">
+            <div className="live-core-state live-core-state-compact" role="status">
               <strong
                 className={
                   "mic-status " +
@@ -411,11 +443,6 @@ export default function LiveSpeechPanel({
                     ? "마이크 연결 중"
                     : "듣기 전"}
               </strong>
-              <span>
-                {state === "listening"
-                  ? "새 말이 들어오면 위의 한마디가 자동으로 갱신돼요."
-                  : "설정 없이 바로 시작할 수 있어요."}
-              </span>
             </div>
 
             {!available && (
@@ -437,38 +464,6 @@ export default function LiveSpeechPanel({
                 {notice}
               </p>
             )}
-          </section>
-
-          <section className="live-remember-card" aria-label="이번 대화에서 꼭 기억할 것">
-            <div className="live-remember-heading">
-              <Icon name="book" size={17} />
-              <strong>꼭 기억할 것</strong>
-            </div>
-            <ul>
-              {rememberGoal && (
-                <li>
-                  <span>목표</span>
-                  {rememberGoal}
-                </li>
-              )}
-              {rememberBoundary && (
-                <li>
-                  <span>지킬 선</span>
-                  {rememberBoundary}
-                </li>
-              )}
-              {rememberItems.slice(0, 5).map((item, index) => (
-                <li key={index} className="live-remember-detected">
-                  <span>{index === 0 ? "대화에서" : "기억"}</span>
-                  {item}
-                </li>
-              ))}
-              {!rememberGoal && !rememberBoundary && rememberItems.length === 0 && (
-                <li className="live-remember-empty">
-                  상대가 약속한 일정·해야 할 일·중요한 숫자가 잡히면 여기에 남겨요.
-                </li>
-              )}
-            </ul>
           </section>
         </aside>
       </div>
