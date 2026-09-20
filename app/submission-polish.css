@@ -1172,3 +1172,38 @@ html {
     margin-top: 4px;
   }
 }
+
+
+/* The live-help screen needs more vertical room than browse screens.
+   Keep the floating navigation reachable without covering conversation memory. */
+@media (max-width: 700px) {
+  .dc-root[data-view="quick"] {
+    --mobile-nav-height: 54px;
+  }
+
+  .dc-root[data-view="quick"] .dc-nav {
+    left: 22px;
+    right: 22px;
+    bottom: max(7px, env(safe-area-inset-bottom));
+    min-height: 52px;
+    padding: 3px;
+    border-radius: 19px;
+  }
+
+  .dc-root[data-view="quick"] .dc-nav button {
+    min-height: 40px;
+    padding: 4px 6px;
+    gap: 5px;
+    font-size: 10px;
+    border-radius: 14px;
+  }
+
+  .dc-root[data-view="quick"] .dc-nav button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .dc-root[data-view="quick"] .dc-shell main {
+    padding-bottom: calc(66px + env(safe-area-inset-bottom));
+  }
+}
