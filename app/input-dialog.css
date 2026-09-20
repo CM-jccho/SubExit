@@ -56,6 +56,19 @@ html {
   flex: 0 0 auto;
   min-height: 44px;
 }
+
+.input-dialog-busy {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f1f4ed;
+  color: #6b7768;
+  font-size: var(--t-cap);
+  font-weight: 700;
+}
 .input-dialog :is(input, textarea, select) {
   font-size: var(--t-lead);
 }
