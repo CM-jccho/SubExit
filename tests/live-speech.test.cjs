@@ -19,6 +19,55 @@ const tick = async (t, ms) => {
   await Promise.resolve();
 };
 
+test("starting an active speech stream does not open a second microphone session", () => {
+  const engines = [];
+  class Engine {
+    constructor() { engines.push(this); }
+    start() { this.onstart(); }
+    abort() { this.aborted = true; }
+  }
+  const speech = new SpeechStream(Engine, {
+    caption: () => {}, state: () => {}, error: assert.fail,
+  });
+  try {
+    speech.start();
+    speech.start();
+    assert.equal(engines.length, 1);
+  } finally {
+    speech.stop();
+    assert(engines.every((engine) => engine.aborted));
+  }
+});
+
+test("late events from an ended recognition session cannot overwrite its replacement", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const engines = [], captions = [], errors = [];
+  class Engine {
+    constructor() { engines.push(this); }
+    start() { this.onstart(); }
+    abort() { this.aborted = true; }
+  }
+  const speech = new SpeechStream(Engine, {
+    caption: (final) => captions.push(final), state: () => {},
+    error: (message) => errors.push(message),
+  });
+  try {
+    speech.start();
+    const oldResult = engines[0].onresult;
+    const oldError = engines[0].onerror;
+    engines[0].onend();
+    await tick(t, 300);
+    engines[1].onresult({ results: [{ isFinal: true, 0: { transcript: "현재 발화" } }] });
+    oldResult({ results: [{ isFinal: true, 0: { transcript: "지난 발화" } }] });
+    oldError({ error: "network" });
+    assert.equal(captions.at(-1), "현재 발화");
+    assert.deepEqual(errors, []);
+    assert.equal(engines[1].aborted, undefined);
+  } finally {
+    speech.stop();
+  }
+});
+
 test("coaching serializes requests, coalesces new speech and respects the six-second interval", async (t) => {
   t.mock.timers.enable({ apis: ["setTimeout", "Date"], now: 100000 });
   const calls = [],

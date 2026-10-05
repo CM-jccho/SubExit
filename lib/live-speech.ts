@@ -72,6 +72,7 @@ export class SpeechStream {
     private language = "ko-KR",
   ) {}
   start() {
+    if (this.active) return;
     this.active = true;
     this.connect();
   }
@@ -104,7 +105,7 @@ export class SpeechStream {
       12000,
     );
     engine.onstart = () => {
-      if (!this.active) return;
+      if (!this.active || this.engine !== engine) return;
       clearTimeout(this.startup);
       this.handlers.state("listening");
       this.silence = setTimeout(() => {
@@ -115,7 +116,7 @@ export class SpeechStream {
       }, 15000);
     };
     engine.onresult = (event) => {
-      if (!this.active) return;
+      if (!this.active || this.engine !== engine) return;
       clearTimeout(this.silence);
       this.handlers.notice?.("");
       this.restarts = 0;
@@ -133,7 +134,7 @@ export class SpeechStream {
       );
     };
     engine.onerror = ({ error }) => {
-      if (!this.active) return;
+      if (!this.active || this.engine !== engine) return;
       if (error === "no-speech") {
         this.handlers.notice?.(
           "말소리를 인식하지 못했어요. 마이크 가까이에서 말하거나 짧게 녹음·직접 입력으로 이어가세요.",
@@ -153,9 +154,13 @@ export class SpeechStream {
       );
     };
     engine.onend = () => {
+      if (!this.active || this.engine !== engine) return;
+      // Ended sessions can still have queued callbacks. Retire the session
+      // before reconnecting so it cannot overwrite or stop its replacement.
+      this.engine = undefined;
+      engine.onstart = engine.onresult = engine.onerror = engine.onend = null;
       clearTimeout(this.startup);
       clearTimeout(this.silence);
-      if (!this.active) return;
       this.committed = tailTranscript(this.committed + " " + this.currentFinal);
       if (++this.restarts > 3) {
         this.fail(
